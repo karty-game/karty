@@ -1,0 +1,11 @@
+{
+  "name": "karty-contributor-checks",
+  "private": true,
+  "scripts": {
+    "check:browser": "node internal/build/testdata/browser.test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  },
+  "license": "MIT"
+}

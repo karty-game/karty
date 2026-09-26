@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "golang.go",
+    "ryanluker.vscode-coverage-gutters",
+    "mkhl.direnv",
+    "hverlin.mise-vscode"
+  ]
+}

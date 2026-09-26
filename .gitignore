@@ -1,0 +1,14 @@
+dist/
+tmp/
+node_modules/
+test-results/
+.vscode/mise-tools/
+
+# Local contributor overrides
+go.work
+go.work.sum
+
+# Generated project state and local agent configuration
+.karty/
+.codex/
+.agents/

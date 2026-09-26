@@ -1,0 +1,10 @@
+kartui Hud() {
+    <panel modal="false" class="hud">
+        <label class="hud-text">Second arena — tap the game to pause</label>
+    </panel>
+}
+
+style {
+    .hud { padding: theme.spacing.gap; gap: theme.spacing.gap; }
+    .hud-text { color: theme.colors.accent; }
+}

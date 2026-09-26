@@ -1,0 +1,27 @@
+[project]
+name = "ui-demo"
+compiler = "tinygo"
+
+[project.resolution]
+width = 640
+height = 360
+
+[sdk]
+version = "0.0.1"
+
+# Everything under ui/, ui/layouts/, ui/theme.toml, and assets/textures/ is
+# discovered. These are sparse overrides for non-conventional names/profiles.
+[[assets.texture]]
+name = "ui.panel"
+source = "assets/textures/ui-panel.png"
+profile = "interface"
+
+[[assets.texture]]
+name = "ui.menu-background"
+source = "assets/textures/orbital-menu-background.png"
+profile = "interface"
+
+[[assets.texture]]
+name = "ui.command-emblem"
+source = "assets/textures/orbital-command-emblem.png"
+profile = "interface"

@@ -1,0 +1,7 @@
+[level]
+name = "levels.left"
+kind = "pong-arena"
+
+[[data]]
+name = "arena"
+source = "data/arena.json"

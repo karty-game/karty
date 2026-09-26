@@ -1,0 +1,3 @@
+dist/
+.karty/
+*_codegen.go

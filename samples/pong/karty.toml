@@ -1,0 +1,10 @@
+[project]
+name = "pong"
+compiler = "tinygo"
+
+[sdk]
+version = "0.0.1"
+
+[[assets.texture]]
+name = "sprites.player"
+source = "assets/textures/player.png"

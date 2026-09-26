@@ -1,0 +1,73 @@
+layout MainMenuLayout {
+    <!-- Full-screen art and navigation structure for primary game menus. -->
+    <panel modal="true" class="menu-screen">
+        <panel class="menu-rail">
+            <panel class="menu-heading">
+                <image class="menu-emblem"/>
+                <panel class="menu-heading-copy">
+                    <slot name="eyebrow"><label>ORBITAL COMMAND</label></slot>
+                    <slot name="title"><label>UNTITLED</label></slot>
+                    <slot name="status"><label>OFFLINE</label></slot>
+                </panel>
+            </panel>
+            <panel class="menu-navigation"><slot/></panel>
+            <panel class="menu-footer">
+                <slot name="footer"><label>ARROWS  NAVIGATE   ENTER  SELECT</label></slot>
+            </panel>
+        </panel>
+        <panel class="menu-corner"><slot name="corner"><label>ONLINE</label></slot></panel>
+    </panel>
+}
+
+style {
+    .menu-screen {
+        background-image: theme.images.menu-background;
+        padding: 28;
+        align-items: start;
+        justify-content: center;
+        transition-duration: 240;
+        transition-easing: ease-out;
+    }
+    .menu-rail {
+        background: theme.colors.scrim;
+        padding: 28;
+        gap: 18;
+        min-width: 340;
+        max-width: 390;
+        align-items: stretch;
+        transition-duration: 320;
+        transition-delay: 80;
+        transition-easing: ease-in-out;
+        transition-enter: slide-from-left;
+    }
+    .menu-heading { gap: 12; flex-direction: row; align-items: center; }
+    .menu-heading-copy { gap: 3; align-items: stretch; }
+    .menu-emblem { image: theme.images.command-emblem; image-fit: contain; tint: theme.colors.accent; min-width: 54; min-height: 54; max-width: 54; max-height: 54; }
+    .menu-navigation { gap: 6; align-items: stretch; }
+    .menu-footer { gap: 4; align-items: stretch; }
+    .menu-corner {
+        position: absolute;
+        top: 18;
+        right: 18;
+        background: theme.colors.scrim;
+        padding: 8;
+        transition-duration: 240;
+        transition-delay: 160;
+        transition-easing: ease-out;
+        transition-enter: slide-from-top;
+    }
+
+    @media (max-width: 480) {
+        .menu-screen { padding: 10; justify-content: end; }
+        .menu-rail { padding: 18; gap: 12; min-width: 280; max-width: 400; }
+        .menu-heading { gap: 2; }
+        .menu-heading-copy { gap: 2; }
+        .menu-emblem { min-width: 42; min-height: 42; max-width: 42; max-height: 42; }
+        .menu-navigation { gap: 4; }
+        .menu-footer { gap: 2; }
+        .menu-corner { top: 8; right: 8; padding: 6; }
+        label { font-size: 14; }
+        button { font-size: 16; min-height: 42; }
+        .menu-title { font-size: 34; }
+    }
+}

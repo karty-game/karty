@@ -1,0 +1,41 @@
+extends = "dark"
+
+[colors]
+surface = "#101927f5"
+surface-raised = "#17283df0"
+primary = "#27658aff"
+primary-hover = "#3685b5ff"
+primary-pressed = "#1b4965ff"
+disabled = "#283748ff"
+accent = "#70d6ffff"
+text = "#f4f8ffff"
+text-disabled = "#8292a6ff"
+scrim = "#06101be6"
+transparent = "#00000000"
+warning = "#f0a95aff"
+
+[spacing]
+panel = 24
+gap = 10
+
+[typography]
+body = 20
+title = 30
+
+[controls]
+height = 48
+transition = 140
+easing = "ease-out"
+
+[images.panel]
+asset = "ui.panel"
+# top, right, bottom, left source-pixel insets
+slice = [24, 24, 24, 24]
+
+[images.menu-background]
+asset = "ui.menu-background"
+slice = [0, 0, 0, 0]
+
+[images.command-emblem]
+asset = "ui.command-emblem"
+slice = [0, 0, 0, 0]

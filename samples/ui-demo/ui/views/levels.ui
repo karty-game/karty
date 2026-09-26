@@ -1,0 +1,26 @@
+setup Levels(props AppProps) {
+    first := func() { props.Mount("levels.first") }
+    second := func() { props.Mount("levels.second") }
+    back := func() { props.Show(Menu(props)) }
+}
+
+kartui Levels {
+    <WindowLayout>
+        <fragment slot="title"><label class="title">Choose level</label></fragment>
+        <button class="primary" onClick={ first }>First arena</button>
+        <button class="primary" onClick={ second }>Second arena</button>
+        <button class="secondary" onClick={ back }>Back</button>
+        <fragment slot="footer"><label class="hint">The selected level is mounted as a separate .kld.</label></fragment>
+    </WindowLayout>
+}
+
+style {
+    .title { color: theme.colors.accent; font-size: theme.typography.title; }
+    .hint { color: theme.colors.text-disabled; }
+    .primary { background: theme.colors.primary; color: theme.colors.text; min-height: theme.controls.height; }
+    .primary:hover { background: theme.colors.primary-hover; color: theme.colors.accent; }
+    .primary:pressed { background: theme.colors.primary-pressed; }
+    .secondary { background: theme.colors.surface-raised; color: theme.colors.text; min-height: theme.controls.height; }
+    .secondary:hover { background: theme.colors.primary-hover; }
+    .secondary:pressed { background: theme.colors.primary-pressed; }
+}

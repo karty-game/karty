@@ -1,0 +1,32 @@
+version: 2
+project_name: karty
+builds:
+  - id: karty
+    main: ./cmd/karty
+    binary: karty
+    env: [CGO_ENABLED=0]
+    flags: [-trimpath]
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    ignore:
+      - {goos: windows, goarch: arm64}
+archives:
+  - builds: [karty]
+    files: [README.md, LICENSE.md]
+    format_overrides:
+      - {goos: windows, format: zip}
+checksum:
+  name_template: checksums.txt
+release:
+  github:
+    owner: karty-game
+    name: karty
+  name_template: 'Karty CLI {{ .Tag }}'
+  header: |
+    The Karty command-line toolkit for creating, building, and running games.
+    Download your platform archive and add the binary to PATH.
+    SDK and host artifacts are distributed separately under sdk-v tags.
+source:
+  enabled: false
+changelog:
+  disable: true

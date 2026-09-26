@@ -1,0 +1,10 @@
+[level]
+name = "levels.second"
+kind = "ui-demo"
+[[data]]
+name = "arena"
+source = "arena.json"
+
+[[ui]]
+name = "ui.hud"
+source = "hud.ui"

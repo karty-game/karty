@@ -1,0 +1,48 @@
+import "strconv"
+
+// A reusable child: no Game dependency; every keyed instance owns its counter.
+type ItemRowProps struct {
+    ID uint32
+    Quantity func() int
+    Use func() bool
+    Changed func()
+}
+
+setup ItemRow(props ItemRowProps) {
+    uses := 0
+    use := func() {
+        if props.Use() {
+            uses++
+            invalidate()
+            props.Changed()
+        }
+    }
+}
+
+kartui ItemRow {
+    <panel modal="true" class="item">
+        <label class="item-label">{ "Item " + strconv.Itoa(int(props.ID)) + " — used " + strconv.Itoa(uses) + " times" }</label>
+        <button class="use" enabled={ props.Quantity() > 0 } onClick={ use }>{ "Use potion (" + strconv.Itoa(props.Quantity()) + " left)" }</button>
+    </panel>
+}
+
+style {
+    .item {
+        gap: theme.spacing.gap;
+        padding: theme.spacing.gap;
+        margin: 4;
+        transition-duration: 180;
+        transition-enter: slide-from-right;
+        transition-exit: slide-to-left;
+    }
+    .item-label { color: theme.colors.accent; }
+    .use { background: theme.colors.primary; color: theme.colors.text; transition-duration: theme.controls.transition; }
+    .use:hover { background: theme.colors.primary-hover; color: theme.colors.accent; }
+    .use:pressed { background: theme.colors.primary-pressed; }
+    .use:disabled { background: theme.colors.disabled; color: theme.colors.text-disabled; }
+	@media (max-width: 480) {
+		.item { gap: 4; padding: 4; margin: 2; }
+		.item-label { font-size: 16; max-width: 280; }
+		.use { font-size: 16; min-height: 40; }
+	}
+}

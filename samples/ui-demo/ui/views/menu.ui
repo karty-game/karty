@@ -1,0 +1,63 @@
+import "example.com/ui-demo/.karty/engine"
+
+// AppProps supplies domain operations without coupling screens to a concrete Game.
+// The screen owns navigation; the game owns data and lifecycle operations.
+type AppProps struct {
+    Show func(*engine.UI)
+    Quantity func() int
+    UsePotion func() bool
+    Mount func(string)
+    Level func() string
+    Resume func()
+    Leave func()
+}
+
+setup Menu(props AppProps) {
+    choose := func() { props.Show(Levels(props)) }
+    inventory := func() {
+        props.Show(Inventory(InventoryProps{
+            Quantity: props.Quantity,
+            UsePotion: props.UsePotion,
+            Back: func() { props.Show(Menu(props)) },
+        }))
+    }
+}
+
+kartui Menu {
+    <MainMenuLayout>
+        <fragment slot="eyebrow"><label class="eyebrow">KARTY SYSTEMS // 07</label></fragment>
+        <fragment slot="title"><label class="menu-title">ORBITAL</label></fragment>
+        <fragment slot="status"><label class="status">SYSTEMS NOMINAL · LINK SECURE</label></fragment>
+        <fragment slot="corner"><label class="corner">NETWORK // ONLINE</label></fragment>
+        <button class="menu-action" onClick={ choose }>›  SELECT DESTINATION</button>
+        <button class="menu-action" onClick={ inventory }>›  INVENTORY</button>
+        <fragment slot="footer"><label class="prompt">↑↓  NAVIGATE     ENTER  SELECT</label></fragment>
+    </MainMenuLayout>
+}
+
+style {
+    .eyebrow { color: theme.colors.warning; font-size: 13; font-family: theme.typography.mono-family; }
+    .menu-title { color: theme.colors.text; font-size: 44; font-family: theme.typography.title-family; }
+    .status { color: theme.colors.accent; font-size: 14; font-family: theme.typography.mono-family; }
+    .prompt { color: theme.colors.text-disabled; font-size: 12; font-family: theme.typography.mono-family; }
+    .corner { color: theme.colors.accent; font-size: 11; font-family: theme.typography.mono-family; }
+    .menu-action {
+        background: theme.colors.transparent;
+        color: theme.colors.text;
+        font-size: 18;
+        font-family: theme.typography.title-family;
+        min-height: 52;
+        text-align: left;
+        transition-duration: theme.controls.transition;
+        transition-easing: theme.controls.easing;
+        icon: theme.images.command-emblem;
+        icon-position: start;
+        icon-size: 18;
+        icon-gap: 10;
+        tint: theme.colors.accent;
+    }
+    .menu-action:hover { background: theme.colors.primary; color: theme.colors.accent; }
+    .menu-action:focus { background: theme.colors.accent; color: theme.colors.scrim; }
+    .menu-action:pressed { background: theme.colors.primary-pressed; }
+    .menu-action:disabled { background: theme.colors.disabled; color: theme.colors.text-disabled; }
+}

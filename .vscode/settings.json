@@ -1,0 +1,28 @@
+{
+  "go.lintOnSave": "package",
+  "go.toolsManagement.autoUpdate": true,
+  "go.testExplorer.packageDisplayMode": "nested",
+  "go.testTimeout": "600s",
+  "go.testFlags": ["-p=12"],
+  "mise.configureExtensionsAutomatically": true,
+  "mise.configureExtensionsIncludeGlobalTools": true,
+  "mise.configureExtensionsUseSymLinks": true,
+  "files.associations": {
+    "*.ui": "kartui",
+    "*.ui.tmpl": "kartui"
+  },
+  "files.exclude": {
+    ".direnv/**": true
+  },
+  "search.exclude": {
+    "**/*_codegen.go": false
+  },
+  "go.alternateTools": {
+    "go": "${workspaceFolder}/.vscode/mise-tools/go",
+    "gopls": "${workspaceFolder}/.vscode/mise-tools/gopls",
+    "dlv": "${workspaceFolder}/.vscode/mise-tools/dlv"
+  },
+  "debug.javascript.defaultRuntimeExecutable": {
+    "pwa-node": "${workspaceFolder}/.vscode/mise-tools/node"
+  }
+}
