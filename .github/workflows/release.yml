@@ -11,7 +11,7 @@ jobs:
     env:
       KARTY_TEST_SDK: "0.0.1"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: jdx/mise-action@v4
@@ -24,7 +24,7 @@ jobs:
       - run: mise run install-browser
       - name: Validate the customer workflow against published hosts
         run: mise run check-integration
-      - uses: goreleaser/goreleaser-action@v6
+      - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: '~> v2'
