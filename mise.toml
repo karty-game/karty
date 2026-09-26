@@ -3,6 +3,12 @@ golangci-lint = "2.13.2"
 go = "1.27.0"
 node = "24.21.0"
 
+[shell_alias]
+karty = "{{config_root}}/dist/karty"
+fmt = "mise run fmt"
+lint = "mise run lint"
+test = "mise run test"
+
 [tasks.test]
 run = "go test ./..."
 
@@ -45,3 +51,8 @@ run = "golangci-lint run ./..."
 
 [tasks.check-integration]
 run = "bash scripts/check-integration.sh"
+
+[tasks.build-samples]
+depends = ["build"]
+tools = { python = "3.12.12" }
+run = "python3 scripts/build-samples.py"

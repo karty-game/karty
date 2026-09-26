@@ -1,0 +1,126 @@
+name: Publish samples
+on:
+  workflow_run:
+    workflows: [Build samples]
+    types: [completed]
+  pull_request_target:
+    types: [closed]
+permissions:
+  contents: read
+# A deployment replaces the whole Pages site. Serialize updates to preserve other previews.
+concurrency:
+  group: sample-pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.event_name == 'pull_request_target' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      # Never check out PR code or execute files from the downloaded artifact here.
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Resolve destination from GitHub metadata
+        id: target
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner, repo} = context.repo;
+            const open = await github.paginate(github.rest.pulls.list,
+              {owner, repo, state: 'open', per_page: 100});
+            core.setOutput('open_prs', JSON.stringify(open.map(pr => pr.number)));
+            if (context.eventName === 'pull_request_target') {
+              core.setOutput('path', `pr/${context.payload.pull_request.number}`);
+              core.setOutput('remove', 'true');
+              return;
+            }
+            const run = context.payload.workflow_run;
+            if (run.event === 'pull_request') {
+              // GitHub may omit pull_requests for fork workflow runs.
+              const prs = await github.paginate(github.rest.repos.listPullRequestsAssociatedWithCommit,
+                {owner, repo, commit_sha: run.head_sha, per_page: 100});
+              const matches = prs.filter(pr => pr.state === 'open' &&
+                pr.head.sha === run.head_sha && pr.base.repo.full_name === `${owner}/${repo}` &&
+                pr.head.repo?.full_name === run.head_repository?.full_name);
+              if (matches.length !== 1) {
+                core.info('Skipping closed, superseded, or ambiguous pull request build.');
+                return;
+              }
+              core.setOutput('path', `pr/${matches[0].number}`);
+            } else if (['push', 'workflow_dispatch'].includes(run.event) &&
+                run.head_branch === context.payload.repository.default_branch &&
+                run.head_repository.full_name === `${owner}/${repo}`) {
+              const {data: branch} = await github.rest.repos.getBranch({owner, repo,
+                branch: context.payload.repository.default_branch});
+              if (branch.commit.sha !== run.head_sha) {
+                core.info('Skipping superseded default-branch build.');
+                return;
+              }
+              core.setOutput('path', 'main');
+            }
+      - uses: actions/download-artifact@v5
+        if: steps.target.outputs.path != '' && steps.target.outputs.remove != 'true'
+        with:
+          name: sample-site
+          path: ${{ runner.temp }}/sample-incoming
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - name: Prepare site and preserve other previews
+        if: steps.target.outputs.path != ''
+        env:
+          DESTINATION: ${{ steps.target.outputs.path }}
+          REMOVE_PREVIEW: ${{ steps.target.outputs.remove }}
+          OPEN_PRS: ${{ steps.target.outputs.open_prs }}
+        run: |
+          set -euo pipefail
+          state="$RUNNER_TEMP/sample-pages-state"
+          # Distinguish a missing state branch from a failed fetch.
+          remote=$(git ls-remote --heads origin gh-pages-state)
+          if [ -n "$remote" ]; then
+            git fetch --depth=1 origin gh-pages-state
+            git worktree add --detach "$state" FETCH_HEAD
+          else
+            git worktree add --detach "$state" HEAD
+            git -C "$state" switch --orphan gh-pages-state
+          fi
+          python3 scripts/assemble-pages.py "$state" "$RUNNER_TEMP/sample-incoming" "$DESTINATION" "$REMOVE_PREVIEW" "$OPEN_PRS"
+          git -C "$state" config user.name 'github-actions[bot]'
+          git -C "$state" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$state" add --all
+          if ! git -C "$state" diff --cached --quiet; then
+            git -C "$state" commit -m "Update sample site: $DESTINATION"
+            git -C "$state" push origin HEAD:refs/heads/gh-pages-state
+          fi
+          mkdir -p dist/pages
+          git -C "$state" archive HEAD | tar -x -C dist/pages
+      - uses: actions/configure-pages@v5
+        if: steps.target.outputs.path != ''
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.target.outputs.path != ''
+        with:
+          path: dist/pages
+      - uses: actions/deploy-pages@v4
+        if: steps.target.outputs.path != ''
+        id: deploy
+      - name: Preview link
+        if: steps.deploy.outputs.page_url != ''
+        env:
+          PAGE_URL: ${{ steps.deploy.outputs.page_url }}
+          DESTINATION: ${{ steps.target.outputs.path }}
+          REMOVE_PREVIEW: ${{ steps.target.outputs.remove }}
+        run: |
+          if [ "$REMOVE_PREVIEW" = true ]; then
+            printf 'Removed preview `%s`.\n' "$DESTINATION" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '[Open sample preview](%s%s/)\n' "$PAGE_URL" "$DESTINATION" >> "$GITHUB_STEP_SUMMARY"
+          fi

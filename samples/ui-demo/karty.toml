@@ -7,7 +7,7 @@ width = 640
 height = 360
 
 [sdk]
-version = "0.0.1"
+version = "0.0.2"
 
 # Everything under ui/, ui/layouts/, ui/theme.toml, and assets/textures/ is
 # discovered. These are sparse overrides for non-conventional names/profiles.
