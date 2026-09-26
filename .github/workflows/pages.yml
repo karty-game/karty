@@ -10,7 +10,7 @@ permissions:
 # A deployment replaces the whole Pages site. Serialize updates to preserve other previews.
 concurrency:
   group: sample-pages
-  cancel-in-progress: false
+  queue: max
 jobs:
   publish:
     if: github.event_name == 'pull_request_target' || github.event.workflow_run.conclusion == 'success'

@@ -30,7 +30,7 @@ The **Publish samples** workflow then updates GitHub Pages:
 - `/`: links to the latest samples and active previews.
 
 Each sample has its own subdirectory (`pong/` or `ui-demo/`). The deployment
-summary includes the preview link. Closing or merging a PR removes its preview;
+summary includes the preview link, and the PR build summary links to its expected URL. Closing or merging a PR removes its preview;
 each subsequent deployment also prunes closed previews. Failed builds leave the
 last successful preview in place. Superseded builds are skipped.
 
@@ -49,7 +49,8 @@ last successful preview in place. Superseded builds are skipped.
 For `karty-game/karty`, the usual URLs are
 `https://karty-game.github.io/karty/main/` and
 `https://karty-game.github.io/karty/pr/NUMBER/`. A configured custom domain may
-change the base URL; the deployment summary uses the actual Pages URL.
+change the base URL; set repository variable `PAGES_BASE_URL` for the PR build
+summary. The deployment summary always uses the actual Pages URL.
 
 No PAT or engine secrets are needed. Fork builds use read-only permissions and
 may require GitHub's contributor workflow approval. The privileged publisher
@@ -61,3 +62,6 @@ Pages serves the regular WASM host. The Brotli artifact is not selected because
 this deployment does not configure the required `Content-Encoding` response.
 To update the SDK used by the demos, change both sample `karty.toml` pins after
 publishing the corresponding engine artifacts; `go.mod` alone does not select it.
+
+The publisher queues deployments with GitHub's [concurrency queue](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
+and uses the official [Pages Actions deployment flow](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
