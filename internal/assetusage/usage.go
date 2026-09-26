@@ -16,6 +16,7 @@ import (
 
 	"github.com/karty-game/karty-ui/codegen"
 	"github.com/karty-game/karty/internal/project"
+	"github.com/karty-game/karty/internal/sdk"
 )
 
 const (
@@ -319,8 +320,13 @@ func appendUIFiles(fileSet *token.FileSet, directory, modulePath string, sourceF
 		return nil, err
 	}
 
+	manifest, err := sdk.Resolve(config.SDK.Version)
+	if err != nil {
+		return nil, err
+	}
+
 	generated, err := codegen.UIClientFiles(views, modulePath)
-	if config.SDK.Version == "0.0.1" {
+	if manifest.API.Version == "0.0.1" {
 		generated, err = codegen.UIPackageFiles(views, modulePath)
 	}
 

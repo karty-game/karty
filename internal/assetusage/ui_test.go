@@ -42,8 +42,7 @@ func main(){`+test.body+`}`)
 
 func TestLocalUIScreenReachability(t *testing.T) {
 	t.Parallel()
-	t.Run("0.0.1", func(t *testing.T) { t.Parallel(); testLocalUIScreenReachability(t, "0.0.1") })
-	t.Run("0.0.1", func(t *testing.T) { t.Parallel(); testLocalUIScreenReachability(t, "0.0.1") })
+	testLocalUIScreenReachability(t, "0.0.1")
 }
 
 func testLocalUIScreenReachability(t *testing.T, version string) {
@@ -81,7 +80,7 @@ func testLocalUIScreenReachability(t *testing.T, version string) {
 	}
 
 	names := []string{"ui.menu", "ui.levels", "ui.loading", "ui.error", "ui.pause", "ui.inventory", "ui.releasing", "ui.hud", "ui.unused"}
-	if version == "0.0.1" {
+	if manifest.API.Version == "0.0.1" {
 		names = append(names, "ui.item-row")
 	}
 
@@ -96,7 +95,7 @@ func testLocalUIScreenReachability(t *testing.T, version string) {
 		}
 	}
 
-	if version == "0.0.1" && result.Live["ui.item-row"] == "" {
+	if manifest.API.Version == "0.0.1" && result.Live["ui.item-row"] == "" {
 		t.Fatal("nested child stripped")
 	}
 }
