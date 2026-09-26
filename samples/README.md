@@ -1,11 +1,11 @@
 # Samples
 
-Pong and the KartUI demo pin published SDK **0.0.2** in their `karty.toml`.
+Pong and the KartUI demo pin published SDK **0.0.3** in their `karty.toml`.
 Build the CLI, then install the SDK before working on a sample:
 
 ```sh
 mise run build
-./dist/karty sdk install 0.0.2
+./dist/karty sdk install 0.0.3
 cd samples/pong
 ../../dist/karty build --target web
 ../../dist/karty dev

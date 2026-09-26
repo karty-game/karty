@@ -3,6 +3,7 @@ package dev
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -74,12 +75,9 @@ func run(ctx context.Context, command *cli.Command) error {
 		return err
 	}
 
-	host, err := findHost(command.String("host"))
+	host, err := devHost(command.String("host"))
 	if err != nil {
-		host, err = toolchainservice.EnsureHost(ctx, manifest, "web")
-		if err != nil {
-			return errHostNotFound
-		}
+		return err
 	}
 
 	_, err = toolchainservice.Ensure(ctx, manifest, toolchainservice.EnsureOptions{
@@ -132,12 +130,7 @@ func run(ctx context.Context, command *cli.Command) error {
 		return fmt.Errorf("resolve karty executable: %w", err)
 	}
 
-	buildCommand := []string{
-		shellQuote(currentExecutable),
-		"build",
-		"--host", shellQuote(host),
-		"--target", "web",
-	}
+	buildCommand := devBuildCommand(currentExecutable, host)
 
 	for _, option := range []struct{ name, value string }{
 		{name: "--go", value: goPath},
@@ -192,6 +185,26 @@ func run(ctx context.Context, command *cli.Command) error {
 	}
 
 	return nil
+}
+
+// devHost returns only local overrides. Managed artifacts are resolved by each
+// build from the project SDK, including its separately cached wasm_exec.js.
+func devHost(override string) (string, error) {
+	host, err := findHost(override)
+	if errors.Is(err, errHostNotFound) {
+		return "", nil
+	}
+
+	return host, err
+}
+
+func devBuildCommand(executable, host string) []string {
+	command := []string{shellQuote(executable), "build", "--target", "web"}
+	if host != "" {
+		command = append(command, "--host", shellQuote(host))
+	}
+
+	return command
 }
 
 func runProcess(ctx context.Context, process *exec.Cmd) error {
