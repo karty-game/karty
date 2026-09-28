@@ -10,7 +10,7 @@ require (
 	github.com/karty-game/karty-ui v0.0.2
 	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/file v1.2.1
-	github.com/knadh/koanf/v2 v2.3.6
+	github.com/knadh/koanf/v2 v2.3.7
 	github.com/muesli/termenv v0.16.0
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/urfave/cli/v3 v3.13.0
