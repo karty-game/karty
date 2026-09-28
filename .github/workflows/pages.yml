@@ -109,7 +109,7 @@ jobs:
         if: steps.target.outputs.path != ''
         with:
           path: dist/pages
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v5
         if: steps.target.outputs.path != ''
         id: deploy
       - name: Preview link
