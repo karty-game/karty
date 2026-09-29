@@ -147,7 +147,7 @@ Promise.resolve().then(() => {
   state("loading-cartridge");
   status("Loading game cartridge…");
   go = new Go();
-  return loadClientWasm("game.kart?v=994fc3a8c2df097b", imports);
+  return loadClientWasm("game.kart?v=469ced423f608285", imports);
 })
   .then(result => {
     client = result.instance;
