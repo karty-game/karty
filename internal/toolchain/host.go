@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/karty-game/karty/internal/sdk"
 )
@@ -24,7 +25,11 @@ func Host(version, target string) (string, error) {
 		return "", err
 	}
 
-	platform := runtime.GOOS + "-" + runtime.GOARCH
+	platform, err := hostPlatform(target)
+	if err != nil {
+		return "", err
+	}
+
 	name := "karty-host"
 
 	switch target {
@@ -55,16 +60,24 @@ func Host(version, target string) (string, error) {
 
 // InstallHost downloads, verifies, and atomically installs a raw host artifact.
 func InstallHost(ctx context.Context, version, target string, artifact sdk.ToolArtifact) (string, error) {
-	if version == "" || artifact.URL == "" || artifact.SHA256 == "" {
-		return "", errHostMetadata
-	}
-
 	cacheDir, err := kartyHome("")
 	if err != nil {
 		return "", err
 	}
 
-	platform := runtime.GOOS + "-" + runtime.GOARCH
+	return installHost(ctx, cacheDir, version, target, artifact)
+}
+
+func installHost(ctx context.Context, cacheDir, version, target string, artifact sdk.ToolArtifact) (string, error) {
+	if version == "" || artifact.URL == "" || artifact.SHA256 == "" {
+		return "", errHostMetadata
+	}
+
+	platform, err := hostPlatform(target)
+	if err != nil {
+		return "", err
+	}
+
 	name := "karty-host"
 	mode := os.FileMode(0o700)
 
@@ -164,7 +177,10 @@ func EnsureHost(ctx context.Context, manifest sdk.Manifest, target string) (stri
 		return InstallHost(ctx, manifest.Host.Version, target, manifest.Artifacts.Host.WebRuntime)
 	}
 
-	platform := runtime.GOOS + "-" + runtime.GOARCH
+	platform, err := hostPlatform(target)
+	if err != nil {
+		return "", err
+	}
 
 	artifact, found := manifest.Artifacts.Host.Native[platform]
 	if !found {
@@ -179,7 +195,12 @@ func manifestWithPublishedHost(ctx context.Context, manifest sdk.Manifest, targe
 	if target == "web-runtime" {
 		hasHost = manifest.Artifacts.Host.WebRuntime.URL != ""
 	} else if target != "web" {
-		_, hasHost = manifest.Artifacts.Host.Native[runtime.GOOS+"-"+runtime.GOARCH]
+		platform, err := hostPlatform(target)
+		if err != nil {
+			return sdk.Manifest{}, err
+		}
+
+		_, hasHost = manifest.Artifacts.Host.Native[platform]
 	}
 
 	if hasHost {
@@ -196,4 +217,43 @@ func manifestWithPublishedHost(ctx context.Context, manifest sdk.Manifest, targe
 	}
 
 	return published, nil
+}
+
+// NativePlatform validates a game distribution target independently of installed tools.
+func NativePlatform(platform string) (string, error) {
+	if platform == "" {
+		platform = runtime.GOOS + "-" + runtime.GOARCH
+	}
+
+	switch platform {
+	case "linux-amd64", "linux-arm64", "darwin-arm64", "windows-amd64", "windows-arm64":
+		return platform, nil
+	default:
+		return "", fmt.Errorf("unsupported game platform %q: %w", platform, os.ErrInvalid)
+	}
+}
+
+// NativeHostName uses the destination OS, not the build machine's OS.
+func NativeHostName(platform string) string {
+	if platform == "" {
+		platform = runtime.GOOS + "-" + runtime.GOARCH
+	}
+
+	if strings.HasPrefix(platform, "windows-") {
+		return "karty-host.exe"
+	}
+
+	return "karty-host"
+}
+
+func hostPlatform(target string) (string, error) {
+	if target == "web" || target == "web-runtime" {
+		return target, nil
+	}
+
+	if target == "native" {
+		target = ""
+	}
+
+	return NativePlatform(target)
 }

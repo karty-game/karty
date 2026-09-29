@@ -38,7 +38,7 @@ func TestRunBuildsSelfDescribingClient(t *testing.T) {
 		t.Fatalf("Run() error = %v", runErr)
 	}
 
-	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/engine/assets.go", "dist/raw/game.kart", "dist/raw/asset-report.json"} {
+	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/assets/textures.go", "dist/raw/game.kart", "dist/raw/asset-report.json"} {
 		if _, statErr := os.Stat(filepath.Join(directory, path)); statErr != nil {
 			t.Errorf("generated %s: %v", path, statErr)
 		}

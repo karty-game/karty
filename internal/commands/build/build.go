@@ -19,6 +19,7 @@ func Command() *cli.Command {
 			&cli.StringFlag{Name: "tinygo", Usage: "path to a TinyGo executable"},
 			&cli.StringFlag{Name: "wasm-tools", Usage: "path to a wasm-tools executable"},
 			&cli.StringFlag{Name: "host", Usage: "path to a pre-built Karty host artifact"},
+			&cli.StringFlag{Name: "platform", Usage: "native distribution platform, e.g. windows-arm64 (default: current machine)"},
 			&cli.StringFlag{Name: "target", Value: "native", Usage: "target to stage: native or web"},
 		},
 		Action: run,
@@ -33,6 +34,7 @@ func run(ctx context.Context, command *cli.Command) error {
 			WasmTools: command.String("wasm-tools"),
 			Host:      command.String("host"),
 			Target:    command.String("target"),
+			Platform:  command.String("platform"),
 		})
 	})
 }

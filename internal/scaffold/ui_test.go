@@ -23,7 +23,7 @@ func TestUITemplate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, name := range []string{"src/main.go", "assets/ui/menu.ui", "assets/ui/hud.ui", "levels/first/level.toml", ".karty/engine/game.go", ".karty/engine/ui-views.go"} {
+	for _, name := range []string{"src/main.go", "assets/ui/menu.ui", "assets/ui/hud.ui", "levels/first/level.toml", ".karty/engine/game.go", ".karty/engine/ui-views.go", ".karty/assets/ui.go"} {
 		if _, err := os.Stat(filepath.Join(directory, name)); err != nil {
 			t.Fatal(err)
 		}

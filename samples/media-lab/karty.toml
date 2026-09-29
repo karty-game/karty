@@ -1,0 +1,77 @@
+[project]
+name = "media-lab"
+compiler = "tinygo"
+
+[project.resolution]
+width = 960
+height = 540
+
+[sdk]
+version = "0.0.5"
+
+[[assets.texture]]
+name = "gallery.background"
+source = "assets/textures/gradient.jpg"
+profile = "environment"
+keep = true
+
+[assets.texture.transform]
+max_width = 960
+max_height = 540
+filter = "smooth-lanczos3"
+bit_depth = 8
+
+[[assets.texture]]
+name = "gallery.checker"
+source = "assets/textures/checker.png"
+profile = "sprite"
+keep = true
+
+[assets.texture.transform]
+max_width = 192
+max_height = 192
+filter = "nearest"
+bit_depth = 8
+
+[[assets.texture]]
+name = "gallery.badge"
+source = "assets/textures/badge.webp"
+profile = "interface"
+keep = true
+
+[assets.texture.transform]
+max_width = 240
+max_height = 180
+filter = "smooth-lanczos3"
+bit_depth = 8
+
+[[assets.music]]
+name = "lab.loop"
+source = "assets/sounds/music/loop.wav"
+profile = "music"
+
+[assets.music.transform]
+sample_rate = 24000
+channels = "preserve"
+
+[[assets.sound]]
+name = "effects.click"
+source = "assets/sounds/effects/click.wav"
+profile = "effect"
+
+[assets.sound.transform]
+sample_rate = 22050
+channels = "mono"
+
+[[assets.sound]]
+name = "effects.machine-gun"
+source = "assets/sounds/effects/machine-gun.wav"
+profile = "effect"
+
+[assets.sound.transform]
+sample_rate = 44100
+channels = "mono"
+
+[[assets.video]]
+name = "demo.pattern"
+source = "assets/videos/test-pattern.mpg"

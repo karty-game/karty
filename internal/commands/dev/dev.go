@@ -152,7 +152,7 @@ func run(ctx context.Context, command *cli.Command) error {
 		"-build.cmd", strings.Join(buildCommand, " "),
 		"-build.full_bin", serveCommand,
 		"-build.include_dir", "src,assets,levels,ui",
-		"-build.include_ext", "go,ui,json,toml,png",
+		"-build.include_ext", "go,ui,json,toml,png,jpg,jpeg,webp,wav,mpg",
 		"-build.include_file", "karty.toml",
 		"-build.exclude_regex", generatedSourcePattern,
 		"-build.exclude_dir", "dist",

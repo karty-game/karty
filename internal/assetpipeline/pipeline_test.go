@@ -2,20 +2,195 @@ package assetpipeline_test
 
 import (
 	"bytes"
+	"context"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
 
+	"github.com/karty-game/karty-sdk/format/asset"
+	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
 )
+
+//nolint:gocyclo // One integration scenario intentionally checks cold, warm, and selectively invalidated builds.
+func TestProcessGameAssetsCachesQOIAndQOAWithResolvedTransforms(t *testing.T) {
+	t.Parallel()
+
+	directory := t.TempDir()
+
+	writePNG(t, filepath.Join(directory, "first.png"), color.RGBA{R: 255, A: 255})
+	writePNG(t, filepath.Join(directory, "second.png"), color.RGBA{G: 255, A: 255})
+
+	wave := buildWAV(t, wavOptions{
+		encoding: testWavePCM, bits: 16, channels: 2, sampleRate: 48_000,
+		data: encodeIntegers(16, 100, -100, 200, -200, 300, -300, 400, -400),
+	})
+	for _, name := range []string{"open.wav", "hit.wav"} {
+		if err := os.WriteFile(filepath.Join(directory, name), wave, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	manifest := processingManifest()
+	textures := []project.Texture{
+		{Name: "sprites.first", Source: "first.png", Profile: "sprite", Transform: project.TextureTransform{MaxWidth: 1}},
+		{Name: "sprites.second", Source: "second.png", Profile: "sprite"},
+	}
+	sounds := []project.Sound{
+		{Name: "ui.open", Source: "open.wav", Profile: "effect"},
+		{Name: "ball.hit", Source: "hit.wav", Profile: "effect", Transform: project.SoundTransform{Channels: "mono"}},
+	}
+
+	first, err := assetpipeline.ProcessGameAssets(context.Background(), directory, manifest, textures, sounds)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Equal(first.Features, []string{cartridge.FeatureSoundQOAv1, cartridge.FeatureTextureQOIv1}) {
+		t.Fatalf("features = %v", first.Features)
+	}
+
+	if first.Textures[0].Width != 1 || first.Textures[0].Transform.MaxHeight != 2 || first.Textures[0].Encoding != "qoi" {
+		t.Fatalf("resolved transformed texture = %+v", first.Textures[0])
+	}
+
+	if first.Sounds[0].Name != "ball.hit" || first.Sounds[0].ID != 1 || first.Sounds[0].Metadata.Channels != 1 ||
+		first.Sounds[1].Name != "ui.open" || first.Sounds[1].ID != 2 {
+		t.Fatalf("deterministic sound catalog = %+v", first.Sounds)
+	}
+
+	for _, texture := range first.Textures {
+		if texture.CacheHit || texture.SourceSHA256 == "" || texture.OutputSHA256 == "" ||
+			texture.SourcePath == filepath.Join(directory, texture.Source) {
+			t.Fatalf("cold texture = %+v", texture)
+		}
+	}
+
+	for _, sound := range first.Sounds {
+		if sound.CacheHit || sound.SourceSHA256 == "" || sound.OutputSHA256 == "" {
+			t.Fatalf("cold sound = %+v", sound)
+		}
+	}
+
+	warm, err := assetpipeline.ProcessGameAssets(context.Background(), directory, manifest, textures, sounds)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, texture := range warm.Textures {
+		if !texture.CacheHit {
+			t.Fatalf("warm texture miss = %+v", texture)
+		}
+	}
+
+	for _, sound := range warm.Sounds {
+		if !sound.CacheHit {
+			t.Fatalf("warm sound miss = %+v", sound)
+		}
+	}
+
+	writePNG(t, filepath.Join(directory, "second.png"), color.RGBA{B: 255, A: 255})
+
+	selective, err := assetpipeline.ProcessGameAssets(context.Background(), directory, manifest, textures, sounds)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !selective.Textures[0].CacheHit || selective.Textures[1].CacheHit ||
+		!selective.Sounds[0].CacheHit || !selective.Sounds[1].CacheHit {
+		t.Fatalf("selective invalidation = textures %+v sounds %+v", selective.Textures, selective.Sounds)
+	}
+}
+
+func TestProcessGameAssetsPreservesLegacyCopyPNG(t *testing.T) {
+	t.Parallel()
+	directory := t.TempDir()
+	writePNG(t, filepath.Join(directory, "player.png"), color.RGBA{A: 255})
+
+	declarations := []project.Texture{{Name: "sprites.player", Source: "player.png", Profile: "sprite"}}
+
+	legacy, err := assetpipeline.AnalyzeTextures(directory, sdkManifest(t), declarations)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	processed, err := assetpipeline.ProcessGameAssets(context.Background(), directory, sdkManifest(t), declarations, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if processed.Textures[0].CacheKey != legacy.Textures[0].CacheKey ||
+		processed.Textures[0].Processor != "copy-png@1" || len(processed.Features) != 0 {
+		t.Fatalf("legacy processing changed: legacy=%+v processed=%+v", legacy.Textures[0], processed.Textures[0])
+	}
+}
+
+//nolint:golines,wsl_v5 // One scenario verifies duration and both catalog namespaces together.
+func TestProcessAudioStreamsUsesIndependentKindIDsAndLongDuration(t *testing.T) {
+	t.Parallel()
+	directory := t.TempDir()
+	// Thirty-one seconds proves the stream path does not inherit the one-shot limit.
+	samples := make([]int64, 31*22_050)
+	for index := range samples {
+		samples[index] = int64((index % 200) - 100)
+	}
+	wave := buildWAV(t, wavOptions{encoding: testWavePCM, bits: 16, channels: 1, sampleRate: 22_050, data: encodeIntegers(16, samples...)})
+	for _, name := range []string{"z.wav", "a.wav", "rain.wav"} {
+		if err := os.WriteFile(filepath.Join(directory, name), wave, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	manifest := processingManifest()
+	streams, err := assetpipeline.ProcessAudioStreams(t.Context(), directory, manifest,
+		[]project.AudioStream{{Name: "z", Source: "z.wav", Profile: "effect"}, {Name: "a", Source: "a.wav", Profile: "effect"}},
+		[]project.AudioStream{{Name: "rain", Source: "rain.wav", Profile: "effect"}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(streams) != 3 || streams[0].Name != "a" || streams[0].ID != 1 || streams[1].Name != "z" || streams[1].ID != 2 || streams[2].Kind != "environment" || streams[2].ID != 1 {
+		t.Fatalf("streams = %+v", streams)
+	}
+	if streams[0].Metadata.Frames <= 30*streams[0].Metadata.SampleRate {
+		t.Fatalf("duration was not preserved: %+v", streams[0].Metadata)
+	}
+}
+
+func processingManifest() sdk.Manifest {
+	return sdk.Manifest{Version: "test", Assets: struct {
+		Capabilities    asset.Capabilities          `toml:"capabilities"`
+		TextureProfiles map[string]sdk.AssetProfile `toml:"texture-profiles"`
+		SoundProfiles   map[string]sdk.SoundProfile `toml:"sound-profiles"`
+	}{
+		Capabilities: asset.Capabilities{
+			Processors: []asset.Processor{asset.ProcessorQOAv1, asset.ProcessorQOIv1},
+			Runtime:    []asset.Capability{asset.CapabilitySoundQOAv1, asset.CapabilityTextureQOIv1},
+		},
+		TextureProfiles: map[string]sdk.AssetProfile{
+			"sprite": {
+				Processor: asset.ProcessorQOIv1,
+				Transform: asset.ImageRecipe{
+					MaxWidth: 2, MaxHeight: 2, Filter: asset.ImageFilterNearest, BitDepth: 8,
+				},
+			},
+		},
+		SoundProfiles: map[string]sdk.SoundProfile{
+			"effect": {
+				Processor: asset.ProcessorQOAv1,
+				Transform: asset.AudioRecipe{SampleRate: 24_000, ChannelMode: asset.ChannelPreserve},
+			},
+		},
+	}}
+}
 
 func TestAnalyzeTexturesIsDeterministicAndProfileSensitive(t *testing.T) {
 	t.Parallel()

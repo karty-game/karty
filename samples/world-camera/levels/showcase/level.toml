@@ -1,0 +1,22 @@
+[level]
+name = "levels.camera-showcase"
+kind = "world"
+
+[world]
+source = "world.yaml"
+
+[[textures]]
+name = "floor"
+source = "floor.png"
+
+[[textures]]
+name = "ceiling"
+source = "ceiling.png"
+
+[[textures]]
+name = "wall"
+source = "wall.png"
+
+[[textures]]
+name = "actor"
+source = "actor.png"

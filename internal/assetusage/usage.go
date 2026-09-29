@@ -47,40 +47,55 @@ func Analyze(directory, modulePath string, names []string) Result {
 		known[name] = struct{}{}
 	}
 
-	fileSet, enginePackage, sourceFiles, info, err := loadTypeInfo(directory, modulePath)
+	fileSet, enginePackage, assetsPackage, sourceFiles, info, err := loadTypeInfo(directory, modulePath)
 	if err != nil {
 		return keepAll(err)
 	}
 
 	result := Result{Live: make(map[string]string)}
-	inspectUses(directory, fileSet, enginePackage, info, known, &result)
+	inspectUses(directory, fileSet, enginePackage, assetsPackage, info, known, &result)
 	inspectCalls(directory, fileSet, enginePackage, sourceFiles, info, known, &result)
 
 	return result
 }
 
-func loadTypeInfo(directory, modulePath string) (*token.FileSet, *types.Package, []*ast.File, *types.Info, error) {
+func loadTypeInfo(directory, modulePath string) (*token.FileSet, *types.Package, *types.Package, []*ast.File, *types.Info, error) {
 	fileSet := token.NewFileSet()
 	enginePath := modulePath + "/.karty/engine"
 
 	engineFiles, err := parsePackageFiles(fileSet, filepath.Join(directory, ".karty", "engine"))
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	enginePackage, err := (&types.Config{Importer: importer.Default()}).Check(enginePath, fileSet, engineFiles, nil)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
+
+	resolver := packageImporter{enginePath: enginePath, engine: enginePackage, fallback: importer.Default()}
+	assetsPath := modulePath + "/.karty/assets"
+
+	assetsFiles, err := parsePackageFiles(fileSet, filepath.Join(directory, ".karty", "assets"))
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+
+	assetsPackage, err := (&types.Config{Importer: resolver}).Check(assetsPath, fileSet, assetsFiles, nil)
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+
+	resolver.assetsPath, resolver.assets = assetsPath, assetsPackage
 
 	sourceFiles, err := parsePackageFiles(fileSet, filepath.Join(directory, "src"))
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	sourceFiles, err = appendUIFiles(fileSet, directory, modulePath, sourceFiles)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	info := &types.Info{
@@ -89,11 +104,6 @@ func loadTypeInfo(directory, modulePath string) (*token.FileSet, *types.Package,
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 	}
 
-	resolver := packageImporter{
-		enginePath: enginePath,
-		engine:     enginePackage,
-		fallback:   importer.Default(),
-	}
 	configuration := &types.Config{Importer: resolver}
 
 	var (
@@ -114,7 +124,7 @@ func loadTypeInfo(directory, modulePath string) (*token.FileSet, *types.Package,
 
 		uiPackage, err := configuration.Check(uiPath, fileSet, uiFiles, info)
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, nil, nil, err
 		}
 
 		resolver.uiPath, resolver.ui = uiPath, uiPackage
@@ -122,30 +132,31 @@ func loadTypeInfo(directory, modulePath string) (*token.FileSet, *types.Package,
 	}
 
 	if _, err := configuration.Check(modulePath+"/src", fileSet, mainFiles, info); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
-	return fileSet, enginePackage, sourceFiles, info, nil
+	return fileSet, enginePackage, assetsPackage, sourceFiles, info, nil
 }
 
 func inspectUses(
 	directory string,
 	fileSet *token.FileSet,
 	enginePackage *types.Package,
+	assetsPackage *types.Package,
 	info *types.Info,
 	known map[string]struct{},
 	result *Result,
 ) {
 	for identifier, object := range info.Uses {
-		if object.Pkg() != enginePackage {
-			continue
-		}
-
-		if typedConstant, ok := object.(*types.Const); ok && isTextureID(typedConstant.Type()) {
+		if typedConstant, ok := object.(*types.Const); ok && object.Pkg() == assetsPackage && isTextureID(typedConstant.Type()) {
 			name := constant.StringVal(typedConstant.Val())
 			if _, exists := known[name]; exists {
 				result.Live[name] = ReasonTypedReference
 			}
+		}
+
+		if object.Pkg() != enginePackage {
+			continue
 		}
 
 		switch object.Name() {
@@ -200,6 +211,8 @@ func inspectCalls(
 }
 
 type packageImporter struct {
+	assetsPath string
+	assets     *types.Package
 	uiPath     string
 	ui         *types.Package
 	enginePath string
@@ -208,6 +221,10 @@ type packageImporter struct {
 }
 
 func (resolver packageImporter) Import(path string) (*types.Package, error) {
+	if resolver.assets != nil && path == resolver.assetsPath {
+		return resolver.assets, nil
+	}
+
 	if resolver.ui != nil && path == resolver.uiPath {
 		return resolver.ui, nil
 	}

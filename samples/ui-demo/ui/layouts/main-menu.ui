@@ -12,7 +12,7 @@ layout MainMenuLayout {
             </panel>
             <panel class="menu-navigation"><slot/></panel>
             <panel class="menu-footer">
-                <slot name="footer"><label>ARROWS  NAVIGATE   ENTER  SELECT</label></slot>
+                <slot name="footer"><label>CLICK OR TAP TO SELECT</label></slot>
             </panel>
         </panel>
         <panel class="menu-corner"><slot name="corner"><label>ONLINE</label></slot></panel>
@@ -23,6 +23,8 @@ style {
     .menu-screen {
         background-image: theme.images.menu-background;
         padding: 28;
+        max-height: 360;
+        flex-grow: 1;
         align-items: start;
         justify-content: center;
         transition-duration: 240;
@@ -58,7 +60,7 @@ style {
     }
 
     @media (max-width: 480) {
-        .menu-screen { padding: 10; justify-content: end; }
+        .menu-screen { padding: 10; max-height: 360; flex-grow: 1; justify-content: end; }
         .menu-rail { padding: 18; gap: 12; min-width: 280; max-width: 400; }
         .menu-heading { gap: 2; }
         .menu-heading-copy { gap: 2; }

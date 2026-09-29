@@ -31,7 +31,7 @@ kartui Menu {
         <fragment slot="corner"><label class="corner">NETWORK // ONLINE</label></fragment>
         <button class="menu-action" onClick={ choose }>›  SELECT DESTINATION</button>
         <button class="menu-action" onClick={ inventory }>›  INVENTORY</button>
-        <fragment slot="footer"><label class="prompt">↑↓  NAVIGATE     ENTER  SELECT</label></fragment>
+        <fragment slot="footer"><label class="prompt">CLICK OR TAP TO SELECT</label></fragment>
     </MainMenuLayout>
 }
 

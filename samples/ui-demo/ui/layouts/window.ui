@@ -20,13 +20,18 @@ style {
         background: theme.colors.surface;
         padding: theme.spacing.gap;
         gap: theme.spacing.gap;
+        max-height: 360;
+        flex-grow: 1;
         align-items: center;
+		justify-content: center;
 		transition-duration: 180;
     }
     .layout-window {
         background-image: theme.images.panel;
         padding: theme.spacing.panel;
         gap: theme.spacing.gap;
+        max-height: 340;
+        flex-grow: 1;
         max-width: 620;
         align-items: stretch;
     }
@@ -42,6 +47,7 @@ style {
         padding: theme.spacing.gap;
         gap: theme.spacing.gap;
         align-items: stretch;
+        flex-grow: 1;
     }
     .layout-footer {
         background: theme.colors.primary-pressed;
@@ -54,8 +60,8 @@ style {
 	button { transition-duration: theme.controls.transition; }
 
 	@media (max-width: 480) {
-		.layout-screen { padding: 4; gap: 4; }
-		.layout-window { padding: 10; gap: 6; max-width: 440; }
+		.layout-screen { padding: 4; gap: 4; max-height: 360; flex-grow: 1; }
+		.layout-window { padding: 10; gap: 6; max-height: 352; max-width: 440; flex-grow: 1; }
 		.layout-header { padding: 6; gap: 6; }
 		.layout-content { padding: 6; gap: 6; }
 		.layout-footer { padding: 6; gap: 6; }

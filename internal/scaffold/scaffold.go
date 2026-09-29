@@ -108,15 +108,18 @@ func CreateTemplate(destination, name string, manifest sdk.Manifest, selection s
 		textureNames = append(textureNames, texture.Name)
 	}
 
-	assetFile, err := codegen.TextureAssetFile(textureNames)
+	modulePath := "example.com/" + name
+	engineImport := modulePath + "/.karty/engine"
+
+	assetFile, err := codegen.TextureAssetPackageFile(textureNames, engineImport)
 	if err != nil {
 		return fmt.Errorf("generate typed assets: %w", err)
 	}
 
-	generated["engine/assets.go"] = assetFile
+	generated["assets/textures.go"] = assetFile
 	if manifest.API.Version == "0.0.1" {
 		if err := addUIViews(
-			destination, generated, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
+			destination, modulePath, generated, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
 		); err != nil {
 			return err
 		}
@@ -124,7 +127,7 @@ func CreateTemplate(destination, name string, manifest sdk.Manifest, selection s
 
 	if err := addUIPackage(
 		destination,
-		"example.com/"+name,
+		modulePath,
 		manifest.API.Version,
 		config.Assets.UI,
 		config.Assets.Layouts,
@@ -200,18 +203,18 @@ func writeBindings(destination string, generated map[string][]byte) error {
 	return nil
 }
 
-func addUIAssets(generated map[string][]byte, assets []project.Texture) error {
+func addUIAssets(generated map[string][]byte, assets []project.Texture, engineImport string) error {
 	names := make([]string, 0, len(assets))
 	for _, asset := range assets {
 		names = append(names, asset.Name)
 	}
 
-	contents, err := codegen.UIAssetFile(names)
+	contents, err := codegen.UIAssetPackageFile(names, engineImport)
 	if err != nil {
 		return err
 	}
 
-	generated["engine/ui-assets.go"] = contents
+	generated["assets/ui.go"] = contents
 
 	return nil
 }
@@ -247,12 +250,13 @@ func renderTemplateFile(path, relative string, contents []byte, data any) (strin
 
 func addUIViews(
 	directory string,
+	modulePath string,
 	generated map[string][]byte,
 	assets []project.Texture,
 	layouts []project.Layout,
 	theme string,
 ) error {
-	if err := addUIAssets(generated, assets); err != nil {
+	if err := addUIAssets(generated, assets, modulePath+"/.karty/engine"); err != nil {
 		return err
 	}
 
