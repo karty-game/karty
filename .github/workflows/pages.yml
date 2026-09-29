@@ -105,7 +105,7 @@ jobs:
           git -C "$state" archive HEAD | tar -x -C dist/pages
       - uses: actions/configure-pages@v5
         if: steps.target.outputs.path != ''
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: steps.target.outputs.path != ''
         with:
           path: dist/pages
