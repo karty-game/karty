@@ -1,7 +1,7 @@
 # Image and sound assets
 
 Karty processes authoring assets while it builds the cartridge. The current
-implementation supports **SDK 0.0.6**: images become lossless QOI
+implementation supports **SDK 0.0.7**: images become lossless QOI
 textures and WAV effects become lossy QOA sounds. Players only need the matching
 host; they do not need FFmpeg, ImageMagick, CGO, or separate conversion tools.
 
@@ -144,10 +144,10 @@ Dev mode watches PNG, JPG, JPEG, WebP, and WAV sources and rebuilds after a
 change. Release builds do not apply a second quality pass, so a successful dev
 build exercises the same QOI/QOA conversion used for distribution.
 
-Install the published SDK and pin `[sdk].version = "0.0.6"` in `karty.toml`:
+Install the published SDK and pin `[sdk].version = "0.0.7"` in `karty.toml`:
 
 ```sh
-karty sdk install 0.0.6
+karty sdk install 0.0.7
 ```
 
 Installation verifies the signed public metadata and bundle checksum.
@@ -190,5 +190,5 @@ ffmpeg -i input.mp4 -vf 'scale=640:-2' -r 25 -c:v mpeg1video -q:v 5 \
   -c:a mp2 -ar 48000 -ac 2 -f mpeg output.mpg
 ```
 
-Video requires SDK 0.0.5 or newer. The samples pin the published SDK 0.0.6.
+Video requires SDK 0.0.5 or newer. The samples pin the published SDK 0.0.7.
 Earlier SDKs reject video declarations rather than silently omitting them.

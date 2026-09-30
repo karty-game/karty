@@ -208,7 +208,7 @@ func TestLoadDiscoversImageAndSoundSourcesWithTransformOverrides(t *testing.T) {
 	manifest := `[project]
 name = "demo"
 [sdk]
-version = "0.0.6"
+version = "0.0.7"
 [[assets.texture]]
 source = "assets/textures/photo.jpg"
 profile = "environment"
@@ -288,7 +288,7 @@ func TestLoadDoesNotRediscoverDeclaredAudioStreamAsSound(t *testing.T) {
 	manifest := `[project]
 name = "demo"
 [sdk]
-version = "0.0.6"
+version = "0.0.7"
 [[assets.music]]
 name = "loop"
 source = "assets/sounds/music/loop.wav"
@@ -310,7 +310,7 @@ source = "assets/sounds/music/loop.wav"
 func TestLoadRejectsInvalidAssetTransforms(t *testing.T) {
 	t.Parallel()
 
-	base := "[project]\nname='demo'\n[sdk]\nversion='0.0.6'\n"
+	base := "[project]\nname='demo'\n[sdk]\nversion='0.0.7'\n"
 
 	for name, declaration := range map[string]string{
 		"texture": "[[assets.texture]]\nname='bad'\nsource='texture.png'\n[assets.texture.transform]\nfilter='magic'\n",
@@ -354,7 +354,7 @@ func TestLoadRejectsAssetSymlinkOutsideProject(t *testing.T) {
 	manifest := `[project]
 name = "demo"
 [sdk]
-version = "0.0.6"
+version = "0.0.7"
 [[assets.texture]]
 name = "outside"
 source = "texture.png"

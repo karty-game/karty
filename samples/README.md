@@ -1,11 +1,11 @@
 # Samples
 
-The checked-in samples pin SDK **0.0.6** in their `karty.toml`. Build the CLI and
+The checked-in samples pin SDK **0.0.7** in their `karty.toml`. Build the CLI and
 install that published SDK before working on a sample:
 
 ```sh
 mise run build
-./dist/karty sdk install 0.0.6
+./dist/karty sdk install 0.0.7
 cd samples/pong
 ../../dist/karty build --target web
 ../../dist/karty dev
