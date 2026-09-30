@@ -19,7 +19,7 @@ def validate(source):
             raise ValueError(f"Non-regular sample entry: {relative}")
         if any(not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*", part) for part in relative.parts):
             raise ValueError(f"Invalid sample path: {relative}")
-        if relative.parts[0] not in ("pong", "ui-demo", "media-lab", "index.html"):
+        if relative.parts[0] not in ("pong", "ui-demo", "media-lab", "world-camera", "index.html"):
             raise ValueError(f"Unexpected sample entry: {relative}")
         if path.is_file():
             total += path.stat().st_size
@@ -28,6 +28,9 @@ def validate(source):
     for name in ("index.html", "pong/index.html", "ui-demo/index.html", "media-lab/index.html"):
         if not (source / name).is_file():
             raise ValueError(f"Missing {name}")
+
+    if (source / "world-camera").exists() and not (source / "world-camera/index.html").is_file():
+        raise ValueError("Missing world-camera/index.html")
 
 
 def assemble(state, source, destination, remove=False, open_prs=None):

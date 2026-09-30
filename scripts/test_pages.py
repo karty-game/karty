@@ -37,6 +37,23 @@ class PagesTests(unittest.TestCase):
         self.assertFalse((self.state / "pr/2").exists())
         self.assertTrue((self.state / "main/index.html").exists())
 
+    def test_accepts_world_camera_and_preserves_existing_previews(self):
+        pages.assemble(self.state, self.source, "pr/1")
+        sample = self.source / "world-camera"
+        sample.mkdir()
+        (sample / "index.html").write_text("camera")
+        (sample / "karty-host.wasm").write_bytes(b"wasm")
+        pages.assemble(self.state, self.source, "pr/2")
+        self.assertEqual((self.state / "pr/2/world-camera/index.html").read_text(), "camera")
+        self.assertFalse((self.state / "pr/1/world-camera").exists())
+
+    def test_rejects_incomplete_world_camera_before_replacing_preview(self):
+        pages.assemble(self.state, self.source, "pr/1")
+        (self.source / "world-camera").mkdir()
+        with self.assertRaisesRegex(ValueError, "Missing world-camera/index.html"):
+            pages.assemble(self.state, self.source, "pr/1")
+        self.assertTrue((self.state / "pr/1/index.html").exists())
+
     def test_rejects_links_and_preserves_previous_preview(self):
         pages.assemble(self.state, self.source, "pr/1")
         (self.source / "pong/leak").symlink_to(self.state / "index.html")
