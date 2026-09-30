@@ -172,7 +172,8 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 		return err
 	}
 
-	return command(ctx, root, nil, "node", "cmd/karty-check/testdata/check-allocations.mjs", artifact)
+	return command(ctx, root, nil, "node", "cmd/karty-check/testdata/check-allocations.mjs", artifact,
+		filepath.Join(project, ".karty", "engine", "protocol.go"))
 }
 
 func command(ctx context.Context, directory string, environment []string, executable string, args ...string) error {
@@ -196,5 +197,5 @@ func testSDKVersion() string {
 		return version
 	}
 
-	return "0.0.1"
+	return "0.0.6"
 }

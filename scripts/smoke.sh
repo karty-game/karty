@@ -4,7 +4,7 @@ cli_root=$(pwd)
 smoke_dir=$(mktemp -d)
 trap 'rm -rf "$smoke_dir"' EXIT
 cd "$smoke_dir"
-"$cli_root/dist/karty" new --sdk "${KARTY_TEST_SDK:-0.0.1}" pong
+"$cli_root/dist/karty" new --sdk "${KARTY_TEST_SDK:-0.0.6}" pong
 cd pong
 native_args=()
 web_args=()

@@ -18,5 +18,21 @@ name = "wall"
 source = "wall.png"
 
 [[textures]]
-name = "actor"
-source = "actor.png"
+name = "character"
+source = "character.png"
+
+[[textures]]
+name = "ghost"
+source = "ghost.png"
+
+[[textures]]
+name = "tree"
+source = "tree.png"
+
+[[textures]]
+name = "sign"
+source = "sign.png"
+
+[[textures]]
+name = "decal"
+source = "decal.png"

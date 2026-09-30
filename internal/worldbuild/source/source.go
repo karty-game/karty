@@ -51,8 +51,10 @@ type Room struct {
 type Endpoint struct{ Room, Edge string }
 
 type Connection struct {
-	ID   string
-	A, B Endpoint
+	ID           string
+	A, B         Endpoint
+	Direction    worldsource.PortalDirection
+	NonEuclidean bool
 }
 
 type Expanded struct {
@@ -268,6 +270,7 @@ func (builder *expander) expandScope(
 		}
 		result.connections = append(result.connections, Connection{
 			ID: joinIdentity(prefix, connection.ID), A: left, B: right,
+			Direction: connection.Direction, NonEuclidean: connection.NonEuclidean,
 		})
 	}
 
@@ -312,42 +315,51 @@ func transformRoom(
 			ID: joinIdentity(roomID, content.ID), SourceID: content.ID, Instance: prefix, Kind: content.Kind,
 			Position: transformPoint3(content.Position, transform),
 		}
-		if content.Actor != nil {
-			scale := content.Actor.Scale
-			if scale.X == 0 {
-				scale.X = 1
-			}
-			if scale.Y == 0 {
-				scale.Y = 1
-			}
-			if scale.Z == 0 {
-				scale.Z = 1
-			}
-			tags := content.Actor.Tags
-			if len(tagOverride) > 0 {
-				tags = tagOverride
-			}
-			tags = append([]string(nil), tags...)
-			slices.Sort(tags)
-			tags = slices.Compact(tags)
-			var sprite *worldsource.Sprite
-			if content.Actor.Sprite != nil {
-				copyOfSprite := *content.Actor.Sprite
-				sprite = &copyOfSprite
-			}
-			room.Contents[index].Actor = &Actor{
-				Yaw:   transform.yaw + content.Actor.YawDegrees*math.Pi/degreesPerHalfTurn,
-				Pitch: content.Actor.PitchDegrees * math.Pi / degreesPerHalfTurn,
-				Roll:  content.Actor.RollDegrees * math.Pi / degreesPerHalfTurn,
-				Scale: worldsource.Vec3{
-					X: scale.X * transform.scale, Y: scale.Y * transform.scale, Z: scale.Z * transform.scale,
-				},
-				Sprite: sprite, Tags: tags,
-			}
-		}
+		room.Contents[index].Actor = transformActor(content.Actor, transform, tagOverride)
 	}
 
 	return room
+}
+
+func transformActor(authored *worldsource.Actor, transform affine, tagOverride []string) *Actor {
+	if authored == nil {
+		return nil
+	}
+
+	scale := authored.Scale
+	if scale.X == 0 {
+		scale.X = 1
+	}
+	if scale.Y == 0 {
+		scale.Y = 1
+	}
+	if scale.Z == 0 {
+		scale.Z = 1
+	}
+
+	tags := authored.Tags
+	if len(tagOverride) > 0 {
+		tags = tagOverride
+	}
+	tags = append([]string(nil), tags...)
+	slices.Sort(tags)
+	tags = slices.Compact(tags)
+
+	var sprite *worldsource.Sprite
+	if authored.Sprite != nil {
+		copyOfSprite := *authored.Sprite
+		sprite = &copyOfSprite
+	}
+
+	return &Actor{
+		Yaw:   transform.yaw + authored.YawDegrees*math.Pi/degreesPerHalfTurn,
+		Pitch: authored.PitchDegrees * math.Pi / degreesPerHalfTurn,
+		Roll:  authored.RollDegrees * math.Pi / degreesPerHalfTurn,
+		Scale: worldsource.Vec3{
+			X: scale.X * transform.scale, Y: scale.Y * transform.scale, Z: scale.Z * transform.scale,
+		},
+		Sprite: sprite, Tags: tags,
+	}
 }
 
 func transformFrom(value worldsource.Transform) affine {

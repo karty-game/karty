@@ -29,6 +29,11 @@ func TestRunBuildsSelfDescribingClient(t *testing.T) {
 	}
 
 	addUnusedTexture(t, directory)
+
+	if err := os.WriteFile(filepath.Join(directory, "assets", "textures", "legacy-ignored.jpg"), []byte("not a JPEG"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
 	writeLegacyRootOutput(t, directory)
 
 	tinyGo, wasmTools := buildTools(t)
@@ -38,7 +43,7 @@ func TestRunBuildsSelfDescribingClient(t *testing.T) {
 		t.Fatalf("Run() error = %v", runErr)
 	}
 
-	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/assets/textures.go", "dist/raw/game.kart", "dist/raw/asset-report.json"} {
+	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/engine/assets.go", ".karty/assets/textures.go", "dist/raw/game.kart", "dist/raw/asset-report.json"} {
 		if _, statErr := os.Stat(filepath.Join(directory, path)); statErr != nil {
 			t.Errorf("generated %s: %v", path, statErr)
 		}
@@ -307,6 +312,38 @@ func TestRunStagesWebTarget(t *testing.T) {
 		if _, statErr := os.Stat(filepath.Join(directory, path)); statErr != nil {
 			t.Errorf("staged %s: %v", path, statErr)
 		}
+	}
+
+	indexPath := filepath.Join(directory, "dist/web/index.html")
+
+	index, err := os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if strings.Contains(string(index), "KARTY_AIR_BASE_PATH_PATCHED") ||
+		strings.Contains(string(index), "@@AIR_PROXY_BOOTSTRAP@@") {
+		t.Fatal("production web shell contains the Air proxy bootstrap or an unreplaced placeholder")
+	}
+
+	err = build.RunWithOptions(context.Background(), directory, build.Options{
+		TinyGo: tinyGo, WasmTools: wasmTools, Host: host, Target: "web", AirProxy: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	index, err = os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(string(index), "KARTY_AIR_BASE_PATH_PATCHED") ||
+		!strings.Contains(string(index), "Object.defineProperty(window, \"SharedWorker\"") ||
+		!strings.Contains(string(index), "new Proxy(window.EventSource") ||
+		!strings.Contains(string(index), "new URL(\".\" + value, window.location.href)") ||
+		strings.Contains(string(index), "@@AIR_PROXY_BOOTSTRAP@@") {
+		t.Fatal("development web shell does not preserve Air URLs under a path-based proxy")
 	}
 
 	for _, path := range []string{"dist/client.wasm", "dist/web/client.wasm"} {

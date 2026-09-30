@@ -3,7 +3,7 @@ name = "pong"
 compiler = "tinygo"
 
 [sdk]
-version = "0.0.5"
+version = "0.0.6"
 
 [[assets.texture]]
 name = "sprites.player"

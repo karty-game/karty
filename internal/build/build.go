@@ -58,6 +58,7 @@ type Options struct {
 	Host      string
 	Target    string
 	Platform  string
+	AirProxy  bool
 }
 
 // Run validates a project and compiles its self-describing cartridges.
@@ -91,6 +92,11 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	manifest, err := sdk.Resolve(config.SDK.Version)
 	if err != nil {
 		return err
+	}
+	if manifest.Assets.TextureProfiles[project.DefaultTextureProfile].Processor == asset.ProcessorCopyPNGv1 {
+		config.Assets.Textures = slices.DeleteFunc(config.Assets.Textures, func(texture project.Texture) bool {
+			return texture.Inferred && strings.ToLower(filepath.Ext(texture.Source)) != ".png"
+		})
 	}
 
 	if len(config.Assets.Videos) > 0 && !slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityVideoMPEG1v1) {
@@ -144,14 +150,6 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
-	if len(config.Assets.UI) > 0 && manifest.API.Version != "0.0.1" {
-		return fmt.Errorf("UI assets require SDK API 0.0.1: %w", ui.ErrTemplate)
-	}
-
-	if len(config.Assets.Fonts) > 0 && manifest.API.Version != "0.0.1" {
-		return fmt.Errorf("project UI fonts require SDK 0.0.1: %w", ui.ErrTemplate)
-	}
-
 	generated, err := sdk.ClientFiles(manifest, compiler)
 	if err != nil {
 		return fmt.Errorf("generate client API: %w", err)
@@ -169,6 +167,12 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 
 	generated["assets/textures.go"] = assetFile
+	if manifest.API.Version == "0.0.1" {
+		generated["engine/assets.go"], err = codegen.TextureAssetFile(textureNames)
+		if err != nil {
+			return fmt.Errorf("generate legacy typed assets: %w", err)
+		}
+	}
 
 	generated["assets/sounds.go"], err = soundAssetFile(config.Assets.Sounds, engineImport)
 	if err != nil {
@@ -181,7 +185,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 			return err
 		}
 	}
-	if manifest.API.Version == "0.0.2" {
+	if len(config.Assets.Music) > 0 || len(config.Assets.Environments) > 0 {
 		generated["assets/music.go"], err = audioStreamAssetFile("MusicID", "Music", "music", engineImport, config.Assets.Music)
 		if err != nil {
 			return err
@@ -194,29 +198,32 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 
 	var views []uicompiler.Component
 
-	uiAPI := manifest.API.Version == "0.0.1"
-	if uiAPI {
-		names := make([]string, 0, len(config.Assets.UI))
-		for _, asset := range config.Assets.UI {
-			names = append(names, asset.Name)
-		}
+	names := make([]string, 0, len(config.Assets.UI))
+	for _, asset := range config.Assets.UI {
+		names = append(names, asset.Name)
+	}
 
-		generated["assets/ui.go"], err = codegen.UIAssetPackageFile(names, engineImport)
+	generated["assets/ui.go"], err = codegen.UIAssetPackageFile(names, engineImport)
+	if err != nil {
+		return err
+	}
+	if manifest.API.Version == "0.0.1" {
+		generated["engine/ui-assets.go"], err = codegen.UIAssetFile(names)
 		if err != nil {
 			return err
 		}
+	}
 
-		views, err = project.CompileUI(
-			directory, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
-		)
-		if err != nil {
-			return err
-		}
+	views, err = project.CompileUI(
+		directory, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
+	)
+	if err != nil {
+		return err
+	}
 
-		generated["engine/ui-views.go"], err = codegen.UIViewFile(views)
-		if err != nil {
-			return err
-		}
+	generated["engine/ui-views.go"], err = codegen.UIViewFile(views)
+	if err != nil {
+		return err
 	}
 
 	if err := writeGeneratedClientAPI(directory, generated); err != nil {
@@ -227,10 +234,8 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
-	if manifest.API.Version == "0.0.1" {
-		if err := writeUIPackage(directory, modulePath, views); err != nil {
-			return err
-		}
+	if err := writeUIPackage(directory, modulePath, views); err != nil {
+		return err
 	}
 
 	if err := retireLegacyGeneratedRegistration(directory); err != nil {
@@ -447,7 +452,10 @@ func stageRequestedTarget(
 		}
 	}
 
-	return stageTarget(distributionDirectory, rawDirectory, artifact, levels, options.Host, options.Target, webRuntime, options.Platform)
+	return stageTarget(
+		distributionDirectory, rawDirectory, artifact, levels,
+		options.Host, options.Target, webRuntime, options.Platform, options.AirProxy,
+	)
 }
 
 func resolveWebRuntime(ctx context.Context, manifest sdk.Manifest, host string, local bool) (string, error) {
@@ -985,6 +993,7 @@ func stageTarget(
 	distributionDirectory, rawDirectory, clientArtifact string,
 	levels []levelbuild.Artifact,
 	hostArtifact, target, webRuntime, platform string,
+	airProxy bool,
 ) error {
 	if target == "" {
 		target = "native"
@@ -1043,7 +1052,7 @@ func stageTarget(
 			}
 		}
 
-		if err := stageWebShell(targetDirectory, webRuntime); err != nil {
+		if err := stageWebShell(targetDirectory, webRuntime, airProxy); err != nil {
 			return err
 		}
 	}
@@ -1373,7 +1382,7 @@ func writeAssetReport(buildDirectory string, report assetpipeline.Report) error 
 	return nil
 }
 
-func stageWebShell(targetDirectory, wasmExec string) error {
+func stageWebShell(targetDirectory, wasmExec string, airProxy bool) error {
 	if err := copyFile(wasmExec, filepath.Join(targetDirectory, "wasm_exec.js"), 0o600); err != nil {
 		return fmt.Errorf("stage wasm_exec.js: %w", err)
 	}
@@ -1403,7 +1412,35 @@ func stageWebShell(targetDirectory, wasmExec string) error {
 		return fmt.Errorf("hash staged runtime: %w", err)
 	}
 
-	index := strings.NewReplacer("@@LAUNCHER_HASH@@", launcherHash, "@@RUNTIME_HASH@@", runtimeHash).Replace(webIndexTemplate)
+	airProxyBootstrap := ""
+	if airProxy {
+		airProxyBootstrap = "<script>\n" +
+			"    // Air's SharedWorker also opens a root-relative SSE URL internally,\n" +
+			"    // so use its page-level EventSource fallback and preserve proxy prefixes.\n" +
+			"    const kartyAirURL = value => typeof value === \"string\" && value.startsWith(\"/__air_internal/\")\n" +
+			"      ? new URL(\".\" + value, window.location.href).href : value;\n" +
+			"    try {\n" +
+			"      Object.defineProperty(window, \"SharedWorker\", { configurable: true, value: undefined });\n" +
+			"    } catch (_) {\n" +
+			"      window.SharedWorker = undefined;\n" +
+			"    }\n" +
+			"    if (typeof window.EventSource === \"function\") {\n" +
+			"      window.EventSource = new Proxy(window.EventSource, {\n" +
+			"        construct(target, args) {\n" +
+			"          args[0] = kartyAirURL(args[0]);\n" +
+			"          return Reflect.construct(target, args);\n" +
+			"        },\n" +
+			"      });\n" +
+			"    }\n" +
+			"    window.KARTY_AIR_BASE_PATH_PATCHED = true;\n" +
+			"  </script>"
+	}
+
+	index := strings.NewReplacer(
+		"@@LAUNCHER_HASH@@", launcherHash,
+		"@@RUNTIME_HASH@@", runtimeHash,
+		"@@AIR_PROXY_BOOTSTRAP@@", airProxyBootstrap,
+	).Replace(webIndexTemplate)
 
 	if err := os.WriteFile(filepath.Join(targetDirectory, "index.html"), []byte(index), 0o600); err != nil {
 		return fmt.Errorf("write web shell: %w", err)

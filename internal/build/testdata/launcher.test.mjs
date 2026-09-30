@@ -45,7 +45,10 @@ assert.ok(["present", "absent", "duplicate"].includes(soundSections));
 const soundFailure = mock && soundSections === "duplicate";
 const expectedFailure = failure || soundFailure;
 const mockSoundBundle = new Uint8Array([0x4b, 0x54, 0x59, 0x53, 1, 0, 0, 0]).buffer;
-const protocolVersion = 5;
+// The mock uses its fixture wire version; staged guests use their pinned SDK.
+const protocolSource = mock ? null : await readFile(join(directory, "../../.karty/engine/protocol.go"), "utf8");
+const protocolVersion = mock ? 5 : Number(protocolSource.match(/protocolVersion\s*=\s*uint16\((\d+)\)/)?.[1]);
+assert.ok(Number.isInteger(protocolVersion) && protocolVersion > 0, "SDK must declare a wire version");
 
 // Exercise the inline fallback independently: the launcher may never execute.
 const shell = await readFile(new URL("../templates/index.html.tmpl", import.meta.url), "utf8");

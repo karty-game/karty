@@ -3,6 +3,7 @@ package build
 
 import (
 	"context"
+	"os"
 
 	buildservice "github.com/karty-game/karty/internal/build"
 	"github.com/karty-game/karty/internal/ui"
@@ -35,6 +36,7 @@ func run(ctx context.Context, command *cli.Command) error {
 			Host:      command.String("host"),
 			Target:    command.String("target"),
 			Platform:  command.String("platform"),
+			AirProxy:  os.Getenv("KARTY_AIR_PROXY") == "1",
 		})
 	})
 }

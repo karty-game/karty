@@ -114,6 +114,7 @@ rooms:
 	}
 }
 
+//nolint:gocyclo,gocognit // One end-to-end fixture audit keeps compiled geometry, actor roles and shared assets together.
 func TestWorldCameraSampleLevelCompiles(t *testing.T) {
 	t.Parallel()
 
@@ -144,9 +145,40 @@ func TestWorldCameraSampleLevelCompiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if document.Version != sdkworld.Version || len(document.Sectors) != 4 || len(document.Contents) != 8 {
+	if document.Version != sdkworld.Version || len(document.Sectors) != 7 || len(document.Contents) != 12 {
 		t.Fatalf("sample world v%d = %d sectors, %d contents", document.Version, len(document.Sectors), len(document.Contents))
 	}
+
+	type portalRef struct{ sector, wall int }
+	findPortal := func(instance, room, edge string) portalRef {
+		for sectorIndex, sector := range document.Sectors {
+			if sector.Instance != instance || sector.SourceRoom != room {
+				continue
+			}
+			for wallIndex, wall := range sector.Walls {
+				if wall.SourceEdge == edge {
+					return portalRef{sector: sectorIndex, wall: wallIndex}
+				}
+			}
+		}
+		t.Fatalf("missing portal endpoint %s/%s/%s", instance, room, edge)
+
+		return portalRef{-1, -1}
+	}
+	ascentExit := findPortal("north-ascent", "room", "exit")
+	hallNorth := findPortal("", "hall", "north")
+	cornerExit := findPortal("east-corner", "room", "exit")
+	ascentEntrance := findPortal("north-ascent", "room", "entrance")
+	assertTarget := func(from, to portalRef) {
+		wall := document.Sectors[from.sector].Walls[from.wall]
+		if int(wall.Portal) != to.sector || int(wall.PortalWall) != to.wall+1 {
+			t.Fatalf("portal %+v targets sector=%d wall=%d, want %+v", from, wall.Portal, wall.PortalWall, to)
+		}
+	}
+	assertTarget(ascentExit, hallNorth)
+	assertTarget(hallNorth, ascentExit)
+	assertTarget(cornerExit, ascentEntrance)
+	assertTarget(ascentEntrance, cornerExit)
 
 	actors := make(map[string]sdkworld.Content)
 	for _, content := range document.Contents {
@@ -154,33 +186,55 @@ func TestWorldCameraSampleLevelCompiles(t *testing.T) {
 			actors[content.ID] = content
 		}
 	}
-	if len(actors) != 7 {
-		t.Fatalf("sample authored actors = %d, want 7", len(actors))
+	if len(actors) != 11 {
+		t.Fatalf("sample authored actors = %d, want 11", len(actors))
 	}
-	for id, facing := range map[string]sdkworld.SpriteFacing{
-		"hall/camera-facing":    sdkworld.SpriteCameraFacing,
-		"hall/upright":          sdkworld.SpriteUpright,
-		"hall/fixed-sign":       sdkworld.SpriteFixed,
-		"hall/slope-decal":      sdkworld.SpriteFixed,
-		"gallery-a/room/marker": sdkworld.SpriteCross,
-		"gallery-b/room/marker": sdkworld.SpriteCross,
+	for authoredID, facing := range map[string]sdkworld.SpriteFacing{
+		"hall/player-marker":            sdkworld.SpriteCameraFacing,
+		"hall/camera-facing-adventurer": sdkworld.SpriteCameraFacing,
+		"hall/upright-adventurer":       sdkworld.SpriteUpright,
+		"hall/fixed-sign":               sdkworld.SpriteFixed,
+		"hall/slope-decal":              sdkworld.SpriteFixed,
+		"hall/blended-ghost":            sdkworld.SpriteCameraFacing,
+		"gallery-a/room/marker":         sdkworld.SpriteCross,
+		"gallery-b/room/marker":         sdkworld.SpriteCross,
+		"gallery-c/room/marker":         sdkworld.SpriteCross,
+		"east-corner/room/corner-sign":  sdkworld.SpriteFixed,
+		"north-ascent/room/beacon":      sdkworld.SpriteUpright,
 	} {
-		actor, ok := actors[id]
-		if !ok || actor.Actor.Sprite == nil || actor.Actor.Sprite.Facing != facing || actor.Actor.Sprite.AssetID != 1 {
-			t.Fatalf("sample actor %q = %+v, exists %v", id, actor, ok)
+		actor, ok := actors[authoredID]
+		if !ok || actor.Actor.Sprite == nil || actor.Actor.Sprite.Facing != facing || actor.Actor.Sprite.AssetID == 0 {
+			t.Fatalf("sample actor %q = %+v, exists %v", authoredID, actor, ok)
 		}
 	}
+	if actors["hall/camera-facing-adventurer"].Actor.Sprite.AssetID != actors["hall/upright-adventurer"].Actor.Sprite.AssetID ||
+		actors["hall/blended-ghost"].Actor.Sprite.AssetID != actors["north-ascent/room/beacon"].Actor.Sprite.AssetID ||
+		actors["gallery-a/room/marker"].Actor.Sprite.AssetID != actors["gallery-c/room/marker"].Actor.Sprite.AssetID ||
+		actors["hall/fixed-sign"].Actor.Sprite.AssetID != actors["east-corner/room/corner-sign"].Actor.Sprite.AssetID {
+		t.Fatal("sample actor roles do not share their intended texture assets")
+	}
 	decal := actors["hall/slope-decal"].Actor
-	wantYaw := math.Atan2(-.03, .04)
-	wantPitch := math.Atan2(1, math.Hypot(.03, .04))
+	wantYaw := math.Atan2(-.08, 0)
+	wantPitch := math.Atan2(1, .08)
 	if math.Abs(decal.Yaw-wantYaw) > 1e-8 || math.Abs(decal.Pitch-wantPitch) > 1e-8 ||
 		decal.Sprite.Alpha != sdkworld.SpriteBlend {
 		t.Fatalf("slope decal = %+v, want yaw=%g pitch=%g", decal, wantYaw, wantPitch)
 	}
-	if got := actors["gallery-a/room/marker"].Actor.Tags; !slices.Equal(got, []string{"gallery", "gallery-a"}) {
+	// Despite their authored IDs, fixed-sign is in the starting-room corner,
+	// while corner-sign is the sign at the far end of the long hall.
+	if got := actors["hall/fixed-sign"].Actor.Yaw; math.Abs(got) > 1e-8 {
+		t.Fatalf("starting-corner sign yaw = %g, want 0", got)
+	}
+	if got := actors["east-corner/room/corner-sign"].Actor.Yaw; math.Abs(got+math.Pi/2) > 1e-8 {
+		t.Fatalf("far-hall sign yaw = %g, want %g", got, -math.Pi/2)
+	}
+	if got := actors["gallery-a/room/marker"].Actor.Tags; !slices.Equal(got, []string{"gallery", "gallery-a", "spinner"}) {
 		t.Fatalf("gallery-a tag override = %v", got)
 	}
 	if got := actors["gallery-b/room/marker"].Actor.Tags; !slices.Equal(got, []string{"gallery", "gallery-b"}) {
 		t.Fatalf("gallery-b tag override = %v", got)
+	}
+	if got := actors["gallery-c/room/marker"].Actor.Tags; !slices.Equal(got, []string{"gallery", "gallery-c"}) {
+		t.Fatalf("gallery-c tag override = %v", got)
 	}
 }

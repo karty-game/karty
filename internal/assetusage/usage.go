@@ -16,7 +16,6 @@ import (
 
 	"github.com/karty-game/karty-ui/codegen"
 	"github.com/karty-game/karty/internal/project"
-	"github.com/karty-game/karty/internal/sdk"
 )
 
 const (
@@ -148,7 +147,8 @@ func inspectUses(
 	result *Result,
 ) {
 	for identifier, object := range info.Uses {
-		if typedConstant, ok := object.(*types.Const); ok && object.Pkg() == assetsPackage && isTextureID(typedConstant.Type()) {
+		if typedConstant, ok := object.(*types.Const); ok &&
+			(object.Pkg() == assetsPackage || object.Pkg() == enginePackage) && isTextureID(typedConstant.Type()) {
 			name := constant.StringVal(typedConstant.Val())
 			if _, exists := known[name]; exists {
 				result.Live[name] = ReasonTypedReference
@@ -337,16 +337,12 @@ func appendUIFiles(fileSet *token.FileSet, directory, modulePath string, sourceF
 		return nil, err
 	}
 
-	manifest, err := sdk.Resolve(config.SDK.Version)
+	clientFiles, err := codegen.UIClientFiles(views, modulePath)
 	if err != nil {
 		return nil, err
 	}
 
-	generated, err := codegen.UIClientFiles(views, modulePath)
-	if manifest.API.Version == "0.0.1" {
-		generated, err = codegen.UIPackageFiles(views, modulePath)
-	}
-
+	packageFiles, err := codegen.UIPackageFiles(views, modulePath)
 	if err != nil {
 		return nil, err
 	}
@@ -356,12 +352,14 @@ func appendUIFiles(fileSet *token.FileSet, directory, modulePath string, sourceF
 			continue
 		}
 
-		file, err := parser.ParseFile(fileSet, view.Source, generated[view.Source], parser.AllErrors)
-		if err != nil {
-			return nil, err
-		}
+		for _, generated := range [][]byte{clientFiles[view.Source], packageFiles[view.Source]} {
+			file, err := parser.ParseFile(fileSet, view.Source, generated, parser.AllErrors)
+			if err != nil {
+				return nil, err
+			}
 
-		sourceFiles = append(sourceFiles, file)
+			sourceFiles = append(sourceFiles, file)
+		}
 	}
 
 	return sourceFiles, nil

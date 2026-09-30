@@ -1,10 +1,9 @@
 # Image and sound assets
 
 Karty processes authoring assets while it builds the cartridge. The current
-implementation targets the **SDK 0.0.4 candidate**: images become lossless QOI
+implementation supports **SDK 0.0.6**: images become lossless QOI
 textures and WAV effects become lossy QOA sounds. Players only need the matching
 host; they do not need FFmpeg, ImageMagick, CGO, or separate conversion tools.
-At the time of this change, `sdk-v0.0.4` has not been published.
 
 Projects pinned to an older SDK keep that SDK's asset behavior. In particular,
 changing the CLI alone does not switch an SDK 0.0.3 project to QOI or QOA.
@@ -145,17 +144,15 @@ Dev mode watches PNG, JPG, JPEG, WebP, and WAV sources and rebuilds after a
 change. Release builds do not apply a second quality pass, so a successful dev
 build exercises the same QOI/QOA conversion used for distribution.
 
-Before the candidate is public, install a reviewed local SDK archive explicitly:
+Install the published SDK and pin `[sdk].version = "0.0.6"` in `karty.toml`:
 
 ```sh
-karty sdk install --archive /path/to/sdk-0.0.4.zip --sha256 HEX_DIGEST 0.0.4
+karty sdk install 0.0.6
 ```
 
-After `sdk-v0.0.4` is published, `karty sdk install 0.0.4` will use its signed
-public metadata. Do not treat the candidate manifest or this documentation as
-a publication announcement.
+Installation verifies the signed public metadata and bundle checksum.
 
-## MPEG-1 video (SDK 0.0.5 candidate)
+## MPEG-1 video (SDK 0.0.5+)
 
 Declare already-encoded MPEG-PS files explicitly:
 
@@ -193,6 +190,5 @@ ffmpeg -i input.mp4 -vf 'scale=640:-2' -r 25 -c:v mpeg1video -q:v 5 \
   -c:a mp2 -ar 48000 -ac 2 -f mpeg output.mpg
 ```
 
-SDK 0.0.5 and its matching host are an unpublished candidate; use a locally
-built candidate bundle until a release is available. Earlier SDKs reject video
-declarations rather than silently omitting them.
+Video requires SDK 0.0.5 or newer. The samples pin the published SDK 0.0.6.
+Earlier SDKs reject video declarations rather than silently omitting them.

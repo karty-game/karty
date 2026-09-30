@@ -34,7 +34,7 @@ type edgeKey struct {
 
 // Compile triangulates every room and resolves internal and authored portals.
 //
-//nolint:gocognit,gocyclo // The phases share bounded identity and portal maps that are easier to audit together.
+//nolint:gocognit,gocyclo,maintidx // The phases share bounded identity and portal maps that are easier to audit together.
 func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Document, error) {
 	document := sdkworld.Document{Version: sdkworld.Version}
 	external := make(map[string]wallRef)
@@ -95,10 +95,6 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 			}
 		}
 	}
-	if len(usedMaterials) > MaxMaterials {
-		return sdkworld.Document{}, fmt.Errorf("%d materials exceeds %d: %w", len(usedMaterials), MaxMaterials, ErrMaterial)
-	}
-
 	for sectorIndex := range document.Sectors {
 		for wallIndex := range document.Sectors[sectorIndex].Walls {
 			wall := &document.Sectors[sectorIndex].Walls[wallIndex]
@@ -112,7 +108,9 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 					return sdkworld.Document{}, ErrTriangulation
 				}
 				otherWall.Portal = int32(sectorIndex)
+				otherWall.PortalWall = uint16(wallIndex + 1)
 				wall.Portal = int32(other.sector)
+				wall.PortalWall = uint16(other.wall + 1)
 				delete(internal, key)
 			} else {
 				internal[key] = wallRef{sector: sectorIndex, wall: wallIndex}
@@ -131,10 +129,28 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 		}
 		leftWall := &document.Sectors[left.sector].Walls[left.wall]
 		rightWall := &document.Sectors[right.sector].Walls[right.wall]
-		if leftWall.Portal >= 0 || rightWall.Portal >= 0 || leftWall.Start != rightWall.End || leftWall.End != rightWall.Start {
+		if !connection.NonEuclidean && (leftWall.Start != rightWall.End || leftWall.End != rightWall.Start) ||
+			!equalEdgeLength(leftWall.Start, leftWall.End, rightWall.Start, rightWall.End) {
 			return sdkworld.Document{}, fmt.Errorf("connection %q: %w", connection.ID, ErrPortal)
 		}
-		leftWall.Portal, rightWall.Portal = int32(right.sector), int32(left.sector)
+		outgoingA := connection.Direction == "" || connection.Direction == worldsource.PortalBoth ||
+			connection.Direction == worldsource.PortalAToB
+		outgoingB := connection.Direction == "" || connection.Direction == worldsource.PortalBoth ||
+			connection.Direction == worldsource.PortalBToA
+		if outgoingA {
+			if leftWall.Portal >= 0 {
+				return sdkworld.Document{}, fmt.Errorf("connection %q endpoint a: %w", connection.ID, ErrPortal)
+			}
+			leftWall.Portal = int32(right.sector)
+			leftWall.PortalWall = uint16(right.wall + 1)
+		}
+		if outgoingB {
+			if rightWall.Portal >= 0 {
+				return sdkworld.Document{}, fmt.Errorf("connection %q endpoint b: %w", connection.ID, ErrPortal)
+			}
+			rightWall.Portal = int32(left.sector)
+			rightWall.PortalWall = uint16(left.wall + 1)
+		}
 	}
 
 	for _, room := range expanded.Rooms {
@@ -164,11 +180,15 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 						Alpha: sdkworld.SpriteAlpha(actor.Sprite.Alpha), Width: actor.Sprite.Width,
 						Height: actor.Sprite.Height, OriginX: actor.Sprite.OriginX, OriginY: actor.Sprite.OriginY,
 					}
+					usedMaterials[assetID] = struct{}{}
 				}
 				compiledContent.Actor = compiledActor
 			}
 			document.Contents = append(document.Contents, compiledContent)
 		}
+	}
+	if len(usedMaterials) > MaxMaterials {
+		return sdkworld.Document{}, fmt.Errorf("%d materials exceeds %d: %w", len(usedMaterials), MaxMaterials, ErrMaterial)
 	}
 
 	if err := sdkworld.Validate(&document); err != nil {
@@ -314,6 +334,14 @@ func materialID(materials map[string]uint32, name string) (uint32, error) {
 	}
 
 	return value, nil
+}
+
+func equalEdgeLength(leftStart, leftEnd, rightStart, rightEnd sdkworld.Vec2) bool {
+	leftX, leftY := leftEnd.X-leftStart.X, leftEnd.Y-leftStart.Y
+	rightX, rightY := rightEnd.X-rightStart.X, rightEnd.Y-rightStart.Y
+	leftLength, rightLength := leftX*leftX+leftY*leftY, rightX*rightX+rightY*rightY
+
+	return math.Abs(leftLength-rightLength) <= geometryEpsilon*max(1, leftLength, rightLength)
 }
 
 func endpointKey(room, edge string) string { return room + "\x00" + edge }

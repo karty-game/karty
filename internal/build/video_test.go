@@ -16,7 +16,7 @@ func TestVideoStagingAndTypedIDs(t *testing.T) {
 	t.Parallel()
 
 	directory := t.TempDir()
-	source := append([]byte{0, 0, 1, 0xba}, bytes.Repeat([]byte{7}, cartridge.VideoChunkSize)...)
+	source := append(mpeg1Header(640, 360), bytes.Repeat([]byte{7}, cartridge.VideoChunkSize)...)
 	if err := os.WriteFile(filepath.Join(directory, "clip.mpg"), source, 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -83,6 +83,42 @@ func TestVideoSourceRejectsEscapeAndUnsupportedHeader(t *testing.T) {
 		if _, err := stageVideoSource(root, t.TempDir(), path); err == nil {
 			t.Fatal("accepted invalid source")
 		}
+	}
+}
+
+func TestVideoSourceRejectsMPEG2MissingSequenceAndOversizedFrames(t *testing.T) {
+	t.Parallel()
+
+	for name, contents := range map[string][]byte{
+		"mpeg2-pack":  append([]byte{0, 0, 1, 0xba, 0x44}, make([]byte, 16)...),
+		"no-sequence": append([]byte{0, 0, 1, 0xba, 0x21}, make([]byte, 16)...),
+		"oversized":   mpeg1Header(1281, 720),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			directory := t.TempDir()
+			if err := os.WriteFile(filepath.Join(directory, "clip.mpg"), contents, 0o600); err != nil {
+				t.Fatal(err)
+			}
+
+			root, err := os.OpenRoot(directory)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer root.Close()
+
+			if _, err := stageVideoSource(root, t.TempDir(), "clip.mpg"); err == nil {
+				t.Fatal("accepted unsupported MPEG stream")
+			}
+		})
+	}
+}
+
+func mpeg1Header(width, height int) []byte {
+	return []byte{
+		0, 0, 1, 0xba, 0x21, 0, 1, 0, 1, 0, 0, 1,
+		0, 0, 1, 0xb3, byte(width >> 4), byte(width<<4) | byte(height>>8), byte(height), 0x13,
 	}
 }
 

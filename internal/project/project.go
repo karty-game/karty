@@ -86,6 +86,7 @@ type Texture struct {
 	Profile   string           `koanf:"profile"`
 	Keep      bool             `koanf:"keep"`
 	Transform TextureTransform `koanf:"transform"`
+	Inferred  bool             `koanf:"-"`
 }
 
 // TextureTransform contains sparse per-asset overrides for the SDK profile.
@@ -109,6 +110,7 @@ type Sound struct {
 	Source    string         `koanf:"source"`
 	Profile   string         `koanf:"profile"`
 	Transform SoundTransform `koanf:"transform"`
+	Inferred  bool           `koanf:"-"`
 }
 
 // AudioStream describes a long-form WAV source encoded as a staged QOA sidecar.
@@ -150,7 +152,7 @@ func ModulePath(directory string) (string, error) {
 
 // Load reads and validates the project configuration in directory.
 //
-//nolint:golines,wsl_v5 // Validation remains in declaration order for actionable errors.
+//nolint:wsl_v5 // Validation remains in declaration order for actionable errors.
 func Load(directory string) (Config, error) {
 	path := filepath.Join(directory, "karty.toml")
 
@@ -190,7 +192,8 @@ func Load(directory string) (Config, error) {
 
 	seenVideos := make(map[string]bool)
 	for _, video := range config.Assets.Videos {
-		if video.Name == "" || seenVideos[video.Name] || validateConfinedFile(directory, video.Source) != nil || strings.ToLower(filepath.Ext(video.Source)) != ".mpg" {
+		if video.Name == "" || seenVideos[video.Name] || validateConfinedFile(directory, video.Source) != nil ||
+			strings.ToLower(filepath.Ext(video.Source)) != ".mpg" {
 			return Config{}, fmt.Errorf("video %q: %w", video.Name, errInvalidVideo)
 		}
 		seenVideos[video.Name] = true
@@ -274,6 +277,13 @@ func resolveAssets(directory string, assets *Assets) error {
 	if err != nil {
 		return err
 	}
+	streamSources := make(map[string]bool, len(assets.Music)+len(assets.Environments))
+	for _, stream := range append(slices.Clone(assets.Music), assets.Environments...) {
+		streamSources[stream.Source] = true
+	}
+	assets.Sounds = slices.DeleteFunc(assets.Sounds, func(sound Sound) bool {
+		return sound.Inferred && streamSources[sound.Source]
+	})
 
 	uiEntries, err := discoverUI(directory)
 	if err != nil {
@@ -325,7 +335,10 @@ func discoverTextures(directory string) ([]Texture, error) {
 		if !slices.Contains([]string{".png", ".jpg", ".jpeg", ".webp"}, strings.ToLower(filepath.Ext(source))) {
 			continue
 		}
-		result = append(result, Texture{Name: inferredName(source, "assets/textures"), Source: source, Profile: DefaultTextureProfile})
+		result = append(
+			result,
+			Texture{Name: inferredName(source, "assets/textures"), Source: source, Profile: DefaultTextureProfile, Inferred: true},
+		)
 	}
 	return result, nil
 }
@@ -338,7 +351,10 @@ func discoverSounds(directory string) ([]Sound, error) {
 
 	result := make([]Sound, 0, len(files))
 	for _, source := range files {
-		result = append(result, Sound{Name: inferredName(source, "assets/sounds"), Source: source, Profile: DefaultSoundProfile})
+		result = append(
+			result,
+			Sound{Name: inferredName(source, "assets/sounds"), Source: source, Profile: DefaultSoundProfile, Inferred: true},
+		)
 	}
 
 	return result, nil
@@ -473,6 +489,7 @@ func mergeTextures(directory, inferredRoot string, discovered, overrides []Textu
 			}
 			result[index].Keep = result[index].Keep || override.Keep
 			result[index].Transform = override.Transform
+			result[index].Inferred = false
 			continue
 		}
 		bySource[override.Source] = len(result)

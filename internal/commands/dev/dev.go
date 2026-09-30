@@ -20,9 +20,10 @@ import (
 )
 
 const (
-	defaultPort         = "4242"
-	airRuntimeDirectory = ".karty/log"
-	airBuildLog         = "build-errors.log"
+	defaultPort          = "4242"
+	airRuntimeDirectory  = ".karty/log"
+	airBuildLog          = "build-errors.log"
+	airWatchedExtensions = "go,ui,json,toml,yaml,yml,png,jpg,jpeg,webp,wav,mpg"
 )
 
 type staticError string
@@ -152,8 +153,11 @@ func run(ctx context.Context, command *cli.Command) error {
 		"-build.cmd", strings.Join(buildCommand, " "),
 		"-build.full_bin", serveCommand,
 		"-build.include_dir", "src,assets,levels,ui",
-		"-build.include_ext", "go,ui,json,toml,png,jpg,jpeg,webp,wav,mpg",
+		"-build.include_ext", airWatchedExtensions,
 		"-build.include_file", "karty.toml",
+		"-build.exclude_unchanged", "true",
+		"-build.poll", "true",
+		"-build.poll_interval", "500",
 		"-build.exclude_regex", generatedSourcePattern,
 		"-build.exclude_dir", "dist",
 		"-tmp_dir", airRuntimeDirectory,
@@ -169,6 +173,8 @@ func run(ctx context.Context, command *cli.Command) error {
 	fmt.Fprintf(os.Stderr, "Karty dev watching src, assets, levels and ui, proxying at http://%s/\n", proxyAddress)
 
 	process := exec.CommandContext(context.WithoutCancel(ctx), air, args...)
+
+	process.Env = append(os.Environ(), "KARTY_AIR_PROXY=1")
 	prepareProcess(process)
 
 	process.Dir, err = os.Getwd()
@@ -297,6 +303,7 @@ func existingHost(path string) (string, error) {
 		return "", err
 	}
 
+	//nolint:gosec // The caller explicitly selects a host executable; regular-file validation follows.
 	info, err := os.Stat(absolute)
 	if err != nil {
 		return "", err

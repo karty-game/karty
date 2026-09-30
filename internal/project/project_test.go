@@ -208,7 +208,7 @@ func TestLoadDiscoversImageAndSoundSourcesWithTransformOverrides(t *testing.T) {
 	manifest := `[project]
 name = "demo"
 [sdk]
-version = "0.0.5"
+version = "0.0.6"
 [[assets.texture]]
 source = "assets/textures/photo.jpg"
 profile = "environment"
@@ -272,10 +272,45 @@ source = "assets/environment/rain.wav"
 	}
 }
 
+func TestLoadDoesNotRediscoverDeclaredAudioStreamAsSound(t *testing.T) {
+	t.Parallel()
+	directory := t.TempDir()
+
+	path := filepath.Join(directory, "assets", "sounds", "music", "loop.wav")
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(path, []byte("wave"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	manifest := `[project]
+name = "demo"
+[sdk]
+version = "0.0.6"
+[[assets.music]]
+name = "loop"
+source = "assets/sounds/music/loop.wav"
+`
+	if err := os.WriteFile(filepath.Join(directory, "karty.toml"), []byte(manifest), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	config, err := project.Load(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(config.Assets.Sounds) != 0 || len(config.Assets.Music) != 1 {
+		t.Fatalf("sounds=%+v music=%+v", config.Assets.Sounds, config.Assets.Music)
+	}
+}
+
 func TestLoadRejectsInvalidAssetTransforms(t *testing.T) {
 	t.Parallel()
 
-	base := "[project]\nname='demo'\n[sdk]\nversion='0.0.5'\n"
+	base := "[project]\nname='demo'\n[sdk]\nversion='0.0.6'\n"
 
 	for name, declaration := range map[string]string{
 		"texture": "[[assets.texture]]\nname='bad'\nsource='texture.png'\n[assets.texture.transform]\nfilter='magic'\n",
@@ -319,7 +354,7 @@ func TestLoadRejectsAssetSymlinkOutsideProject(t *testing.T) {
 	manifest := `[project]
 name = "demo"
 [sdk]
-version = "0.0.5"
+version = "0.0.6"
 [[assets.texture]]
 name = "outside"
 source = "texture.png"

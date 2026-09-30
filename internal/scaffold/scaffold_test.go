@@ -109,7 +109,7 @@ func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 func assertTypedTextureUse(t *testing.T, mainSource []byte) {
 	t.Helper()
 
-	if !strings.Contains(string(mainSource), "assets.TexturePlayer") {
+	if !strings.Contains(string(mainSource), "engine.TexturePlayer") {
 		t.Errorf("generated main.go does not use the typed texture reference: %s", mainSource)
 	}
 }

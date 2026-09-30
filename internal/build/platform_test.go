@@ -21,7 +21,7 @@ func TestStageForeignPlatformKeepsOtherDistributions(t *testing.T) {
 
 	dist := filepath.Join(root, "dist")
 	for _, platform := range []string{"linux-arm64", "windows-arm64"} {
-		if err := stageTarget(dist, root, game, nil, host, "native", "", platform); err != nil {
+		if err := stageTarget(dist, root, game, nil, host, "native", "", platform, false); err != nil {
 			t.Fatal(err)
 		}
 	}

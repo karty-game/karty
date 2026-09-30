@@ -3,6 +3,8 @@ package geometry_test
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"slices"
 	"testing"
 
@@ -27,7 +29,10 @@ func TestCompileTriangulatesConcaveRoomsAndBuildsReciprocalPortals(t *testing.T)
 					ID: "hall/spawn", SourceID: "spawn", Kind: "spawn", Position: worldsource.Vec3{X: 1, Y: 1, Z: 1},
 					Actor: &source.Actor{
 						Scale: worldsource.Vec3{X: 1, Y: 1, Z: 1}, Tags: []string{"player"},
-						Sprite: &worldsource.Sprite{Texture: "actor", Facing: "upright", Alpha: "blend", Width: 1, Height: 2, OriginX: .5, OriginY: 1},
+						Sprite: &worldsource.Sprite{
+							Texture: "actor", Facing: "upright", Alpha: "blend",
+							Width: 1, Height: 2, OriginX: .5, OriginY: 1,
+						},
 					},
 				}},
 			},
@@ -124,4 +129,110 @@ func edges(points []point, names []string) []worldsource.Edge {
 	}
 
 	return result
+}
+
+func TestCompileDirectedNonEuclideanPortalGraph(t *testing.T) {
+	t.Parallel()
+
+	rooms := []source.Room{
+		{
+			ID:              "a",
+			SourceRoom:      "a",
+			Boundary:        edges([]point{{0, 0}, {2, 0}, {2, 2}, {0, 2}}, []string{"south", "east", "north", "west"}),
+			FloorMaterial:   "floor",
+			CeilingMaterial: "ceiling",
+			Ceiling:         worldsource.Plane{C: 4},
+		},
+		{
+			ID:              "b",
+			SourceRoom:      "b",
+			Boundary:        edges([]point{{10, 10}, {12, 10}, {12, 12}, {10, 12}}, []string{"south", "east", "north", "west"}),
+			FloorMaterial:   "floor",
+			CeilingMaterial: "ceiling",
+			Ceiling:         worldsource.Plane{C: 4},
+		},
+	}
+	expanded := source.Expanded{Rooms: rooms, Connections: []source.Connection{{
+		ID: "a-to-b", A: source.Endpoint{Room: "a", Edge: "north"}, B: source.Endpoint{Room: "b", Edge: "north"},
+		Direction: worldsource.PortalAToB, NonEuclidean: true,
+	}}}
+	document, err := geometry.Compile(expanded, map[string]uint32{"floor": 1, "ceiling": 2, "wall": 3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallA := findSourceWall(t, document, "a")
+	wallB := findSourceWall(t, document, "b")
+	if wallA.Portal < 0 || wallA.PortalWall == 0 || wallB.Portal >= 0 || wallB.PortalWall != 0 {
+		t.Fatalf("one-way walls: wallA=%+v wallB=%+v", wallA, wallB)
+	}
+
+	expanded.Connections = append(expanded.Connections, source.Connection{
+		ID: "b-to-a", A: source.Endpoint{Room: "b", Edge: "north"}, B: source.Endpoint{Room: "a", Edge: "north"},
+		Direction: worldsource.PortalAToB, NonEuclidean: true,
+	})
+	document, err = geometry.Compile(expanded, map[string]uint32{"floor": 1, "ceiling": 2, "wall": 3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallA = findSourceWall(t, document, "a")
+	wallB = findSourceWall(t, document, "b")
+	if wallA.Portal < 0 || wallB.Portal < 0 || wallA.PortalWall == 0 || wallB.PortalWall == 0 {
+		t.Fatalf("independent outgoing walls: wallA=%+v wallB=%+v", wallA, wallB)
+	}
+}
+
+func TestCompileCountsActorSpritesInMaterialLimit(t *testing.T) {
+	t.Parallel()
+	expanded := source.Expanded{}
+	materials := make(map[string]uint32, geometry.MaxMaterials+1)
+	for index := range 65 {
+		x := float64(index * 3)
+		floor, ceiling, wall := fmt.Sprintf("floor-%d", index), fmt.Sprintf("ceiling-%d", index), fmt.Sprintf("wall-%d", index)
+		boundary := edges([]point{{x, 0}, {x + 2, 0}, {x + 2, 2}, {x, 2}}, []string{"south", "east", "north", "west"})
+		for edge := range boundary {
+			boundary[edge].Material = wall
+		}
+		expanded.Rooms = append(expanded.Rooms, source.Room{
+			ID: fmt.Sprintf("room-%d", index), SourceRoom: fmt.Sprintf("room-%d", index), Boundary: boundary,
+			FloorMaterial: floor, CeilingMaterial: ceiling, Ceiling: worldsource.Plane{C: 4},
+		})
+		materials[floor], materials[ceiling], materials[wall] = uint32(index*3+1), uint32(index*3+2), uint32(index*3+3)
+	}
+	actor := func(id, texture string, x float64) source.Content {
+		return source.Content{ID: id, SourceID: id, Kind: "actor", Position: worldsource.Vec3{X: x, Y: 1}, Actor: &source.Actor{
+			Scale: worldsource.Vec3{
+				X: 1,
+				Y: 1,
+				Z: 1,
+			},
+			Sprite: &worldsource.Sprite{Texture: texture, Facing: "upright", Alpha: "cutout", Width: 1, Height: 1},
+		}}
+	}
+	materials["sprite-196"] = 196
+	expanded.Rooms[0].Contents = append(expanded.Rooms[0].Contents, actor("first", "sprite-196", 1))
+	if _, err := geometry.Compile(expanded, materials); err != nil {
+		t.Fatalf("196 materials: %v", err)
+	}
+	materials["sprite-197"] = 197
+	expanded.Rooms[0].Contents = append(expanded.Rooms[0].Contents, actor("second", "sprite-197", 1.5))
+	if _, err := geometry.Compile(expanded, materials); !errors.Is(err, geometry.ErrMaterial) {
+		t.Fatalf("197 materials error = %v", err)
+	}
+}
+
+func findSourceWall(t *testing.T, document sdkworld.Document, room string) sdkworld.Wall {
+	t.Helper()
+	for _, sector := range document.Sectors {
+		if sector.SourceRoom != room {
+			continue
+		}
+		for _, wall := range sector.Walls {
+			if wall.SourceEdge == "north" {
+				return wall
+			}
+		}
+	}
+	t.Fatalf("missing %s/north", room)
+
+	return sdkworld.Wall{}
 }

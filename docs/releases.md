@@ -33,11 +33,14 @@ release the CLI that selects SDK 0.0.4. Older SDK releases do not include Linux
 ARM64 host/tool metadata. macOS amd64 and Windows arm64 are not CLI release targets. Windows arm64 is
 a game host target, validated by a separate native startup job without TinyGo.
 
-## SDK 0.0.4 asset pipeline
+## SDK 0.0.6 integration
 
-The current source supports the SDK 0.0.4 QOI/QOA profiles and sound runtime.
-It remains a release candidate until the engine publishes immutable
-`sdk-v0.0.4` assets and the CLI customer integration gate passes against them.
-Do not replace an existing SDK release or describe the candidate as published.
-Projects on SDK 0.0.3 and earlier retain their existing PNG behavior. See
-[Image and sound assets](assets.md) for the candidate authoring surface.
+The CLI defaults, samples, and release integration gate select the published
+SDK 0.0.6 bundle and hosts. The Go module dependency is separately pinned to
+`karty-sdk v0.0.7`, which supplies the directed portal world format.
+These two version numbers identify different releases and need not match.
+
+SDK 0.0.6 includes the image/audio/video pipeline, perspective and isometric
+cameras, and directed portals with host-authoritative transform updates.
+Projects on older SDKs retain their pinned behavior. See
+[Image and sound assets](assets.md) for the authoring surface.
