@@ -284,7 +284,10 @@ func InstallBundle(version string, data []byte, checksum string) error {
 	target := filepath.Join(root, version)
 	if existing, err := os.ReadFile(filepath.Join(target, "sha256")); err == nil {
 		if string(existing) != checksum {
-			return bundleError("SDK %s is immutable; installed checksum differs", version)
+			return bundleError(
+				"SDK %s is immutable; installed checksum differs; remove %q only if it is a pre-release local candidate, then reinstall",
+				version, target,
+			)
 		}
 
 		contents, err := readBundleFile(filepath.Join(target, "sdk.zip"))

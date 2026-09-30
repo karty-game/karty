@@ -19,13 +19,13 @@ def validate(source):
             raise ValueError(f"Non-regular sample entry: {relative}")
         if any(not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*", part) for part in relative.parts):
             raise ValueError(f"Invalid sample path: {relative}")
-        if relative.parts[0] not in ("pong", "ui-demo", "index.html"):
+        if relative.parts[0] not in ("pong", "ui-demo", "media-lab", "index.html"):
             raise ValueError(f"Unexpected sample entry: {relative}")
         if path.is_file():
             total += path.stat().st_size
     if total > 200 * 1024 * 1024:
         raise ValueError("Sample output exceeds 200 MiB")
-    for name in ("index.html", "pong/index.html", "ui-demo/index.html"):
+    for name in ("index.html", "pong/index.html", "ui-demo/index.html", "media-lab/index.html"):
         if not (source / name).is_file():
             raise ValueError(f"Missing {name}")
 

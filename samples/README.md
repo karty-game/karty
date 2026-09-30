@@ -1,11 +1,11 @@
 # Samples
 
-Pong and the KartUI demo pin published SDK **0.0.3** in their `karty.toml`.
-Build the CLI, then install the SDK before working on a sample:
+The checked-in samples pin SDK **0.0.7** in their `karty.toml`. Build the CLI and
+install that published SDK before working on a sample:
 
 ```sh
 mise run build
-./dist/karty sdk install 0.0.3
+./dist/karty sdk install 0.0.7
 cd samples/pong
 ../../dist/karty build --target web
 ../../dist/karty dev
@@ -14,9 +14,23 @@ cd samples/pong
 Use `samples/ui-demo` for KartUI composition and game menus. Generated `.karty`
 and `dist` directories are derived and excluded from Git.
 
+Use `samples/media-lab` for PNG/JPEG/WebP conversion, WAV/QOA conversion,
+timed music replay, and overlapping one-shot stress. Its BGM replay is not a
+gapless loop because the current public audio API only exposes one-shot playback.
+
+Use `samples/world-camera` for the portal renderer, perspective/isometric camera
+switching, authored world actors, sprite modes, tag queries, and G-buffer views.
+
+## Published asset pipeline
+
+SDK 0.0.5 processes image sources as QOI and sound sources as QOA. Pages and
+pull request previews consume its signed public artifacts. Sound discovery,
+transforms, and `Game.PlaySound` are covered in the
+[asset guide](../docs/assets.md).
+
 ## Published demos and pull request previews
 
-`mise run build-samples` builds both checked-in samples into `dist/samples-site/`,
+`mise run build-samples` builds all four checked-in samples into `dist/samples-site/`,
 including an index page and redistribution notices. It installs each sample's
 exact published SDK and downloads the compatible host and Go browser runtime.
 It needs no private engine access. The task pins Python for TOML parsing.
@@ -29,7 +43,8 @@ The **Publish samples** workflow then updates GitHub Pages:
 - `/pr/NUMBER/`: samples built from that pull request's merge commit.
 - `/`: links to the latest samples and active previews.
 
-Each sample has its own subdirectory (`pong/` or `ui-demo/`). The deployment
+Each sample has its own subdirectory (`pong/`, `ui-demo/`, `media-lab/`, or
+`world-camera/`). The deployment
 summary includes the preview link, and the PR build summary links to its expected URL. Closing or merging a PR removes its preview;
 each subsequent deployment also prunes closed previews. Failed builds leave the
 last successful preview in place. Superseded builds are skipped.

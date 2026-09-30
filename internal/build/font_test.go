@@ -53,7 +53,7 @@ func TestEmbedProjectAssetsRetainsOnlyUsedFontRoles(t *testing.T) {
 	}
 
 	fonts := []project.Font{{Role: "body", Source: "body.ttf"}, {Role: "mono", Source: "mono.ttf"}}
-	if err := embedProjectAssets(directory, artifact, nil, fonts, map[string]bool{"body": true}); err != nil {
+	if err := embedProjectAssets(directory, artifact, nil, nil, fonts, map[string]bool{"body": true}); err != nil {
 		t.Fatal(err)
 	}
 

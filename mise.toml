@@ -1,7 +1,7 @@
 [tools]
-golangci-lint = "2.13.2"
-go = "1.27.0"
-node = "24.21.0"
+golangci-lint = "2.14.0"
+go = "1.27.1"
+node = "26.10.0"
 
 [shell_alias]
 karty = "{{config_root}}/dist/karty"
@@ -46,6 +46,9 @@ run = "go run ./cmd/karty-check --watcher"
 [tasks.check-guest-allocations]
 run = "go run ./cmd/karty-check --allocations"
 
+[tasks.check-world-camera]
+run = "go run ./cmd/karty-check --world-camera"
+
 [tasks.lint]
 run = "golangci-lint run ./..."
 
@@ -56,3 +59,9 @@ run = "bash scripts/check-integration.sh"
 depends = ["build"]
 tools = { python = "3.12.12" }
 run = "python3 scripts/build-samples.py"
+
+[tasks.build-cli-linux-arm64]
+run = "CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o dist/cli/linux-arm64/karty ./cmd/karty"
+
+[tasks.check-video]
+run = "node scripts/check-video.mjs"

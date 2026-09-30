@@ -13,7 +13,7 @@ func TestAnalyzeFindsTypedReferenceThroughImportAlias(t *testing.T) {
 	t.Parallel()
 
 	directory := usageProject(t, `package main
-import k "example.com/game/.karty/engine"
+import k "example.com/game/.karty/assets"
 func main() { var _ = k.TextureSpritesPlayer }
 `)
 
@@ -61,9 +61,10 @@ func usageProject(t *testing.T, source string) string {
 
 	directory := t.TempDir()
 	engineDirectory := filepath.Join(directory, ".karty", "engine")
+	assetsDirectory := filepath.Join(directory, ".karty", "assets")
 
 	sourceDirectory := filepath.Join(directory, "src")
-	for _, path := range []string{engineDirectory, sourceDirectory} {
+	for _, path := range []string{engineDirectory, assetsDirectory, sourceDirectory} {
 		if err := os.MkdirAll(path, 0o750); err != nil {
 			t.Fatal(err)
 		}
@@ -75,10 +76,6 @@ type UIAsset string
 const UIInventory UIAsset = "ui.inventory"
 func (*Game) ShowUI(UIAsset) {}
 func (*Game) ShowInventory() {}
-const (
-	TextureSpritesPlayer TextureID = "sprites.player"
-	TextureSpritesUnused TextureID = "sprites.unused"
-)
 type Game struct{}
 func (*Game) NewSprite2D(TextureID, int) {}
 func (*Game) NewSprite2DName(string, int) {}
@@ -88,6 +85,17 @@ func (*Sprite2d) UpdateAssetName(string) {}
 func DynamicTexture(string) TextureID { return "" }
 `
 	if err := os.WriteFile(filepath.Join(engineDirectory, "engine.go"), []byte(engine), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	assets := `package assets
+import "example.com/game/.karty/engine"
+const (
+	TextureSpritesPlayer engine.TextureID = "sprites.player"
+	TextureSpritesUnused engine.TextureID = "sprites.unused"
+)
+`
+	if err := os.WriteFile(filepath.Join(assetsDirectory, "assets.go"), []byte(assets), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

@@ -4,6 +4,7 @@ package levelbuild
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -17,9 +18,17 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/karty-game/karty-sdk/format/asset"
+	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty-sdk/format/level"
+	sdkworld "github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-ui/compiler"
 	"github.com/karty-game/karty-ui/schema"
+	"github.com/karty-game/karty/internal/assetpipeline"
+	"github.com/karty-game/karty/internal/project"
+	"github.com/karty-game/karty/internal/sdk"
+	worldgeometry "github.com/karty-game/karty/internal/worldbuild/geometry"
+	worldsource "github.com/karty-game/karty/internal/worldbuild/source"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -38,6 +47,7 @@ type manifest struct {
 		Metadata string `toml:"metadata"`
 	} `toml:"level"`
 	Data     []dataEntry    `toml:"data"`
+	World    dataEntry      `toml:"world"`
 	Textures []textureEntry `toml:"textures"`
 	UI       []dataEntry    `toml:"ui"`
 	Theme    dataEntry      `toml:"theme"`
@@ -49,8 +59,17 @@ type dataEntry struct {
 }
 
 type textureEntry struct {
-	Name   string `toml:"name"`
-	Source string `toml:"source"`
+	Name      string           `toml:"name"`
+	Source    string           `toml:"source"`
+	Profile   string           `toml:"profile"`
+	Transform textureTransform `toml:"transform"`
+}
+
+type textureTransform struct {
+	MaxWidth  uint32 `toml:"max_width"`
+	MaxHeight uint32 `toml:"max_height"`
+	Filter    string `toml:"filter"`
+	BitDepth  uint8  `toml:"bit_depth"`
 }
 
 type metadataTexture struct {
@@ -74,6 +93,16 @@ type Artifact struct {
 	Bytes           []byte
 	ContentSHA256   string
 	EnvelopeVersion uint16
+	// Textures describes processed cache artifacts included in this level.
+	Textures []assetpipeline.Texture
+	// Features is the sorted runtime capability set required by this level.
+	// The game manifest must include the union for every packaged level.
+	Features []string
+}
+
+type assetBuild struct {
+	projectRoot string
+	manifest    sdk.Manifest
 }
 
 // BuildAll discovers levels/*/level.toml and builds them in logical-name order.
@@ -90,6 +119,30 @@ func BuildAllWithStyles(projectDirectory string, allowStyles bool) ([]Artifact, 
 }
 
 func BuildAllWithTheme(projectDirectory string, uiSchema uint32, themeSource string) ([]Artifact, error) {
+	return buildAll(context.Background(), projectDirectory, uiSchema, themeSource, nil)
+}
+
+// BuildAllWithAssets processes level textures with the selected SDK before
+// packaging them. Its artifacts report runtime features for the game manifest.
+func BuildAllWithAssets(
+	ctx context.Context,
+	projectDirectory string,
+	uiSchema uint32,
+	themeSource string,
+	manifest sdk.Manifest,
+) ([]Artifact, error) {
+	return buildAll(ctx, projectDirectory, uiSchema, themeSource, &assetBuild{
+		projectRoot: projectDirectory, manifest: manifest,
+	})
+}
+
+func buildAll(
+	ctx context.Context,
+	projectDirectory string,
+	uiSchema uint32,
+	themeSource string,
+	assets *assetBuild,
+) ([]Artifact, error) {
 	levelsDirectory := filepath.Join(projectDirectory, "levels")
 
 	entries, err := os.ReadDir(levelsDirectory)
@@ -127,7 +180,7 @@ func BuildAllWithTheme(projectDirectory string, uiSchema uint32, themeSource str
 			continue
 		}
 
-		artifact, err := build(directory, uiSchema, theme)
+		artifact, err := build(ctx, directory, uiSchema, theme, assets)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +198,13 @@ func BuildAllWithTheme(projectDirectory string, uiSchema uint32, themeSource str
 	return artifacts, nil
 }
 
-func build(directory string, uiSchema uint32, inheritedTheme uicompiler.Theme) (Artifact, error) {
+func build(
+	ctx context.Context,
+	directory string,
+	uiSchema uint32,
+	inheritedTheme uicompiler.Theme,
+	assets *assetBuild,
+) (Artifact, error) {
 	manifestPath := filepath.Join(directory, "level.toml")
 
 	contents, err := os.ReadFile(manifestPath)
@@ -163,7 +222,7 @@ func build(directory string, uiSchema uint32, inheritedTheme uicompiler.Theme) (
 		return Artifact{}, fmt.Errorf("%s: %w", manifestPath, ErrManifest)
 	}
 
-	textures, textureMetadata, err := loadTextures(directory, definition.Textures)
+	textures, textureMetadata, processedTextures, features, err := loadTextures(ctx, directory, definition.Textures, assets)
 	if err != nil {
 		return Artifact{}, err
 	}
@@ -176,6 +235,33 @@ func build(directory string, uiSchema uint32, inheritedTheme uicompiler.Theme) (
 	data, err := loadData(directory, definition.Data)
 	if err != nil {
 		return Artifact{}, err
+	}
+
+	if definition.World.Source != "" {
+		expanded, sourceErr := worldsource.Load(directory, definition.World.Source)
+		if sourceErr != nil {
+			return Artifact{}, fmt.Errorf("compile level %q world source: %w", definition.Level.Name, sourceErr)
+		}
+
+		materials := make(map[string]uint32, len(textureMetadata))
+		for _, texture := range textureMetadata {
+			materials[texture.Name] = texture.ID
+		}
+
+		compiled, compileErr := worldgeometry.Compile(expanded, materials)
+		if compileErr != nil {
+			return Artifact{}, fmt.Errorf("compile level %q world geometry: %w", definition.Level.Name, compileErr)
+		}
+
+		encoded, encodeErr := sdkworld.Encode(compiled)
+		if encodeErr != nil {
+			return Artifact{}, fmt.Errorf("encode level %q world: %w", definition.Level.Name, encodeErr)
+		}
+
+		data = append(data, level.SourceEntry{Name: sdkworld.EntryName, Kind: level.EntryData, Data: encoded})
+		features = append(features, sdkworld.Feature)
+		slices.Sort(features)
+		features = slices.Compact(features)
 	}
 
 	data = append(data, textures...)
@@ -231,6 +317,8 @@ func build(directory string, uiSchema uint32, inheritedTheme uicompiler.Theme) (
 		Bytes:           module,
 		ContentSHA256:   hex.EncodeToString(digest[:]),
 		EnvelopeVersion: level.EnvelopeVersion,
+		Textures:        processedTextures,
+		Features:        features,
 	}, nil
 }
 
@@ -314,37 +402,144 @@ func loadMetadata(directory string, definition manifest, textures []metadataText
 	return contents, nil
 }
 
-func loadTextures(directory string, entries []textureEntry) ([]level.SourceEntry, []metadataTexture, error) {
+func loadTextures(
+	ctx context.Context,
+	directory string,
+	entries []textureEntry,
+	assets *assetBuild,
+) ([]level.SourceEntry, []metadataTexture, []assetpipeline.Texture, []string, error) {
 	sorted := slices.Clone(entries)
 	slices.SortFunc(sorted, func(left, right textureEntry) int { return strings.Compare(left.Name, right.Name) })
 	result := make([]level.SourceEntry, 0, len(sorted))
 	metadata := make([]metadataTexture, 0, len(sorted))
+	processedTextures := make([]assetpipeline.Texture, 0, len(sorted))
+	features := make([]string, 0, 1)
 
 	previous := ""
 	for index, entry := range sorted {
 		if entry.Name == "" || entry.Source == "" || !utf8.ValidString(entry.Name) || entry.Name == previous {
-			return nil, nil, fmt.Errorf("texture %q: %w", entry.Name, ErrSource)
+			return nil, nil, nil, nil, fmt.Errorf("texture %q: %w", entry.Name, ErrSource)
 		}
 
-		contents, err := readConfinedFile(directory, entry.Source, level.MaxEntrySize)
+		contents, width, height, processed, err := loadTexture(ctx, directory, entry, assets)
 		if err != nil {
-			return nil, nil, fmt.Errorf("texture %q: %w", entry.Name, err)
+			return nil, nil, nil, nil, fmt.Errorf("texture %q: %w", entry.Name, err)
 		}
 
-		configuration, format, err := image.DecodeConfig(bytes.NewReader(contents))
-		if err != nil || format != "png" || configuration.Width < 1 || configuration.Height < 1 {
-			return nil, nil, fmt.Errorf("texture %q: %w", entry.Name, ErrSource)
+		if processed != nil {
+			processedTextures = append(processedTextures, *processed)
+			if processed.Processor == string(asset.ProcessorQOIv1) {
+				features = append(features, cartridge.FeatureTextureQOIv1)
+			}
 		}
 
 		assetID := uint32(index + 1)
 		result = append(result, level.SourceEntry{Name: level.TextureEntryName(assetID), Kind: level.EntryTexture, Data: contents})
 		metadata = append(metadata, metadataTexture{
-			ID: assetID, Name: entry.Name, Width: configuration.Width, Height: configuration.Height,
+			ID: assetID, Name: entry.Name, Width: width, Height: height,
 		})
 		previous = entry.Name
 	}
 
-	return result, metadata, nil
+	slices.Sort(features)
+	features = slices.Compact(features)
+
+	return result, metadata, processedTextures, features, nil
+}
+
+func loadTexture(
+	ctx context.Context,
+	directory string,
+	entry textureEntry,
+	assets *assetBuild,
+) ([]byte, int, int, *assetpipeline.Texture, error) {
+	maximum := level.MaxEntrySize
+	if assets != nil {
+		maximum = asset.MaxSourceAssetBytes
+	}
+
+	contents, err := readConfinedFile(directory, entry.Source, maximum)
+	if err != nil {
+		return nil, 0, 0, nil, err
+	}
+
+	if assets == nil {
+		configuration, format, decodeErr := image.DecodeConfig(bytes.NewReader(contents))
+		if decodeErr != nil || format != "png" || configuration.Width < 1 || configuration.Height < 1 {
+			return nil, 0, 0, nil, ErrSource
+		}
+
+		return contents, configuration.Width, configuration.Height, nil, nil
+	}
+
+	return loadProcessedTexture(ctx, directory, entry, assets)
+}
+
+func loadProcessedTexture(
+	ctx context.Context,
+	directory string,
+	entry textureEntry,
+	assets *assetBuild,
+) ([]byte, int, int, *assetpipeline.Texture, error) {
+	profileName := entry.Profile
+	if profileName == "" {
+		profileName = project.DefaultTextureProfile
+	}
+
+	profile, found := assets.manifest.Assets.TextureProfiles[profileName]
+	if !found {
+		return nil, 0, 0, nil, fmt.Errorf("profile %q: %w", profileName, ErrSource)
+	}
+
+	absoluteSource := filepath.Join(directory, filepath.FromSlash(entry.Source))
+
+	relativeSource, err := filepath.Rel(assets.projectRoot, absoluteSource)
+	if err != nil || relativeSource == ".." || strings.HasPrefix(relativeSource, ".."+string(filepath.Separator)) {
+		return nil, 0, 0, nil, ErrSource
+	}
+
+	processed, err := assetpipeline.ProcessTexture(
+		ctx,
+		assets.projectRoot,
+		assets.manifest.Version,
+		profile,
+		project.Texture{
+			Name: entry.Name, Source: filepath.ToSlash(relativeSource), Profile: profileName,
+			Transform: project.TextureTransform{
+				MaxWidth: entry.Transform.MaxWidth, MaxHeight: entry.Transform.MaxHeight,
+				Filter: entry.Transform.Filter, BitDepth: entry.Transform.BitDepth,
+			},
+		},
+	)
+	if err != nil {
+		return nil, 0, 0, nil, err
+	}
+
+	contents, err := readVerifiedProcessedAsset(processed.SourcePath, level.MaxEntrySize, processed.OutputSHA256)
+	if err != nil {
+		return nil, 0, 0, nil, fmt.Errorf("output: %w", err)
+	}
+
+	return contents, processed.Width, processed.Height, &processed, nil
+}
+
+func readVerifiedProcessedAsset(path string, maximum int, expectedSHA256 string) ([]byte, error) {
+	info, err := os.Stat(path)
+	if err != nil || !info.Mode().IsRegular() || info.Size() < 1 || info.Size() > int64(maximum) {
+		return nil, ErrSource
+	}
+
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return nil, ErrSource
+	}
+
+	digest := sha256.Sum256(contents)
+	if hex.EncodeToString(digest[:]) != expectedSHA256 {
+		return nil, ErrSource
+	}
+
+	return contents, nil
 }
 
 func loadData(directory string, entries []dataEntry) ([]level.SourceEntry, error) {

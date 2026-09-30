@@ -1,6 +1,9 @@
 package main
 
-import "example.com/pong/.karty/engine"
+import (
+	"example.com/pong/.karty/assets"
+	"example.com/pong/.karty/engine"
+)
 
 // Game represents the main game structure, containing it's general state and entities.
 type Game struct {
@@ -25,7 +28,7 @@ func main() {
 
 // Initialize is called when the game is first started to set up the initial state.
 func (game *Game) Initialize() {
-	game.player = game.NewSprite2D(engine.TextureSpritesPlayer, engine.NewVec2D(48, 48))
+	game.player = game.NewSprite2D(assets.TextureSpritesPlayer, engine.NewVec2D(48, 48))
 	panel := game.NewVector2D(engine.Rectangle(360, 56), engine.NewVec2D(16, 216))
 	panel.SetFill(engine.RGBA(25, 45, 80, 255))
 	panel.SetLayer(-1)
@@ -38,7 +41,7 @@ func (game *Game) Initialize() {
 	axis.SetStroke(engine.RGBA(100, 220, 255, 255), 3)
 
 	for i := 0; i < 10; i++ {
-		game.entities = append(game.entities, game.NewSprite2D(engine.TextureSpritesPlayer, engine.NewVec2D(float32(i*16), 64+float32(i*16))))
+		game.entities = append(game.entities, game.NewSprite2D(assets.TextureSpritesPlayer, engine.NewVec2D(float32(i*16), 64+float32(i*16))))
 	}
 	game.leftRequest = game.RequestLevel("levels.left")
 }

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/parser"
 	"go/token"
 	"os"
@@ -15,7 +16,9 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"unicode"
 
+	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty-ui/codegen"
 	"github.com/karty-game/karty-ui/compiler"
@@ -36,11 +39,15 @@ func (err staticError) Error() string {
 }
 
 const (
-	errUnsupportedTarget     staticError = "unsupported build target"
-	errHostNotFile           staticError = "host artifact is not a file"
-	errWebHostRequired       staticError = "web target requires the SDK-pinned public host; install the selected SDK or pass --host /path/to/karty-host.wasm"
-	errGoWebCompiler         staticError = "compiler=go is not supported for web targets yet; use compiler=tinygo"
-	errRegistrationCollision staticError = "legacy registration file conflicts with the user-owned karty_register export; remove or rename it before building"
+	errUnsupportedTarget      staticError = "unsupported build target"
+	errHostNotFile            staticError = "host artifact is not a file"
+	errWebHostRequired        staticError = "web target requires the SDK-pinned public host; install the selected SDK or pass --host /path/to/karty-host.wasm"
+	errGoWebCompiler          staticError = "compiler=go is not supported for web targets yet; use compiler=tinygo"
+	errRegistrationCollision  staticError = "legacy registration file conflicts with the user-owned karty_register export; remove or rename it before building"
+	errSoundIdentifier        staticError = "sound names produce the same generated Go identifier"
+	errCachedAssetChanged     staticError = "cached processor output changed after validation"
+	errVideoSDKRequired       staticError = "videos require an SDK with video/mpeg1@1 support (SDK 0.0.5+)"
+	errAudioStreamSDKRequired staticError = "music/environment require an SDK with audio-stream/qoa@1 support (SDK 0.0.5+)"
 )
 
 // Options configures build tool overrides.
@@ -50,6 +57,8 @@ type Options struct {
 	WasmTools string
 	Host      string
 	Target    string
+	Platform  string
+	AirProxy  bool
 }
 
 // Run validates a project and compiles its self-describing cartridges.
@@ -59,8 +68,22 @@ func Run(ctx context.Context, directory string) error {
 
 // RunWithOptions builds a project using its SDK-pinned toolchain.
 //
-//nolint:gocognit,gocyclo,maintidx // This function intentionally keeps the transactional build sequence visible.
+//nolint:gocognit,gocyclo,maintidx,golines,wsl_v5 // This function intentionally keeps the transactional build sequence visible.
 func RunWithOptions(ctx context.Context, directory string, options Options) error {
+	if options.Platform != "" {
+		if options.Target == "web" {
+			return fmt.Errorf("--platform applies only to native builds: %w", os.ErrInvalid)
+		}
+
+		if _, err := toolchain.NativePlatform(options.Platform); err != nil {
+			return err
+		}
+
+		if options.Target == "" {
+			options.Target = "native"
+		}
+	}
+
 	config, err := project.Load(directory)
 	if err != nil {
 		return err
@@ -70,7 +93,19 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	if err != nil {
 		return err
 	}
+	if manifest.Assets.TextureProfiles[project.DefaultTextureProfile].Processor == asset.ProcessorCopyPNGv1 {
+		config.Assets.Textures = slices.DeleteFunc(config.Assets.Textures, func(texture project.Texture) bool {
+			return texture.Inferred && strings.ToLower(filepath.Ext(texture.Source)) != ".png"
+		})
+	}
 
+	if len(config.Assets.Videos) > 0 && !slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityVideoMPEG1v1) {
+		return errVideoSDKRequired
+	}
+	if (len(config.Assets.Music) > 0 || len(config.Assets.Environments) > 0) &&
+		!slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityAudioStreamQOAv1) {
+		return errAudioStreamSDKRequired
+	}
 	if config.Project.Compiler == "go" && options.Target == "web" {
 		return errGoWebCompiler
 	}
@@ -115,14 +150,6 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
-	if len(config.Assets.UI) > 0 && manifest.API.Version != "0.0.1" {
-		return fmt.Errorf("UI assets require SDK API 0.0.1: %w", ui.ErrTemplate)
-	}
-
-	if len(config.Assets.Fonts) > 0 && manifest.Version != "0.0.1" {
-		return fmt.Errorf("project UI fonts require SDK 0.0.1: %w", ui.ErrTemplate)
-	}
-
 	generated, err := sdk.ClientFiles(manifest, compiler)
 	if err != nil {
 		return fmt.Errorf("generate client API: %w", err)
@@ -133,38 +160,70 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		textureNames = append(textureNames, texture.Name)
 	}
 
-	assetFile, err := codegen.TextureAssetFile(textureNames)
+	engineImport := modulePath + "/.karty/engine"
+	assetFile, err := codegen.TextureAssetPackageFile(textureNames, engineImport)
 	if err != nil {
 		return fmt.Errorf("generate typed assets: %w", err)
 	}
 
-	generated["engine/assets.go"] = assetFile
+	generated["assets/textures.go"] = assetFile
+	if manifest.API.Version == "0.0.1" {
+		generated["engine/assets.go"], err = codegen.TextureAssetFile(textureNames)
+		if err != nil {
+			return fmt.Errorf("generate legacy typed assets: %w", err)
+		}
+	}
+
+	generated["assets/sounds.go"], err = soundAssetFile(config.Assets.Sounds, engineImport)
+	if err != nil {
+		return fmt.Errorf("generate typed sounds: %w", err)
+	}
+
+	if len(config.Assets.Videos) > 0 {
+		generated["assets/videos.go"], err = videoAssetFile(config.Assets.Videos, engineImport)
+		if err != nil {
+			return err
+		}
+	}
+	if len(config.Assets.Music) > 0 || len(config.Assets.Environments) > 0 {
+		generated["assets/music.go"], err = audioStreamAssetFile("MusicID", "Music", "music", engineImport, config.Assets.Music)
+		if err != nil {
+			return err
+		}
+		generated["assets/environments.go"], err = audioStreamAssetFile("EnvironmentID", "Environment", "environment", engineImport, config.Assets.Environments)
+		if err != nil {
+			return err
+		}
+	}
 
 	var views []uicompiler.Component
 
-	uiAPI := manifest.API.Version == "0.0.1"
-	if uiAPI {
-		names := make([]string, 0, len(config.Assets.UI))
-		for _, asset := range config.Assets.UI {
-			names = append(names, asset.Name)
-		}
+	names := make([]string, 0, len(config.Assets.UI))
+	for _, asset := range config.Assets.UI {
+		names = append(names, asset.Name)
+	}
 
+	generated["assets/ui.go"], err = codegen.UIAssetPackageFile(names, engineImport)
+	if err != nil {
+		return err
+	}
+	if manifest.API.Version == "0.0.1" {
 		generated["engine/ui-assets.go"], err = codegen.UIAssetFile(names)
 		if err != nil {
 			return err
 		}
+	}
 
-		views, err = project.CompileUI(
-			directory, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
-		)
-		if err != nil {
-			return err
-		}
+	views, err = project.CompileUI(
+		directory, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
+	)
+	if err != nil {
+		return err
+	}
 
-		generated["engine/ui-views.go"], err = codegen.UIViewFile(views)
-		if err != nil {
-			return err
-		}
+	generated["engine/ui-views.go"], err = codegen.UIViewFile(views)
+	if err != nil {
+		return err
 	}
 
 	if err := writeGeneratedClientAPI(directory, generated); err != nil {
@@ -175,10 +234,8 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
-	if manifest.API.Version == "0.0.1" {
-		if err := writeUIPackage(directory, modulePath, views); err != nil {
-			return err
-		}
+	if err := writeUIPackage(directory, modulePath, views); err != nil {
+		return err
 	}
 
 	if err := retireLegacyGeneratedRegistration(directory); err != nil {
@@ -203,10 +260,25 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		}
 	}
 
-	assetReport, err := analyzeProjectAssets(directory, modulePath, manifest, config.Assets.Textures, textureNames, theme)
+	assetReport, err := analyzeProjectAssets(
+		ctx, directory, modulePath, manifest,
+		config.Assets.Textures, config.Assets.Sounds, textureNames, theme,
+	)
 	if err != nil {
 		return err
 	}
+	assetReport.AudioStreams, err = assetpipeline.ProcessAudioStreams(ctx, directory, manifest, config.Assets.Music, config.Assets.Environments)
+	if err != nil {
+		return fmt.Errorf("process streaming audio: %w", err)
+	}
+
+	for _, stream := range assetReport.AudioStreams {
+		assetReport.Summary.AudioStreamSourceBytes += stream.SourceBytes
+		assetReport.Summary.AudioStreamOutputBytes += stream.OutputBytes
+	}
+	assetReport.Summary.AudioStreamCount = len(assetReport.AudioStreams)
+	assetReport.Summary.AssetSourceBytes += assetReport.Summary.AudioStreamSourceBytes
+	assetReport.Summary.AssetOutputBytes += assetReport.Summary.AudioStreamOutputBytes
 
 	fontRoles := usedFontRoles(views)
 	if err := analyzeProjectFonts(directory, config.Assets.Fonts, fontRoles, &assetReport); err != nil {
@@ -233,6 +305,13 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 	defer cleanup()
 
+	// Go can treat an existing output with the same build ID as current. Karty
+	// postprocesses that output with custom sections, so retaining it would make
+	// a repeated build try to embed those sections twice.
+	if err := os.Remove(artifact); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove previous raw client artifact: %w", err)
+	}
+
 	arguments := compilerArguments(compiler, artifact)
 	arguments[len(arguments)-1] = clientSource
 	command := exec.CommandContext(ctx, compilerPath, arguments...)
@@ -243,7 +322,9 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return fmt.Errorf("compile client: %w\n%s", commandErr, output)
 	}
 
-	if err := embedProjectAssets(directory, artifact, assetReport.Textures, config.Assets.Fonts, fontRoles); err != nil {
+	if err := embedProjectAssets(
+		directory, artifact, assetReport.Textures, assetReport.Sounds, config.Assets.Fonts, fontRoles,
+	); err != nil {
 		return err
 	}
 
@@ -257,22 +338,40 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
-	if err := writeAssetReport(rawDirectory, assetReport); err != nil {
-		return err
-	}
-
 	if err := removeStagedAssets(rawDirectory); err != nil {
 		return err
 	}
 
 	uiSchema := ui.SchemaInteractionPolish
 
-	levels, err := buildAndStageLevels(directory, rawDirectory, uiSchema, config.Assets.Theme.Source)
+	levels, err := buildAndStageLevels(ctx, directory, rawDirectory, uiSchema, config.Assets.Theme.Source, manifest)
 	if err != nil {
 		return err
 	}
 
-	if err := embedProjectManifest(artifact, config, compiler, levels); err != nil {
+	if err := includeLevelAssets(&assetReport, levels); err != nil {
+		return err
+	}
+
+	if len(config.Assets.Videos) > 0 {
+		if err := stageProjectVideos(directory, rawDirectory, artifact, config.Assets.Videos); err != nil {
+			return err
+		}
+		assetReport.Features = append(assetReport.Features, cartridge.FeatureVideoMPEG1v1)
+		slices.Sort(assetReport.Features)
+	}
+	if len(assetReport.AudioStreams) > 0 {
+		if err := stageProjectAudioStreams(rawDirectory, artifact, assetReport.AudioStreams); err != nil {
+			return err
+		}
+		assetReport.Features = append(assetReport.Features, cartridge.FeatureAudioStreamQOAv1)
+		slices.Sort(assetReport.Features)
+	}
+	if err := writeAssetReport(rawDirectory, assetReport); err != nil {
+		return err
+	}
+
+	if err := embedProjectManifest(artifact, config, compiler, levels, assetReport.Features); err != nil {
 		return err
 	}
 
@@ -318,6 +417,12 @@ func stageRequestedTarget(
 	}
 
 	localHost := options.Host != ""
+
+	hostTarget := options.Target
+	if options.Platform != "" {
+		hostTarget = options.Platform
+	}
+
 	if options.Host == "" {
 		var (
 			host string
@@ -326,7 +431,7 @@ func stageRequestedTarget(
 		if options.Target == "web" {
 			host, localHost, err = resolveWebHost(ctx, manifest)
 		} else {
-			host, err = toolchain.EnsureHost(ctx, manifest, options.Target)
+			host, err = toolchain.EnsureHost(ctx, manifest, hostTarget)
 		}
 
 		if err != nil {
@@ -347,7 +452,10 @@ func stageRequestedTarget(
 		}
 	}
 
-	return stageTarget(distributionDirectory, rawDirectory, artifact, levels, options.Host, options.Target, webRuntime)
+	return stageTarget(
+		distributionDirectory, rawDirectory, artifact, levels,
+		options.Host, options.Target, webRuntime, options.Platform, options.AirProxy,
+	)
 }
 
 func resolveWebRuntime(ctx context.Context, manifest sdk.Manifest, host string, local bool) (string, error) {
@@ -409,8 +517,14 @@ func removeLegacyRootOutput(distributionDirectory string) error {
 	return nil
 }
 
-func buildAndStageLevels(directory, buildDirectory string, uiSchema uint32, themeSource string) ([]levelbuild.Artifact, error) {
-	levels, err := levelbuild.BuildAllWithTheme(directory, uiSchema, themeSource)
+func buildAndStageLevels(
+	ctx context.Context,
+	directory, buildDirectory string,
+	uiSchema uint32,
+	themeSource string,
+	manifest sdk.Manifest,
+) ([]levelbuild.Artifact, error) {
+	levels, err := levelbuild.BuildAllWithAssets(ctx, directory, uiSchema, themeSource, manifest)
 	if err != nil {
 		return nil, fmt.Errorf("build levels: %w", err)
 	}
@@ -422,10 +536,41 @@ func buildAndStageLevels(directory, buildDirectory string, uiSchema uint32, them
 	return levels, nil
 }
 
+func includeLevelAssets(report *assetpipeline.Report, levels []levelbuild.Artifact) error {
+	features := slices.Clone(report.Features)
+	for _, builtLevel := range levels {
+		features = append(features, builtLevel.Features...)
+
+		var levelDecodedBytes int64
+
+		for _, texture := range builtLevel.Textures {
+			report.Levels = append(report.Levels, assetpipeline.LevelTexture{Level: builtLevel.Name, Texture: texture})
+			report.Summary.LevelTextureCount++
+			report.Summary.LevelSourceBytes += texture.SourceBytes
+			report.Summary.LevelOutputBytes += texture.OutputBytes
+			report.Summary.EstimatedDecodedLevelBytes += texture.EstimatedDecodedBytes
+			levelDecodedBytes += texture.EstimatedDecodedBytes
+		}
+
+		if report.Summary.EstimatedDecodedBytes+levelDecodedBytes > asset.MaxDecodedTextures {
+			return fmt.Errorf("level %q and game textures: %w", builtLevel.Name, assetpipeline.ErrAssetResourceLimits)
+		}
+	}
+
+	slices.Sort(features)
+	report.Features = slices.Compact(features)
+	report.Summary.AssetSourceBytes += report.Summary.LevelSourceBytes
+	report.Summary.AssetOutputBytes += report.Summary.LevelOutputBytes
+
+	return nil
+}
+
 func analyzeProjectAssets(
+	ctx context.Context,
 	directory, modulePath string,
 	manifest sdk.Manifest,
 	textures []project.Texture,
+	sounds []project.Sound,
 	names []string,
 	theme uicompiler.Theme,
 ) (assetpipeline.Report, error) {
@@ -439,7 +584,7 @@ func analyzeProjectAssets(
 		return assetpipeline.Report{}, err
 	}
 
-	report, err := assetpipeline.AnalyzeTextures(directory, manifest, liveTextures)
+	report, err := assetpipeline.ProcessGameAssets(ctx, directory, manifest, liveTextures, sounds)
 	if err != nil {
 		return assetpipeline.Report{}, fmt.Errorf("analyze assets: %w", err)
 	}
@@ -451,10 +596,6 @@ func analyzeProjectAssets(
 
 	if err := theme.ValidateGameImages(dimensions); err != nil {
 		return assetpipeline.Report{}, err
-	}
-
-	if err := assetpipeline.PopulateCache(directory, &report); err != nil {
-		return assetpipeline.Report{}, fmt.Errorf("populate asset cache: %w", err)
 	}
 
 	report.Usage = usageReport
@@ -585,11 +726,28 @@ func compilerEnvironment(compiler string) []string {
 
 	environment = setEnvironmentValue(environment, "GOFLAGS", strings.Join(goFlags, " "))
 	if compiler == "go" {
+		// The CLI can run under a different Go release than the SDK-pinned
+		// compiler. Let that compiler discover its own GOROOT instead of
+		// inheriting the CLI toolchain's standard library.
+		environment = removeEnvironmentValue(environment, "GOROOT")
 		environment = setEnvironmentValue(environment, "GOOS", "wasip1")
 		environment = setEnvironmentValue(environment, "GOARCH", "wasm")
 	}
 
 	return environment
+}
+
+func removeEnvironmentValue(environment []string, name string) []string {
+	prefix := name + "="
+	result := make([]string, 0, len(environment))
+
+	for _, entry := range environment {
+		if !strings.HasPrefix(entry, prefix) {
+			result = append(result, entry)
+		}
+	}
+
+	return result
 }
 
 func setEnvironmentValue(environment []string, name, value string) []string {
@@ -606,8 +764,19 @@ func setEnvironmentValue(environment []string, name, value string) []string {
 }
 
 func writeGeneratedClientAPI(directory string, generated map[string][]byte) error {
+	root := filepath.Join(directory, ".karty")
+	if err := os.RemoveAll(filepath.Join(root, "assets")); err != nil {
+		return fmt.Errorf("replace generated assets package: %w", err)
+	}
+
+	for _, name := range []string{"assets.go", "sounds.go", "videos.go", "music.go", "environments.go", "ui-assets.go"} {
+		if err := os.Remove(filepath.Join(root, "engine", name)); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("remove legacy generated asset file %s: %w", name, err)
+		}
+	}
+
 	for relativePath, contents := range generated {
-		path := filepath.Join(directory, ".karty", filepath.FromSlash(relativePath))
+		path := filepath.Join(root, filepath.FromSlash(relativePath))
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			return fmt.Errorf("create generated client API directory: %w", err)
 		}
@@ -618,6 +787,70 @@ func writeGeneratedClientAPI(directory string, generated map[string][]byte) erro
 	}
 
 	return nil
+}
+
+func soundAssetFile(sounds []project.Sound, engineImport string) ([]byte, error) {
+	sorted := slices.Clone(sounds)
+	slices.SortFunc(sorted, func(left, right project.Sound) int { return strings.Compare(left.Name, right.Name) })
+
+	var source strings.Builder
+	source.WriteString("// Code generated by Karty. DO NOT EDIT.\n" +
+		"// WARNING: DO NOT MODIFY THIS FILE DIRECTLY.\n" +
+		"// WARNING: MANUAL CHANGES WILL BE OVERWRITTEN.\n" +
+		"// Source of truth: sound declarations in karty.toml.\n" +
+		"// Change the sound declarations, then regenerate with: karty build\n\n" +
+		"package assets\n")
+
+	if len(sorted) > 0 {
+		fmt.Fprintf(&source, "\nimport engine %q\n\nconst (\n", engineImport)
+	}
+
+	identifiers := make(map[string]string, len(sorted))
+	for index, sound := range sorted {
+		identifier := "Sound" + exportedAssetIdentifier(sound.Name)
+		if previous, exists := identifiers[identifier]; exists {
+			return nil, fmt.Errorf("%q and %q -> %s: %w", previous, sound.Name, identifier, errSoundIdentifier)
+		}
+
+		identifiers[identifier] = sound.Name
+		fmt.Fprintf(&source, "\t%s engine.SoundID = %d\n", identifier, index+1)
+	}
+
+	if len(sorted) > 0 {
+		source.WriteString(")\n")
+	}
+
+	formatted, err := format.Source([]byte(source.String()))
+	if err != nil {
+		return nil, fmt.Errorf("format generated sound constants: %w", err)
+	}
+
+	return formatted, nil
+}
+
+func exportedAssetIdentifier(name string) string {
+	var (
+		result    strings.Builder
+		upperNext = true
+	)
+
+	for _, character := range name {
+		if !unicode.IsLetter(character) && !unicode.IsDigit(character) {
+			upperNext = true
+
+			continue
+		}
+
+		if upperNext {
+			result.WriteRune(unicode.ToUpper(character))
+
+			upperNext = false
+		} else {
+			result.WriteRune(character)
+		}
+	}
+
+	return result.String()
 }
 
 func retireLegacyGeneratedRegistration(directory string) error {
@@ -759,7 +992,8 @@ func resolveCompiler(ctx context.Context, compiler string, manifest sdk.Manifest
 func stageTarget(
 	distributionDirectory, rawDirectory, clientArtifact string,
 	levels []levelbuild.Artifact,
-	hostArtifact, target, webRuntime string,
+	hostArtifact, target, webRuntime, platform string,
+	airProxy bool,
 ) error {
 	if target == "" {
 		target = "native"
@@ -779,6 +1013,10 @@ func stageTarget(
 	}
 
 	targetDirectory := filepath.Join(distributionDirectory, target)
+	if platform != "" {
+		targetDirectory = filepath.Join(targetDirectory, platform)
+	}
+
 	if err := os.MkdirAll(targetDirectory, 0o750); err != nil {
 		return fmt.Errorf("create %s target directory: %w", target, err)
 	}
@@ -791,7 +1029,15 @@ func stageTarget(
 		return err
 	}
 
-	if err := stageHostArtifact(targetDirectory, hostArtifact, target, hostMode); err != nil {
+	if err := stageVideoFiles(targetDirectory, clientArtifact, rawDirectory); err != nil {
+		return err
+	}
+
+	if err := stageAudioStreamFiles(targetDirectory, clientArtifact, rawDirectory); err != nil {
+		return err
+	}
+
+	if err := stageHostArtifact(targetDirectory, hostArtifact, target, platform, hostMode); err != nil {
 		return err
 	}
 
@@ -806,7 +1052,7 @@ func stageTarget(
 			}
 		}
 
-		if err := stageWebShell(targetDirectory, webRuntime); err != nil {
+		if err := stageWebShell(targetDirectory, webRuntime, airProxy); err != nil {
 			return err
 		}
 	}
@@ -863,12 +1109,12 @@ func removeLegacyClientArtifact(directory string) error {
 	return nil
 }
 
-func stageHostArtifact(targetDirectory, hostArtifact, target string, mode os.FileMode) error {
+func stageHostArtifact(targetDirectory, hostArtifact, target, platform string, mode os.FileMode) error {
 	if hostArtifact == "" {
 		return nil
 	}
 
-	name := "karty-host"
+	name := toolchain.NativeHostName(platform)
 	if target == "web" {
 		name = "karty-host.wasm"
 	}
@@ -883,12 +1129,13 @@ func stageHostArtifact(targetDirectory, hostArtifact, target string, mode os.Fil
 func embedProjectAssets(
 	directory, artifact string,
 	textures []assetpipeline.Texture,
+	sounds []assetpipeline.Sound,
 	fonts []project.Font,
 	usedFonts map[string]bool,
 ) error {
 	assets := make([]cartridge.Asset, 0, len(textures)+len(fonts))
 	for _, texture := range textures {
-		contents, err := os.ReadFile(texture.SourcePath)
+		contents, err := readVerifiedProcessedAsset(texture.SourcePath, texture.OutputSHA256, texture.OutputBytes)
 		if err != nil {
 			return fmt.Errorf("read texture %q for cartridge: %w", texture.Name, err)
 		}
@@ -923,12 +1170,52 @@ func embedProjectAssets(
 	if err != nil {
 		return fmt.Errorf("embed game assets: %w", err)
 	}
+
+	if len(sounds) > 0 {
+		catalog := make([]cartridge.Sound, 0, len(sounds))
+		for _, sound := range sounds {
+			contents, readErr := readVerifiedProcessedAsset(sound.SourcePath, sound.OutputSHA256, sound.OutputBytes)
+			if readErr != nil {
+				return fmt.Errorf("read sound %q for cartridge: %w", sound.Name, readErr)
+			}
+
+			catalog = append(catalog, cartridge.Sound{
+				ID: sound.ID, Name: sound.Name, Codec: cartridge.SoundCodecQOA,
+				Channels: sound.Metadata.Channels, SampleRate: sound.Metadata.SampleRate,
+				Frames: sound.Metadata.Frames, Bytes: contents,
+			})
+		}
+
+		soundBundle, encodeErr := cartridge.EncodeSounds(catalog)
+		if encodeErr != nil {
+			return fmt.Errorf("encode game sounds: %w", encodeErr)
+		}
+
+		embedded, err = cartridge.EmbedSounds(embedded, soundBundle)
+		if err != nil {
+			return fmt.Errorf("embed game sounds: %w", err)
+		}
+	}
 	//nolint:gosec // artifact is the fixed dist/raw/game.kart path owned by this build.
 	if err := os.WriteFile(artifact, embedded, 0o600); err != nil {
 		return fmt.Errorf("write game cartridge assets: %w", err)
 	}
 
 	return nil
+}
+
+func readVerifiedProcessedAsset(path, expectedDigest string, expectedBytes int64) ([]byte, error) {
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	digest := sha256.Sum256(contents)
+	if int64(len(contents)) != expectedBytes || hex.EncodeToString(digest[:]) != expectedDigest {
+		return nil, errCachedAssetChanged
+	}
+
+	return contents, nil
 }
 
 func usedFontRoles(views []uicompiler.Component) map[string]bool {
@@ -965,7 +1252,13 @@ func fontRoleName(style ui.Style) string {
 	}
 }
 
-func embedProjectManifest(artifact string, config project.Config, compiler string, levels []levelbuild.Artifact) error {
+func embedProjectManifest(
+	artifact string,
+	config project.Config,
+	compiler string,
+	levels []levelbuild.Artifact,
+	features []string,
+) error {
 	dependencies := make([]cartridge.LevelDependency, 0, len(levels))
 	for _, level := range levels {
 		dependencies = append(dependencies, cartridge.LevelDependency{
@@ -986,6 +1279,7 @@ func embedProjectManifest(artifact string, config project.Config, compiler strin
 		Compiler:    compiler,
 		Width:       uint32(config.Project.Resolution.Width),
 		Height:      uint32(config.Project.Resolution.Height),
+		Features:    slices.Clone(features),
 		Levels:      dependencies,
 	})
 	if err != nil {
@@ -1010,8 +1304,10 @@ func embedProjectManifest(artifact string, config project.Config, compiler strin
 }
 
 func removeStagedAssets(root string) error {
-	if err := os.RemoveAll(filepath.Join(root, "assets")); err != nil {
-		return fmt.Errorf("remove separately staged assets: %w", err)
+	for _, directory := range []string{"assets", "audio", "video"} {
+		if err := os.RemoveAll(filepath.Join(root, directory)); err != nil {
+			return fmt.Errorf("remove separately staged %s: %w", directory, err)
+		}
 	}
 
 	return nil
@@ -1086,7 +1382,7 @@ func writeAssetReport(buildDirectory string, report assetpipeline.Report) error 
 	return nil
 }
 
-func stageWebShell(targetDirectory, wasmExec string) error {
+func stageWebShell(targetDirectory, wasmExec string, airProxy bool) error {
 	if err := copyFile(wasmExec, filepath.Join(targetDirectory, "wasm_exec.js"), 0o600); err != nil {
 		return fmt.Errorf("stage wasm_exec.js: %w", err)
 	}
@@ -1116,7 +1412,35 @@ func stageWebShell(targetDirectory, wasmExec string) error {
 		return fmt.Errorf("hash staged runtime: %w", err)
 	}
 
-	index := strings.NewReplacer("@@LAUNCHER_HASH@@", launcherHash, "@@RUNTIME_HASH@@", runtimeHash).Replace(webIndexTemplate)
+	airProxyBootstrap := ""
+	if airProxy {
+		airProxyBootstrap = "<script>\n" +
+			"    // Air's SharedWorker also opens a root-relative SSE URL internally,\n" +
+			"    // so use its page-level EventSource fallback and preserve proxy prefixes.\n" +
+			"    const kartyAirURL = value => typeof value === \"string\" && value.startsWith(\"/__air_internal/\")\n" +
+			"      ? new URL(\".\" + value, window.location.href).href : value;\n" +
+			"    try {\n" +
+			"      Object.defineProperty(window, \"SharedWorker\", { configurable: true, value: undefined });\n" +
+			"    } catch (_) {\n" +
+			"      window.SharedWorker = undefined;\n" +
+			"    }\n" +
+			"    if (typeof window.EventSource === \"function\") {\n" +
+			"      window.EventSource = new Proxy(window.EventSource, {\n" +
+			"        construct(target, args) {\n" +
+			"          args[0] = kartyAirURL(args[0]);\n" +
+			"          return Reflect.construct(target, args);\n" +
+			"        },\n" +
+			"      });\n" +
+			"    }\n" +
+			"    window.KARTY_AIR_BASE_PATH_PATCHED = true;\n" +
+			"  </script>"
+	}
+
+	index := strings.NewReplacer(
+		"@@LAUNCHER_HASH@@", launcherHash,
+		"@@RUNTIME_HASH@@", runtimeHash,
+		"@@AIR_PROXY_BOOTSTRAP@@", airProxyBootstrap,
+	).Replace(webIndexTemplate)
 
 	if err := os.WriteFile(filepath.Join(targetDirectory, "index.html"), []byte(index), 0o600); err != nil {
 		return fmt.Errorf("write web shell: %w", err)
@@ -1137,6 +1461,7 @@ func fileHash(path string) (string, error) {
 }
 
 func copyFile(source, destination string, mode os.FileMode) error {
+	//nolint:gosec // source is a validated build-owned path or pinned tool artifact.
 	contents, err := os.ReadFile(source)
 	if err != nil {
 		return err

@@ -26,13 +26,13 @@ func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 		t.Fatalf("CreateGame() error = %v", createErr)
 	}
 
-	for _, path := range []string{"README.md", "karty.toml", "go.mod", ".gitignore", "src/main.go", "assets/textures/player.png", ".karty/engine/game.go", ".karty/engine/components.go", ".karty/engine/assets.go"} {
+	for _, path := range []string{"README.md", "karty.toml", "go.mod", ".gitignore", "src/main.go", "assets/textures/player.png", ".karty/engine/game.go", ".karty/engine/components.go", ".karty/assets/textures.go"} {
 		if _, statErr := os.Stat(filepath.Join(destination, path)); statErr != nil {
 			t.Errorf("generated %s: %v", path, statErr)
 		}
 	}
 
-	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/engine/assets.go", ".karty/engine/protocol.go"} {
+	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/assets/textures.go", ".karty/engine/protocol.go"} {
 		generated, readErr := os.ReadFile(filepath.Join(destination, path))
 		if readErr != nil {
 			t.Fatal(readErr)

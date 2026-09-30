@@ -15,8 +15,8 @@ transparent = "#00000000"
 warning = "#f0a95aff"
 
 [spacing]
-panel = 24
-gap = 10
+panel = 16
+gap = 8
 
 [typography]
 body = 20

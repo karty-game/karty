@@ -58,6 +58,22 @@ func TestAirWatcherLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	levelDirectory := filepath.Join(root, "levels", "showcase")
+	if err := os.MkdirAll(levelDirectory, 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	worldSource := filepath.Join(levelDirectory, "world.yaml")
+	levelSource := filepath.Join(levelDirectory, "level.toml")
+
+	if err := os.WriteFile(worldSource, []byte("version: 2\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(levelSource, []byte("name = \"showcase\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
 	generatedSource := filepath.Join(sourceDirectory, "api_codegen.go")
 
 	if err := os.WriteFile(mainSource, []byte("package main\n"), 0o600); err != nil {
@@ -71,7 +87,10 @@ func TestAirWatcherLifecycle(t *testing.T) {
 		"-build.cmd", helper + " -test.run=^TestAirBuildHelper$",
 		"-build.full_bin", helper + " -test.run=^TestAirRunHelper$",
 		"-build.include_dir", "src,assets,levels,ui",
-		"-build.include_ext", "go,ui,json,toml,png",
+		"-build.include_ext", airWatchedExtensions,
+		"-build.exclude_unchanged", "true",
+		"-build.poll", "true",
+		"-build.poll_interval", "500",
 		"-build.exclude_dir", "dist",
 		"-build.exclude_regex", generatedSourcePattern,
 		"-tmp_dir", airRuntimeDirectory,
@@ -105,6 +124,17 @@ func TestAirWatcherLifecycle(t *testing.T) {
 	})
 
 	waitForBuildCount(t, countPath, 1)
+
+	now := time.Now()
+	if err := os.Chtimes(worldSource, now, now); err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(750 * time.Millisecond)
+
+	if count := readBuildCount(t, countPath); count != 1 {
+		t.Fatalf("unchanged YAML timestamp triggered a rebuild: got %d builds, want 1", count)
+	}
 
 	if _, err := os.Stat(filepath.Join(root, "tmp")); !os.IsNotExist(err) {
 		t.Fatalf("Air created a visible project tmp directory: %v", err)
@@ -146,6 +176,18 @@ func TestAirWatcherLifecycle(t *testing.T) {
 	}
 
 	waitForBuildCount(t, countPath, 4)
+
+	if err := os.WriteFile(worldSource, []byte("version: 2\n# edited world\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	waitForBuildCount(t, countPath, 5)
+
+	if err := os.WriteFile(levelSource, []byte("name = \"edited-showcase\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	waitForBuildCount(t, countPath, 6)
 }
 
 func TestAirBuildHelper(t *testing.T) {

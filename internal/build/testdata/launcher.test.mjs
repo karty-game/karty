@@ -40,7 +40,15 @@ const elements = new Map(["loading", "status", "progress", "retry", "error-detai
 }]));
 const failure = process.env.KARTY_TEST_HTTP_FAILURE === "1";
 const fallback = process.env.KARTY_TEST_WASM_FALLBACK === "1";
-const protocolVersion = 5;
+const soundSections = process.env.KARTY_TEST_SOUND_SECTIONS || "present";
+assert.ok(["present", "absent", "duplicate"].includes(soundSections));
+const soundFailure = mock && soundSections === "duplicate";
+const expectedFailure = failure || soundFailure;
+const mockSoundBundle = new Uint8Array([0x4b, 0x54, 0x59, 0x53, 1, 0, 0, 0]).buffer;
+// The mock uses its fixture wire version; staged guests use their pinned SDK.
+const protocolSource = mock ? null : await readFile(join(directory, "../../.karty/engine/protocol.go"), "utf8");
+const protocolVersion = mock ? 5 : Number(protocolSource.match(/protocolVersion\s*=\s*uint16\((\d+)\)/)?.[1]);
+assert.ok(Number.isInteger(protocolVersion) && protocolVersion > 0, "SDK must declare a wire version");
 
 // Exercise the inline fallback independently: the launcher may never execute.
 const shell = await readFile(new URL("../templates/index.html.tmpl", import.meta.url), "utf8");
@@ -103,7 +111,7 @@ const context = {
   Uint8Array, DataView, TextDecoder, BigInt,
   crypto: globalThis.crypto,
   console: { warn: console.warn, error: (...args) => {
-    if (failure) setTimeout(resolveDone, 0);
+    if (expectedFailure) setTimeout(resolveDone, 0);
     else rejectDone(new Error(args.map(String).join(" ")));
   } },
   fetch: async (url) => ({
@@ -118,12 +126,18 @@ const context = {
       return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
     },
   }),
+  URL,
   WebAssembly: {
     compile: async bytes => mock ? { bytes } : WebAssembly.compile(bytes),
     Module: {
       customSections: (module, name) => {
         if (!mock) return WebAssembly.Module.customSections(module, name);
-        if (name === "karty.ui.v1") return [];
+        if (name === "karty.ui.v1" || name === "karty.videos.v1" || name === "karty.audio-streams.v1") return [];
+        if (name === "karty.sounds.v1") {
+          if (soundSections === "absent") return [];
+          if (soundSections === "duplicate") return [mockSoundBundle, mockSoundBundle.slice(0)];
+          return [mockSoundBundle];
+        }
         if (name === "karty.assets.v1") {
           const bundle = new Uint8Array(16);
           bundle.set([0x4b, 0x54, 0x59, 0x41, 1, 0]);
@@ -188,8 +202,23 @@ const context = {
     importObject = { hostTest: true };
     run() {
       try {
+        if (mock) {
+          if (soundSections === "present") assert.equal(context.kartySoundBundle, mockSoundBundle, "sound bundle must be installed before host startup");
+          if (soundSections === "absent") assert.equal(context.kartySoundBundle, null, "absent sound section must clear the global bundle");
+          assert.equal(context.kartyAudioStreamBundle, null, "absent streaming audio section must clear the global bundle");
+          assert.equal(context.kartyAudioStreamBaseURL, "http://localhost/game.kart?v=@@CLIENT_HASH@@");
+        }
         context.kartyHostLog = () => {};
         context.kartyHostPlaySound = () => {};
+        context.kartyHostPlaySFXFrom = () => {};
+        context.kartyHostSetAudioReceiver = () => {};
+        context.kartyHostClearAudioReceiver = () => {};
+        context.kartyHostPlayMusic = () => {};
+        context.kartyHostStopMusic = () => {};
+        context.kartyHostPlayEnvironment = () => {};
+        context.kartyHostStopEnvironment = () => {};
+        context.kartyHostLoopSound = () => {};
+        context.kartyHostStopSound = () => {};
         context.kartyHostAction = () => {};
         context.kartyHostSubmitCommands = (bytes) => submissions.push(Uint8Array.from(bytes));
         context.kartyClientInitialize();
@@ -233,12 +262,16 @@ try {
   }
   runInNewContext(source, context, { filename: "karty.js" });
   await done;
-  if (failure) {
+  if (expectedFailure) {
     assert.equal(elements.get("loading").hidden, false);
     assert.equal(elements.get("retry").hidden, false);
     assert.equal(elements.get("progress").hidden, true);
-    assert.match(elements.get("error-detail").textContent, /HTTP 503/);
+    if (failure) assert.match(elements.get("error-detail").textContent, /HTTP 503/);
+    if (soundFailure) {
+      assert.match(elements.get("error-detail").textContent, /sound section is duplicated/);
+      assert.equal(context.kartySoundBundle, undefined, "duplicate sound sections must not publish a bundle");
+    }
     assert.equal(registered, false);
   }
-  console.log(`Launcher checks passed (${mock ? "fixture" : "actual TinyGo cartridge"}; host rendering mocked).`);
+  console.log(`Launcher checks passed (${mock ? `fixture, sounds ${soundSections}` : "actual TinyGo cartridge"}; host rendering mocked).`);
 } finally { clearTimeout(timer); }

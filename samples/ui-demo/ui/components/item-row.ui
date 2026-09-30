@@ -22,27 +22,28 @@ setup ItemRow(props ItemRowProps) {
 kartui ItemRow {
     <panel modal="true" class="item">
         <label class="item-label">{ "Item " + strconv.Itoa(int(props.ID)) + " — used " + strconv.Itoa(uses) + " times" }</label>
-        <button class="use" enabled={ props.Quantity() > 0 } onClick={ use }>{ "Use potion (" + strconv.Itoa(props.Quantity()) + " left)" }</button>
+        <button class="use" enabled={ props.Quantity() > 0 } onClick={ use }>{ "Use (" + strconv.Itoa(props.Quantity()) + ")" }</button>
     </panel>
 }
 
 style {
     .item {
-        gap: theme.spacing.gap;
-        padding: theme.spacing.gap;
-        margin: 4;
-        transition-duration: 180;
-        transition-enter: slide-from-right;
-        transition-exit: slide-to-left;
+        gap: 4;
+        padding: 2;
+        margin: 1;
+        min-height: 36;
+        max-height: 36;
+        flex-direction: row;
+        align-items: center;
     }
-    .item-label { color: theme.colors.accent; }
-    .use { background: theme.colors.primary; color: theme.colors.text; transition-duration: theme.controls.transition; }
+    .item-label { color: theme.colors.accent; font-size: 16; flex-grow: 1; }
+    .use { background: theme.colors.primary; color: theme.colors.text; font-size: 14; min-height: 32; transition-duration: theme.controls.transition; }
     .use:hover { background: theme.colors.primary-hover; color: theme.colors.accent; }
     .use:pressed { background: theme.colors.primary-pressed; }
     .use:disabled { background: theme.colors.disabled; color: theme.colors.text-disabled; }
 	@media (max-width: 480) {
-		.item { gap: 4; padding: 4; margin: 2; }
-		.item-label { font-size: 16; max-width: 280; }
-		.use { font-size: 16; min-height: 40; }
+		.item { gap: 3; padding: 2; margin: 1; min-height: 36; max-height: 36; }
+		.item-label { font-size: 14; max-width: 250; }
+		.use { font-size: 14; min-height: 32; }
 	}
 }

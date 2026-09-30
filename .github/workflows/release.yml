@@ -5,11 +5,17 @@ on:
 permissions:
   contents: write
 jobs:
-  release:
-    runs-on: ubuntu-24.04
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
     timeout-minutes: 45
     env:
-      KARTY_TEST_SDK: "0.0.3"
+      KARTY_TEST_SDK: "0.0.7"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -24,6 +30,57 @@ jobs:
       - run: mise run install-browser
       - name: Validate the customer workflow against published hosts
         run: mise run check-integration
+      - name: Package Windows ARM64 game on Linux
+        if: matrix.runner == 'ubuntu-24.04'
+        working-directory: samples/pong
+        run: ../../dist/karty build --target native --platform windows-arm64
+      - uses: actions/upload-artifact@v4
+        if: matrix.runner == 'ubuntu-24.04'
+        with:
+          name: windows-arm64-game
+          path: samples/pong/dist/native/windows-arm64/
+          if-no-files-found: error
+  validate-windows-arm64:
+    needs: validate
+    runs-on: windows-11-arm
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: windows-arm64-game
+          path: game
+      - name: Validate packaged cartridge without developer tools
+        working-directory: game
+        shell: pwsh
+        run: |
+          ./karty-host.exe --check --cartridge game.kart
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Native game startup smoke
+        working-directory: game
+        shell: pwsh
+        run: |
+          $game = Start-Process -FilePath ./karty-host.exe -ArgumentList '--cartridge', 'game.kart' -PassThru -RedirectStandardOutput host.stdout.log -RedirectStandardError host.stderr.log
+          try {
+            Start-Sleep -Seconds 8
+            if ($game.HasExited) {
+              Get-Content host.stdout.log, host.stderr.log
+              throw "Windows ARM64 game exited during startup (code $($game.ExitCode))"
+            }
+          } finally {
+            if (-not $game.HasExited) { Stop-Process -Id $game.Id -Force }
+          }
+  release:
+    needs: [validate, validate-windows-arm64]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: jdx/mise-action@v4
       - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser

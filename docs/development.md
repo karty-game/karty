@@ -50,3 +50,8 @@ publication, standalone builds resolve the versions declared in `go.mod`.
 `karty dev` resolves managed host and `wasm_exec.js` artifacts from the project's
 pinned SDK on each rebuild. Only explicit or discovered local host overrides
 are forwarded as `--host`; those require a matching sibling `wasm_exec.js`.
+
+Image and sound authoring, transforms, the project cache, and SDK 0.0.4
+candidate behavior are described in [Image and sound assets](assets.md).
+`karty dev` watches supported image and WAV sources and uses the same processed
+bytes as `karty build`.

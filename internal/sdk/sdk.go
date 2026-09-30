@@ -4,6 +4,9 @@ package sdk
 import (
 	"fmt"
 	"io/fs"
+	"slices"
+
+	assetcontract "github.com/karty-game/karty-sdk/format/asset"
 )
 
 type staticError string
@@ -32,7 +35,9 @@ type Manifest struct {
 		Game string `toml:"game"`
 	} `toml:"templates"`
 	Assets struct {
-		TextureProfiles map[string]AssetProfile `toml:"texture-profiles"`
+		Capabilities    assetcontract.Capabilities `toml:"capabilities"`
+		TextureProfiles map[string]AssetProfile    `toml:"texture-profiles"`
+		SoundProfiles   map[string]SoundProfile    `toml:"sound-profiles"`
 	} `toml:"assets"`
 	Tools struct {
 		Air       string `toml:"air"`
@@ -56,7 +61,14 @@ type Manifest struct {
 
 // AssetProfile pins the processor selected for an SDK asset profile.
 type AssetProfile struct {
-	Processor string `toml:"processor"`
+	Processor assetcontract.Processor   `toml:"processor"`
+	Transform assetcontract.ImageRecipe `toml:"transform"`
+}
+
+// SoundProfile pins one deterministic WAV-to-QOA processing recipe.
+type SoundProfile struct {
+	Processor assetcontract.Processor   `toml:"processor"`
+	Transform assetcontract.AudioRecipe `toml:"transform"`
 }
 
 // ToolArtifact identifies a verified tool release archive.
@@ -72,6 +84,44 @@ func validateManifest(version string, manifest Manifest) error {
 		manifest.Tools.Air == "" || manifest.Tools.Go == "" || manifest.Tools.TinyGo == "" ||
 		manifest.Tools.WasmTools == "" {
 		return fmt.Errorf("SDK %s: %w", version, errIncompleteSDK)
+	}
+
+	if err := validateAssets(manifest); err != nil {
+		return fmt.Errorf("SDK %s assets: %w", version, err)
+	}
+
+	return nil
+}
+
+func validateAssets(manifest Manifest) error {
+	capabilities := manifest.Assets.Capabilities
+	if err := capabilities.Validate(); err != nil {
+		return err
+	}
+
+	for _, profile := range manifest.Assets.TextureProfiles {
+		switch profile.Processor {
+		case assetcontract.ProcessorCopyPNGv1:
+			continue
+		case assetcontract.ProcessorQOIv1:
+			if profile.Transform.Validate() != nil ||
+				!slices.Contains(capabilities.Processors, profile.Processor) ||
+				!slices.Contains(capabilities.Runtime, assetcontract.CapabilityTextureQOIv1) {
+				return errIncompleteSDK
+			}
+		case assetcontract.ProcessorQOAv1:
+			return errIncompleteSDK
+		default:
+			return errIncompleteSDK
+		}
+	}
+
+	for _, profile := range manifest.Assets.SoundProfiles {
+		if profile.Processor != assetcontract.ProcessorQOAv1 || profile.Transform.Validate() != nil ||
+			!slices.Contains(capabilities.Processors, profile.Processor) ||
+			!slices.Contains(capabilities.Runtime, assetcontract.CapabilitySoundQOAv1) {
+			return errIncompleteSDK
+		}
 	}
 
 	return nil

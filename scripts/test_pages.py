@@ -18,7 +18,7 @@ class PagesTests(unittest.TestCase):
         self.source = self.root / "input"
         self.state.mkdir()
         self.source.mkdir()
-        for name in ("index.html", "pong/index.html", "ui-demo/index.html"):
+        for name in ("index.html", "pong/index.html", "ui-demo/index.html", "media-lab/index.html"):
             path = self.source / name
             path.parent.mkdir(exist_ok=True)
             path.write_text("sample")

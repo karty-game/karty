@@ -17,7 +17,7 @@ import (
 	"github.com/karty-game/karty/internal/toolchain"
 )
 
-var errCheckMode = errors.New("select exactly one of --web, --browser, --watcher, or --allocations")
+var errCheckMode = errors.New("select exactly one of --web, --browser, --watcher, --allocations, or --world-camera")
 var errWatcherPlatform = errors.New("watcher integration check currently requires macOS or Linux")
 
 func main() {
@@ -26,11 +26,12 @@ func main() {
 	watcher := flag.Bool("watcher", false, "check managed Air rebuild and generated-file exclusion behavior")
 	allocations := flag.Bool("allocations", false, "check actual TinyGo guest allocation counters")
 	ui := flag.Bool("ui", false, "scaffold and execute the UI template in native WASM and Chromium")
+	worldCamera := flag.Bool("world-camera", false, "build the packaged world sample twice and verify native/browser camera switching")
 
 	flag.Parse()
 
 	if *ui {
-		if *web || *browser || *watcher || *allocations {
+		if *web || *browser || *watcher || *allocations || *worldCamera {
 			fmt.Fprintln(os.Stderr, errCheckMode)
 			os.Exit(1)
 		}
@@ -43,16 +44,16 @@ func main() {
 		return
 	}
 
-	if err := run(context.Background(), *web, *browser, *watcher, *allocations); err != nil {
+	if err := run(context.Background(), *web, *browser, *watcher, *allocations, *worldCamera); err != nil {
 		fmt.Fprintln(os.Stderr, "karty-check:", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, web, browser, watcher, allocations bool) error {
+func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bool) error {
 	selected := 0
 
-	for _, enabled := range []bool{web, browser, watcher, allocations} {
+	for _, enabled := range []bool{web, browser, watcher, allocations, worldCamera} {
 		if enabled {
 			selected++
 		}
@@ -65,6 +66,10 @@ func run(ctx context.Context, web, browser, watcher, allocations bool) error {
 	root, err := os.Getwd()
 	if err != nil {
 		return err
+	}
+
+	if worldCamera {
+		return runWorldCamera(ctx, root)
 	}
 
 	manifest, err := sdk.Resolve(testSDKVersion())
@@ -167,10 +172,12 @@ func run(ctx context.Context, web, browser, watcher, allocations bool) error {
 		return err
 	}
 
-	return command(ctx, root, nil, "node", "cmd/karty-check/testdata/check-allocations.mjs", artifact)
+	return command(ctx, root, nil, "node", "cmd/karty-check/testdata/check-allocations.mjs", artifact,
+		filepath.Join(project, ".karty", "engine", "protocol.go"))
 }
 
 func command(ctx context.Context, directory string, environment []string, executable string, args ...string) error {
+	//nolint:gosec // This contributor check intentionally executes an explicit tool or pinned resolved executable.
 	cmd := exec.CommandContext(ctx, executable, args...)
 	cmd.Dir = directory
 
@@ -190,5 +197,5 @@ func testSDKVersion() string {
 		return version
 	}
 
-	return "0.0.1"
+	return "0.0.7"
 }

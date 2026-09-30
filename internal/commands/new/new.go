@@ -28,7 +28,7 @@ func Command() *cli.Command {
 		Usage:     "create a game project",
 		ArgsUsage: "<name>",
 		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "sdk", Value: "0.0.3", Usage: "exact Karty SDK version"},
+			&cli.StringFlag{Name: "sdk", Value: "0.0.7", Usage: "exact Karty SDK version"},
 			&cli.StringFlag{Name: "template", Value: "game", Usage: "project template: game or ui"},
 		},
 		Action: run,

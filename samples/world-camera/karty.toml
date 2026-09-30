@@ -1,0 +1,10 @@
+[project]
+name = "world-camera"
+compiler = "tinygo"
+
+[project.resolution]
+width = 960
+height = 540
+
+[sdk]
+version = "0.0.7"

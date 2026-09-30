@@ -22,9 +22,14 @@ func TestCompilerEnvironmentDisablesVCSStamping(t *testing.T) {
 }
 
 func TestGoCompilerEnvironmentSelectsWASI(t *testing.T) {
-	t.Parallel()
+	t.Setenv("GOROOT", "/unexpected/outer-go")
 
 	environment := compilerEnvironment("go")
+	for _, entry := range environment {
+		if strings.HasPrefix(entry, "GOROOT=") {
+			t.Errorf("environment unexpectedly retains %q", entry)
+		}
+	}
 
 	if value := environmentValue(environment, "GOOS"); value != "wasip1" {
 		t.Errorf("GOOS = %q, want wasip1", value)

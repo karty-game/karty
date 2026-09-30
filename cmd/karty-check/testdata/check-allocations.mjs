@@ -1,7 +1,11 @@
 // Diagnostic runner for a temporary cartridge built with karty_alloccheck.
-// Usage: node check-allocations.mjs /path/to/game.kart
+// Usage: node check-allocations.mjs /path/to/game.kart /path/to/engine/protocol.go
 import { readFile } from "node:fs/promises";
 import assert from "node:assert/strict";
+
+const protocolSource = await readFile(process.argv[3], "utf8");
+const protocolVersion = Number(protocolSource.match(/protocolVersion\s*=\s*uint16\((\d+)\)/)?.[1]);
+assert.ok(Number.isInteger(protocolVersion) && protocolVersion > 0, "SDK must declare a wire version");
 
 const { instance } = await WebAssembly.instantiate(await readFile(process.argv[2]), {
   wasi_snapshot_preview1: {
@@ -23,7 +27,7 @@ function update(frame) {
   const pointer = guest.event_buffer() >>> 0;
   const view = new DataView(guest.memory.buffer, pointer, 29);
   view.setUint32(0, 0x4259544b, true);
-  view.setUint16(4, 5, true);
+  view.setUint16(4, protocolVersion, true);
   view.setUint8(6, 1);
   view.setUint8(7, 0);
   view.setBigUint64(8, BigInt(frame), true);

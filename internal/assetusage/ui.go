@@ -16,7 +16,7 @@ func AnalyzeUI(directory, modulePath string, names []string) Result {
 
 // AnalyzeUIViews also retains assets reached through generated component methods.
 func AnalyzeUIViews(directory, modulePath string, names []string, views map[string]string) Result {
-	fileSet, enginePackage, files, info, err := loadTypeInfo(directory, modulePath)
+	fileSet, enginePackage, _, files, info, err := loadTypeInfo(directory, modulePath)
 	if err != nil {
 		return keepAll(err)
 	}
