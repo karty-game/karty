@@ -58,6 +58,17 @@ const loadClientWasm = async (url, imports) => {
   const uiSections = WebAssembly.Module.customSections(module, "karty.ui.v1");
   if (uiSections.length > 1) throw new Error("The game UI section is duplicated");
   globalThis.kartyUIBundle = uiSections.length ? uiSections[0] : null;
+  const soundSections = WebAssembly.Module.customSections(module, "karty.sounds.v1");
+  if (soundSections.length > 1) throw new Error("The game sound section is duplicated");
+  globalThis.kartySoundBundle = soundSections.length ? soundSections[0] : null;
+  const videoSections = WebAssembly.Module.customSections(module, "karty.videos.v1");
+  if (videoSections.length > 1) throw new Error("The game video section is duplicated");
+  globalThis.kartyVideoBundle = videoSections.length ? videoSections[0] : null;
+  globalThis.kartyVideoBaseURL = new URL(url, globalThis.location?.href || "http://localhost/").href;
+  const audioStreamSections = WebAssembly.Module.customSections(module, "karty.audio-streams.v1");
+  if (audioStreamSections.length > 1) throw new Error("The game streaming audio section is duplicated");
+  globalThis.kartyAudioStreamBundle = audioStreamSections.length ? audioStreamSections[0] : null;
+  globalThis.kartyAudioStreamBaseURL = new URL(url, globalThis.location?.href || "http://localhost/").href;
   const manifests = WebAssembly.Module.customSections(module, "karty.manifest.v1");
   if (manifests.length !== 1) throw new Error("The game cartridge manifest section is missing or duplicated");
   globalThis.kartyManifestBundle = manifests[0];
@@ -89,6 +100,17 @@ const imports = {
   karty: {
     log: (pointer, length) => globalThis.kartyHostLog(readClientString(pointer, length)),
     play_sound: soundID => globalThis.kartyHostPlaySound(soundID),
+    play_sfx_from: (soundID, entityID, volume, nearDistance, farDistance) => globalThis.kartyHostPlaySFXFrom(soundID, entityID, volume, nearDistance, farDistance),
+    set_audio_receiver: (entityID, rightX, rightY) => globalThis.kartyHostSetAudioReceiver(entityID, rightX, rightY),
+    clear_audio_receiver: () => globalThis.kartyHostClearAudioReceiver(),
+    play_music: (streamID, looped, crossfadeMS) => globalThis.kartyHostPlayMusic(streamID, looped, crossfadeMS),
+    stop_music: fadeMS => globalThis.kartyHostStopMusic(fadeMS),
+    play_environment: (lane, streamID, looped, crossfadeMS) => globalThis.kartyHostPlayEnvironment(lane, streamID, looped, crossfadeMS),
+    stop_environment: (lane, fadeMS) => globalThis.kartyHostStopEnvironment(lane, fadeMS),
+    loop_sound: soundID => globalThis.kartyHostLoopSound(soundID),
+    stop_sound: soundID => globalThis.kartyHostStopSound(soundID),
+    play_video: (id, x, y, width, height) => globalThis.kartyHostPlayVideo(id, x, y, width, height),
+    stop_video: () => globalThis.kartyHostStopVideo(),
     action: actionID => globalThis.kartyHostAction(actionID),
     submit_commands: (pointer, length) => {
       pointer >>>= 0; length >>>= 0;
@@ -147,7 +169,7 @@ Promise.resolve().then(() => {
   state("loading-cartridge");
   status("Loading game cartridge…");
   go = new Go();
-  return loadClientWasm("game.kart?v=f289b823e030a2a0", imports);
+  return loadClientWasm("game.kart?v=e17d3166da999d09", imports);
 })
   .then(result => {
     client = result.instance;
@@ -175,7 +197,7 @@ Promise.resolve().then(() => {
     globalThis.kartyClientShutdown = () => client.exports.shutdown();
     client.exports._initialize();
     status("Starting the renderer…");
-    return loadWasm("karty-host.wasm?v=acdd7af686530d85", go.importObject);
+    return loadWasm("karty-host.wasm?v=9b91ec966215243f", go.importObject);
   })
   .then(result => go.run(result.instance))
   .then(() => { throw new Error("The game has stopped. Reload to play again."); })
