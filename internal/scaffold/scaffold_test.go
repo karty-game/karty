@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
 )
@@ -16,7 +17,7 @@ func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 	t.Parallel()
 	destination := filepath.Join(t.TempDir(), "pong")
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +61,7 @@ func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(contents), `version = "0.0.1"`) {
+	if !strings.Contains(string(contents), `version = "`+release.SDKVersion()+`"`) {
 		t.Errorf("karty.toml = %q, want pinned SDK version", contents)
 	}
 
@@ -109,7 +110,7 @@ func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 func assertTypedTextureUse(t *testing.T, mainSource []byte) {
 	t.Helper()
 
-	if !strings.Contains(string(mainSource), "engine.TexturePlayer") {
+	if !strings.Contains(string(mainSource), "assets.TexturePlayer") {
 		t.Errorf("generated main.go does not use the typed texture reference: %s", mainSource)
 	}
 }

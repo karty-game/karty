@@ -6,26 +6,30 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"os"
 	"testing"
 
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
-// A patch SDK can keep its API and templates unchanged. Test this offline with
-// the bootstrap bundle so the regression does not require a published release.
+// A local patch SDK retains the current released API and templates.
 func TestLocalUIScreenReachabilityPatchSDK(t *testing.T) {
+	manifest, err := sdk.Resolve(release.SDKVersion())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resources, err := sdk.Resources(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	reader, ok := resources.(*zip.Reader)
+	if !ok {
+		t.Fatal("SDK resources are not a ZIP archive")
+	}
+
 	t.Setenv("KARTY_HOME", t.TempDir())
-
-	original, err := os.ReadFile("../sdk/bootstrap/sdk-0.0.1.zip")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	reader, err := zip.NewReader(bytes.NewReader(original), int64(len(original)))
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	var output bytes.Buffer
 
@@ -47,7 +51,7 @@ func TestLocalUIScreenReachabilityPatchSDK(t *testing.T) {
 		}
 
 		if file.Name == "manifest.toml" {
-			data = bytes.Replace(data, []byte("version = '0.0.1'"), []byte("version = '9.9.9'"), 1)
+			data = bytes.Replace(data, []byte("version = '"+release.SDKVersion()+"'"), []byte("version = '9.9.9'"), 1)
 		}
 
 		entry, err := writer.Create(file.Name)

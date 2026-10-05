@@ -178,7 +178,7 @@ func copyWorldCameraProject(root, destination string) error {
 		}
 	}
 
-	for _, name := range []string{"levels", "src"} {
+	for _, name := range []string{"levels", "src", "ui"} {
 		if err := os.CopyFS(filepath.Join(destination, name), os.DirFS(filepath.Join(source, name))); err != nil {
 			return err
 		}

@@ -1,6 +1,8 @@
 package build
 
 import (
+	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"io/fs"
 	"os"
@@ -115,7 +117,68 @@ func stageUIClient(directory, module string, views []uicompiler.Component) (stri
 		return "", nil, err
 	}
 
+	stable, err := stableUIStage(stage)
+	if err != nil {
+		cleanup()
+
+		return "", nil, err
+	}
+
+	stage = stable
+
 	return stage, cleanup, nil
+}
+
+// TinyGo embeds the compilation directory in WASM debug data. Name the staged
+// package by its contents so repeated builds retain identical source paths.
+func stableUIStage(stage string) (string, error) {
+	root, err := os.OpenRoot(stage)
+	if err != nil {
+		return "", err
+	}
+	defer root.Close()
+
+	digest := sha256.New()
+
+	err = fs.WalkDir(root.FS(), ".", func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+
+		if entry.IsDir() {
+			return nil
+		}
+
+		contents, err := root.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		for _, value := range [][]byte{[]byte(path), contents} {
+			var size [8]byte
+			binary.LittleEndian.PutUint64(size[:], uint64(len(value)))
+			_, _ = digest.Write(size[:])
+			_, _ = digest.Write(value)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	stable := filepath.Join(filepath.Dir(stage), fmt.Sprintf("client-build-%x", digest.Sum(nil)))
+	if _, err := os.Lstat(stable); err == nil {
+		return "", fmt.Errorf("UI client stage already exists: %w", fs.ErrExist)
+	} else if !os.IsNotExist(err) {
+		return "", err
+	}
+
+	if err := os.Rename(stage, stable); err != nil {
+		return "", err
+	}
+
+	return stable, nil
 }
 
 func writeLocalUI(stageRoot *os.Root, views []uicompiler.Component, files map[string][]byte) error {

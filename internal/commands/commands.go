@@ -2,6 +2,7 @@
 package commands
 
 import (
+	"github.com/karty-game/karty/internal/commands/bake"
 	"github.com/karty-game/karty/internal/commands/build"
 	"github.com/karty-game/karty/internal/commands/dev"
 	newcommand "github.com/karty-game/karty/internal/commands/new"
@@ -19,6 +20,7 @@ func New() *cli.Command {
 			newcommand.Command(),
 			sdkCommand(),
 			build.Command(),
+			bake.Command(),
 			dev.Command(),
 			serve.Command(),
 			toolchain.Command(),

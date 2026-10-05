@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -220,7 +221,7 @@ bit_depth = 8
 	}
 }
 
-func TestBuildAllWithAssetsPreservesCopyPNGProfile(t *testing.T) {
+func TestBuildAllWithAssetsRejectsUnsupportedCopyPNGProfile(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
@@ -246,19 +247,9 @@ func TestBuildAllWithAssetsPreservesCopyPNGProfile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	artifacts, err := levelbuild.BuildAllWithAssets(context.Background(), root, 4, "", textureSDK(asset.ProcessorCopyPNGv1))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	decoded, err := level.Decode(unwrapLevelModule(t, artifacts[0].Bytes))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	texture, _, found := decoded.Read(level.TextureEntryName(1), 0, level.MaxEntrySize)
-	if !found || !bytes.Equal(texture, pngBytes) || len(artifacts[0].Features) != 0 {
-		t.Fatalf("legacy texture changed or gained features: found=%v features=%v", found, artifacts[0].Features)
+	_, err = levelbuild.BuildAllWithAssets(context.Background(), root, 4, "", textureSDK(asset.ProcessorCopyPNGv1))
+	if err == nil || !strings.Contains(err.Error(), "not supported") {
+		t.Fatalf("obsolete PNG processor accepted: %v", err)
 	}
 }
 

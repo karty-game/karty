@@ -15,7 +15,7 @@ import (
 	"github.com/karty-game/karty/internal/project"
 )
 
-//nolint:golines,wsl_v5 // One scenario covers generation, catalog embedding, and target staging.
+//nolint:wsl_v5 // One scenario covers generation, catalog embedding, and target staging.
 func TestAudioStreamStagingAndTypedIDs(t *testing.T) {
 	t.Parallel()
 
@@ -33,7 +33,21 @@ func TestAudioStreamStagingAndTypedIDs(t *testing.T) {
 		t.Fatal(err)
 	}
 	digest := fmt.Sprintf("%x", sha256.Sum256(encoded))
-	streams := []assetpipeline.AudioStream{{ID: 1, Name: "theme", Kind: "music", SourcePath: source, OutputSHA256: digest, OutputBytes: int64(len(encoded)), Metadata: assetpipeline.AudioMetadata{Channels: metadata.Channels, SampleRate: metadata.SampleRate, Frames: metadata.Frames}}}
+	streams := []assetpipeline.AudioStream{
+		{
+			ID:           1,
+			Name:         "theme",
+			Kind:         "music",
+			SourcePath:   source,
+			OutputSHA256: digest,
+			OutputBytes:  int64(len(encoded)),
+			Metadata: assetpipeline.AudioMetadata{
+				Channels:   metadata.Channels,
+				SampleRate: metadata.SampleRate,
+				Frames:     metadata.Frames,
+			},
+		},
+	}
 	if err := stageProjectAudioStreams(directory, artifact, streams); err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +83,13 @@ func TestAudioStreamStagingAndTypedIDs(t *testing.T) {
 	if err != nil || !bytes.Equal(payload, encoded) || reader.Verify() != nil {
 		t.Fatalf("unwrapped audio: %v", err)
 	}
-	generated, err := audioStreamAssetFile("MusicID", "Music", "music", "example.com/game/.karty/engine", []project.AudioStream{{Name: "battle.theme"}})
+	generated, err := audioStreamAssetFile(
+		"MusicID",
+		"Music",
+		"music",
+		"example.com/game/.karty/engine",
+		[]project.AudioStream{{Name: "battle.theme"}},
+	)
 	if err != nil || !bytes.Contains(generated, []byte("MusicBattleTheme engine.MusicID = 1")) {
 		t.Fatalf("generated IDs: %s %v", generated, err)
 	}

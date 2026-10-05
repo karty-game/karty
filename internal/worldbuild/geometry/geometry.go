@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 
 	sdkworld "github.com/karty-game/karty-sdk/format/world"
@@ -37,6 +38,30 @@ type edgeKey struct {
 //nolint:gocognit,gocyclo,maintidx // The phases share bounded identity and portal maps that are easier to audit together.
 func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Document, error) {
 	document := sdkworld.Document{Version: sdkworld.Version}
+	if err := validateExpandedUV(expanded); err != nil {
+		return sdkworld.Document{}, err
+	}
+	if expanded.UV != nil {
+		document.MaterialMapping = &sdkworld.MaterialMapping{Version: sdkworld.MaterialMappingVersion}
+	}
+	if expanded.Lighting != nil {
+		if err := sdkworld.ValidateLighting(expanded.Lighting); err != nil {
+			return sdkworld.Document{}, fmt.Errorf("world lighting: %w", err)
+		}
+		lighting := *expanded.Lighting
+		lighting.Lights = slices.Clone(expanded.Lighting.Lights)
+		for index := range lighting.Lights {
+			if motion := lighting.Lights[index].Motion; motion != nil {
+				owned := *motion
+				lighting.Lights[index].Motion = &owned
+			}
+		}
+		if expanded.Lighting.AmbientCube != nil {
+			cube := *expanded.Lighting.AmbientCube
+			lighting.AmbientCube = &cube
+		}
+		document.Lighting = &lighting
+	}
 	external := make(map[string]wallRef)
 	internal := make(map[edgeKey]wallRef)
 	roomSectors := make(map[string][]uint32, len(expanded.Rooms))
@@ -66,10 +91,24 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 				FloorMaterial: floorMaterial, CeilingMaterial: ceilingMaterial,
 				Walls: make([]sdkworld.Wall, len(polygon)),
 			}
+			if expanded.UV != nil {
+				sector.FloorUV = bakeHorizontalUV(room.Floor, room.FloorUV, false)
+				sector.CeilingUV = bakeHorizontalUV(room.Ceiling, room.CeilingUV, true)
+			}
 			for wallIndex := range polygon {
 				startIndex, endIndex := polygon[wallIndex], polygon[(wallIndex+1)%len(polygon)]
 				start, end := room.Boundary[startIndex].Start, room.Boundary[endIndex].Start
 				wall := sdkworld.Wall{Start: compilePoint(start), End: compilePoint(end), Portal: -1}
+				authoredIndex := -1
+				if endIndex == (startIndex+1)%len(room.Boundary) {
+					authoredIndex = startIndex
+				}
+				if expanded.UV != nil {
+					wall.UV, err = bakeWallUV(room, start, end, authoredIndex)
+					if err != nil {
+						return sdkworld.Document{}, fmt.Errorf("room %q wall UV: %w", room.ID, err)
+					}
+				}
 				if endIndex == (startIndex+1)%len(room.Boundary) {
 					authored := room.Boundary[startIndex]
 					wall.SourceEdge = authored.ID
@@ -86,6 +125,9 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 		}
 	}
 	usedMaterials := make(map[uint32]struct{})
+	if err := compileSolids(&document, expanded, materials, usedMaterials); err != nil {
+		return sdkworld.Document{}, err
+	}
 	for _, sector := range document.Sectors {
 		usedMaterials[sector.FloorMaterial] = struct{}{}
 		usedMaterials[sector.CeilingMaterial] = struct{}{}
@@ -186,6 +228,9 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 			}
 			document.Contents = append(document.Contents, compiledContent)
 		}
+	}
+	if err := compileLooseContents(&document, expanded.Contents, materials, usedMaterials); err != nil {
+		return sdkworld.Document{}, err
 	}
 	if len(usedMaterials) > MaxMaterials {
 		return sdkworld.Document{}, fmt.Errorf("%d materials exceeds %d: %w", len(usedMaterials), MaxMaterials, ErrMaterial)

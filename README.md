@@ -1,40 +1,84 @@
 # Karty
 
-**Build and run games with Go, WebAssembly, and KartUI.**
+<p align="center">
+  <strong>Write the game, Karty handles the rest</strong><br>
+  Go, KartUI, and one CLI for browser and desktop games.
+</p>
 
-Karty is a game development toolkit built on **Ebiten (Ebitengine)** and
-**EbitenUI**, designed to make building games in Go easier and more accessible.
-It brings project setup, game builds, declarative interfaces, and native/browser
-runtimes together behind one command-line tool.
+Karty is an open source game development toolkit built around Go, WebAssembly,
+and [KartUI](https://github.com/karty-game/karty-ui). The Karty CLI creates a
+ready-to-build project and takes care of the toolchain, asset processing, and
+game packaging, so you can focus on making the game.
 
-- **Create** a game from a ready-to-use template.
-- **Build and develop** with managed tools, automatic rebuilds, and cached image/audio processing.
-- **Learn** from Pong, the KartUI demo, and the media pipeline lab in `samples/`.
+Games run on the Karty runtime, available for native platforms and the browser.
+The CLI downloads versioned SDK and host releases from
+[Karty SDK](https://github.com/karty-game/karty-sdk), so you can build without
+access to the private engine source.
 
-The CLI downloads versioned SDK and host artifacts from
-[Karty SDK](https://github.com/karty-game/karty-sdk). Contributors do not need
-access to the private engine repository.
+## Documentation
+
+See the [documentation index](docs/README.md),
+[implemented behavior](docs/implemented.md), and
+[proposals](docs/proposals.md).
+
+## Get started
+
+Install the [latest Karty CLI release](https://github.com/karty-game/karty/releases/latest),
+then create and run a project:
 
 ```sh
-mise run test
-mise run build
-./dist/karty new my-game
+karty new my-game
+cd my-game
+karty dev
 ```
 
-[Assets](docs/assets.md) · [Development](docs/development.md) · [Samples](samples/README.md) · [Releases](docs/releases.md)
+`karty dev` builds and serves the game for the browser, then rebuilds as you
+edit. To make a native desktop build instead, run:
 
-Part of **Karty**: [KartUI](https://github.com/karty-game/karty-ui) provides the
-language and editor tools; the private Karty Engine provides the runtime.
+```sh
+karty build --target native
+```
 
-[Contributing](CONTRIBUTING.md) · [MIT license](LICENSE.md)
+The first project setup downloads the SDK-pinned tools and runtime assets. See
+the [development guide](docs/development.md) for setup details and the
+[distribution guide](docs/distribution.md) for supported targets.
 
-The MIT license covers the CLI source. Engine runtime binaries use the separate
-[Karty Runtime License](https://github.com/karty-game/karty-sdk/blob/main/RUNTIME_LICENSE.md),
+## Make it yours
+
+| | What you can do |
+| --- | --- |
+| **Build with Go** | Write game logic in Go and use Karty's game runtime and typed APIs. |
+| **Design with KartUI** | Create game interfaces with a declarative UI language and reusable components. |
+| **Bring in assets** | Package levels, textures, sounds, music, and video with your game. Image and audio processing is built into the pipeline. |
+| **Develop in the browser** | Run a live web build that watches your source, UI, levels, and supported assets for changes. |
+| **Ship across platforms** | Build browser games and native desktop distributions. The CLI and game hosts have separate platform support. |
+
+## Explore the samples
+
+Start with a small game, then explore UI, rendering, and media examples:
+
+- [Pong](samples/pong) — a compact playable game and a good first project.
+- [UI demo](samples/ui-demo) — menus, inventory, and interactive KartUI components.
+- [World camera](samples/world-camera) — authored worlds with perspective and isometric cameras.
+- [Media lab](samples/media-lab) — image and audio processing examples.
+
+See [how to build and run the samples](samples/README.md).
+
+## Commands
+
+```sh
+karty new <name>          # Create a game project
+karty dev                 # Build and serve a live browser preview
+karty build               # Build a native game
+karty build --target web  # Build a browser game
+karty bake                # Bake static directional lighting and diffuse radiosity
+```
+
+Run `karty --help` or `karty <command> --help` for options. The CLI also
+includes commands to install an SDK and manage its pinned toolchain.
+
+## License
+
+The CLI source is available under the [MIT license](LICENSE.md). Runtime
+binaries use the separate [Karty Runtime License](https://github.com/karty-game/karty-sdk/blob/main/RUNTIME_LICENSE.md),
 which permits distribution with free and commercial games.
-
-CLI development platforms: **Linux amd64 and arm64, macOS arm64, Windows amd64**.
-Linux ARM64 requires SDK **0.0.4** or newer. Browser builds share the same WASM host.
-
-Game distribution additionally supports **Windows arm64** with SDK 0.0.4.
-Use `karty build --platform windows-arm64` from any supported development machine.
-See [cross-platform distribution](docs/distribution.md).

@@ -29,8 +29,8 @@ var (
 // ResolvePublished downloads and verifies the SDK manifest attached to the
 // matching Karty release. Callers must use its exact project-pinned version.
 func ResolvePublished(ctx context.Context, version string) (Manifest, error) {
-	if !versionPattern.MatchString(version) {
-		return Manifest{}, fmt.Errorf("invalid SDK version: %w", errIncompleteSDK)
+	if err := validateVersion(version); err != nil {
+		return Manifest{}, err
 	}
 
 	manifestURL := publishedSDKBaseURL + version + "/sdk-" + version + ".toml"

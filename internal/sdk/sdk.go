@@ -1,4 +1,4 @@
-// Package sdk resolves versioned Karty SDK manifests embedded in core.
+// Package sdk resolves installed versioned Karty SDK bundles.
 package sdk
 
 import (
@@ -40,16 +40,19 @@ type Manifest struct {
 		SoundProfiles   map[string]SoundProfile    `toml:"sound-profiles"`
 	} `toml:"assets"`
 	Tools struct {
-		Air       string `toml:"air"`
-		Go        string `toml:"go"`
-		TinyGo    string `toml:"tinygo"`
-		WasmTools string `toml:"wasm-tools"`
+		Air                 string `toml:"air"`
+		Go                  string `toml:"go"`
+		Materialize         string `toml:"materialize"`
+		MaterializeRevision string `toml:"materialize-revision"`
+		TinyGo              string `toml:"tinygo"`
+		WasmTools           string `toml:"wasm-tools"`
 	} `toml:"tools"`
 	Artifacts struct {
-		Air       map[string]ToolArtifact `toml:"air"`
-		TinyGo    map[string]ToolArtifact `toml:"tinygo"`
-		WasmTools map[string]ToolArtifact `toml:"wasm-tools"`
-		Host      struct {
+		Air         map[string]ToolArtifact         `toml:"air"`
+		Materialize map[string]MaterialToolArtifact `toml:"materialize"`
+		TinyGo      map[string]ToolArtifact         `toml:"tinygo"`
+		WasmTools   map[string]ToolArtifact         `toml:"wasm-tools"`
+		Host        struct {
 			Native       map[string]ToolArtifact `toml:"native"`
 			Web          ToolArtifact            `toml:"web"`
 			WebRuntime   ToolArtifact            `toml:"web-runtime"`
@@ -78,6 +81,10 @@ type ToolArtifact struct {
 }
 
 func validateManifest(version string, manifest Manifest) error {
+	if err := validateVersion(version); err != nil {
+		return err
+	}
+
 	if manifest.Version != version || manifest.API.Version == "" || manifest.Host.Version == "" ||
 		manifest.Templates.Game == "" ||
 		len(manifest.Assets.TextureProfiles) == 0 || manifest.Assets.TextureProfiles["sprite"].Processor == "" ||
@@ -88,6 +95,15 @@ func validateManifest(version string, manifest Manifest) error {
 
 	if err := validateAssets(manifest); err != nil {
 		return fmt.Errorf("SDK %s assets: %w", version, err)
+	}
+
+	if err := ValidateMaterialize(manifest); err != nil {
+		return fmt.Errorf("SDK %s Materialize: %w", version, err)
+	}
+
+	if slices.Contains(manifest.Assets.Capabilities.Runtime, assetcontract.CapabilityWorldMaterialAtlasV1) &&
+		manifest.Tools.Materialize == "" {
+		return fmt.Errorf("SDK %s world material atlas requires Materialize: %w", version, errIncompleteSDK)
 	}
 
 	return nil
@@ -101,15 +117,13 @@ func validateAssets(manifest Manifest) error {
 
 	for _, profile := range manifest.Assets.TextureProfiles {
 		switch profile.Processor {
-		case assetcontract.ProcessorCopyPNGv1:
-			continue
 		case assetcontract.ProcessorQOIv1:
 			if profile.Transform.Validate() != nil ||
 				!slices.Contains(capabilities.Processors, profile.Processor) ||
 				!slices.Contains(capabilities.Runtime, assetcontract.CapabilityTextureQOIv1) {
 				return errIncompleteSDK
 			}
-		case assetcontract.ProcessorQOAv1:
+		case assetcontract.ProcessorQOAv1, assetcontract.ProcessorCopyPNGv1:
 			return errIncompleteSDK
 		default:
 			return errIncompleteSDK

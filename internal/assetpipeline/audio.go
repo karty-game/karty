@@ -111,8 +111,13 @@ func ProcessStreamAudio(source []byte, recipe asset.AudioRecipe) (ProcessedAudio
 	return processAudio(source, recipe, asset.MaxAudioStreamDurationSeconds, uint64(asset.MaxSourceAssetBytes)*4, true)
 }
 
-//nolint:golines // Keeping all processing bounds visible makes the static/stream distinction explicit.
-func processAudio(source []byte, recipe asset.AudioRecipe, maxDuration uint64, maxDecodedBytes uint64, stream bool) (ProcessedAudio, error) {
+func processAudio(
+	source []byte,
+	recipe asset.AudioRecipe,
+	maxDuration uint64,
+	maxDecodedBytes uint64,
+	stream bool,
+) (ProcessedAudio, error) {
 	if len(source) > asset.MaxSourceAssetBytes {
 		return ProcessedAudio{}, ErrAudioBounds
 	}

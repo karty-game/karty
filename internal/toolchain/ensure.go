@@ -14,22 +14,25 @@ const errArtifactUnavailable staticError = "SDK does not provide this tool for t
 // EnsureOptions selects the SDK tools needed by a command. An explicit tool
 // path is deliberately never downloaded or replaced.
 type EnsureOptions struct {
-	GoOverride        string
-	TinyGoOverride    string
-	WasmToolsOverride string
-	AirOverride       string
-	NeedGo            bool
-	NeedTinyGo        bool
-	NeedWasmTools     bool
-	NeedAir           bool
+	GoOverride          string
+	TinyGoOverride      string
+	WasmToolsOverride   string
+	AirOverride         string
+	MaterializeOverride string
+	NeedGo              bool
+	NeedTinyGo          bool
+	NeedWasmTools       bool
+	NeedAir             bool
+	NeedMaterialize     bool
 }
 
 // EnsurePaths reports the resolved locations of tools that Ensure checked.
 type EnsurePaths struct {
-	Go        string
-	TinyGo    string
-	WasmTools string
-	Air       string
+	Go          string
+	TinyGo      string
+	WasmTools   string
+	Air         string
+	Materialize string
 }
 
 // Ensure verifies that the selected SDK tools are ready to run, downloading
@@ -38,6 +41,13 @@ type EnsurePaths struct {
 func Ensure(ctx context.Context, manifest sdk.Manifest, options EnsureOptions) (EnsurePaths, error) {
 	paths := EnsurePaths{}
 	platform := runtime.GOOS + "-" + runtime.GOARCH
+
+	// Reject invalid managed Materialize selections before any tool writes.
+	if options.NeedMaterialize && options.MaterializeOverride == "" {
+		if _, err := materializeSpecForPlatform(manifest, platform); err != nil {
+			return EnsurePaths{}, err
+		}
+	}
 
 	if options.NeedGo {
 		path, err := Go(ctx, GoOptions{Override: options.GoOverride, Version: manifest.Tools.Go})
@@ -73,6 +83,15 @@ func Ensure(ctx context.Context, manifest sdk.Manifest, options EnsureOptions) (
 		}
 
 		paths.Air = path
+	}
+
+	if options.NeedMaterialize {
+		path, err := EnsureMaterialize(ctx, manifest, options.MaterializeOverride)
+		if err != nil {
+			return EnsurePaths{}, err
+		}
+
+		paths.Materialize = path
 	}
 
 	return paths, nil

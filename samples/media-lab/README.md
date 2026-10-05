@@ -16,7 +16,7 @@ Build the sample from the repository root:
 
 ```sh
 mise run build
-./dist/karty sdk install 0.0.7
+./dist/karty sdk install 0.0.8
 cd samples/media-lab
 ../../dist/karty build --target web
 ../../dist/karty dev

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/toolchain"
 )
@@ -13,7 +14,7 @@ import (
 func TestEnsureRejectsMissingPlatformArtifactBeforeDownload(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatalf("Resolve() error = %v", err)
 	}

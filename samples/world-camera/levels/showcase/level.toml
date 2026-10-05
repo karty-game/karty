@@ -8,14 +8,35 @@ source = "world.yaml"
 [[textures]]
 name = "floor"
 source = "floor.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.9
+height = 0.8
+ao = 0.9
+rim = 0.6
 
 [[textures]]
 name = "ceiling"
 source = "ceiling.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.8
+height = 0.5
+ao = 0.7
+rim = 0.4
 
 [[textures]]
 name = "wall"
 source = "wall.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 1.0
+height = 1.4
+ao = 0.8
+rim = 0.0
 
 [[textures]]
 name = "character"
@@ -36,3 +57,94 @@ source = "sign.png"
 [[textures]]
 name = "decal"
 source = "decal.png"
+
+[[textures]]
+name = "z-court-marble"
+source = "z-court-marble.jpg"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.25
+height = 0.03
+ao = 0.25
+rim = 0.15
+
+[[textures]]
+name = "z-court-mosaic"
+source = "z-court-mosaic.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.4
+height = 0.25
+ao = 3.5
+rim = 0.2
+
+[[textures]]
+name = "z-court-paving"
+source = "z-court-paving.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.65
+height = 0.0
+ao = 3.5
+rim = 0.2
+
+[[textures]]
+name = "z-court-plaster"
+source = "z-court-plaster.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.6
+height = 0.12
+ao = 0.8
+rim = 0.25
+
+[[textures]]
+name = "z-court-coffer"
+source = "z-court-coffer.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.65
+height = 0.45
+ao = 3.0
+rim = 0.25
+
+[[textures]]
+name = "z-court-sky"
+source = "z-court-sky.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.0
+height = 0.0
+ao = 0.0
+rim = 0.0
+
+[[textures]]
+name = "z-court-water"
+source = "z-court-water.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.75
+height = 0.1
+ao = 0.0
+rim = 0.25
+
+
+[lightmap]
+enabled = true
+density = 16
+page_size = 1024
+padding = 4
+max_pages = 1
+max_texels = 1048576
+lights = ["court-daylight", "west-brazier", "east-brazier", "north-cool-fill", "hall-fill", "gallery-fill"]
+shadow_size = 512
+offline = true
+bake_samples = 196
+bake_bounces = 1

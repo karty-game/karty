@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/urfave/cli/v3"
 )
@@ -14,6 +15,13 @@ func sdkCommand() *cli.Command {
 	return &cli.Command{
 		Name: "sdk", Usage: "install an exact SDK release",
 		Commands: []*cli.Command{{
+			Name: "current", Usage: "print the SDK selected by this CLI",
+			Action: func(_ context.Context, command *cli.Command) error {
+				_, err := fmt.Fprintln(command.Writer, release.SDKVersion())
+
+				return err
+			},
+		}, {
 			Name: "install", Usage: "install SDK VERSION (or a local candidate with --archive and --sha256)",
 			Flags:  []cli.Flag{&cli.StringFlag{Name: "archive"}, &cli.StringFlag{Name: "sha256"}},
 			Action: installSDK,

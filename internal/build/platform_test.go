@@ -13,23 +13,31 @@ func TestStageForeignPlatformKeepsOtherDistributions(t *testing.T) {
 	host := filepath.Join(root, "download")
 
 	game := filepath.Join(root, "game.kart")
-	for _, file := range []string{host, game} {
-		if err := os.WriteFile(file, []byte("\x00asm\x01\x00\x00\x00"), 0600); err != nil {
-			t.Fatal(err)
-		}
+	if err := os.WriteFile(game, []byte("\x00asm\x01\x00\x00\x00"), 0600); err != nil {
+		t.Fatal(err)
 	}
 
 	dist := filepath.Join(root, "dist")
-	for _, platform := range []string{"linux-arm64", "windows-arm64"} {
-		if err := stageTarget(dist, root, game, nil, host, "native", "", platform, false); err != nil {
+
+	for _, platform := range []string{"linux-arm64", "windows-arm64", "darwin-arm64"} {
+		if err := os.WriteFile(host, nativeHeader(t, platform), 0600); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := stageTarget(dist, root, game, nil, host, "native", "", platform, false, "platform-test", false); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	for _, name := range []string{"linux-arm64/karty-host", "windows-arm64/karty-host.exe", "windows-arm64/game.kart", "linux-arm64/game.kart"} {
+	for _, name := range []string{"linux-arm64/karty-host", "windows-arm64/karty-host.exe", "windows-arm64/game.kart", "linux-arm64/game.kart", "darwin-arm64/karty-host", "darwin-arm64/game.kart"} {
 		if _, err := os.Stat(filepath.Join(dist, "native", name)); err != nil {
 			t.Fatal(err)
 		}
+	}
+
+	info, err := os.Stat(filepath.Join(dist, "native", "darwin-arm64", "karty-host"))
+	if err != nil || info.Mode().Perm() != 0o755 {
+		t.Fatalf("native host must be executable: %v, %v", info, err)
 	}
 }
 

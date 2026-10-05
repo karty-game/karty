@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "rust": "1.99.0",
+  "tools": {
+    "crunch": {
+      "repository": "https://github.com/ChevyRay/crunch",
+      "commit": "a836f6dbaf2af6bd10e1f1bff0c74ad82ceaa913",
+      "archive_sha256": "c4d2265f85bfedf54d8354a159d9b17dc827779d8bfc69841994537b7ed7f3ae",
+      "subdirectory": "",
+      "binary": "crunch"
+    },
+    "materialize": {
+      "repository": "https://github.com/maikramer/AiGameKit",
+      "commit": "1a3fe7d052a464d3217ef66d2bce9889d3946792",
+      "archive_sha256": "404f996ca4e3d36c668c31feec89feac578068d133f94efc6249cbb083631abc",
+      "subdirectory": "Materialize",
+      "binary": "materialize-cli"
+    }
+  },
+  "targets": {
+    "linux-amd64": "x86_64-unknown-linux-gnu",
+    "linux-arm64": "aarch64-unknown-linux-gnu",
+    "macos-arm64": "aarch64-apple-darwin",
+    "windows-amd64": "x86_64-pc-windows-msvc"
+  }
+}

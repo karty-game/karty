@@ -1,0 +1,113 @@
+type ControlsProps struct {
+    Ready func() bool
+    Status func() string
+    Pose func() string
+    Inspect func(bool)
+    Isometric func() bool
+    Courtyard func() bool
+    Output func() int
+    Moving func() bool
+    View func(bool)
+    Channel func(int)
+    Visit func(bool)
+    Move func(float32, float32)
+    Orbit func(float32)
+    Look func(float32)
+    Stop func()
+    Reload func()
+    Hide func()
+}
+
+setup Controls(props ControlsProps) {
+    details := false
+    inspect := func() { details = !details; props.Inspect(details); invalidate() }
+    fps := func() { props.View(false) }
+    iso := func() { props.View(true) }
+    gallery := func() { props.Visit(false) }
+    court := func() { props.Visit(true) }
+    full := func() { props.Channel(1) }
+    albedo := func() { props.Channel(2) }
+    normal := func() { props.Channel(3) }
+    depth := func() { props.Channel(4) }
+    back := func() { details = false; props.Inspect(false); props.Move(-1, 0); invalidate() }
+    forward := func() { details = false; props.Inspect(false); props.Move(1, 0); invalidate() }
+    left := func() { details = false; props.Inspect(false); props.Move(0, -1); invalidate() }
+    right := func() { details = false; props.Inspect(false); props.Move(0, 1); invalidate() }
+    orbitLeft := func() { details = false; props.Inspect(false); props.Orbit(-1); invalidate() }
+    lookUp := func() { details = false; props.Inspect(false); props.Look(1); invalidate() }
+    lookDown := func() { details = false; props.Inspect(false); props.Look(-1); invalidate() }
+    orbitRight := func() { details = false; props.Inspect(false); props.Orbit(1); invalidate() }
+}
+
+kartui Controls {
+    <panel class="screen" modal="false">
+        <panel class="toolbar">
+            <label class="status">{ props.Status() }</label>
+            <panel class="row">
+                <button enabled={ props.Ready() && !props.Courtyard() } onClick={ court }>Roman court</button>
+                <button enabled={ props.Ready() && props.Courtyard() } onClick={ gallery }>Gallery</button>
+                <button enabled={ props.Ready() } onClick={ props.Reload }>Reload</button>
+                <button onClick={ inspect }>Inspect</button>
+            </panel>
+            if details {
+                <panel class="diagnostics"><label class="pose">{ props.Pose() }</label></panel>
+            }
+        </panel>
+        if !details {
+        <panel class="footer">
+        <panel class="dock">
+            <panel class="row">
+                <button enabled={ props.Ready() && props.Isometric() } onClick={ fps }>FPS</button>
+                <button enabled={ props.Ready() && !props.Isometric() } onClick={ iso }>Isometric</button>
+                <button onClick={ props.Hide }>Hide</button>
+            </panel>
+            <panel class="row">
+                <button enabled={ props.Ready() && props.Output() != 1 } onClick={ full }>Full</button>
+                <button enabled={ props.Ready() && props.Output() != 2 } onClick={ albedo }>Albedo</button>
+                <button enabled={ props.Ready() && props.Output() != 3 } onClick={ normal }>Normal</button>
+                <button enabled={ props.Ready() && props.Output() != 4 } onClick={ depth }>Depth</button>
+            </panel>
+            <panel class="row">
+                <button enabled={ props.Ready() } onClick={ left }>←</button>
+                <button enabled={ props.Ready() } onClick={ back }>↓</button>
+                <button enabled={ props.Ready() } onClick={ forward }>↑</button>
+                <button enabled={ props.Ready() } onClick={ right }>→</button>
+            </panel>
+                <panel class="row">
+                    <button enabled={ props.Ready() } onClick={ orbitLeft }>←</button>
+                    <button enabled={ props.Ready() && !props.Isometric() } onClick={ lookDown }>↓</button>
+                    <button class="stop" enabled={ props.Moving() } onClick={ props.Stop }>■</button>
+                    <button enabled={ props.Ready() && !props.Isometric() } onClick={ lookUp }>↑</button>
+                    <button enabled={ props.Ready() } onClick={ orbitRight }>→</button>
+                </panel>
+        </panel>
+        <panel class="safe-area" />
+        </panel>
+        }
+    </panel>
+}
+
+style {
+    .screen { background: #00000000; padding: 12; gap: 8; align-items: stretch; justify-content: space-between; }
+    .toolbar { background: #151b1ce8; padding: 8; gap: 6; align-items: stretch; }
+    .status { color: #edf1eaff; font-size: 16; }
+    .row { flex-direction: row; gap: 6; align-items: stretch; }
+    .dock { background: #151b1ce8; padding: 8; gap: 6; align-items: stretch; max-width: 460; }
+    .footer { align-items: stretch; gap: 0; }
+    .safe-area { min-height: 56; max-height: 56; }
+    .diagnostics { overflow: scroll; max-height: 124; min-height: 80; }
+    .pose { color: #acccbdff; font-size: 12; font-family: mono; }
+    button { background: #344247ff; color: #f1f4efff; min-height: 44; font-size: 16; flex-grow: 1; }
+    button:hover { background: #496161ff; }
+    button:focus { background: #507561ff; }
+    button:pressed { background: #215246ff; }
+    button:disabled { background: #26302cff; color: #92ab9bff; }
+    .stop { background: #853e47ff; }
+    @media (max-width: 600) {
+        .screen { padding: 8; }
+        .toolbar { padding: 6; }
+        .dock { max-width: 600; }
+        button { font-size: 14; }
+        .pose { font-size: 10; }
+    }
+}

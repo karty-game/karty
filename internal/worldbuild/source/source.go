@@ -46,6 +46,7 @@ type Room struct {
 	Floor, Ceiling                 worldsource.Plane
 	FloorMaterial, CeilingMaterial string
 	Contents                       []Content
+	FloorUV, CeilingUV, WallUV     *worldsource.UVSettings
 }
 
 type Endpoint struct{ Room, Edge string }
@@ -60,6 +61,13 @@ type Connection struct {
 type Expanded struct {
 	Rooms       []Room
 	Connections []Connection
+	// Lighting retains authored global coordinates and order independently of
+	// prefab expansion. Its payload and light slice belong to this result.
+	Lighting *sdkworld.Lighting
+	// UV is nil for released source versions; v5 owns complete effective settings.
+	UV       *worldsource.UVSettings
+	Solids   []worldsource.Solid
+	Contents []Content
 }
 
 type affine struct {
@@ -70,6 +78,8 @@ type scopeResult struct {
 	rooms       []Room
 	connections []Connection
 	ports       map[string]Endpoint
+	solids      []worldsource.Solid
+	contents    []Content
 }
 
 type expander struct {
@@ -127,7 +137,7 @@ func Decode(contents []byte) (Expanded, error) {
 	}
 
 	result, err := (&expander{prefabs: prefabs}).expandScope(
-		"", document.Rooms, document.Instances, document.Connections, nil,
+		"", document.Rooms, document.Instances, document.Connections, nil, document.Solids, document.Contents,
 		affine{scale: 1}, func(value string) string { return value },
 		nil,
 	)
@@ -135,11 +145,55 @@ func Decode(contents []byte) (Expanded, error) {
 		return Expanded{}, err
 	}
 	if len(result.rooms) == 0 || len(result.rooms) > sdkworld.MaxSectors ||
-		len(result.connections) > worldsource.MaxConnections {
+		len(
+			result.connections,
+		) > worldsource.MaxConnections || len(result.solids) > sdkworld.MaxStaticSolids || len(result.contents) > sdkworld.MaxContents {
 		return Expanded{}, fmt.Errorf("expanded rooms or connections exceed runtime bounds: %w", ErrExpansion)
 	}
 
-	return Expanded{Rooms: result.rooms, Connections: result.connections}, nil
+	expanded := Expanded{Rooms: result.rooms, Connections: result.connections, Solids: result.solids, Contents: result.contents}
+	if document.Lighting != nil {
+		expanded.Lighting = &sdkworld.Lighting{
+			Version: document.Lighting.Version, Ambient: sdkworld.Vec3(document.Lighting.Ambient),
+			Lights: make([]sdkworld.PointLight, len(document.Lighting.Lights)), Actors: document.Lighting.Actors,
+		}
+		if cube := document.Lighting.AmbientCube; cube != nil {
+			expanded.Lighting.AmbientCube = &sdkworld.AmbientCube{
+				PositiveX: sdkworld.Vec3(cube.PositiveX),
+				NegativeX: sdkworld.Vec3(cube.NegativeX),
+				PositiveY: sdkworld.Vec3(cube.PositiveY),
+				NegativeY: sdkworld.Vec3(cube.NegativeY),
+				PositiveZ: sdkworld.Vec3(cube.PositiveZ),
+				NegativeZ: sdkworld.Vec3(cube.NegativeZ),
+			}
+		}
+		for index, light := range document.Lighting.Lights {
+			expanded.Lighting.Lights[index] = sdkworld.PointLight{
+				ID: light.ID, Position: sdkworld.Vec3(light.Position),
+				Color: sdkworld.Vec3(light.Color), Radius: light.Radius,
+			}
+			if motion := light.Motion; motion != nil {
+				expanded.Lighting.Lights[index].Motion = &sdkworld.LightMotion{
+					Version:       motion.Version,
+					Offset:        sdkworld.Vec3(motion.Offset),
+					PeriodSeconds: motion.PeriodSeconds,
+				}
+			}
+		}
+	}
+
+	contentCount := len(expanded.Contents)
+	for _, room := range expanded.Rooms {
+		contentCount += len(room.Contents)
+	}
+	if contentCount > sdkworld.MaxContents {
+		return Expanded{}, ErrExpansion
+	}
+	if document.Version >= worldsource.MappingVersion {
+		expandMaterialUV(&expanded, document.UV)
+	}
+
+	return expanded, nil
 }
 
 func rejectAliases(contents []byte) error {
@@ -162,7 +216,11 @@ func rejectAliases(contents []byte) error {
 		return nil
 	}
 
-	return visit(&document)
+	if err := visit(&document); err != nil {
+		return err
+	}
+
+	return validateExtrasPresence(&document)
 }
 
 func confinedPath(root, relative string) (string, error) {
@@ -197,6 +255,8 @@ func (builder *expander) expandScope(
 	instances []worldsource.Instance,
 	connections []worldsource.Connection,
 	ports []worldsource.Port,
+	solids []worldsource.Solid,
+	contents []worldsource.Content,
 	transform affine,
 	material func(string) string,
 	tagOverride []string,
@@ -205,6 +265,12 @@ func (builder *expander) expandScope(
 	direct := make(map[string]map[string]Endpoint, len(rooms))
 	nested := make(map[string]map[string]Endpoint, len(instances))
 
+	for _, solid := range solids {
+		result.solids = append(result.solids, transformSolid(solid, prefix, transform, material))
+	}
+	for _, content := range contents {
+		result.contents = append(result.contents, transformLooseContent(content, prefix, transform, material, tagOverride))
+	}
 	for _, authored := range rooms {
 		room := transformRoom(authored, prefix, transform, material, tagOverride)
 		if len(room.ID) > sdkworld.MaxIdentifierBytes {
@@ -231,40 +297,29 @@ func (builder *expander) expandScope(
 			instanceTags = instance.Tags
 		}
 		expanded, err := builder.expandScope(
-			instancePrefix, prefab.Rooms, prefab.Instances, prefab.Connections, prefab.Ports,
+			instancePrefix, prefab.Rooms, prefab.Instances, prefab.Connections, prefab.Ports, prefab.Solids, prefab.Contents,
 			instanceTransform, instanceMaterial, instanceTags,
 		)
 		if err != nil {
 			return scopeResult{}, err
 		}
+		if len(result.solids)+len(expanded.solids) > sdkworld.MaxStaticSolids ||
+			len(result.contents)+len(expanded.contents) > sdkworld.MaxContents {
+			return scopeResult{}, ErrExpansion
+		}
+		result.solids = append(result.solids, expanded.solids...)
+		result.contents = append(result.contents, expanded.contents...)
 		result.rooms = append(result.rooms, expanded.rooms...)
 		result.connections = append(result.connections, expanded.connections...)
 		nested[instance.ID] = expanded.ports
 	}
 
-	resolve := func(endpoint worldsource.Endpoint) (Endpoint, error) {
-		if endpoint.Room != "" {
-			resolved, ok := direct[endpoint.Room][endpoint.Edge]
-			if !ok {
-				return Endpoint{}, ErrExpansion
-			}
-
-			return resolved, nil
-		}
-		resolved, ok := nested[endpoint.Instance][endpoint.Port]
-		if !ok {
-			return Endpoint{}, ErrExpansion
-		}
-
-		return resolved, nil
-	}
-
 	for _, connection := range connections {
-		left, err := resolve(connection.A)
+		left, err := resolveScopeEndpoint(connection.A, direct, nested)
 		if err != nil {
 			return scopeResult{}, fmt.Errorf("connection %q endpoint a: %w", connection.ID, err)
 		}
-		right, err := resolve(connection.B)
+		right, err := resolveScopeEndpoint(connection.B, direct, nested)
 		if err != nil {
 			return scopeResult{}, fmt.Errorf("connection %q endpoint b: %w", connection.ID, err)
 		}
@@ -275,7 +330,7 @@ func (builder *expander) expandScope(
 	}
 
 	for _, port := range ports {
-		resolved, err := resolve(port.Endpoint)
+		resolved, err := resolveScopeEndpoint(port.Endpoint, direct, nested)
 		if err != nil {
 			return scopeResult{}, fmt.Errorf("port %q: %w", port.ID, err)
 		}
@@ -303,11 +358,12 @@ func transformRoom(
 		Floor:    transformPlane(authored.Floor, transform), Ceiling: transformPlane(authored.Ceiling, transform),
 		FloorMaterial: material(authored.FloorMaterial), CeilingMaterial: material(authored.CeilingMaterial),
 		Contents: make([]Content, len(authored.Contents)),
+		FloorUV:  authored.FloorUV, CeilingUV: authored.CeilingUV, WallUV: authored.WallUV,
 	}
 	for index, edge := range authored.Boundary {
 		room.Boundary[index] = worldsource.Edge{
 			ID: edge.ID, Start: transformPoint(edge.Start, transform), End: transformPoint(edge.End, transform),
-			Material: material(edge.Material),
+			Material: material(edge.Material), UV: edge.UV,
 		}
 	}
 	for index, content := range authored.Contents {
@@ -444,4 +500,21 @@ func snap(value float64) float64 {
 	}
 
 	return value
+}
+
+func resolveScopeEndpoint(endpoint worldsource.Endpoint, direct, nested map[string]map[string]Endpoint) (Endpoint, error) {
+	if endpoint.Room != "" {
+		resolved, ok := direct[endpoint.Room][endpoint.Edge]
+		if !ok {
+			return Endpoint{}, ErrExpansion
+		}
+
+		return resolved, nil
+	}
+	resolved, ok := nested[endpoint.Instance][endpoint.Port]
+	if !ok {
+		return Endpoint{}, ErrExpansion
+	}
+
+	return resolved, nil
 }

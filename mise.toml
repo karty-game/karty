@@ -10,7 +10,7 @@ lint = "mise run lint"
 test = "mise run test"
 
 [tasks.test]
-run = "go test ./..."
+run = ["go run ./cmd/karty-release --check", "go run ./cmd/karty-test-sdk", "go test ./..."]
 
 [tasks.build]
 run = "go build -o dist/karty ./cmd/karty"
@@ -49,6 +49,39 @@ run = "go run ./cmd/karty-check --allocations"
 [tasks.check-world-camera]
 run = "go run ./cmd/karty-check --world-camera"
 
+[tasks.check-renderer-debug-ui]
+description = "Check AA and lightmap browser controls, input isolation and mobile layout"
+run = "node internal/build/testdata/renderer-debug.test.mjs"
+
+[tasks.build-world-camera-web]
+depends = ["build"]
+dir = "samples/world-camera"
+run = "../../dist/karty build --target web"
+
+[tasks.serve-world-camera]
+dir = "samples/world-camera"
+run = "../../dist/karty serve"
+
+[tasks.prepare-world-camera-lighting]
+run = "go run ./scripts/world-camera-lighting"
+
+[tasks.build-world-camera-lighting]
+depends = ["build"]
+dir = "dist/world-camera-lighting"
+run = "../karty build --target web"
+
+[tasks.serve-world-camera-lighting]
+run = "dist/karty serve --dir dist/world-camera-lighting/dist/web"
+
+[tasks.check-materialize-software]
+description = "Generate real atlas maps using released Materialize and headless Mesa software OpenGL"
+env = { KARTY_TEST_MATERIALIZE_ATLAS = "1" }
+run = "go test ./internal/assetpipeline -run '^TestWorldMaterialReleaseAtlas$' -count=1 -v"
+
+[tasks.generate-world-camera-materials]
+description = "Regenerate the world-camera sample's authored albedo textures"
+run = "go run ./scripts/world-camera-materials"
+
 [tasks.lint]
 run = "golangci-lint run ./..."
 
@@ -65,3 +98,9 @@ run = "CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o dist/cli/linux-arm64/ka
 
 [tasks.check-video]
 run = "node scripts/check-video.mjs"
+
+[tasks.prepare-release]
+run = "go run ./cmd/karty-release"
+
+[tasks.check-release]
+run = "go run ./cmd/karty-release --check"

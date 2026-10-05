@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -13,7 +14,7 @@ import (
 func TestSyncDocsWritesPinnedReferenceAndProtectsOwnership(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +77,7 @@ func TestSyncDocsWritesPinnedReferenceAndProtectsOwnership(t *testing.T) {
 func TestSyncDocsIsIdempotentForTheCurrentSDK(t *testing.T) {
 	t.Parallel()
 
-	latest, err := sdk.Resolve("0.0.1")
+	latest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}

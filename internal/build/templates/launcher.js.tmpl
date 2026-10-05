@@ -80,7 +80,7 @@ let content = {};
 globalThis.kartyConfigureProject = (project, levels) => {
   content = levels || {};
   if (project?.name) {
-    document.title = project.name;
+    document.title = project.name + " - Powered by Karty";
     if (element("game-title")) element("game-title").textContent = project.name;
   }
 };

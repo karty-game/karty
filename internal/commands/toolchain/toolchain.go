@@ -37,14 +37,23 @@ func install(ctx context.Context, _ *cli.Command) error {
 		return err
 	}
 
-	paths, err := toolchainservice.Ensure(ctx, manifest, toolchainservice.EnsureOptions{
-		NeedGo: true, NeedTinyGo: true, NeedWasmTools: true, NeedAir: true,
-	})
+	paths, err := toolchainservice.Ensure(ctx, manifest, installOptions(manifest))
 	if err != nil {
 		return err
 	}
 
 	slog.Info("Karty toolchain installed", "go", paths.Go, "air", paths.Air, "tinygo", paths.TinyGo, "wasm-tools", paths.WasmTools)
 
+	if paths.Materialize != "" {
+		slog.Info("Materialize installed", "path", paths.Materialize)
+	}
+
 	return nil
+}
+
+func installOptions(manifest sdk.Manifest) toolchainservice.EnsureOptions {
+	return toolchainservice.EnsureOptions{
+		NeedGo: true, NeedTinyGo: true, NeedWasmTools: true, NeedAir: true,
+		NeedMaterialize: manifest.Tools.Materialize != "",
+	}
 }

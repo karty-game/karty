@@ -14,8 +14,6 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 45
-    env:
-      KARTY_TEST_SDK: "0.0.7"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -26,7 +24,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install --yes libgl1-mesa-dev xorg-dev xvfb
       - run: mise run build
       - name: Install the pinned public SDK
-        run: ./dist/karty sdk install "$KARTY_TEST_SDK"
+        run: ./dist/karty sdk install "$(./dist/karty sdk current)"
       - run: mise run install-browser
       - name: Validate the customer workflow against published hosts
         run: mise run check-integration

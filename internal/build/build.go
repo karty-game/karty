@@ -11,6 +11,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"html"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -52,13 +53,14 @@ const (
 
 // Options configures build tool overrides.
 type Options struct {
-	Go        string
-	TinyGo    string
-	WasmTools string
-	Host      string
-	Target    string
-	Platform  string
-	AirProxy  bool
+	Go            string
+	TinyGo        string
+	WasmTools     string
+	Host          string
+	Target        string
+	Platform      string
+	AirProxy      bool
+	rendererDebug bool
 }
 
 // Run validates a project and compiles its self-describing cartridges.
@@ -68,7 +70,7 @@ func Run(ctx context.Context, directory string) error {
 
 // RunWithOptions builds a project using its SDK-pinned toolchain.
 //
-//nolint:gocognit,gocyclo,maintidx,golines,wsl_v5 // This function intentionally keeps the transactional build sequence visible.
+//nolint:gocognit,gocyclo,maintidx,wsl_v5 // This function intentionally keeps the transactional build sequence visible.
 func RunWithOptions(ctx context.Context, directory string, options Options) error {
 	if options.Platform != "" {
 		if options.Target == "web" {
@@ -88,6 +90,8 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	if err != nil {
 		return err
 	}
+
+	options.rendererDebug = config.Project.Debug.Renderer
 
 	manifest, err := sdk.Resolve(config.SDK.Version)
 	if err != nil {
@@ -155,6 +159,11 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return fmt.Errorf("generate client API: %w", err)
 	}
 
+	generated["config/project.go"], err = projectConfigFile(config)
+	if err != nil {
+		return fmt.Errorf("generate project configuration: %w", err)
+	}
+
 	textureNames := make([]string, 0, len(config.Assets.Textures))
 	for _, texture := range config.Assets.Textures {
 		textureNames = append(textureNames, texture.Name)
@@ -167,12 +176,6 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 
 	generated["assets/textures.go"] = assetFile
-	if manifest.API.Version == "0.0.1" {
-		generated["engine/assets.go"], err = codegen.TextureAssetFile(textureNames)
-		if err != nil {
-			return fmt.Errorf("generate legacy typed assets: %w", err)
-		}
-	}
 
 	generated["assets/sounds.go"], err = soundAssetFile(config.Assets.Sounds, engineImport)
 	if err != nil {
@@ -190,7 +193,13 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		if err != nil {
 			return err
 		}
-		generated["assets/environments.go"], err = audioStreamAssetFile("EnvironmentID", "Environment", "environment", engineImport, config.Assets.Environments)
+		generated["assets/environments.go"], err = audioStreamAssetFile(
+			"EnvironmentID",
+			"Environment",
+			"environment",
+			engineImport,
+			config.Assets.Environments,
+		)
 		if err != nil {
 			return err
 		}
@@ -206,12 +215,6 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	generated["assets/ui.go"], err = codegen.UIAssetPackageFile(names, engineImport)
 	if err != nil {
 		return err
-	}
-	if manifest.API.Version == "0.0.1" {
-		generated["engine/ui-assets.go"], err = codegen.UIAssetFile(names)
-		if err != nil {
-			return err
-		}
 	}
 
 	views, err = project.CompileUI(
@@ -267,7 +270,13 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	if err != nil {
 		return err
 	}
-	assetReport.AudioStreams, err = assetpipeline.ProcessAudioStreams(ctx, directory, manifest, config.Assets.Music, config.Assets.Environments)
+	assetReport.AudioStreams, err = assetpipeline.ProcessAudioStreams(
+		ctx,
+		directory,
+		manifest,
+		config.Assets.Music,
+		config.Assets.Environments,
+	)
 	if err != nil {
 		return fmt.Errorf("process streaming audio: %w", err)
 	}
@@ -383,7 +392,9 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
-	if err := stageRequestedTarget(ctx, manifest, distributionDirectory, rawDirectory, artifact, levels, options); err != nil {
+	if err := stageRequestedTarget(
+		ctx, manifest, config.Project.Name, distributionDirectory, rawDirectory, artifact, levels, options,
+	); err != nil {
 		return err
 	}
 
@@ -403,7 +414,7 @@ func removeLegacyRawCatalog(rawDirectory string) error {
 }
 
 func stageRequestedTarget(
-	ctx context.Context, manifest sdk.Manifest,
+	ctx context.Context, manifest sdk.Manifest, gameTitle string,
 	distributionDirectory, rawDirectory, artifact string,
 	levels []levelbuild.Artifact,
 	options Options,
@@ -454,7 +465,7 @@ func stageRequestedTarget(
 
 	return stageTarget(
 		distributionDirectory, rawDirectory, artifact, levels,
-		options.Host, options.Target, webRuntime, options.Platform, options.AirProxy,
+		options.Host, options.Target, webRuntime, options.Platform, options.AirProxy, gameTitle, options.rendererDebug,
 	)
 }
 
@@ -993,7 +1004,7 @@ func stageTarget(
 	distributionDirectory, rawDirectory, clientArtifact string,
 	levels []levelbuild.Artifact,
 	hostArtifact, target, webRuntime, platform string,
-	airProxy bool,
+	airProxy bool, gameTitle string, rendererDebug bool,
 ) error {
 	if target == "" {
 		target = "native"
@@ -1010,6 +1021,14 @@ func stageTarget(
 
 	if target == "native" && hostArtifact == "" {
 		return errHostNotFile
+	}
+
+	if target == "native" {
+		if err := validateNativeHost(hostArtifact, platform); err != nil {
+			return err
+		}
+
+		hostMode = 0o755
 	}
 
 	targetDirectory := filepath.Join(distributionDirectory, target)
@@ -1052,7 +1071,7 @@ func stageTarget(
 			}
 		}
 
-		if err := stageWebShell(targetDirectory, webRuntime, airProxy); err != nil {
+		if err := stageWebShell(targetDirectory, webRuntime, airProxy, gameTitle, rendererDebug); err != nil {
 			return err
 		}
 	}
@@ -1382,7 +1401,7 @@ func writeAssetReport(buildDirectory string, report assetpipeline.Report) error 
 	return nil
 }
 
-func stageWebShell(targetDirectory, wasmExec string, airProxy bool) error {
+func stageWebShell(targetDirectory, wasmExec string, airProxy bool, gameTitle string, rendererDebug bool) error {
 	if err := copyFile(wasmExec, filepath.Join(targetDirectory, "wasm_exec.js"), 0o600); err != nil {
 		return fmt.Errorf("stage wasm_exec.js: %w", err)
 	}
@@ -1436,7 +1455,14 @@ func stageWebShell(targetDirectory, wasmExec string, airProxy bool) error {
 			"  </script>"
 	}
 
+	debugScripts, err := stageRendererDebugShell(targetDirectory, rendererDebug)
+	if err != nil {
+		return err
+	}
+
 	index := strings.NewReplacer(
+		"@@GAME_TITLE@@", html.EscapeString(gameTitle),
+		"@@RENDERER_DEBUG@@", debugScripts,
 		"@@LAUNCHER_HASH@@", launcherHash,
 		"@@RUNTIME_HASH@@", runtimeHash,
 		"@@AIR_PROXY_BOOTSTRAP@@", airProxyBootstrap,

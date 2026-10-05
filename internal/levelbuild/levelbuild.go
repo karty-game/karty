@@ -22,13 +22,12 @@ import (
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty-sdk/format/level"
 	sdkworld "github.com/karty-game/karty-sdk/format/world"
-	"github.com/karty-game/karty-ui/compiler"
-	"github.com/karty-game/karty-ui/schema"
+	"github.com/karty-game/karty-sdk/format/worldmaterial"
+	uicompiler "github.com/karty-game/karty-ui/compiler"
+	ui "github.com/karty-game/karty-ui/schema"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
-	worldgeometry "github.com/karty-game/karty/internal/worldbuild/geometry"
-	worldsource "github.com/karty-game/karty/internal/worldbuild/source"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -46,11 +45,12 @@ type manifest struct {
 		Kind     string `toml:"kind"`
 		Metadata string `toml:"metadata"`
 	} `toml:"level"`
-	Data     []dataEntry    `toml:"data"`
-	World    dataEntry      `toml:"world"`
-	Textures []textureEntry `toml:"textures"`
-	UI       []dataEntry    `toml:"ui"`
-	Theme    dataEntry      `toml:"theme"`
+	Data     []dataEntry            `toml:"data"`
+	World    dataEntry              `toml:"world"`
+	Lightmap *lightmapBuildSettings `toml:"lightmap"`
+	Textures []textureEntry         `toml:"textures"`
+	UI       []dataEntry            `toml:"ui"`
+	Theme    dataEntry              `toml:"theme"`
 }
 
 type dataEntry struct {
@@ -59,10 +59,11 @@ type dataEntry struct {
 }
 
 type textureEntry struct {
-	Name      string           `toml:"name"`
-	Source    string           `toml:"source"`
-	Profile   string           `toml:"profile"`
-	Transform textureTransform `toml:"transform"`
+	Name              string             `toml:"name"`
+	Source            string             `toml:"source"`
+	Profile           string             `toml:"profile"`
+	Transform         textureTransform   `toml:"transform"`
+	MaterialStrengths *materialStrengths `toml:"material_strengths"`
 }
 
 type textureTransform struct {
@@ -103,6 +104,9 @@ type Artifact struct {
 type assetBuild struct {
 	projectRoot string
 	manifest    sdk.Manifest
+	// Tests may supply fixture atlas bytes; public builds always use the managed
+	// Go asset processor, including the shared dev/cache path.
+	materials func(context.Context, string, sdk.Manifest, sdkworld.Document, map[uint32][]byte) (worldmaterial.Pair, assetpipeline.Artifact, error)
 }
 
 // BuildAll discovers levels/*/level.toml and builds them in logical-name order.
@@ -222,6 +226,14 @@ func build(
 		return Artifact{}, fmt.Errorf("%s: %w", manifestPath, ErrManifest)
 	}
 
+	if err := validateMaterialStrengths(definition, assets); err != nil {
+		return Artifact{}, err
+	}
+
+	if err := validateLightmapSettings(definition, assets); err != nil {
+		return Artifact{}, err
+	}
+
 	textures, textureMetadata, processedTextures, features, err := loadTextures(ctx, directory, definition.Textures, assets)
 	if err != nil {
 		return Artifact{}, err
@@ -238,28 +250,14 @@ func build(
 	}
 
 	if definition.World.Source != "" {
-		expanded, sourceErr := worldsource.Load(directory, definition.World.Source)
-		if sourceErr != nil {
-			return Artifact{}, fmt.Errorf("compile level %q world source: %w", definition.Level.Name, sourceErr)
+		atlas, materialErr := compileWorldAssets(ctx, directory, definition, textureMetadata, textures, data, metadata, assets)
+		if materialErr != nil {
+			return Artifact{}, materialErr
 		}
 
-		materials := make(map[string]uint32, len(textureMetadata))
-		for _, texture := range textureMetadata {
-			materials[texture.Name] = texture.ID
-		}
-
-		compiled, compileErr := worldgeometry.Compile(expanded, materials)
-		if compileErr != nil {
-			return Artifact{}, fmt.Errorf("compile level %q world geometry: %w", definition.Level.Name, compileErr)
-		}
-
-		encoded, encodeErr := sdkworld.Encode(compiled)
-		if encodeErr != nil {
-			return Artifact{}, fmt.Errorf("encode level %q world: %w", definition.Level.Name, encodeErr)
-		}
-
-		data = append(data, level.SourceEntry{Name: sdkworld.EntryName, Kind: level.EntryData, Data: encoded})
-		features = append(features, sdkworld.Feature)
+		data, metadata = atlas.data, atlas.metadata
+		processedTextures = append(processedTextures, atlas.textures...)
+		features = append(features, atlas.features...)
 		slices.Sort(features)
 		features = slices.Compact(features)
 	}
@@ -376,6 +374,12 @@ func loadMetadata(directory string, definition manifest, textures []metadataText
 		if err := json.Unmarshal(contents, &metadata); err != nil {
 			return nil, fmt.Errorf("parse level metadata: %w", err)
 		}
+
+		if metadata == nil {
+			return nil, ErrManifest
+		}
+		// Only the selected SDK's build pipeline may declare an atlas contract.
+		delete(metadata, worldmaterial.MetadataKey)
 
 		metadata["kartyTextures"] = textures
 		metadata["kartyLevel"] = identity
@@ -501,7 +505,6 @@ func loadProcessedTexture(
 	processed, err := assetpipeline.ProcessTexture(
 		ctx,
 		assets.projectRoot,
-		assets.manifest.Version,
 		profile,
 		project.Texture{
 			Name: entry.Name, Source: filepath.ToSlash(relativeSource), Profile: profileName,
@@ -549,6 +552,11 @@ func loadData(directory string, entries []dataEntry) ([]level.SourceEntry, error
 	for _, entry := range entries {
 		if entry.Name == "" || entry.Source == "" || !utf8.ValidString(entry.Name) {
 			return nil, ErrSource
+		}
+
+		if entry.Name == worldmaterial.LayoutEntry || entry.Name == worldmaterial.AlbedoEntry || entry.Name == worldmaterial.DataEntry ||
+			entry.Name == worldmaterial.MipTailEntry {
+			return nil, fmt.Errorf("data %q is owned by the world material processor: %w", entry.Name, ErrSource)
 		}
 
 		if _, exists := seen[entry.Name]; exists {

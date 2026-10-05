@@ -1,66 +1,44 @@
 package sdk_test
 
 import (
+	"slices"
 	"testing"
 
+	"github.com/karty-game/karty-sdk/format/asset"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
 func TestResolve(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatalf("Resolve() error = %v", err)
+	}
+
+	if manifest.Version != release.SDKVersion() || manifest.Host.Version != release.SDKVersion() {
+		t.Fatalf("current SDK resolved unexpected versions: %+v", manifest)
 	}
 
 	if manifest.Templates.Game != "0.0.1" {
 		t.Errorf("game template = %q, want %q", manifest.Templates.Game, "0.0.1")
 	}
 
-	for _, profile := range []string{"sprite", "interface", "environment"} {
-		if processor := manifest.Assets.TextureProfiles[profile].Processor; processor != "copy-png@1" {
-			t.Errorf("texture profile %q processor = %q, want copy-png@1", profile, processor)
+	for _, capability := range []asset.Capability{
+		asset.CapabilityWorldMaterialAtlasV1, asset.CapabilityWorldMaterialMappingV1,
+		asset.CapabilityWorldLightingV1, asset.CapabilityWorldStaticSolidsV1,
+		asset.CapabilityWorldLightmapsV1, asset.CapabilityWorldLightmapsPrebakedV1,
+	} {
+		if !slices.Contains(manifest.Assets.Capabilities.Runtime, capability) {
+			t.Errorf("released default SDK omits %s", capability)
 		}
 	}
-}
 
-func TestResolveControlTransitionSDK(t *testing.T) {
-	t.Parallel()
-
-	manifest, err := sdk.Resolve("0.0.1")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if manifest.API.Version != "0.0.1" || manifest.Host.Version != "0.0.1" {
-		t.Fatalf("transition SDK resolved incompatible versions: %+v", manifest)
-	}
-}
-
-func TestResolveTextAlignmentSDK(t *testing.T) {
-	t.Parallel()
-
-	manifest, err := sdk.Resolve("0.0.1")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if manifest.API.Version != "0.0.1" || manifest.Host.Version != "0.0.1" {
-		t.Fatalf("visual-hierarchy SDK resolved incompatible versions: %+v", manifest)
-	}
-}
-
-func TestResolveInteractionPolishSDK(t *testing.T) {
-	t.Parallel()
-
-	manifest, err := sdk.Resolve("0.0.1")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if manifest.API.Version != "0.0.1" || manifest.Host.Version != "0.0.1" || manifest.Docs.Version != "0.0.1" {
-		t.Fatalf("interaction-polish SDK resolved incompatible versions: %+v", manifest)
+	for _, profile := range []string{"sprite", "interface", "environment"} {
+		if processor := manifest.Assets.TextureProfiles[profile].Processor; processor != "qoi@1" {
+			t.Errorf("texture profile %q processor = %q, want qoi@1", profile, processor)
+		}
 	}
 }
 

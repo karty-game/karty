@@ -98,6 +98,10 @@ try {
     await activate(4);
     await page.waitForFunction(() => Object.values(uiObserved.nodes).some(values=>Object.values(values).some(text=>text.includes("used 1 times"))));
     await page.waitForFunction(() => Object.values(uiObserved.nodes).some(values=>Object.values(values).some(text=>text.includes("2 left"))));
+    // Exercise the inventory through actual UI action events and command batches.
+    await activate();
+    await page.waitForFunction(() => Object.values(uiObserved.nodes).some(values=>Object.values(values).some(text=>text.includes("used 2 times"))));
+    await page.waitForFunction(() => Object.values(uiObserved.nodes).some(values=>Object.values(values).some(text=>text.includes("1 left"))));
     const before = await page.evaluate(()=>uiObserved.commands);
     const frame = await page.locator("html").getAttribute("data-karty-frame");
     await page.waitForFunction(frame=>BigInt(document.documentElement.dataset.kartyFrame)>BigInt(frame)+10n,frame);
@@ -107,6 +111,7 @@ try {
     await activate(1);
     await page.waitForFunction(() => uiObserved.asset==="ui.inventory");
     await page.waitForFunction(() => Object.values(uiObserved.nodes).some(values=>Object.values(values).some(text=>text.includes("used 0 times"))));
+    await page.waitForFunction(() => Object.values(uiObserved.nodes).some(values=>Object.values(values).some(text=>text.includes("1 left"))));
     await activate();
     await page.waitForFunction(() => uiObserved.asset==="ui.pause");
     await activate(2);

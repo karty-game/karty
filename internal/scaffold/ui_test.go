@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
 )
@@ -13,7 +14,7 @@ import (
 func TestUITemplate(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +38,7 @@ func TestUITemplate(t *testing.T) {
 func TestCompositionUITemplate(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +62,7 @@ func TestCompositionUITemplate(t *testing.T) {
 func TestStyledUITemplate(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +87,7 @@ func TestStyledUITemplate(t *testing.T) {
 func TestImageThemeSDKUsesCompatibleStyledStarter(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +98,7 @@ func TestImageThemeSDKUsesCompatibleStyledStarter(t *testing.T) {
 	}
 
 	config, err := os.ReadFile(filepath.Join(directory, "karty.toml"))
-	if err != nil || !strings.Contains(string(config), `version = "0.0.1"`) {
+	if err != nil || !strings.Contains(string(config), `version = "`+release.SDKVersion()+`"`) {
 		t.Fatalf("SDK 0.6 starter config = %s, error = %v", config, err)
 	}
 
@@ -109,7 +110,7 @@ func TestImageThemeSDKUsesCompatibleStyledStarter(t *testing.T) {
 func TestLayoutSDKUsesCompatibleStarter(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,7 +121,7 @@ func TestLayoutSDKUsesCompatibleStarter(t *testing.T) {
 	}
 
 	config, err := os.ReadFile(filepath.Join(directory, "karty.toml"))
-	if err != nil || !strings.Contains(string(config), `version = "0.0.1"`) {
+	if err != nil || !strings.Contains(string(config), `version = "`+release.SDKVersion()+`"`) {
 		t.Fatalf("SDK 0.7 starter config = %s, error = %v", config, err)
 	}
 
@@ -132,7 +133,7 @@ func TestLayoutSDKUsesCompatibleStarter(t *testing.T) {
 func TestRecentPresentationSDKsUseCompatibleStarter(t *testing.T) {
 	t.Parallel()
 
-	for _, version := range []string{"0.0.1", "0.0.1", "0.0.1"} {
+	for _, version := range []string{release.SDKVersion()} {
 		manifest, err := sdk.Resolve(version)
 		if err != nil {
 			t.Fatal(err)
@@ -155,11 +156,11 @@ func TestRecentPresentationSDKsUseCompatibleStarter(t *testing.T) {
 		docsPath := filepath.Join(directory, ".karty", "docs", "README.md")
 
 		_, docsErr := os.Stat(docsPath)
-		if version == "0.0.1" && docsErr != nil {
+		if version == release.SDKVersion() && docsErr != nil {
 			t.Fatalf("SDK %s reference missing: %v", version, docsErr)
 		}
 
-		if version != "0.0.1" && !os.IsNotExist(docsErr) {
+		if version != release.SDKVersion() && !os.IsNotExist(docsErr) {
 			t.Fatalf("SDK %s unexpectedly wrote latest reference: %v", version, docsErr)
 		}
 	}

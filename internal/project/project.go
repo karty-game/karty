@@ -50,6 +50,10 @@ type Config struct {
 			Width  int `koanf:"width"`
 			Height int `koanf:"height"`
 		} `koanf:"resolution"`
+		Camera CameraConfig `koanf:"camera"`
+		Debug  struct {
+			Renderer bool `koanf:"renderer"`
+		} `koanf:"debug"`
 	} `koanf:"project"`
 	SDK struct {
 		Version string `koanf:"version"`
@@ -188,6 +192,10 @@ func Load(directory string) (Config, error) {
 
 	if config.Project.Resolution.Width < 1 || config.Project.Resolution.Height < 1 {
 		return Config{}, fmt.Errorf("%s: %w", path, errInvalidResolution)
+	}
+
+	if err := loadCameraConfig(&config, configFile); err != nil {
+		return Config{}, fmt.Errorf("%s: %w", path, err)
 	}
 
 	seenVideos := make(map[string]bool)

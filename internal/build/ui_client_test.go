@@ -55,6 +55,26 @@ func TestUIClientStagingOwnership(t *testing.T) {
 		t.Fatal("private staging directory survived cleanup")
 	}
 
+	repeated, repeatedCleanup, err := stageUIClient(root, "example.com/demo", []uicompiler.Component{view})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if repeated != stage {
+		t.Fatalf("identical inputs changed staging path: %s / %s", stage, repeated)
+	}
+
+	if _, _, err := stageUIClient(root, "example.com/demo", []uicompiler.Component{view}); err == nil {
+		t.Fatal("concurrent staging reused an occupied directory")
+	}
+
+	data, err = os.ReadFile(filepath.Join(repeated, "main.go"))
+	if err != nil || !strings.Contains(string(data), "func main(){}") {
+		t.Fatal("occupied stage was modified")
+	}
+
+	repeatedCleanup()
+
 	if err := os.Symlink(filepath.Join(src, "main.go"), filepath.Join(src, "link.go")); err != nil {
 		t.Fatal(err)
 	}

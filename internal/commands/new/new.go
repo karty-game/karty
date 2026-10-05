@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/toolchain"
@@ -28,7 +29,7 @@ func Command() *cli.Command {
 		Usage:     "create a game project",
 		ArgsUsage: "<name>",
 		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "sdk", Value: "0.0.7", Usage: "exact Karty SDK version"},
+			&cli.StringFlag{Name: "sdk", Value: release.SDKVersion(), Usage: "exact Karty SDK version"},
 			&cli.StringFlag{Name: "template", Value: "game", Usage: "project template: game or ui"},
 		},
 		Action: run,

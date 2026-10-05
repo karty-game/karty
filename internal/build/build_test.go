@@ -2,6 +2,7 @@ package build_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty/internal/build"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
 )
@@ -18,7 +20,7 @@ func TestRunBuildsSelfDescribingClient(t *testing.T) {
 	t.Parallel()
 	directory := filepath.Join(t.TempDir(), "pong")
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,14 +45,14 @@ func TestRunBuildsSelfDescribingClient(t *testing.T) {
 		t.Fatalf("Run() error = %v", runErr)
 	}
 
-	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/engine/assets.go", ".karty/assets/textures.go", "dist/raw/game.kart", "dist/raw/asset-report.json"} {
+	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/assets/textures.go", "dist/raw/game.kart", "dist/raw/asset-report.json"} {
 		if _, statErr := os.Stat(filepath.Join(directory, path)); statErr != nil {
 			t.Errorf("generated %s: %v", path, statErr)
 		}
 	}
 
 	assertAssetMetadata(t, filepath.Join(directory, "dist", "raw"))
-	assertUnusedTextureStripped(t, filepath.Join(directory, "dist", "raw"))
+	assertUnusedTextureStripped(t, filepath.Join(directory, "dist", "raw"), 2)
 	assertDistributionRootContainsOnlyDirectories(t, filepath.Join(directory, "dist"))
 	assertNoCatalog(t, filepath.Join(directory, "dist", "raw"))
 }
@@ -60,7 +62,7 @@ func TestRunBuildsAndStagesLevelCartridges(t *testing.T) {
 
 	directory := filepath.Join(t.TempDir(), "pong")
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,10 +87,7 @@ func TestRunBuildsAndStagesLevelCartridges(t *testing.T) {
 
 	tinyGo, wasmTools := buildTools(t)
 
-	host := filepath.Join(t.TempDir(), "karty-host")
-	if err := os.WriteFile(host, []byte("host"), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	host := nativeHostFixture(t)
 
 	if err := build.RunWithOptions(t.Context(), directory, build.Options{
 		TinyGo: tinyGo, WasmTools: wasmTools, Host: host, Target: "native",
@@ -159,7 +158,7 @@ profile = "sprite"
 	}
 }
 
-func assertUnusedTextureStripped(t *testing.T, distribution string) {
+func assertUnusedTextureStripped(t *testing.T, distribution string, count int) {
 	t.Helper()
 
 	contents, err := os.ReadFile(filepath.Join(distribution, "asset-report.json"))
@@ -168,7 +167,7 @@ func assertUnusedTextureStripped(t *testing.T, distribution string) {
 	}
 
 	for _, expected := range []string{
-		`"strippedTextureCount": 1`,
+		fmt.Sprintf(`"strippedTextureCount": %d`, count),
 		`"name": "sprites.unused"`,
 		`"status": "stripped"`,
 	} {
@@ -206,7 +205,7 @@ func TestRunStagesNativeTarget(t *testing.T) {
 	t.Parallel()
 	directory := filepath.Join(t.TempDir(), "pong")
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,10 +216,7 @@ func TestRunStagesNativeTarget(t *testing.T) {
 
 	tinyGo, wasmTools := buildTools(t)
 
-	host := filepath.Join(t.TempDir(), "karty-host")
-	if err := os.WriteFile(host, []byte("host"), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	host := nativeHostFixture(t)
 
 	err = build.RunWithOptions(context.Background(), directory, build.Options{
 		TinyGo:    tinyGo,
@@ -246,7 +242,7 @@ func TestRunStagesWebTarget(t *testing.T) {
 	t.Parallel()
 	directory := filepath.Join(t.TempDir(), "pong")
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -361,7 +357,7 @@ func TestRunRemovesStaleStrippedTextureOutput(t *testing.T) {
 
 	directory := filepath.Join(t.TempDir(), "pong")
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -399,7 +395,7 @@ var retainedTexture = engine.DynamicTexture("sprites.unused")
 		t.Fatal(err)
 	}
 
-	assertUnusedTextureStripped(t, filepath.Join(directory, "dist", "raw"))
+	assertUnusedTextureStripped(t, filepath.Join(directory, "dist", "raw"), 1)
 }
 
 func TestRunRetainsExplicitlyKeptTexture(t *testing.T) {
@@ -407,7 +403,7 @@ func TestRunRetainsExplicitlyKeptTexture(t *testing.T) {
 
 	directory := filepath.Join(t.TempDir(), "pong")
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -459,7 +455,7 @@ func assertAssetMetadata(t *testing.T, distribution string) {
 	assertGeneratedJSONNotice(t, "asset report", contents)
 
 	for _, expected := range []string{
-		`"processor": "copy-png@1"`,
+		`"processor": "qoi@1"`,
 		`"estimatedDecodedBytes"`,
 	} {
 		if !strings.Contains(string(contents), expected) {

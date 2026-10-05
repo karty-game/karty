@@ -4,31 +4,35 @@ import (
 	"archive/zip"
 	"bytes"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/karty-game/karty/internal/release"
 )
 
 func TestBundleInstallIsImmutableAndOffline(t *testing.T) {
-	t.Setenv("KARTY_HOME", t.TempDir())
-
-	data, err := bootstrap.ReadFile("bootstrap/sdk-0.0.1.zip")
+	data, err := currentTestBundle(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	t.Setenv("KARTY_HOME", t.TempDir())
+
 	hash := fmt.Sprintf("%x", sha256.Sum256(data))
-	if err = InstallBundle("0.0.1", data, hash); err != nil {
+	if err = InstallBundle(release.SDKVersion(), data, hash); err != nil {
 		t.Fatal(err)
 	}
 
-	if err = InstallBundle("0.0.1", data, hash); err != nil {
+	if err = InstallBundle(release.SDKVersion(), data, hash); err != nil {
 		t.Fatal(err)
 	}
 
-	manifest, err := Resolve("0.0.1")
+	manifest, err := Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,16 +44,16 @@ func TestBundleInstallIsImmutableAndOffline(t *testing.T) {
 		}
 	}
 
-	if err = InstallBundle("0.0.1", data, "0000000000000000000000000000000000000000000000000000000000000000"); err == nil {
+	if err = InstallBundle(release.SDKVersion(), data, "0000000000000000000000000000000000000000000000000000000000000000"); err == nil {
 		t.Fatal("checksum mismatch accepted")
 	}
 
 	cache, _ := sdkCache()
-	if err = os.WriteFile(filepath.Join(cache, "0.0.1", "sdk.zip"), []byte("corrupt"), 0600); err != nil {
+	if err = os.WriteFile(filepath.Join(cache, release.SDKVersion(), "sdk.zip"), []byte("corrupt"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err = Resolve("0.0.1"); err == nil {
+	if _, err = Resolve(release.SDKVersion()); err == nil {
 		t.Fatal("corrupted cache accepted")
 	}
 }
@@ -58,8 +62,15 @@ func TestBundleInstallIsImmutableAndOffline(t *testing.T) {
 func TestBundleRejectsUnsafeEntriesAndIncompatibleMetadata(t *testing.T) {
 	t.Parallel()
 
-	original, _ := bootstrap.ReadFile("bootstrap/sdk-0.0.1.zip")
-	archive, _ := zip.NewReader(bytes.NewReader(original), int64(len(original)))
+	original, err := currentTestBundle(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	archive, err := zip.NewReader(bytes.NewReader(original), int64(len(original)))
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, kind := range []string{"traversal", "absolute", "backslash", "duplicate", "symlink", "format", "schema", "generator", "version", "missing"} {
 		t.Run(kind, func(t *testing.T) {
@@ -87,7 +98,7 @@ func TestBundleRejectsUnsafeEntriesAndIncompatibleMetadata(t *testing.T) {
 				}
 
 				if file.Name == "manifest.toml" && kind == "version" {
-					data = bytes.Replace(data, []byte("version = '0.0.1'"), []byte("version = '9.9.9'"), 1)
+					data = bytes.Replace(data, []byte("version = '"+release.SDKVersion()+"'"), []byte("version = '9.9.9'"), 1)
 				}
 
 				writer, _ := out.Create(file.Name)
@@ -117,7 +128,7 @@ func TestBundleRejectsUnsafeEntriesAndIncompatibleMetadata(t *testing.T) {
 
 			out.Close()
 
-			if _, err := readBundle("0.0.1", buffer.Bytes()); err == nil {
+			if _, err := readBundle(release.SDKVersion(), buffer.Bytes()); err == nil {
 				t.Fatal("invalid bundle accepted")
 			}
 		})
@@ -130,5 +141,14 @@ func TestBundleVersionConfinement(t *testing.T) {
 		if _, err := Resolve(version); err == nil {
 			t.Fatalf("accepted %q", version)
 		}
+	}
+}
+
+func TestResolveRequiresInstalledSDK(t *testing.T) {
+	t.Setenv("KARTY_HOME", t.TempDir())
+
+	_, err := Resolve(release.SDKVersion())
+	if !errors.Is(err, os.ErrNotExist) || !strings.Contains(err.Error(), "karty sdk install "+release.SDKVersion()) {
+		t.Fatalf("missing SDK error=%v, want installation instructions", err)
 	}
 }

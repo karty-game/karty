@@ -12,6 +12,7 @@ import (
 	"runtime"
 
 	"github.com/karty-game/karty/internal/build"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/toolchain"
@@ -197,5 +198,5 @@ func testSDKVersion() string {
 		return version
 	}
 
-	return "0.0.7"
+	return release.SDKVersion()
 }

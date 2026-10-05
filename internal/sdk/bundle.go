@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"embed"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -22,51 +21,45 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-// Bootstrap is an engine-produced public artifact, not an engine source dependency.
-//
-//go:embed bootstrap/*.zip
-var bootstrap embed.FS
 var versionPattern = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$`)
 
 const maxBundleBytes = 32 << 20
 const bundleTimeout = 2 * time.Minute
 
-// Resolve uses an exact installed SDK, then the bundled migration baseline.
+// Resolve uses only the exact installed, checksummed SDK.
 // Install published versions explicitly with `karty sdk install VERSION`.
-//
-//nolint:nestif // Cache verification precedes the trusted bootstrap fallback.
+
 func Resolve(version string) (Manifest, error) {
-	if !versionPattern.MatchString(version) {
-		return Manifest{}, bundleError("invalid SDK version %q", version)
+	if err := validateVersion(version); err != nil {
+		return Manifest{}, err
 	}
 
-	if root, err := sdkCache(); err == nil {
-		data, err := readBundleFile(filepath.Join(root, version, "sdk.zip"))
-		if err == nil {
-			hash, err := os.ReadFile(filepath.Join(root, version, "sha256"))
-			if err != nil {
-				return Manifest{}, err
-			}
-
-			if err := verifyBundleHash(data, string(hash)); err != nil {
-				return Manifest{}, err
-			}
-
-			return readBundle(version, data)
-		}
-
-		if !os.IsNotExist(err) {
-			return Manifest{}, err
-		}
-	}
-
-	data, err := bootstrap.ReadFile("bootstrap/sdk-" + version + ".zip")
+	root, err := sdkCache()
 	if err != nil {
+		return Manifest{}, err
+	}
+
+	data, err := readBundleFile(filepath.Join(root, version, "sdk.zip"))
+	if os.IsNotExist(err) {
 		return Manifest{}, fmt.Errorf("SDK %s is not installed; run karty sdk install %s: %w", version, version, err)
+	}
+
+	if err != nil {
+		return Manifest{}, err
+	}
+
+	hash, err := os.ReadFile(filepath.Join(root, version, "sha256"))
+	if err != nil {
+		return Manifest{}, err
+	}
+
+	if err := verifyBundleHash(data, string(hash)); err != nil {
+		return Manifest{}, err
 	}
 
 	return readBundle(version, data)
 }
+
 func readBundle(version string, data []byte) (Manifest, error) {
 	if len(data) > maxBundleBytes {
 		return Manifest{}, bundleError("SDK bundle exceeds size limit")
@@ -208,8 +201,8 @@ func verifyBundleHash(data []byte, want string) error {
 
 // InstallPublished verifies the signed release manifest before trusting its bundle URL.
 func InstallPublished(ctx context.Context, version string) error {
-	if !versionPattern.MatchString(version) {
-		return bundleError("invalid SDK version")
+	if err := validateVersion(version); err != nil {
+		return err
 	}
 
 	manifest, err := ResolvePublished(ctx, version)
@@ -260,8 +253,8 @@ func InstallPublished(ctx context.Context, version string) error {
 // InstallBundle installs a bounded, checksummed SDK atomically. This also supports
 // candidate artifacts produced locally by engine contributors.
 func InstallBundle(version string, data []byte, checksum string) error {
-	if !versionPattern.MatchString(version) {
-		return bundleError("invalid SDK version")
+	if err := validateVersion(version); err != nil {
+		return err
 	}
 
 	if err := verifyBundleHash(data, checksum); err != nil {

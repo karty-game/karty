@@ -117,16 +117,9 @@ func CreateTemplate(destination, name string, manifest sdk.Manifest, selection s
 	}
 
 	generated["assets/textures.go"] = assetFile
-	if manifest.API.Version == "0.0.1" {
-		generated["engine/assets.go"], err = codegen.TextureAssetFile(textureNames)
-		if err != nil {
-			return fmt.Errorf("generate legacy typed assets: %w", err)
-		}
-	}
 
 	if err := addUIViews(
 		destination, modulePath, generated, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
-		manifest.API.Version == "0.0.1",
 	); err != nil {
 		return err
 	}
@@ -205,7 +198,7 @@ func writeBindings(destination string, generated map[string][]byte) error {
 	return nil
 }
 
-func addUIAssets(generated map[string][]byte, assets []project.Texture, engineImport string, legacy bool) error {
+func addUIAssets(generated map[string][]byte, assets []project.Texture, engineImport string) error {
 	names := make([]string, 0, len(assets))
 	for _, asset := range assets {
 		names = append(names, asset.Name)
@@ -217,14 +210,6 @@ func addUIAssets(generated map[string][]byte, assets []project.Texture, engineIm
 	}
 
 	generated["assets/ui.go"] = contents
-	if legacy {
-		contents, err = codegen.UIAssetFile(names)
-		if err != nil {
-			return err
-		}
-
-		generated["engine/ui-assets.go"] = contents
-	}
 
 	return nil
 }
@@ -265,9 +250,8 @@ func addUIViews(
 	assets []project.Texture,
 	layouts []project.Layout,
 	theme string,
-	legacy bool,
 ) error {
-	if err := addUIAssets(generated, assets, modulePath+"/.karty/engine", legacy); err != nil {
+	if err := addUIAssets(generated, assets, modulePath+"/.karty/engine"); err != nil {
 		return err
 	}
 

@@ -3,8 +3,18 @@ name = "world-camera"
 compiler = "tinygo"
 
 [project.resolution]
-width = 960
-height = 540
+width = 1280
+height = 720
+
+# Both cameras render at project.resolution; FOV is authored in degrees.
+[project.camera]
+fov_y_degrees = 60
+near = 0.05
+far = 80
+ortho_height = 30
+
+[project.debug]
+renderer = true
 
 [sdk]
-version = "0.0.7"
+version = "0.0.8"

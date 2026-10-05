@@ -1,0 +1,38 @@
+version: 6
+rooms:
+  - id: room
+    boundary:
+      - {id: south, start: {x: 0, y: 0}, end: {x: 10, y: 0}, material: wall}
+      - {id: east, start: {x: 10, y: 0}, end: {x: 10, y: 10}, material: wall}
+      - {id: north, start: {x: 10, y: 10}, end: {x: 0, y: 10}, material: wall}
+      - {id: west, start: {x: 0, y: 10}, end: {x: 0, y: 0}, material: wall}
+    floor: {c: 0}
+    ceiling: {c: 8}
+    floor_material: floor
+    ceiling_material: ceiling
+prefabs:
+  - id: column
+    solids:
+      - id: shaft
+        footprint:
+          - {x: 0.5, y: 0}
+          - {x: 0.404508497, y: 0.293892626}
+          - {x: 0.154508497, y: 0.475528258}
+          - {x: -0.154508497, y: 0.475528258}
+          - {x: -0.404508497, y: 0.293892626}
+          - {x: -0.5, y: 0}
+          - {x: -0.404508497, y: -0.293892626}
+          - {x: -0.154508497, y: -0.475528258}
+          - {x: 0.154508497, y: -0.475528258}
+          - {x: 0.404508497, y: -0.293892626}
+        bottom: {c: 0}
+        top: {c: 5}
+        side_material: detail
+        top_material: detail
+        bottom_material: detail
+        collision: true
+instances:
+  - {id: column-a, prefab: column, transform: {translation: {x: 2, y: 2, z: 0}}}
+  - {id: column-b, prefab: column, transform: {translation: {x: 8, y: 2, z: 0}}}
+  - {id: column-c, prefab: column, transform: {translation: {x: 8, y: 8, z: 0}}}
+  - {id: column-d, prefab: column, transform: {translation: {x: 2, y: 8, z: 0}}}

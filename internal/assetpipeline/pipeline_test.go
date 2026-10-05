@@ -11,13 +11,13 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/project"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -111,30 +111,7 @@ func TestProcessGameAssetsCachesQOIAndQOAWithResolvedTransforms(t *testing.T) {
 	}
 }
 
-func TestProcessGameAssetsPreservesLegacyCopyPNG(t *testing.T) {
-	t.Parallel()
-	directory := t.TempDir()
-	writePNG(t, filepath.Join(directory, "player.png"), color.RGBA{A: 255})
-
-	declarations := []project.Texture{{Name: "sprites.player", Source: "player.png", Profile: "sprite"}}
-
-	legacy, err := assetpipeline.AnalyzeTextures(directory, sdkManifest(t), declarations)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	processed, err := assetpipeline.ProcessGameAssets(context.Background(), directory, sdkManifest(t), declarations, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if processed.Textures[0].CacheKey != legacy.Textures[0].CacheKey ||
-		processed.Textures[0].Processor != "copy-png@1" || len(processed.Features) != 0 {
-		t.Fatalf("legacy processing changed: legacy=%+v processed=%+v", legacy.Textures[0], processed.Textures[0])
-	}
-}
-
-//nolint:golines,wsl_v5 // One scenario verifies duration and both catalog namespaces together.
+//nolint:wsl_v5 // One scenario verifies duration and both catalog namespaces together.
 func TestProcessAudioStreamsUsesIndependentKindIDsAndLongDuration(t *testing.T) {
 	t.Parallel()
 	directory := t.TempDir()
@@ -157,7 +134,9 @@ func TestProcessAudioStreamsUsesIndependentKindIDsAndLongDuration(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(streams) != 3 || streams[0].Name != "a" || streams[0].ID != 1 || streams[1].Name != "z" || streams[1].ID != 2 || streams[2].Kind != "environment" || streams[2].ID != 1 {
+	if len(streams) != 3 || streams[0].Name != "a" || streams[0].ID != 1 || streams[1].Name != "z" || streams[1].ID != 2 ||
+		streams[2].Kind != "environment" ||
+		streams[2].ID != 1 {
 		t.Fatalf("streams = %+v", streams)
 	}
 	if streams[0].Metadata.Frames <= 30*streams[0].Metadata.SampleRate {
@@ -192,7 +171,7 @@ func processingManifest() sdk.Manifest {
 	}}
 }
 
-func TestAnalyzeTexturesIsDeterministicAndProfileSensitive(t *testing.T) {
+func TestProcessTexturesIsDeterministicAndProfileSensitive(t *testing.T) {
 	t.Parallel()
 
 	directory := t.TempDir()
@@ -201,12 +180,12 @@ func TestAnalyzeTexturesIsDeterministicAndProfileSensitive(t *testing.T) {
 	declaration := project.Texture{Name: "sprites.player", Source: "player.png", Profile: "sprite"}
 	manifest := sdkManifest(t)
 
-	first, err := assetpipeline.AnalyzeTextures(directory, manifest, []project.Texture{declaration})
+	first, err := assetpipeline.ProcessGameAssets(t.Context(), directory, manifest, []project.Texture{declaration}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	second, err := assetpipeline.AnalyzeTextures(directory, manifest, []project.Texture{declaration})
+	second, err := assetpipeline.ProcessGameAssets(t.Context(), directory, manifest, []project.Texture{declaration}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,13 +198,13 @@ func TestAnalyzeTexturesIsDeterministicAndProfileSensitive(t *testing.T) {
 		t.Fatalf("texture measurements = %+v", first)
 	}
 
-	if !strings.Contains(first.Textures[0].Output, first.Textures[0].ContentSHA256) {
+	if !strings.Contains(first.Textures[0].Output, first.Textures[0].OutputSHA256) {
 		t.Fatalf("output %q is not content-addressed", first.Textures[0].Output)
 	}
 
 	declaration.Profile = "interface"
 
-	profiled, err := assetpipeline.AnalyzeTextures(directory, manifest, []project.Texture{declaration})
+	profiled, err := assetpipeline.ProcessGameAssets(t.Context(), directory, manifest, []project.Texture{declaration}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,7 +218,7 @@ func TestAnalyzeTexturesIsDeterministicAndProfileSensitive(t *testing.T) {
 	}
 }
 
-func TestAnalyzeTexturesRejectsInvalidPNG(t *testing.T) {
+func TestProcessTexturesRejectsInvalidPNG(t *testing.T) {
 	t.Parallel()
 
 	directory := t.TempDir()
@@ -247,148 +226,32 @@ func TestAnalyzeTexturesRejectsInvalidPNG(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err := assetpipeline.AnalyzeTextures(directory, sdkManifest(t), []project.Texture{{
+	_, err := assetpipeline.ProcessGameAssets(t.Context(), directory, sdkManifest(t), []project.Texture{{
 		Name: "sprites.player", Source: "player.png", Profile: "sprite",
-	}})
-	if err == nil || !strings.Contains(err.Error(), `decode texture "sprites.player" as PNG`) {
-		t.Fatalf("AnalyzeTextures() error = %v", err)
+	}}, nil)
+	if err == nil || !strings.Contains(err.Error(), `texture "sprites.player"`) {
+		t.Fatalf("ProcessGameAssets() error = %v", err)
 	}
 }
 
-func TestAnalyzeTexturesRejectsUnknownSDKProfile(t *testing.T) {
+func TestProcessTexturesRejectsUnknownSDKProfile(t *testing.T) {
 	t.Parallel()
 
 	directory := t.TempDir()
 	writePNG(t, filepath.Join(directory, "player.png"), color.RGBA{A: 255})
 
-	_, err := assetpipeline.AnalyzeTextures(directory, sdkManifest(t), []project.Texture{{
+	_, err := assetpipeline.ProcessGameAssets(t.Context(), directory, sdkManifest(t), []project.Texture{{
 		Name: "sprites.player", Source: "player.png", Profile: "lossy",
-	}})
+	}}, nil)
 	if err == nil || !strings.Contains(err.Error(), "not defined by the selected SDK") {
-		t.Fatalf("AnalyzeTextures() profile error = %v", err)
-	}
-}
-
-func TestPopulateCacheReusesAndRepairsEntries(t *testing.T) {
-	t.Parallel()
-
-	directory := t.TempDir()
-	writePNG(t, filepath.Join(directory, "player.png"), color.RGBA{G: 255, A: 255})
-
-	declarations := []project.Texture{{Name: "sprites.player", Source: "player.png", Profile: "sprite"}}
-
-	first, err := assetpipeline.AnalyzeTextures(directory, sdkManifest(t), declarations)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := assetpipeline.PopulateCache(directory, &first); err != nil {
-		t.Fatal(err)
-	}
-
-	if first.Textures[0].CacheHit {
-		t.Fatal("first cache population reported a hit")
-	}
-
-	cachePath := first.Textures[0].SourcePath
-
-	second, err := assetpipeline.AnalyzeTextures(directory, sdkManifest(t), declarations)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := assetpipeline.PopulateCache(directory, &second); err != nil {
-		t.Fatal(err)
-	}
-
-	if !second.Textures[0].CacheHit || second.Textures[0].SourcePath != cachePath {
-		t.Fatalf("warm cache texture = %+v", second.Textures[0])
-	}
-
-	if err := os.WriteFile(cachePath, []byte("corrupt"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
-	third, err := assetpipeline.AnalyzeTextures(directory, sdkManifest(t), declarations)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := assetpipeline.PopulateCache(directory, &third); err != nil {
-		t.Fatal(err)
-	}
-
-	if third.Textures[0].CacheHit {
-		t.Fatal("corrupt cache entry reported a hit")
-	}
-
-	repaired, err := os.ReadFile(cachePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	source, err := os.ReadFile(filepath.Join(directory, "player.png"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !bytes.Equal(repaired, source) {
-		t.Fatal("corrupt cache entry was not repaired from source")
-	}
-}
-
-func TestPopulateCacheConcurrentWriters(t *testing.T) {
-	t.Parallel()
-
-	directory := t.TempDir()
-	writePNG(t, filepath.Join(directory, "player.png"), color.RGBA{B: 255, A: 255})
-
-	declarations := []project.Texture{{Name: "sprites.player", Source: "player.png", Profile: "sprite"}}
-	manifest := sdkManifest(t)
-
-	const writers = 8
-
-	errors := make(chan error, writers)
-
-	var group sync.WaitGroup
-	for range writers {
-		group.Go(func() {
-			report, err := assetpipeline.AnalyzeTextures(directory, manifest, declarations)
-			if err == nil {
-				err = assetpipeline.PopulateCache(directory, &report)
-			}
-
-			errors <- err
-		})
-	}
-
-	group.Wait()
-	close(errors)
-
-	for err := range errors {
-		if err != nil {
-			t.Errorf("concurrent PopulateCache() error = %v", err)
-		}
-	}
-
-	report, err := assetpipeline.AnalyzeTextures(directory, manifest, declarations)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := assetpipeline.PopulateCache(directory, &report); err != nil {
-		t.Fatal(err)
-	}
-
-	if !report.Textures[0].CacheHit {
-		t.Fatal("concurrent cache writers did not leave a valid entry")
+		t.Fatalf("ProcessGameAssets() profile error = %v", err)
 	}
 }
 
 func sdkManifest(t *testing.T) sdk.Manifest {
 	t.Helper()
 
-	manifest, err := sdk.Resolve("0.0.1")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
