@@ -80,7 +80,7 @@ let content = {};
 globalThis.kartyConfigureProject = (project, levels) => {
   content = levels || {};
   if (project?.name) {
-    document.title = project.name;
+    document.title = project.name + " - Powered by Karty";
     if (element("game-title")) element("game-title").textContent = project.name;
   }
 };
@@ -197,7 +197,7 @@ Promise.resolve().then(() => {
     globalThis.kartyClientShutdown = () => client.exports.shutdown();
     client.exports._initialize();
     status("Starting the renderer…");
-    return loadWasm("karty-host.wasm?v=9b91ec966215243f", go.importObject);
+    return loadWasm("karty-host.wasm?v=eaca888fd1eb3791", go.importObject);
   })
   .then(result => go.run(result.instance))
   .then(() => { throw new Error("The game has stopped. Reload to play again."); })
