@@ -104,7 +104,7 @@ jobs:
           fi
           mkdir -p dist/pages
           git -C "$state" archive HEAD | tar -x -C dist/pages
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         if: steps.target.outputs.path != ''
       - uses: actions/upload-pages-artifact@v5
         if: steps.target.outputs.path != ''
