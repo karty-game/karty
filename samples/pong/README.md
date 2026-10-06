@@ -1,11 +1,22 @@
-# Sprite and input sample
+# 🎮 Sprite playground
 
-This small client demonstrates sprites, text/vector entities, typed keyboard and
-pointer hooks, and independent level mount/release/remount. Arrow keys move the
-player; clicking places it and the marker. Continuous animation stays in the
-frame hook, while input and level results use typed handlers.
+**A small scene with plenty of motion.**
 
-The sample pins the current SDK 0.0.9 candidate. Follow the
-[SDK and matching-host setup](../README.md), then run `../../dist/karty dev` here.
-`mise run check-sample-clients` from the CLI root compiles this client with crafted
-asset identifiers and no texture or graphical host loading.
+Move a character among animated sprites, shapes and text.
+Start here to get a feel for Karty's 2D games, then make the scene your own.
+
+**[▶ Try the playground](https://karty-game.github.io/karty/main/pong/)** · [More demos](../README.md)
+
+## Jump in
+
+- Hold **← / →** to move your character.
+- **Click or tap** to place the character and its circular marker.
+- Watch the scene keep moving while the status message changes as levels reload.
+
+## Run it
+
+[Set up once](../README.md#make-it-yours), then from this sample's folder:
+
+```sh
+../../dist/karty dev
+```

@@ -55,12 +55,12 @@ the [development guide](docs/development.md) for setup details and the
 
 ## Explore the samples
 
-Start with a small game, then explore UI, rendering, and media examples:
+Try the [browser demos](https://karty-game.github.io/karty/main/), then make them your own:
 
-- [Pong](samples/pong) — sprites, input and level lifecycle in a small client.
-- [UI demo](samples/ui-demo) — a flight deck with tabs, ship selection, settings and inventory.
-- [World camera](samples/world-camera) — authored worlds with perspective and isometric cameras.
-- [Media lab](samples/media-lab) — image and audio processing examples.
+- [Orbital flight deck](samples/ui-demo) — choose a ship, tune its thrusters and manage your inventory.
+- [Roman court & galleries](samples/world-camera) — walk through a lit 3D world or explore it from above.
+- [Media lab](samples/media-lab) — mix effects over music and play a video in the same scene.
+- [Sprite playground](samples/pong) — move a character among animated sprites, shapes and text.
 
 See [how to build and run the samples](samples/README.md).
 

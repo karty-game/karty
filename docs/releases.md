@@ -12,13 +12,13 @@ the released CLI default, smoke fixtures and release integration. It remains
 SDK 0.0.8 until compatible immutable public SDK/host assets are available.
 `SampleSDK` selects the current sample baseline: all four examples now use SDK
 0.0.9 with typed hooks, and their interfaces use the current `.kui` format.
-The UI demo also requires the candidate's widgets and explicit sizing contract.
+The UI demo also requires SDK 0.0.9's widgets and explicit sizing contract.
 Public format/compiler module dependencies are selected separately in [go.mod](../go.mod).
 
-Samples currently require a matching candidate SDK bundle and host; see
-[setup and validation](../samples/README.md). Public sample builds require the
-immutable SDK 0.0.9 assets to be published first. Advancing the examples does
-not publish the SDK or advance the released CLI default.
+Samples use the published SDK 0.0.9 bundle and its matching host; see
+[setup](../samples/README.md#make-it-yours) and
+[validation](sample-development.md#focused-validation). Advancing the examples
+does not publish the SDK or advance the released CLI default.
 
 From the repository root, prepare and validate the release:
 

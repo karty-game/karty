@@ -53,7 +53,7 @@ and dev rebuilds.
 Set `KARTY_HOST_NATIVE` / `KARTY_HOST_WEB` to test prebuilt candidate hosts;
 the web override requires its matching `wasm_exec.js` beside it. Unit tests need
 neither host override. `karty dev` otherwise resolves hosts from the project SDK.
-The separate [world-camera check](../samples/world-camera/README.md) requires
+The separate [world-camera check](sample-world-camera.md) requires
 explicit checker/tool artifacts; it is not a public unit-test prerequisite.
 
 ### Materialize installation smoke

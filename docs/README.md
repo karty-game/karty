@@ -19,6 +19,7 @@ repository guides describe current CLI behavior.
 ## Contributor workflows
 
 - [Development](development.md): pinned checks, overrides and sample-site tooling.
+- [Sample development](sample-development.md): focused checks, source notes and Pages publishing.
 - [Repository ownership](repository-split.md): generators, formats and licenses.
 - [SDK bundles](sdk-bundles.md): installation, trust and compatibility.
 - [Releases](releases.md): SDK selection and publication gates.
