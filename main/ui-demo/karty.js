@@ -88,7 +88,39 @@ const levelRequests = new Map();
 const clientMemory = () => new Uint8Array(client.exports.memory.buffer);
 const readClientString = (pointer, length) => new TextDecoder().decode(clientMemory().subarray(pointer, pointer + length));
 const wasi = {
-  fd_write: (fd, iovs, iovsLen, written) => { new DataView(client.exports.memory.buffer).setUint32(written, 0, true); return 0; },
+  // Browser cartridges receive no process arguments or environment variables.
+  args_sizes_get: (count, size) => {
+    const memory = new DataView(client.exports.memory.buffer);
+    memory.setUint32(count, 0, true); memory.setUint32(size, 0, true); return 0;
+  },
+  args_get: () => 0,
+  environ_sizes_get: (count, size) => {
+    const memory = new DataView(client.exports.memory.buffer);
+    memory.setUint32(count, 0, true); memory.setUint32(size, 0, true); return 0;
+  },
+  environ_get: () => 0,
+  fd_write: (fd, iovs, iovsLen, written) => {
+    if (fd !== 1 && fd !== 2) return 8; // WASI EBADF
+    const bytes = clientMemory(), memory = new DataView(bytes.buffer);
+    iovs >>>= 0; iovsLen >>>= 0; written >>>= 0;
+    if (written > bytes.length - 4 || iovs > bytes.length || iovsLen > (bytes.length - iovs) / 8) return 21; // EFAULT
+    let total = 0;
+    for (let index = 0; index < iovsLen; index++) {
+      const pointer = memory.getUint32(iovs + index * 8, true), length = memory.getUint32(iovs + index * 8 + 4, true);
+      if (pointer > bytes.length || length > bytes.length - pointer) return 21;
+      total += length;
+      if (total > 65536) return 28; // EINVAL: bounded diagnostic output
+    }
+    const output = new Uint8Array(total);
+    let offset = 0;
+    for (let index = 0; index < iovsLen; index++) {
+      const pointer = memory.getUint32(iovs + index * 8, true), length = memory.getUint32(iovs + index * 8 + 4, true);
+      output.set(bytes.subarray(pointer, pointer + length), offset); offset += length;
+    }
+    memory.setUint32(written, total, true);
+    if (total) console.log(new TextDecoder().decode(output));
+    return 0;
+  },
   proc_exit: code => console.warn("client exited", code),
   random_get: (pointer, length) => { crypto.getRandomValues(clientMemory().subarray(pointer, pointer + length)); return 0; },
   sched_yield: () => 0,
@@ -169,7 +201,7 @@ Promise.resolve().then(() => {
   state("loading-cartridge");
   status("Loading game cartridge…");
   go = new Go();
-  return loadClientWasm("game.kart?v=51eac32b5654b28e", imports);
+  return loadClientWasm("game.kart?v=e23283583959cf96", imports);
 })
   .then(result => {
     client = result.instance;
@@ -197,7 +229,7 @@ Promise.resolve().then(() => {
     globalThis.kartyClientShutdown = () => client.exports.shutdown();
     client.exports._initialize();
     status("Starting the renderer…");
-    return loadWasm("karty-host.wasm?v=eaca888fd1eb3791", go.importObject);
+    return loadWasm("karty-host.wasm?v=c4d743aa745333e9", go.importObject);
   })
   .then(result => go.run(result.instance))
   .then(() => { throw new Error("The game has stopped. Reload to play again."); })
