@@ -130,6 +130,10 @@ Validation rejects links, unexpected paths, incomplete samples and outputs above
 10,000 entries or 200 MiB before replacing a preview; filesystem roots confine writes.
 These checks run in the normal Go test suite.
 
+The publisher disables Git hooks only for its generated-site commit and push.
+That worktree shares source repository hooks but contains static previews rather
+than a mise/hk project. Source commits retain the pinned hk checks.
+
 The sample artwork generator lives in `cmd/world-camera-materials`; use the normal
 world-camera sample for lighting and renderer checks. Native Materialize builds
 and releases belong to

@@ -99,8 +99,9 @@ jobs:
           git -C "$state" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git -C "$state" add --all
           if ! git -C "$state" diff --cached --quiet; then
-            git -C "$state" commit -m "Update sample site: $DESTINATION"
-            git -C "$state" push origin HEAD:refs/heads/gh-pages-state
+            # Worktrees share source hooks; generated site state has no mise/hk config.
+            git -c core.hooksPath=/dev/null -C "$state" commit -m "Update sample site: $DESTINATION"
+            git -c core.hooksPath=/dev/null -C "$state" push origin HEAD:refs/heads/gh-pages-state
           fi
           mkdir -p dist/pages
           git -C "$state" archive HEAD | tar -x -C dist/pages
