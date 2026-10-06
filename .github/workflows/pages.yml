@@ -69,7 +69,7 @@ jobs:
               }
               core.setOutput('path', 'main');
             }
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         if: steps.target.outputs.path != '' && steps.target.outputs.remove != 'true'
         with:
           name: sample-site
