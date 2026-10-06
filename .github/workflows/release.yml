@@ -33,7 +33,7 @@ jobs:
         if: matrix.runner == 'ubuntu-24.04'
         working-directory: samples/pong
         run: ../../dist/karty build --target native --platform windows-arm64
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: matrix.runner == 'ubuntu-24.04'
         with:
           name: windows-arm64-game
@@ -47,7 +47,7 @@ jobs:
       contents: read
       actions: read
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: windows-arm64-game
           path: game
