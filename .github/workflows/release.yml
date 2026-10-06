@@ -47,7 +47,7 @@ jobs:
       contents: read
       actions: read
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: windows-arm64-game
           path: game
