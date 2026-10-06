@@ -9,20 +9,20 @@ builds:
     goos: [darwin, linux, windows]
     goarch: [amd64, arm64]
     ignore:
-      - {goos: darwin, goarch: amd64}
-      - {goos: windows, goarch: arm64}
+      - { goos: darwin, goarch: amd64 }
+      - { goos: windows, goarch: arm64 }
 archives:
   - ids: [karty]
     files: [README.md, LICENSE.md]
     format_overrides:
-      - {goos: windows, formats: [zip]}
+      - { goos: windows, formats: [zip] }
 checksum:
   name_template: checksums.txt
 release:
   github:
     owner: karty-game
     name: karty
-  name_template: 'Karty CLI {{ .Tag }}'
+  name_template: "Karty CLI {{ .Tag }}"
   header: |
     The Karty command-line toolkit for creating, building, and running games.
     Download your platform archive and add the binary to PATH.

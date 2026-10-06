@@ -77,7 +77,12 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 
 	data = append(data, level.SourceEntry{Name: world.EntryName, Kind: level.EntryData, Data: encoded})
 
-	data, metadata, lightmaps, err := buildWorldLightmaps(directory, definition, compiled, data, metadata)
+	var projectDirectory string
+	if assets != nil {
+		projectDirectory = assets.projectRoot
+	}
+
+	data, metadata, lightmaps, err := buildWorldLightmaps(projectDirectory, directory, definition, compiled, data, metadata)
 	if err != nil {
 		return worldMaterialBuild{}, fmt.Errorf("level %q lightmaps: %w", definition.Level.Name, err)
 	}

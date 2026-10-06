@@ -1,10 +1,8 @@
 package toolchain
 
 import (
-	"archive/tar"
 	"archive/zip"
 	"bytes"
-	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -16,22 +14,17 @@ import (
 )
 
 type materialFixtureMember struct {
-	name     string
-	body     string
-	mode     os.FileMode
-	typeflag byte
+	name string
+	body string
+	mode os.FileMode
 }
 
-func materialFixture(t *testing.T, format string, members ...materialFixtureMember) []byte {
+func materialFixture(t *testing.T, members ...materialFixtureMember) []byte {
 	t.Helper()
 
 	var buffer bytes.Buffer
 
-	if format == "zip" {
-		writeMaterialZipFixture(t, &buffer, members)
-	} else {
-		writeMaterialTarFixture(t, &buffer, members)
-	}
+	writeMaterialZipFixture(t, &buffer, members)
 
 	return buffer.Bytes()
 }
@@ -60,59 +53,20 @@ func writeMaterialZipFixture(t *testing.T, destination io.Writer, members []mate
 	}
 }
 
-func writeMaterialTarFixture(t *testing.T, destination io.Writer, members []materialFixtureMember) {
+func materialFixtureOptions(t *testing.T, platform string, contents []byte) InstallMaterialToolOptions {
 	t.Helper()
 
-	compressed := gzip.NewWriter(destination)
-	writer := tar.NewWriter(compressed)
-
-	for _, member := range members {
-		writeMaterialTarFixtureMember(t, writer, member)
-	}
-
-	if err := writer.Close(); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := compressed.Close(); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func writeMaterialTarFixtureMember(t *testing.T, writer *tar.Writer, member materialFixtureMember) {
-	t.Helper()
-
-	header := &tar.Header{Name: member.name, Mode: 0o600, Size: int64(len(member.body)), Typeflag: member.typeflag}
-	if member.typeflag == tar.TypeSymlink || member.typeflag == tar.TypeLink {
-		header.Linkname = "bin/crunch"
-		header.Size = 0
-	}
-
-	if err := writer.WriteHeader(header); err != nil {
-		t.Fatal(err)
-	}
-
-	if header.Size != 0 {
-		if _, err := io.WriteString(writer, member.body); err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-func materialFixtureOptions(t *testing.T, tool MaterialTool, platform, format string, contents []byte) InstallMaterialToolOptions {
-	t.Helper()
-
-	name := string(tool)
+	name := string(MaterialToolMaterialize)
 	if platform == "windows-amd64" {
 		name += ".exe"
 	}
 
 	return InstallMaterialToolOptions{
 		Spec: MaterialToolSpec{
-			Tool: tool, Revision: strings.Repeat("a", 40),
+			Tool: MaterialToolMaterialize, Revision: strings.Repeat("a", 40),
 			Artifacts: map[string]MaterialToolArtifact{platform: {
-				URL:    "https://artifacts.example/" + platform + "/tool." + format,
-				SHA256: fmt.Sprintf("%x", sha256.Sum256(contents)), Format: format, Executable: "bin/" + name,
+				URL:    "https://artifacts.example/" + platform + "/tool.zip",
+				SHA256: fmt.Sprintf("%x", sha256.Sum256(contents)), Format: "zip", Executable: "bin/" + name,
 			}},
 		},
 		CacheDir: t.TempDir(), Platform: platform,
@@ -126,27 +80,25 @@ func TestMaterialToolPlatformsAndWarmIntegrity(t *testing.T) {
 	t.Parallel()
 
 	for _, platform := range []string{"linux-amd64", "linux-arm64", "darwin-arm64", "windows-amd64"} {
-		for _, tool := range []MaterialTool{MaterialToolCrunch, MaterialToolMaterialize} {
-			t.Run(platform+"/"+string(tool), func(t *testing.T) {
-				t.Parallel()
-				checkMaterialPlatformWarmIntegrity(t, platform, tool)
-			})
-		}
+		t.Run(platform, func(t *testing.T) {
+			t.Parallel()
+			checkMaterialPlatformWarmIntegrity(t, platform)
+		})
 	}
 }
 
-func checkMaterialPlatformWarmIntegrity(t *testing.T, platform string, tool MaterialTool) {
+func checkMaterialPlatformWarmIntegrity(t *testing.T, platform string) {
 	t.Helper()
 
-	format, name := "tar.gz", string(tool)
+	name := string(MaterialToolMaterialize)
 	if platform == "windows-amd64" {
-		format, name = "zip", name+".exe"
+		name += ".exe"
 	}
 
-	contents := materialFixture(t, format,
+	contents := materialFixture(t,
 		materialFixtureMember{name: "bin/" + name, body: "fixture binary", mode: 0o600},
 		materialFixtureMember{name: "NOTICE.txt", body: "upstream notice", mode: 0o600})
-	options := materialFixtureOptions(t, tool, platform, format, contents)
+	options := materialFixtureOptions(t, platform, contents)
 	calls := 0
 	options.Download = func(_ context.Context, url string) (io.ReadCloser, error) {
 		calls++
@@ -205,6 +157,12 @@ func TestMaterialToolRejectsInvalidPins(t *testing.T) {
 		{"revision", func(o *InstallMaterialToolOptions) { o.Spec.Revision = "main" }},
 		{"revision traversal", func(o *InstallMaterialToolOptions) { o.Spec.Revision = "../../escape" }},
 		{"unity", func(o *InstallMaterialToolOptions) { o.Spec.Tool = "materialize-unity" }},
+		{"crunch", func(o *InstallMaterialToolOptions) { o.Spec.Tool = "crunch" }},
+		{"tar format", func(o *InstallMaterialToolOptions) {
+			a := o.Spec.Artifacts[o.Platform]
+			a.Format = "tar.gz"
+			o.Spec.Artifacts[o.Platform] = a
+		}},
 		{"checksum", func(o *InstallMaterialToolOptions) {
 			a := o.Spec.Artifacts[o.Platform]
 			a.SHA256 = "bad"
@@ -217,14 +175,14 @@ func TestMaterialToolRejectsInvalidPins(t *testing.T) {
 		}},
 		{"executable", func(o *InstallMaterialToolOptions) {
 			a := o.Spec.Artifacts[o.Platform]
-			a.Executable = "../crunch"
+			a.Executable = "../materialize-cli"
 			o.Spec.Artifacts[o.Platform] = a
 		}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			options := materialFixtureOptions(t, MaterialToolCrunch, "linux-amd64", "tar.gz", nil)
+			options := materialFixtureOptions(t, "linux-amd64", nil)
 			test.edit(&options)
 			options.Download = func(context.Context, string) (io.ReadCloser, error) {
 				t.Fatal("invalid spec attempted a download")
@@ -242,74 +200,66 @@ func TestMaterialToolRejectsInvalidPins(t *testing.T) {
 func TestMaterialToolChecksumAndArchiveRejection(t *testing.T) {
 	t.Parallel()
 
-	for _, format := range []string{"tar.gz", "zip"} {
-		for _, test := range []string{"checksum", "traversal", "absolute", "backslash", "drive", "device", "alias", "symlink", "duplicate", "missing executable", "hardlink"} {
-			if format == "zip" && test == "hardlink" {
-				continue
+	for _, test := range []string{"checksum", "traversal", "absolute", "backslash", "drive", "device", "alias", "symlink", "duplicate", "missing executable"} {
+		t.Run(test, func(t *testing.T) {
+			t.Parallel()
+
+			members := make([]materialFixtureMember, 0, 2)
+			members = append(members, materialFixtureMember{name: "bin/materialize-cli", body: "binary", mode: 0o600})
+			bad := materialFixtureMember{name: "NOTICE.txt", body: "notice", mode: 0o600}
+
+			switch test {
+			case "traversal":
+				bad.name = "../escape"
+			case "absolute":
+				bad.name = "/escape"
+			case "backslash":
+				bad.name = `..\escape`
+			case "drive":
+				bad.name = "C:/escape"
+			case "device":
+				bad.name = "NUL.txt"
+			case "alias":
+				bad.name = "bin/materialize-cli."
+			case "symlink":
+				bad.mode = os.ModeSymlink | 0o777
+			case "duplicate":
+				bad.name = "bin/materialize-cli"
+			case "missing executable":
+				members = nil
 			}
 
-			t.Run(format+"/"+test, func(t *testing.T) {
-				t.Parallel()
+			contents := materialFixture(t, append(members, bad)...)
 
-				members := make([]materialFixtureMember, 0, 2)
-				members = append(members, materialFixtureMember{name: "bin/crunch", body: "binary", mode: 0o600})
-				bad := materialFixtureMember{name: "NOTICE.txt", body: "notice", mode: 0o600}
+			options := materialFixtureOptions(t, "linux-amd64", contents)
+			if test == "checksum" {
+				a := options.Spec.Artifacts[options.Platform]
+				a.SHA256 = strings.Repeat("0", 64)
+				options.Spec.Artifacts[options.Platform] = a
+			}
 
-				switch test {
-				case "traversal":
-					bad.name = "../escape"
-				case "absolute":
-					bad.name = "/escape"
-				case "backslash":
-					bad.name = `..\escape`
-				case "drive":
-					bad.name = "C:/escape"
-				case "device":
-					bad.name = "NUL.txt"
-				case "alias":
-					bad.name = "bin/crunch."
-				case "symlink":
-					bad.mode, bad.typeflag = os.ModeSymlink|0o777, tar.TypeSymlink
-				case "hardlink":
-					bad.typeflag = tar.TypeLink
-				case "duplicate":
-					bad.name = "bin/crunch"
-				case "missing executable":
-					members = nil
-				}
+			if _, err := InstallMaterialTool(t.Context(), options); err == nil {
+				t.Fatal("bad archive accepted")
+			}
 
-				contents := materialFixture(t, format, append(members, bad)...)
-
-				options := materialFixtureOptions(t, MaterialToolCrunch, "linux-amd64", format, contents)
-				if test == "checksum" {
-					a := options.Spec.Artifacts[options.Platform]
-					a.SHA256 = strings.Repeat("0", 64)
-					options.Spec.Artifacts[options.Platform] = a
-				}
-
-				if _, err := InstallMaterialTool(t.Context(), options); err == nil {
-					t.Fatal("bad archive accepted")
-				}
-
-				parent := filepath.Join(options.CacheDir, "tools", "crunch", options.Spec.Revision)
-				if entries, err := os.ReadDir(parent); err != nil || len(entries) != 0 {
-					t.Fatalf("failed install left published/staging files: %v, %v", entries, err)
-				}
-			})
-		}
+			parent := filepath.Join(options.CacheDir, "tools", "materialize-cli", options.Spec.Revision)
+			if entries, err := os.ReadDir(parent); err != nil || len(entries) != 0 {
+				t.Fatalf("failed install left published/staging files: %v, %v", entries, err)
+			}
+		})
 	}
 }
 
 func TestMaterialToolWarmArchiveAndNoticeIntegrity(t *testing.T) {
 	t.Parallel()
 
-	for _, member := range []string{"artifact.archive", "files/NOTICE", "files/extra", "files/crunch-link"} {
+	for _, member := range []string{"artifact.archive", "files/NOTICE", "files/extra", "files/materialize-link"} {
 		t.Run(member, func(t *testing.T) {
 			t.Parallel()
 
-			contents := materialFixture(t, "zip", materialFixtureMember{name: "bin/crunch", body: "binary", mode: 0o600},
+			contents := materialFixture(t, materialFixtureMember{name: "bin/materialize-cli", body: "binary", mode: 0o600},
 				materialFixtureMember{name: "NOTICE", body: "notice", mode: 0o600})
-			options := materialFixtureOptions(t, MaterialToolCrunch, "linux-amd64", "zip", contents)
+			options := materialFixtureOptions(t, "linux-amd64", contents)
 
 			installed, err := InstallMaterialTool(t.Context(), options)
 			if err != nil {
@@ -319,7 +269,7 @@ func TestMaterialToolWarmArchiveAndNoticeIntegrity(t *testing.T) {
 			root := filepath.Dir(filepath.Dir(filepath.Dir(installed)))
 
 			target := filepath.Join(root, filepath.FromSlash(member))
-			if member == "files/crunch-link" {
+			if member == "files/materialize-link" {
 				if err := os.Symlink(installed, target); err != nil {
 					t.Skipf("symlinks unavailable: %v", err)
 				}
@@ -345,19 +295,20 @@ func TestMaterialToolExpansionBound(t *testing.T) {
 
 	var buffer bytes.Buffer
 
-	compressed := gzip.NewWriter(&buffer)
-
-	writer := tar.NewWriter(compressed)
-	if err := writer.WriteHeader(&tar.Header{Name: "bin/crunch", Mode: 0o700, Size: materialExpandedLimit + 1}); err != nil {
+	writer := zip.NewWriter(&buffer)
+	if _, err := writer.CreateRaw(&zip.FileHeader{
+		Name: "bin/materialize-cli", Method: zip.Store,
+		UncompressedSize64: materialExpandedLimit + 1,
+	}); err != nil {
 		t.Fatal(err)
 	}
 
-	// Deliberately omit the oversized body: rejection must occur at its header.
-	if err := compressed.Close(); err != nil {
+	// Omit the oversized body: rejection must occur at its header.
+	if err := writer.Close(); err != nil {
 		t.Fatal(err)
 	}
 
-	options := materialFixtureOptions(t, MaterialToolCrunch, "linux-amd64", "tar.gz", buffer.Bytes())
+	options := materialFixtureOptions(t, "linux-amd64", buffer.Bytes())
 	if _, err := InstallMaterialTool(t.Context(), options); err == nil || !strings.Contains(err.Error(), "oversized") {
 		t.Fatalf("oversized member not rejected at header: %v", err)
 	}

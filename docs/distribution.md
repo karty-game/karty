@@ -2,13 +2,13 @@
 
 Developer tooling and game runtimes have independent platform support.
 
-| Platform | CLI and developer tools | Game host |
-| --- | --- | --- |
-| Linux amd64 | Yes | Yes |
-| Linux arm64 | Yes | Yes |
-| macOS arm64 | Yes | Yes |
-| Windows amd64 | Yes | Yes |
-| Windows arm64 | No native TinyGo release | Yes |
+| Platform      | CLI and developer tools  | Game host |
+| ------------- | ------------------------ | --------- |
+| Linux amd64   | Yes                      | Yes       |
+| Linux arm64   | Yes                      | Yes       |
+| macOS arm64   | Yes                      | Yes       |
+| Windows amd64 | Yes                      | Yes       |
+| Windows arm64 | No native TinyGo release | Yes       |
 
 From any supported development machine, select a native distribution target:
 

@@ -42,10 +42,15 @@ func main(){`+test.body+`}`)
 
 func TestLocalUIScreenReachability(t *testing.T) {
 	t.Parallel()
-	testLocalUIScreenReachability(t, "0.0.5")
+
+	if os.Getenv("KARTY_TEST_SDK") != "0.0.9" {
+		t.Skip("requires candidate SFC templates; set KARTY_TEST_SDK=0.0.9")
+	}
+
+	testLocalUIScreenReachability(t, "0.0.9", ".kui")
 }
 
-func testLocalUIScreenReachability(t *testing.T, version string) {
+func testLocalUIScreenReachability(t *testing.T, version, extension string) {
 	t.Helper()
 	directory := filepath.Join(t.TempDir(), "demo")
 
@@ -65,15 +70,23 @@ func testLocalUIScreenReachability(t *testing.T, version string) {
 		t.Fatal(err)
 	}
 
-	config = append(config, []byte("\n[[assets.ui]]\nname = \"ui.unused\"\nsource = \"assets/ui/unused.ui\"\n")...)
+	config = append(config, []byte("\n[[assets.ui]]\nname = \"ui.unused\"\nsource = \"assets/ui/unused"+extension+"\"\n")...)
 	//nolint:gosec // Fixed karty.toml inside this test's newly scaffolded temporary project.
 	if err := os.WriteFile(path, config, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := os.WriteFile(
-		filepath.Join(directory, "assets/ui/unused.ui"),
-		[]byte(`kartui Unused(title string) { <panel><label>Unused</label></panel> }`),
+		filepath.Join(directory, "assets/ui/unused"+extension),
+		[]byte(`<template>
+<panel><label>Unused</label></panel>
+</template>
+
+<script setup lang="go">
+func setup(title string) {
+
+}
+</script>`),
 		0o600,
 	); err != nil {
 		t.Fatal(err)
@@ -84,7 +97,7 @@ func testLocalUIScreenReachability(t *testing.T, version string) {
 		"ui.hud", "ui.unused", "ui.item-row",
 	}
 
-	result := assetusage.AnalyzeUIViews(directory, "example.com/demo", names, map[string]string{"ShowHud": "ui.hud"})
+	result := assetusage.AnalyzeUI(directory, "example.com/demo", names)
 	if result.KeepAll || result.Live["ui.unused"] != "" || result.Live["ui.hud"] != "" {
 		t.Fatalf("unexpected retention: %+v", result)
 	}
@@ -97,25 +110,5 @@ func testLocalUIScreenReachability(t *testing.T, version string) {
 
 	if result.Live["ui.item-row"] == "" {
 		t.Fatal("nested child stripped")
-	}
-}
-
-func TestUIComponentUsage(t *testing.T) {
-	t.Parallel()
-
-	for _, body := range []string{`new(engine.Game).ShowInventory()`, `show := new(engine.Game).ShowInventory; show()`} {
-		directory := usageProject(t, `package main
-import "example.com/game/.karty/engine"
-func main(){`+body+`}`)
-
-		result := assetusage.AnalyzeUIViews(
-			directory,
-			"example.com/game",
-			[]string{"ui.inventory", "ui.unused"},
-			map[string]string{"ShowInventory": "ui.inventory"},
-		)
-		if result.KeepAll || result.Live["ui.inventory"] == "" || result.Live["ui.unused"] != "" {
-			t.Fatalf("component usage: %+v", result)
-		}
 	}
 }

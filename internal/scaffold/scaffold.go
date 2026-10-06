@@ -34,7 +34,11 @@ func CreateGame(destination, name string, manifest sdk.Manifest) error {
 
 // CreateTemplate selects user-owned game or UI source while sharing SDK setup.
 func CreateTemplate(destination, name string, manifest sdk.Manifest, selection string) error {
-	if !supportsTemplate(selection, manifest.API.Version) {
+	if selection == "ui" && manifest.Templates.Game == "0.0.1" {
+		return fmt.Errorf("UI scaffolding requires an SDK with .kui templates (SDK 0.0.9 or newer): %w", errUnsupportedTemplateFile)
+	}
+
+	if !supportsTemplate(selection) {
 		return errUnsupportedTemplateFile
 	}
 
@@ -118,9 +122,7 @@ func CreateTemplate(destination, name string, manifest sdk.Manifest, selection s
 
 	generated["assets/textures.go"] = assetFile
 
-	if err := addUIViews(
-		destination, modulePath, generated, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
-	); err != nil {
+	if err := addUIAssets(generated, config.Assets.UI, engineImport); err != nil {
 		return err
 	}
 
@@ -143,15 +145,11 @@ func CreateTemplate(destination, name string, manifest sdk.Manifest, selection s
 	return sdk.SyncDocs(destination, manifest)
 }
 
-func templateVersion(selection string, manifest sdk.Manifest) string {
-	if selection != "ui" {
-		return manifest.Templates.Game
-	}
-
+func templateVersion(_ string, manifest sdk.Manifest) string {
 	return manifest.Templates.Game
 }
 
-func supportsTemplate(selection, _ string) bool {
+func supportsTemplate(selection string) bool {
 	return selection == "game" || selection == "ui"
 }
 
@@ -173,9 +171,7 @@ func addUIPackage(
 	}
 
 	for _, view := range views {
-		if view.Local {
-			generated["ui/karty_ui_"+view.Name+".go"] = files[view.Source]
-		}
+		generated["ui/karty_ui_"+view.Name+".go"] = files[view.Source]
 	}
 
 	return nil
@@ -241,26 +237,4 @@ func renderTemplateFile(path, relative string, contents []byte, data any) (strin
 	}
 
 	return "", nil, fmt.Errorf("%s: %w", path, errUnsupportedTemplateFile)
-}
-
-func addUIViews(
-	directory string,
-	modulePath string,
-	generated map[string][]byte,
-	assets []project.Texture,
-	layouts []project.Layout,
-	theme string,
-) error {
-	if err := addUIAssets(generated, assets, modulePath+"/.karty/engine"); err != nil {
-		return err
-	}
-
-	views, err := project.CompileUI(directory, assets, layouts, theme)
-	if err != nil {
-		return err
-	}
-
-	generated["engine/ui-views.go"], err = codegen.UIViewFile(views)
-
-	return err
 }

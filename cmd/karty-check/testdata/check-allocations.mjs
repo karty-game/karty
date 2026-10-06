@@ -10,7 +10,9 @@ assert.ok(Number.isInteger(protocolVersion) && protocolVersion > 0, "SDK must de
 const { instance } = await WebAssembly.instantiate(await readFile(process.argv[2]), {
   wasi_snapshot_preview1: {
     fd_write: () => 0,
-    proc_exit: (code) => { throw new Error(`guest exited: ${code}`); },
+    proc_exit: (code) => {
+      throw new Error(`guest exited: ${code}`);
+    },
     random_get: () => 0,
     sched_yield: () => 0,
     poll_oneoff: () => 0,

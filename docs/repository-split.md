@@ -1,15 +1,19 @@
 # Repository split
 
-| Source owner | Contents |
-| --- | --- |
-| `karty-game/karty-engine` (private) | Core API/WIT, SDK definitions/templates, binding generator, host/runtime/renderer and SDK publication |
-| `karty-game/karty` (public; local `karty-cli`) | Project building, asset import/cache, staging, samples and customer integration |
-| `karty-game/karty-sdk` (public) | Shared cartridge/level/world formats, codecs and public SDK/host releases |
-| `karty-game/karty-ui` (public) | Compiler, schema, language docs, project adapters and editor integration |
+| Source owner                                   | Contents                                                                                              |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `karty-game/karty-engine` (private)            | Core API/WIT, SDK definitions/templates, binding generator, host/runtime/renderer and SDK publication |
+| `karty-game/karty` (public; local `karty-cli`) | Project building, asset import/cache, staging, samples and customer integration                       |
+| `karty-game/karty-sdk` (public)                | Shared cartridge/level/world formats, codecs and public SDK/host releases                             |
+| `karty-game/karty-ui` (public)                 | Compiler, schema, language docs, project adapters and editor integration                              |
+| `karty-game/karty-tools` (public)              | Native Materialize builds, releases and tool-specific patches                                         |
 
 Public repositories build with versioned public modules and published artifacts,
 without private source or credentials. Ignored local workspaces may select
 sibling public modules; do not copy dependency trees.
+
+SDK manifests pin Materialize release artifacts. The CLI owns installation and
+asset execution, while native tool builds remain in karty-tools.
 
 Keep handwritten generators/templates tracked. Update the engine generator for
 protocol bindings and KartUI generators for UI adapters; never hand-edit generated

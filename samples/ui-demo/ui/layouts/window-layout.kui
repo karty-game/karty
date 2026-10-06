@@ -1,0 +1,83 @@
+<template>
+  <!-- Build-time structure: views project their own bindings into these slots. -->
+  <panel modal="true" class="layout-screen">
+    <panel class="layout-window">
+      <panel class="layout-header">
+        <slot name="title"><label>Untitled</label></slot>
+      </panel>
+      <panel class="layout-content">
+        <slot/>
+      </panel>
+      <panel class="layout-footer">
+        <slot name="footer"><label>KartUI</label></slot>
+      </panel>
+    </panel>
+  </panel>
+</template>
+
+<style>
+.layout-screen
+  background: theme.colors.surface
+  padding: theme.spacing.gap
+  gap: theme.spacing.gap
+  height: 100%
+  flex-grow: 1
+  align: center
+  justify: center
+  transition-duration: 180
+.layout-window
+  background-image: theme.images.panel
+  padding: theme.spacing.panel
+  gap: theme.spacing.gap
+  max-height: 340
+  flex-grow: 1
+  max-width: 620
+  align: stretch
+.layout-header
+  background: theme.colors.primary-pressed
+  padding: theme.spacing.gap
+  gap: theme.spacing.gap
+  direction: row
+  align: center
+.layout-content
+  background: theme.colors.surface-raised
+  padding: theme.spacing.gap
+  gap: theme.spacing.gap
+  align: stretch
+  flex-grow: 1
+.layout-footer
+  background: theme.colors.primary-pressed
+  padding: theme.spacing.gap
+  gap: theme.spacing.gap
+  direction: row
+  align: center
+  justify: center
+button
+  transition-duration: theme.controls.transition
+@media (max-width: 480)
+  .layout-screen
+    padding: 4
+    gap: 4
+    height: 100%
+    flex-grow: 1
+  .layout-window
+    padding: 10
+    gap: 6
+    max-height: 352
+    max-width: 440
+    flex-grow: 1
+  .layout-header
+    padding: 6
+    gap: 6
+  .layout-content
+    padding: 6
+    gap: 6
+  .layout-footer
+    padding: 6
+    gap: 6
+  label
+    font-size: 16
+  button
+    font-size: 16
+    min-height: 40
+</style>

@@ -26,7 +26,7 @@ import (
 const bakeTextureChannels = 4
 
 const automaticBakeDirectory = ".karty/bakes"
-const automaticBakeManifest = automaticBakeDirectory + "/lightmap-prebake.json"
+const automaticBakeManifest = "lightmap-prebake.json"
 
 // BakeOptions controls an explicit offline invocation, without compiling game
 // code or installing a host, SDK bundle, material generator or GPU toolchain.
@@ -34,6 +34,7 @@ type BakeOptions struct {
 	Level   string
 	Samples *int
 	Bounces *int
+	Denoise *string
 	Workers int
 }
 
@@ -99,7 +100,7 @@ func BakeAll(ctx context.Context, projectDirectory string, options BakeOptions, 
 			return reports, err
 		}
 
-		report, err := bakeLevel(ctx, directory, definition, options)
+		report, err := bakeLevel(ctx, projectDirectory, directory, definition, options)
 		if err != nil {
 			return reports, fmt.Errorf("bake level %q: %w", definition.Level.Name, err)
 		}
@@ -158,10 +159,10 @@ func loadBakeMaterials(directory string, definition manifest) ([]metadataTexture
 	return metadata, materials, nil
 }
 
-func bakeLevel(ctx context.Context, directory string, definition manifest, options BakeOptions) (BakeReport, error) {
+func bakeLevel(ctx context.Context, projectDirectory, directory string, definition manifest, options BakeOptions) (BakeReport, error) {
 	started := time.Now()
 
-	cache, err := prepareBakeDirectory(directory)
+	cache, err := prepareBakeDirectory(projectDirectory, directory)
 	if err != nil {
 		return BakeReport{}, err
 	}
@@ -203,8 +204,13 @@ func bakeLevel(ctx context.Context, directory string, definition manifest, optio
 		bounces = *options.Bounces
 	}
 
-	log.Info("Baking directional lightmap", "level_name", definition.Level.Name, "samples", samples, "bounces", bounces)
-	bakeOptions := worldlightmapbake.Options{Samples: samples, Bounces: bounces, Workers: options.Workers, Seed: 1}
+	denoise := definition.Lightmap.denoise()
+	if options.Denoise != nil {
+		denoise = *options.Denoise
+	}
+
+	log.Info("Baking directional lightmap", "level_name", definition.Level.Name, "samples", samples, "bounces", bounces, "denoise", denoise)
+	bakeOptions := worldlightmapbake.Options{Samples: samples, Bounces: bounces, Workers: options.Workers, Seed: 1, Denoise: denoise}
 
 	result, err := worldlightmapbake.Bake(ctx, document, layout, materials, bakeOptions)
 	if err != nil {
@@ -218,7 +224,12 @@ func bakeLevel(ctx context.Context, directory string, definition manifest, optio
 	// The versioned offline manifest also binds surface reflectance and transport
 	// settings; direct-only imported artifacts retain their original contract.
 	pair, err := worldlightmap.NewOfflinePrebake(layout, &document, encoded, worldlightmap.OfflineBakeInputs{
-		ReflectanceSHA256: result.ReflectanceSHA256, Samples: samples, Bounces: bounces, Seed: 1, RGBMRange: result.RGBMRange,
+		ReflectanceSHA256: result.ReflectanceSHA256,
+		Samples:           samples,
+		Bounces:           bounces,
+		Seed:              1,
+		RGBMRange:         result.RGBMRange,
+		Denoise:           denoise,
 	})
 	if err != nil {
 		return BakeReport{}, err
@@ -239,13 +250,13 @@ func bakeLevel(ctx context.Context, directory string, definition manifest, optio
 	}
 	// Publish the manifest last. A concurrent build can only see a complete
 	// content-addressed image or fall back to the runtime recipe.
-	if err := atomicBakeWrite(cache, "lightmap-prebake.json", manifest); err != nil {
+	if err := atomicBakeWrite(cache, automaticBakeManifest, manifest); err != nil {
 		return BakeReport{}, err
 	}
 
 	return BakeReport{
 		Name:      definition.Level.Name,
-		Manifest:  filepath.Join(cache, "lightmap-prebake.json"),
+		Manifest:  filepath.Join(cache, automaticBakeManifest),
 		Image:     filepath.Join(cache, imageName),
 		Duration:  time.Since(started),
 		Stats:     result.Stats,
@@ -253,14 +264,43 @@ func bakeLevel(ctx context.Context, directory string, definition manifest, optio
 	}, nil
 }
 
-func prepareBakeDirectory(directory string) (string, error) {
-	root, err := filepath.EvalSymlinks(directory)
+// Cache identity follows the source directory, never an authored logical name.
+func automaticBakePath(projectDirectory, directory string) (string, error) {
+	if projectDirectory == "" {
+		return "", ErrSource
+	}
+
+	projectRoot, err := filepath.Abs(projectDirectory)
+	if err != nil {
+		return "", err
+	}
+
+	levelRoot, err := filepath.Abs(directory)
+	if err != nil {
+		return "", err
+	}
+
+	name, err := filepath.Rel(filepath.Join(projectRoot, "levels"), levelRoot)
+	if err != nil || name == "." || name == ".." || strings.ContainsAny(name, `/\`) {
+		return "", fmt.Errorf("bake source must be a direct level directory: %w", ErrSource)
+	}
+
+	return filepath.Join(automaticBakeDirectory, name), nil
+}
+
+func prepareBakeDirectory(projectDirectory, directory string) (string, error) {
+	relative, err := automaticBakePath(projectDirectory, directory)
+	if err != nil {
+		return "", err
+	}
+
+	root, err := filepath.EvalSymlinks(projectDirectory)
 	if err != nil {
 		return "", err
 	}
 
 	current := root
-	for _, name := range []string{".karty", "bakes"} {
+	for name := range strings.SplitSeq(relative, string(filepath.Separator)) {
 		current = filepath.Join(current, name)
 		if err := os.Mkdir(current, 0o755); err != nil && !os.IsExist(err) {
 			return "", err
@@ -298,7 +338,7 @@ func atomicBakeWrite(directory, name string, data []byte) error {
 }
 
 func readAutomaticPrebake(
-	directory string,
+	projectDirectory, directory string,
 	definition manifest,
 	layout worldlightmap.Layout,
 	document world.Document,
@@ -309,7 +349,12 @@ func readAutomaticPrebake(
 		}
 	}()
 
-	encoded, err := readConfinedFile(directory, automaticBakeManifest, worldlightmap.MaxPrebakeManifestSize)
+	cache, err := automaticBakePath(projectDirectory, directory)
+	if err != nil {
+		return nil
+	}
+
+	encoded, err := readConfinedFile(projectDirectory, filepath.Join(cache, automaticBakeManifest), worldlightmap.MaxPrebakeManifestSize)
 	if err != nil {
 		return nil
 	}
@@ -325,9 +370,9 @@ func readAutomaticPrebake(
 		}
 	}
 
-	imagePath := automaticBakeDirectory + "/lightmap-" + header.ImageSHA256 + ".qoi"
+	imagePath := filepath.Join(cache, "lightmap-"+header.ImageSHA256+".qoi")
 
-	image, err := readConfinedFile(directory, imagePath, worldlightmap.MaxPrebakeImageSize)
+	image, err := readConfinedFile(projectDirectory, imagePath, worldlightmap.MaxPrebakeImageSize)
 	if err != nil {
 		return nil
 	}
@@ -339,6 +384,21 @@ func readAutomaticPrebake(
 
 	if pair.Manifest.Algorithm != worldlightmap.OfflinePrebakeAlgorithm || pair.Manifest.Seed != 1 ||
 		validateOfflineReflectance(directory, definition, document, pair.Manifest.ReflectanceSHA256) != nil {
+		return nil
+	}
+
+	expectedProducer, err := worldlightmap.OfflineDenoiseProducer(definition.Lightmap.denoise())
+	if err != nil || pair.Manifest.Producer != expectedProducer {
+		log.Info(
+			"Offline lightmap denoiser differs from level settings; run karty bake",
+			"level_name",
+			definition.Level.Name,
+			"expected",
+			definition.Lightmap.denoise(),
+			"producer",
+			pair.Manifest.Producer,
+		)
+
 		return nil
 	}
 

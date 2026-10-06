@@ -5,7 +5,7 @@ import (
 	"example.com/pong/.karty/engine"
 )
 
-// Game represents the main game structure, containing it's general state and entities.
+// Game represents the main game structure, containing its general state and entities.
 type Game struct {
 	engine.Game
 
@@ -23,7 +23,8 @@ type Game struct {
 //
 //go:wasmexport karty_register
 func main() {
-	engine.Run(&Game{})
+	game := &Game{}
+	engine.Run(game.Hooks())
 }
 
 // Initialize is called when the game is first started to set up the initial state.
@@ -41,40 +42,51 @@ func (game *Game) Initialize() {
 	axis.SetStroke(engine.RGBA(100, 220, 255, 255), 3)
 
 	for i := 0; i < 10; i++ {
-		game.entities = append(game.entities, game.NewSprite2D(assets.TextureSpritesPlayer, engine.NewVec2D(float32(i*16), 64+float32(i*16))))
+		game.entities = append(
+			game.entities,
+			game.NewSprite2D(assets.TextureSpritesPlayer, engine.NewVec2D(float32(i*16), 64+float32(i*16))),
+		)
 	}
 	game.leftRequest = game.RequestLevel("levels.left")
 }
 
 // Update is called once per frame to update the game state based on input and elapsed time.
-func (game *Game) Update(frame engine.Frame) {
-	for _, event := range frame.Events {
-		switch event.Type {
-		case engine.EventKeyDown, engine.EventKeyUp:
-			down := event.Type == engine.EventKeyDown
-			if event.Key == engine.KeyLeft {
-				game.left = down
-			}
-			if event.Key == engine.KeyRight {
-				game.right = down
-			}
-		case engine.EventPointerUp:
-			game.player.Translate(event.X-game.player.Position.X, event.Y-game.player.Position.Y)
-			game.label.SetText("Player moved to pointer")
-			game.marker.Translate(event.X-game.marker.Position.X, event.Y-game.marker.Position.Y)
-		case engine.EventLevelReady:
-			game.levelReady(event)
-		case engine.EventLevelData:
-			game.label.SetText("Level data: " + string(event.Bytes))
-		case engine.EventLevelReleased:
-			if game.levelStage == 2 && event.Handle == uint32(game.leftHandle) {
-				game.leftRequest = game.RequestLevel("levels.left")
-				game.levelStage = 3
-			}
-		case engine.EventLevelFailed:
-			game.label.SetText("Level failed: " + event.Diagnostic)
-		}
+func (game *Game) Hooks() engine.Hooks {
+	return engine.Hooks{
+		OnStart: game.Initialize, OnUpdate: game.advanceMotion, OnStop: game.Shutdown,
+		OnKeyDown:         func(key engine.Key) { game.onKey(key, true) },
+		OnKeyUp:           func(key engine.Key) { game.onKey(key, false) },
+		OnPointerReleased: game.placePlayer,
+		OnLevelReady:      game.levelReady,
+		OnLevelData:       func(data engine.LevelData) { game.label.SetText("Level data: " + string(data.Bytes)) },
+		OnLevelReleased:   game.levelReleased,
+		OnLevelFailed:     func(failure engine.LevelFailed) { game.label.SetText("Level failed: " + failure.Diagnostic) },
 	}
+}
+
+func (game *Game) onKey(key engine.Key, down bool) {
+	if key == engine.KeyLeft {
+		game.left = down
+	}
+	if key == engine.KeyRight {
+		game.right = down
+	}
+}
+
+func (game *Game) placePlayer(event engine.PointerEvent) {
+	game.player.Translate(event.X-game.player.Position.X, event.Y-game.player.Position.Y)
+	game.label.SetText("Player moved to pointer")
+	game.marker.Translate(event.X-game.marker.Position.X, event.Y-game.marker.Position.Y)
+}
+
+func (game *Game) levelReleased(event engine.LevelReleased) {
+	if game.levelStage == 2 && event.Handle == game.leftHandle {
+		game.leftRequest = game.RequestLevel("levels.left")
+		game.levelStage = 3
+	}
+}
+
+func (game *Game) advanceMotion(frame engine.Frame) {
 	if game.left {
 		game.player.Translate(-2, 0)
 	}
@@ -100,20 +112,20 @@ func (game *Game) Update(frame engine.Frame) {
 	}
 }
 
-func (game *Game) levelReady(event engine.InputEvent) {
+func (game *Game) levelReady(event engine.LevelReady) {
 	switch {
-	case game.levelStage == 0 && event.RequestID == uint32(game.leftRequest):
+	case game.levelStage == 0 && event.RequestID == game.leftRequest:
 		game.leftHandle = engine.LevelHandle(event.Handle)
 		game.ReadLevelData(game.leftHandle, "arena", 0, 1024)
 		// Prepare B while A remains mounted and usable.
 		game.rightRequest = game.RequestLevel("levels.right")
 		game.levelStage = 1
-	case game.levelStage == 1 && event.RequestID == uint32(game.rightRequest):
+	case game.levelStage == 1 && event.RequestID == game.rightRequest:
 		game.rightHandle = engine.LevelHandle(event.Handle)
 		game.ReadLevelData(game.rightHandle, "arena", 0, 1024)
 		game.ReleaseLevel(game.leftHandle)
 		game.levelStage = 2
-	case game.levelStage == 3 && event.RequestID == uint32(game.leftRequest):
+	case game.levelStage == 3 && event.RequestID == game.leftRequest:
 		game.leftHandle = engine.LevelHandle(event.Handle)
 		game.ReadLevelData(game.leftHandle, "arena", 0, 1024)
 		game.label.SetText("Level A remounted; client kept running")

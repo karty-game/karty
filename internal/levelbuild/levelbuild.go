@@ -3,15 +3,12 @@
 package levelbuild
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"image"
-	_ "image/png"
 	"os"
 	"path/filepath"
 	"slices"
@@ -88,6 +85,8 @@ type metadataIdentity struct {
 
 // Artifact is a complete generated level-data cartridge.
 type Artifact struct {
+	// AuthoredActors lists all compiled content identities instantiated as actors.
+	AuthoredActors  []string
 	Name            string
 	Kind            string
 	SourceDirectory string
@@ -107,23 +106,6 @@ type assetBuild struct {
 	// Tests may supply fixture atlas bytes; public builds always use the managed
 	// Go asset processor, including the shared dev/cache path.
 	materials func(context.Context, string, sdk.Manifest, sdkworld.Document, map[uint32][]byte) (worldmaterial.Pair, assetpipeline.Artifact, error)
-}
-
-// BuildAll discovers levels/*/level.toml and builds them in logical-name order.
-func BuildAll(projectDirectory string) ([]Artifact, error) {
-	return BuildAllWithStyles(projectDirectory, false)
-}
-
-func BuildAllWithStyles(projectDirectory string, allowStyles bool) ([]Artifact, error) {
-	if allowStyles {
-		return BuildAllWithTheme(projectDirectory, 3, "")
-	}
-
-	return BuildAllWithTheme(projectDirectory, 2, "")
-}
-
-func BuildAllWithTheme(projectDirectory string, uiSchema uint32, themeSource string) ([]Artifact, error) {
-	return buildAll(context.Background(), projectDirectory, uiSchema, themeSource, nil)
 }
 
 // BuildAllWithAssets processes level textures with the selected SDK before
@@ -234,6 +216,10 @@ func build(
 		return Artifact{}, err
 	}
 
+	if err := validateWorldSchema(directory, definition); err != nil {
+		return Artifact{}, err
+	}
+
 	textures, textureMetadata, processedTextures, features, err := loadTextures(ctx, directory, definition.Textures, assets)
 	if err != nil {
 		return Artifact{}, err
@@ -275,7 +261,7 @@ func build(
 			return Artifact{}, err
 		}
 
-		template, err := uicompiler.DecodeSourceWithTheme(entry.Source, contents, theme)
+		template, err := project.DecodeUIWithTheme(entry.Source, contents, theme)
 		if err != nil {
 			return Artifact{}, err
 		}
@@ -296,6 +282,11 @@ func build(
 		data = append(data, level.SourceEntry{Name: ui.AssetPrefix + entry.Name, Kind: level.EntryData, Data: encoded})
 	}
 
+	data, authoredActors, err := appendAuthoredActions(directory, data, assets)
+	if err != nil {
+		return Artifact{}, err
+	}
+
 	envelope, err := level.Encode(metadata, data)
 	if err != nil {
 		return Artifact{}, fmt.Errorf("encode level %q: %w", definition.Level.Name, err)
@@ -309,6 +300,7 @@ func build(
 	digest := sha256.Sum256(module)
 
 	return Artifact{
+		AuthoredActors:  authoredActors,
 		Name:            definition.Level.Name,
 		Kind:            definition.Level.Kind,
 		SourceDirectory: directory,
@@ -425,7 +417,7 @@ func loadTextures(
 			return nil, nil, nil, nil, fmt.Errorf("texture %q: %w", entry.Name, ErrSource)
 		}
 
-		contents, width, height, processed, err := loadTexture(ctx, directory, entry, assets)
+		contents, width, height, processed, err := loadProcessedTexture(ctx, directory, entry, assets)
 		if err != nil {
 			return nil, nil, nil, nil, fmt.Errorf("texture %q: %w", entry.Name, err)
 		}
@@ -451,40 +443,18 @@ func loadTextures(
 	return result, metadata, processedTextures, features, nil
 }
 
-func loadTexture(
-	ctx context.Context,
-	directory string,
-	entry textureEntry,
-	assets *assetBuild,
-) ([]byte, int, int, *assetpipeline.Texture, error) {
-	maximum := level.MaxEntrySize
-	if assets != nil {
-		maximum = asset.MaxSourceAssetBytes
-	}
-
-	contents, err := readConfinedFile(directory, entry.Source, maximum)
-	if err != nil {
-		return nil, 0, 0, nil, err
-	}
-
-	if assets == nil {
-		configuration, format, decodeErr := image.DecodeConfig(bytes.NewReader(contents))
-		if decodeErr != nil || format != "png" || configuration.Width < 1 || configuration.Height < 1 {
-			return nil, 0, 0, nil, ErrSource
-		}
-
-		return contents, configuration.Width, configuration.Height, nil, nil
-	}
-
-	return loadProcessedTexture(ctx, directory, entry, assets)
-}
-
 func loadProcessedTexture(
 	ctx context.Context,
 	directory string,
 	entry textureEntry,
 	assets *assetBuild,
 ) ([]byte, int, int, *assetpipeline.Texture, error) {
+	// Level sources are confined to the level directory, even though processing
+	// and its cache belong to the encompassing project.
+	if _, err := readConfinedFile(directory, entry.Source, asset.MaxSourceAssetBytes); err != nil {
+		return nil, 0, 0, nil, err
+	}
+
 	profileName := entry.Profile
 	if profileName == "" {
 		profileName = project.DefaultTextureProfile
@@ -606,4 +576,42 @@ func readConfinedFile(directory, relative string, maximum int) ([]byte, error) {
 	}
 
 	return contents, nil
+}
+
+func appendAuthoredActions(directory string, data []level.SourceEntry, assets *assetBuild) ([]level.SourceEntry, []string, error) {
+	var authoredActors []string
+
+	for _, entry := range data {
+		if entry.Name == sdkworld.EntryName {
+			document, decodeErr := sdkworld.Decode(entry.Data)
+			if decodeErr != nil {
+				return nil, nil, decodeErr
+			}
+
+			for _, content := range document.Contents {
+				authoredActors = append(authoredActors, content.ID)
+			}
+		}
+	}
+
+	if info, statErr := os.Lstat(filepath.Join(directory, "actions.json")); statErr == nil {
+		if !info.Mode().IsRegular() {
+			return nil, nil, fmt.Errorf("actions.json must be a regular authored file: %w", ErrManifest)
+		}
+
+		if assets == nil || assets.manifest.API.Version != "0.0.7" {
+			return nil, nil, fmt.Errorf("authored actions require SDK 0.0.9: %w", ErrManifest)
+		}
+
+		contents, readErr := readConfinedFile(directory, "actions.json", 64*1024)
+		if readErr != nil {
+			return nil, nil, readErr
+		}
+
+		data = append(data, level.SourceEntry{Name: "karty/actions@1", Kind: level.EntryData, Data: contents})
+	} else if !os.IsNotExist(statErr) {
+		return nil, nil, statErr
+	}
+
+	return data, authoredActors, nil
 }

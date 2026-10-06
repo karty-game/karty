@@ -1,10 +1,8 @@
 package toolchain
 
 import (
-	"archive/tar"
 	"archive/zip"
 	"bytes"
-	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -23,7 +21,6 @@ import (
 type MaterialTool string
 
 const (
-	MaterialToolCrunch      MaterialTool = "crunch"
 	MaterialToolMaterialize MaterialTool = "materialize-cli" // AiGameKit Materialize Rust CLI.
 )
 
@@ -33,13 +30,13 @@ const (
 type MaterialToolArtifact struct {
 	URL        string
 	SHA256     string
-	Format     string // "tar.gz" or "zip"; never inferred from the URL.
+	Format     string // "zip"; never inferred from the URL.
 	Executable string
 }
 
 // MaterialToolSpec pins a full Git commit and per-developer-platform artifacts.
 // MaterializeSpec adapts optional released SDK pins to this installer contract;
-// the current default SDK does not yet select Materialize. No PATH fallback exists.
+// released SDKs select Materialize. No PATH fallback exists.
 type MaterialToolSpec struct {
 	Tool      MaterialTool
 	Revision  string
@@ -226,7 +223,7 @@ func stageMaterialInstall(ctx context.Context, staging string, contents []byte, 
 		return err
 	}
 
-	if err := extractMaterialArchive(ctx, payload, contents, artifact); err != nil {
+	if err := extractMaterialArchive(ctx, payload, contents); err != nil {
 		return err
 	}
 
@@ -260,7 +257,7 @@ func publishMaterialInstall(staging, installDir string, warm bool) error {
 }
 
 func materialArtifact(spec MaterialToolSpec, platform string) (MaterialToolArtifact, error) {
-	if spec.Tool != MaterialToolCrunch && spec.Tool != MaterialToolMaterialize {
+	if spec.Tool != MaterialToolMaterialize {
 		return MaterialToolArtifact{}, fmt.Errorf("unsupported material tool %q: %w", spec.Tool, os.ErrInvalid)
 	}
 
@@ -284,7 +281,7 @@ func materialArtifact(spec MaterialToolSpec, platform string) (MaterialToolArtif
 
 	if !found || err != nil || artifactURL.Scheme != "https" || artifactURL.Host == "" ||
 		artifactURL.User != nil || artifactURL.Fragment != "" ||
-		!materialHex(artifact.SHA256, 64) || (artifact.Format != "tar.gz" && artifact.Format != "zip") ||
+		!materialHex(artifact.SHA256, 64) || artifact.Format != "zip" ||
 		!materialMemberPath(artifact.Executable) || path.Base(artifact.Executable) != name {
 		return MaterialToolArtifact{}, fmt.Errorf("incomplete or invalid material artifact for %s: %w", platform, os.ErrInvalid)
 	}
@@ -345,17 +342,13 @@ func materialDirectory(name string) error {
 	return nil
 }
 
-func extractMaterialArchive(ctx context.Context, destination string, contents []byte, artifact MaterialToolArtifact) error {
+func extractMaterialArchive(ctx context.Context, destination string, contents []byte) error {
 	writer := &materialArchiveWriter{
 		destination: destination,
 		seen:        make(map[string]bool),
 	}
 
-	if artifact.Format == "zip" {
-		return extractMaterialZip(ctx, contents, writer)
-	}
-
-	return extractMaterialTar(ctx, contents, writer)
+	return extractMaterialZip(ctx, contents, writer)
 }
 
 // materialArchiveWriter tracks bounds and member uniqueness across the full archive.
@@ -456,47 +449,6 @@ func extractMaterialZipEntry(ctx context.Context, entry *zip.File, writer *mater
 	}
 
 	return closeErr
-}
-
-func extractMaterialTar(ctx context.Context, contents []byte, writer *materialArchiveWriter) error {
-	reader, err := gzip.NewReader(bytes.NewReader(contents))
-	if err != nil {
-		return err
-	}
-	defer reader.Close()
-
-	// Bound the entire decompressed stream, including padding and PAX headers.
-	limited := &io.LimitedReader{R: reader, N: materialExpandedLimit + 1}
-	tarReader := tar.NewReader(limited)
-
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if header.Typeflag != tar.TypeReg && header.Typeflag != tar.TypeDir {
-			return fmt.Errorf("non-regular material TAR member: %w", os.ErrInvalid)
-		}
-
-		if err := writer.write(ctx, header.Name, header.Typeflag == tar.TypeDir, header.Size, tarReader); err != nil {
-			return err
-		}
-	}
-
-	if _, err := io.Copy(io.Discard, limited); err != nil {
-		return err
-	}
-
-	if limited.N == 0 {
-		return fmt.Errorf("material archive exceeds expansion bound: %w", os.ErrInvalid)
-	}
-
-	return nil
 }
 
 func compareMaterialInstall(expected, actual string) error {

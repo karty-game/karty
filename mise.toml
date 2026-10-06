@@ -1,7 +1,19 @@
 [tools]
+hk = "2.5.0"
+taplo = "0.10.0"
+uv = "0.12.23"
+yamllint = { version = "1.38.0", uvx = true }
+prettier = "3.9.9"
 golangci-lint = "2.14.0"
 go = "1.27.1"
 node = "26.10.0"
+
+# Required by the public SDK offline baker on Go 1.27.
+[env]
+GOEXPERIMENT = "simd"
+
+[hooks]
+postinstall = "hk install --mise"
 
 [shell_alias]
 karty = "{{config_root}}/dist/karty"
@@ -10,7 +22,7 @@ lint = "mise run lint"
 test = "mise run test"
 
 [tasks.test]
-run = ["go run ./cmd/karty-release --check", "go run ./cmd/karty-test-sdk", "go test ./..."]
+run = ["go run ./cmd/karty-release --check", "go run ./cmd/karty-test-sdk", "go test -timeout=9s ./..."]
 
 [tasks.build]
 run = "go build -o dist/karty ./cmd/karty"
@@ -25,10 +37,13 @@ run = "CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o dist/cli/darwin-arm64/
 run = "CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/cli/windows-amd64/karty.exe ./cmd/karty"
 
 [tasks.check]
-run = ["mise run test", "mise run build"]
+run = ["mise run check-fmt", "mise run lint", "mise run test", "mise run build"]
 
 [tasks.fmt]
-run = "gofmt -w cmd internal"
+run = "hk fix --all --profile format"
+
+[tasks.check-fmt]
+run = "hk check --all --profile format"
 
 [tasks.smoke]
 depends = ["build"]
@@ -40,6 +55,7 @@ run = "go run ./cmd/karty-check --web"
 [tasks.check-browser]
 run = "go run ./cmd/karty-check --browser"
 [tasks.check-ui]
+env = { KARTY_TEST_SDK = "0.0.9" }
 run = "go run ./cmd/karty-check --ui"
 [tasks.check-dev]
 run = "go run ./cmd/karty-check --watcher"
@@ -48,6 +64,10 @@ run = "go run ./cmd/karty-check --allocations"
 
 [tasks.check-world-camera]
 run = "go run ./cmd/karty-check --world-camera"
+
+[tasks.check-client-hooks]
+description = "Validate hooks/actions with a small native WASM fixture; no browser required"
+run = "go run ./cmd/karty-check --client-hooks --native-only"
 
 [tasks.check-renderer-debug-ui]
 description = "Check AA and lightmap browser controls, input isolation and mobile layout"
@@ -62,27 +82,19 @@ run = "../../dist/karty build --target web"
 dir = "samples/world-camera"
 run = "../../dist/karty serve"
 
-[tasks.prepare-world-camera-lighting]
-run = "go run ./scripts/world-camera-lighting"
-
-[tasks.build-world-camera-lighting]
-depends = ["build"]
-dir = "dist/world-camera-lighting"
-run = "../karty build --target web"
-
-[tasks.serve-world-camera-lighting]
-run = "dist/karty serve --dir dist/world-camera-lighting/dist/web"
-
 [tasks.check-materialize-software]
 description = "Generate real atlas maps using released Materialize and headless Mesa software OpenGL"
 env = { KARTY_TEST_MATERIALIZE_ATLAS = "1" }
-run = "go test ./internal/assetpipeline -run '^TestWorldMaterialReleaseAtlas$' -count=1 -v"
+run = "go test -timeout=9s ./internal/assetpipeline -run '^TestWorldMaterialReleaseAtlas$' -count=1 -v"
 
 [tasks.generate-world-camera-materials]
 description = "Regenerate the world-camera sample's authored albedo textures"
-run = "go run ./scripts/world-camera-materials"
+run = "go run ./cmd/world-camera-materials"
 
 [tasks.lint]
+run = "hk check --all"
+
+[tasks.lint-go]
 run = "golangci-lint run ./..."
 
 [tasks.check-integration]
@@ -90,8 +102,11 @@ run = "bash scripts/check-integration.sh"
 
 [tasks.build-samples]
 depends = ["build"]
-tools = { python = "3.12.12" }
-run = "python3 scripts/build-samples.py"
+run = "go run ./cmd/karty-samples build"
+
+[tasks.assemble-samples]
+description = "Assemble validated static sample previews for Pages CI"
+run = 'go run ./cmd/karty-samples assemble "$SAMPLE_STATE" "$SAMPLE_SOURCE" "$DESTINATION" "$REMOVE_PREVIEW" "$OPEN_PRS"'
 
 [tasks.build-cli-linux-arm64]
 run = "CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o dist/cli/linux-arm64/karty ./cmd/karty"
@@ -104,3 +119,33 @@ run = "go run ./cmd/karty-release"
 
 [tasks.check-release]
 run = "go run ./cmd/karty-release --check"
+
+[tasks.check-client-hooks-native]
+description = "Build the crafted hooks/actions fixture twice and execute its native WASM lifecycle"
+run = "go run ./cmd/karty-check --client-hooks --native-only"
+
+[tasks.check-client-hooks-web]
+description = "Optional Chromium smoke for the crafted hooks/actions fixture, with a 9-second execution budget"
+run = "go run ./cmd/karty-check --client-hooks"
+
+[tasks.check-world-camera-components]
+description = "Test camera movement, accepted-pose followers and HUD with small native CPU fixtures"
+run = "go test -timeout=9s ./cmd/karty-check -run '^TestWorldCameraComponents$' -count=1 -v"
+
+[tasks.check-world-camera-hooks]
+description = "Test the main sample's SDK 0.0.9 hooks and remount behavior without loading world assets or a browser"
+env = { KARTY_TEST_SDK = "0.0.9" }
+run = "go test -timeout=9s ./cmd/karty-check -run '^TestWorldCameraComponents$' -count=1 -v"
+
+[tasks.check-sample-clients]
+description = "Compile current sample sources and exercise UI controls with small CPU fixtures; no sample resources or browser"
+env = { KARTY_TEST_SDK = "0.0.9" }
+run = "go test -timeout=9s ./cmd/karty-check -run '^Test(SampleUISources|SampleClients)$' -count=1 -v"
+
+[tasks.install-hooks]
+description = "Install repository hk hooks with the pinned mise environment"
+run = "hk install --mise"
+
+[tasks.generate-action-contract]
+description = "Refresh the public SDK action schema snapshot with its owning exporter"
+run = "go run github.com/karty-game/karty-sdk/cmd/karty-actions-schema --out internal/actionbuild/testdata/actions-v1.generated.json"

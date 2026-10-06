@@ -1,0 +1,70 @@
+package main
+
+import (
+	"encoding/binary"
+	"example.com/world-camera/.karty/engine"
+	"strings"
+	"testing"
+)
+
+func TestGameHooksMountFeedbackAndRemount(t *testing.T) {
+	game := &Game{}
+	engine.Run(game.Hooks())
+	engine.FixtureStart()
+	defer engine.FixtureStop()
+	engine.FixtureFrame(engine.Frame{Number: 1, Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(game.request), Handle: 9, Bytes: []byte(`{"name":"levels.camera-showcase"}`)}}})
+	if game.camera == nil || game.orbitCamera == nil || game.cameraInfo == "" {
+		t.Fatal("mount did not bind camera behaviors")
+	}
+	game.onActorQuery(engine.ActorQueryResult{RequestID: game.markerQuery, Handle: 9, Actors: []engine.WorldActorID{10}})
+	game.onActorQuery(engine.ActorQueryResult{RequestID: game.spinQuery, Handle: 9, Actors: []engine.WorldActorID{11}})
+	pose := engine.NewTransform3D(engine.NewVec3D(7, 2, 3))
+	engine.FixtureFrame(engine.Frame{Number: 2, Events: []engine.InputEvent{{Type: engine.EventAuthoritativeTransform, EntityID: game.camera.ID, Transform3D: pose}}})
+	if game.fps.Position.X != 7 || !strings.Contains(game.cameraInfo, "x=7") || game.marker.lastPose != pose {
+		t.Fatal("component hooks did not receive synchronized feedback")
+	}
+	oldCamera := game.camera.ID
+	game.reload()
+	// Query results arriving while release is pending must not revive actor refs.
+	game.onActorQuery(engine.ActorQueryResult{RequestID: game.markerQuery, Handle: 9, Actors: []engine.WorldActorID{10}})
+	if game.marker.actor.ID != 0 || game.spinner.actor.ID != 0 {
+		t.Fatal("release retained an actor")
+	}
+	engine.FixtureFrame(engine.Frame{Number: 3, Events: []engine.InputEvent{{Type: engine.EventAuthoritativeTransform, EntityID: oldCamera, Transform3D: pose}}})
+	bytes := engine.FixtureCommands()
+	for offset := 24; offset < len(bytes); {
+		if bytes[offset] != 20 {
+			t.Fatal("late feedback/release tick emitted non-UI commands", bytes[offset])
+		}
+		offset += 3 + int(binary.LittleEndian.Uint16(bytes[offset+1:offset+3]))
+	}
+	engine.FixtureFrame(engine.Frame{Number: 4, Events: []engine.InputEvent{{Type: engine.EventLevelReleased, RequestID: uint32(game.release), Handle: 9}}})
+	engine.FixtureFrame(engine.Frame{Number: 5, Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(game.request), Handle: 19, Bytes: []byte(`{"name":"levels.camera-showcase"}`)}}})
+	game.onActorQuery(engine.ActorQueryResult{RequestID: game.markerQuery, Handle: 19, Actors: []engine.WorldActorID{20}})
+	if game.camera.ID == oldCamera || game.marker.actor.ID != 20 {
+		t.Fatal("remount retained old behavior targets")
+	}
+	game.onActorQuery(engine.ActorQueryResult{RequestID: game.markerQuery, Handle: 9, Actors: []engine.WorldActorID{10}})
+	if game.marker.actor.ID != 20 {
+		t.Fatal("old mount query replaced live marker")
+	}
+}
+func TestViewAndChannelRefreshWithoutFrames(t *testing.T) {
+	engine.FixtureBegin()
+	game := &Game{cameraController: controllerFixture()}
+	game.showCameraInfo()
+	before := game.cameraInfo
+	game.setView(true)
+	if game.cameraInfo == before || !strings.Contains(game.cameraInfo, "ISO") {
+		t.Fatal("view switch left stale HUD")
+	}
+	game.setOutput(engine.CameraOutputDepth)
+	if !strings.Contains(game.cameraInfo, "Channel: depth") {
+		t.Fatal("channel switch left stale HUD")
+	}
+	game.visit(true)
+	if game.fps.Position != courtyardPathPosition() || !strings.Contains(game.cameraInfo, "path=0") {
+		t.Fatal("viewpoint jump left stale pose", game.fps)
+	}
+}
+func courtyardPathPosition() engine.Vec3D { return engine.NewVec3D(-5, 2, 1.7) }

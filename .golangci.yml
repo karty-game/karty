@@ -104,6 +104,11 @@ linters:
           - dupl
 
 formatters:
+  exclusions:
+    generated: strict
+    paths:
+      - "(^|/)dist(/|$)"
+      - '(^|/)\.(karty|codex|agents)(/|$)'
   enable:
     - gci # checks if code and import statements are formatted, with additional rules
     - gofmt # checks if the code is formatted according to 'gofmt' command

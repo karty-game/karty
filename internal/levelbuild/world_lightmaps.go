@@ -27,6 +27,7 @@ type lightmapBuildSettings struct {
 	Offline      bool     `toml:"offline"`
 	BakeSamples  *int     `toml:"bake_samples"`
 	BakeBounces  *int     `toml:"bake_bounces"`
+	BakeDenoise  *string  `toml:"bake_denoise"`
 }
 
 func (s lightmapBuildSettings) options() (worldlightmap.Options, error) {
@@ -82,7 +83,23 @@ func (s lightmapBuildSettings) options() (worldlightmap.Options, error) {
 	return options, nil
 }
 
+func (s lightmapBuildSettings) denoise() string {
+	if s.BakeDenoise != nil {
+		return *s.BakeDenoise
+	}
+
+	return "medium"
+}
+
 func (s lightmapBuildSettings) validatePrebake() error {
+	if s.BakeDenoise != nil && *s.BakeDenoise == "" {
+		return ErrManifest
+	}
+
+	if _, err := worldlightmap.OfflineDenoiseProducer(s.denoise()); err != nil {
+		return fmt.Errorf("bake_denoise: %w", ErrManifest)
+	}
+
 	if (s.BakeSamples != nil && (*s.BakeSamples < 1 || *s.BakeSamples > worldlightmap.MaxOfflineSamples)) ||
 		(s.BakeBounces != nil && (*s.BakeBounces < 0 || *s.BakeBounces > worldlightmap.MaxOfflineBounces)) {
 		return ErrManifest
@@ -124,7 +141,7 @@ func validateLightmapSettings(definition manifest, assets *assetBuild) error {
 }
 
 func buildWorldLightmaps(
-	directory string,
+	projectDirectory, directory string,
 	definition manifest,
 	document world.Document,
 	data []level.SourceEntry,
@@ -182,7 +199,7 @@ func buildWorldLightmaps(
 			return nil, nil, nil, err
 		}
 	} else if definition.Lightmap.Offline {
-		prebaked = readAutomaticPrebake(directory, definition, layout, document)
+		prebaked = readAutomaticPrebake(projectDirectory, directory, definition, layout, document)
 	}
 
 	if len(prebaked) != 0 {

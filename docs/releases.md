@@ -5,13 +5,20 @@ metadata and native/web hosts publish separately in
 [karty-sdk](https://github.com/karty-game/karty-sdk/releases) as `sdk-vVERSION`.
 SDK tags do not trigger CLI publication; SDK, CLI and module versions may differ.
 
-## One SDK pin
+## SDK pins
 
-`CurrentSDK` in [internal/release/version.go](../internal/release/version.go) is
-authoritative for defaults, stable samples, smoke tests and release integration.
-All samples, including world-camera, select the released SDK 0.0.8.
-Change it only after compatible immutable public SDK/host assets are available.
+`CurrentSDK` in [internal/release/version.go](../internal/release/version.go) selects
+the released CLI default, smoke fixtures and release integration. It remains
+SDK 0.0.8 until compatible immutable public SDK/host assets are available.
+`SampleSDK` selects the current sample baseline: all four examples now use SDK
+0.0.9 with typed hooks, and their interfaces use the current `.kui` format.
+The UI demo also requires the candidate's widgets and explicit sizing contract.
 Public format/compiler module dependencies are selected separately in [go.mod](../go.mod).
+
+Samples currently require a matching candidate SDK bundle and host; see
+[setup and validation](../samples/README.md). Public sample builds require the
+immutable SDK 0.0.9 assets to be published first. Advancing the examples does
+not publish the SDK or advance the released CLI default.
 
 From the repository root, prepare and validate the release:
 
@@ -24,8 +31,8 @@ mise run install-browser
 mise run check-integration
 ```
 
-Preparation updates sample SDK pins; tests reject drift and prepare the external
-SDK cache. `karty sdk current` prints the selection for scripts. Preparation
+Preparation updates all samples to `SampleSDK`; tests reject drift and prepare the
+released compatibility SDK cache. `karty sdk current` prints the selection for scripts. Preparation
 does not commit, tag or publish. See [Development](development.md) for overrides.
 
 ## Publication gate

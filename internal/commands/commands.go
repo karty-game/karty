@@ -6,6 +6,7 @@ import (
 	"github.com/karty-game/karty/internal/commands/build"
 	"github.com/karty-game/karty/internal/commands/dev"
 	newcommand "github.com/karty-game/karty/internal/commands/new"
+	"github.com/karty-game/karty/internal/commands/schema"
 	"github.com/karty-game/karty/internal/commands/serve"
 	"github.com/karty-game/karty/internal/commands/toolchain"
 	"github.com/urfave/cli/v3"
@@ -21,6 +22,7 @@ func New() *cli.Command {
 			sdkCommand(),
 			build.Command(),
 			bake.Command(),
+			schema.Command(),
 			dev.Command(),
 			serve.Command(),
 			toolchain.Command(),

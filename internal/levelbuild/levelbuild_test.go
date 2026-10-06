@@ -33,12 +33,12 @@ func TestBuildAllProducesDeterministicSortedCartridges(t *testing.T) {
 	writeLevel(t, directory, "z", "levels.z", "z-data")
 	writeLevel(t, directory, "a", "levels.a", "a-data")
 
-	first, err := levelbuild.BuildAll(directory)
+	first, err := levelbuild.BuildAllWithAssets(t.Context(), directory, 2, "", textureSDK(asset.ProcessorQOIv1))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	second, err := levelbuild.BuildAll(directory)
+	second, err := levelbuild.BuildAllWithAssets(t.Context(), directory, 2, "", textureSDK(asset.ProcessorQOIv1))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,12 +80,12 @@ func TestBuildAllEmbedsDeterministicLevelTextures(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	artifacts, err := levelbuild.BuildAll(directory)
+	artifacts, err := levelbuild.BuildAllWithAssets(t.Context(), directory, 2, "", textureSDK(asset.ProcessorQOIv1))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(artifacts[0].Features) != 0 {
+	if !slices.Equal(artifacts[0].Features, []string{cartridge.FeatureTextureQOIv1}) {
 		t.Fatalf("legacy features = %v", artifacts[0].Features)
 	}
 
@@ -97,8 +97,13 @@ func TestBuildAllEmbedsDeterministicLevelTextures(t *testing.T) {
 	}
 
 	texture, _, found := decoded.Read(level.TextureEntryName(1), 0, level.MaxEntrySize)
-	if !found || string(texture) != string(png) {
-		t.Fatal("embedded texture does not match its source")
+	if !found {
+		t.Fatal("embedded texture is missing")
+	}
+
+	_, processed, err := sdkqoi.Decode(texture)
+	if err != nil || processed.Bounds() != image.Rect(0, 0, 1, 1) {
+		t.Fatalf("processed texture: %v", err)
 	}
 
 	var metadata struct {
@@ -290,8 +295,14 @@ func TestBuildAllResolvesLevelThemeImage(t *testing.T) {
 asset = "panel"
 slice = [1, 1, 1, 1]
 `),
-		"hud.ui": []byte(`kartui Hud() { <panel class="frame"><label>HUD</label></panel> }
-style { .frame { background-image: theme.images.panel; } }`),
+		"hud.kui": []byte(`<template>
+<panel class="frame"><label>HUD</label></panel>
+</template>
+
+<style>
+.frame
+  background-image: theme.images.panel
+</style>`),
 		"level.toml": []byte(`[level]
 name = "levels.themed"
 kind = "level"
@@ -302,7 +313,7 @@ name = "panel"
 source = "panel.png"
 [[ui]]
 name = "ui.hud"
-source = "hud.ui"
+source = "hud.kui"
 `),
 	} {
 		if err := os.WriteFile(filepath.Join(directory, name), contents, 0o600); err != nil {
@@ -310,7 +321,7 @@ source = "hud.ui"
 		}
 	}
 
-	artifacts, err := levelbuild.BuildAllWithTheme(root, 4, "")
+	artifacts, err := levelbuild.BuildAllWithAssets(t.Context(), root, 4, "", textureSDK(asset.ProcessorQOIv1))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -370,7 +381,7 @@ func TestBuildAllRejectsEscapingDataSource(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := levelbuild.BuildAll(directory); err == nil {
+	if _, err := levelbuild.BuildAllWithAssets(t.Context(), directory, 2, "", textureSDK(asset.ProcessorQOIv1)); err == nil {
 		t.Fatal("BuildAll() accepted an escaping source")
 	}
 }

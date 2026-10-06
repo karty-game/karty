@@ -30,7 +30,7 @@ function respond(response, status, body) {
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url, "http://karty.test");
-    const prefix = prefixes.find(candidate => url.pathname.startsWith(candidate));
+    const prefix = prefixes.find((candidate) => url.pathname.startsWith(candidate));
     if (!prefix) return respond(response, 404, "not found");
 
     let name = url.pathname.slice(prefix.length) || "index.html";
@@ -69,19 +69,28 @@ async function checkRuntime(prefix, options = {}) {
   const context = await browser.newContext(options);
   const page = await context.newPage();
   const errors = [];
-  page.on("pageerror", error => errors.push(error.message));
-  page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
   await page.goto(origin + prefix, { waitUntil: "domcontentloaded" });
   try {
-    await page.waitForFunction(() => document.documentElement.dataset.kartyState === "running", null, { timeout: 30000 });
+    await page.waitForFunction(() => document.documentElement.dataset.kartyState === "running", null, {
+      timeout: 9000,
+    });
   } catch (error) {
     const state = await page.locator("html").getAttribute("data-karty-state");
     const detail = await page.locator("#error-detail").textContent();
-    throw new Error(`browser runtime did not start (state=${state}, detail=${detail}, pageErrors=${errors.join("; ")}): ${error.message}`);
+    throw new Error(
+      `browser runtime did not start (state=${state}, detail=${detail}, pageErrors=${errors.join("; ")}): ${error.message}`,
+    );
   }
   const firstFrame = BigInt(await page.locator("html").getAttribute("data-karty-frame"));
-  await page.waitForFunction(frame => BigInt(document.documentElement.dataset.kartyFrame) > BigInt(frame), String(firstFrame));
-  assert.equal(await page.title(), "pong");
+  await page.waitForFunction(
+    (frame) => BigInt(document.documentElement.dataset.kartyFrame) > BigInt(frame),
+    String(firstFrame),
+  );
+  assert.equal(await page.title(), "pong - Powered by Karty");
   assert.equal(await page.locator("#loading").isHidden(), true);
 
   const canvas = page.locator("canvas");
@@ -92,18 +101,22 @@ async function checkRuntime(prefix, options = {}) {
   assert.deepEqual(errors, [], `browser page errors: ${errors.join("; ")}`);
 
   const launcher = prefix + "karty.js?v=";
-  const launcherRequests = requests.filter(path => path.startsWith(launcher)).length;
+  const launcherRequests = requests.filter((path) => path.startsWith(launcher)).length;
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => document.documentElement.dataset.kartyState === "running", null, { timeout: 30000 });
+  await page.waitForFunction(() => document.documentElement.dataset.kartyState === "running", null, { timeout: 9000 });
   assert.equal(await page.locator("#loading").isHidden(), true);
-  assert.equal(requests.filter(path => path.startsWith(launcher)).length, launcherRequests, "versioned launcher missed browser cache");
+  assert.equal(
+    requests.filter((path) => path.startsWith(launcher)).length,
+    launcherRequests,
+    "versioned launcher missed browser cache",
+  );
   await context.close();
 }
 
 async function checkFailure(prefix, expected) {
   const page = await browser.newPage();
   await page.goto(origin + prefix, { waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => document.documentElement.dataset.kartyState === "error", null, { timeout: 10000 });
+  await page.waitForFunction(() => document.documentElement.dataset.kartyState === "error", null, { timeout: 9000 });
   assert.match(await page.locator("#error-detail").textContent(), expected);
   await page.close();
 }
@@ -113,12 +126,18 @@ try {
   await checkRuntime("/proxy/4242/", { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await checkFailure("/missing-script/", /Could not load script/);
   await checkFailure("/missing-asset/", /asset section is missing or duplicated/);
-  assert.ok(requests.some(path => path.startsWith("/proxy/4242/karty.js?v=")), "subpath launcher URL escaped its prefix");
+  assert.ok(
+    requests.some((path) => path.startsWith("/proxy/4242/karty.js?v=")),
+    "subpath launcher URL escaped its prefix",
+  );
   for (const artifact of levelArtifacts) {
-    assert.ok(requests.some(path => path.includes(artifact)), `browser did not fetch level artifact ${artifact}`);
+    assert.ok(
+      requests.some((path) => path.includes(artifact)),
+      `browser did not fetch level artifact ${artifact}`,
+    );
   }
   console.log("Browser checks passed (actual Go/Ebiten host and TinyGo cartridge in Chromium).");
 } finally {
   await browser.close();
-  await new Promise(resolveClose => server.close(resolveClose));
+  await new Promise((resolveClose) => server.close(resolveClose));
 }

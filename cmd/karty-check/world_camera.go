@@ -46,7 +46,12 @@ func runWorldCamera(ctx context.Context, root string) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(temporary)
+
+	if os.Getenv("KARTY_CHECK_KEEP_PROJECT") == "1" {
+		fmt.Fprintln(os.Stdout, "Retained check project:", filepath.Join(temporary, "world-camera"))
+	} else {
+		defer os.RemoveAll(temporary)
+	}
 
 	project := filepath.Join(temporary, "world-camera")
 	if err := copyWorldCameraProject(root, project); err != nil {

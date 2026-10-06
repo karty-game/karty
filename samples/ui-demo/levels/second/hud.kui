@@ -1,0 +1,13 @@
+<template>
+  <panel modal="false" class="hud">
+    <label class="hud-text">Outer relay — use Pause or Escape</label>
+  </panel>
+</template>
+
+<style>
+.hud
+  padding: theme.spacing.gap
+  gap: theme.spacing.gap
+.hud-text
+  color: theme.colors.accent
+</style>

@@ -146,5 +146,6 @@ max_texels = 1048576
 lights = ["court-daylight", "west-brazier", "east-brazier", "north-cool-fill", "hall-fill", "gallery-fill"]
 shadow_size = 512
 offline = true
-bake_samples = 196
+bake_samples = 4
 bake_bounces = 1
+bake_denoise = "medium"

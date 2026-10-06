@@ -43,7 +43,7 @@ func TestAirWatcherLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	uiSource := filepath.Join(assetDirectory, "menu.ui")
+	uiSource := filepath.Join(assetDirectory, "menu.kui")
 	if err := os.WriteFile(uiSource, []byte("initial UI"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +53,7 @@ func TestAirWatcherLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	projectUISource := filepath.Join(projectUIDirectory, "menu.ui")
+	projectUISource := filepath.Join(projectUIDirectory, "menu.kui")
 	if err := os.WriteFile(projectUISource, []byte("initial project UI"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestAirWatcherLifecycle(t *testing.T) {
 		"-build.exclude_unchanged", "true",
 		"-build.poll", "true",
 		"-build.poll_interval", "500",
-		"-build.exclude_dir", "dist",
+		"-build.exclude_dir", ".karty,dist",
 		"-build.exclude_regex", generatedSourcePattern,
 		"-tmp_dir", airRuntimeDirectory,
 		"-build.log", airBuildLog,
@@ -145,6 +145,15 @@ func TestAirWatcherLifecycle(t *testing.T) {
 	}
 
 	if err := os.WriteFile(generatedSource, []byte("package main\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	schemaPath := filepath.Join(root, ".karty", "schemas", "levels", "showcase.schema.json")
+	if err := os.MkdirAll(filepath.Dir(schemaPath), 0750); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(schemaPath, []byte("{}"), 0600); err != nil {
 		t.Fatal(err)
 	}
 

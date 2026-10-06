@@ -26,9 +26,6 @@ func TestMaterialMappingCapabilityGateAndPackagedWASM(t *testing.T) {
 	}
 
 	root := lightingLevelFixture(t, "version: 5\n"+lightingRoomYAML)
-	if _, err := BuildAll(root); !errors.Is(err, ErrManifest) {
-		t.Fatalf("no selected SDK accepted source v5 mapping: %v", err)
-	}
 
 	if _, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); !errors.Is(err, ErrManifest) {
 		t.Fatalf("released SDK accepted source v5 mapping: %v", err)

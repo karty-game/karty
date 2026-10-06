@@ -28,6 +28,11 @@ func Command() *cli.Command {
 			&cli.StringFlag{Name: "level", Usage: "level directory or logical name (default: all enabled levels)"},
 			&cli.IntFlag{Name: "samples", DefaultText: "level bake_samples or 16", Usage: "hemisphere samples per texel"},
 			&cli.IntFlag{Name: "bounces", DefaultText: "level bake_bounces or 1", Usage: "diffuse bounce count; 0 is direct only"},
+			&cli.StringFlag{
+				Name:        "denoise",
+				DefaultText: "level bake_denoise or medium",
+				Usage:       "indirect lighting denoiser: off, low or medium",
+			},
 			&cli.IntFlag{Name: "workers", DefaultText: "available CPUs, up to 64", Usage: "CPU worker count (1–64)"},
 		},
 		Action: run,
@@ -55,6 +60,19 @@ func run(ctx context.Context, command *cli.Command) error {
 		options.Bounces = &value
 	}
 
+	if command.IsSet("denoise") {
+		value := command.String("denoise")
+		if value == "" {
+			return fmt.Errorf("%w: denoise must be off, low or medium", ErrOptions)
+		}
+
+		if _, err := worldlightmap.OfflineDenoiseProducer(value); err != nil {
+			return fmt.Errorf("%w: %w", ErrOptions, err)
+		}
+
+		options.Denoise = &value
+	}
+
 	if options.Samples != nil && (*options.Samples < 1 || *options.Samples > worldlightmap.MaxOfflineSamples) ||
 		options.Bounces != nil && (*options.Bounces < 0 || *options.Bounces > worldlightmap.MaxOfflineBounces) ||
 		options.Workers < 0 ||
@@ -70,18 +88,23 @@ func run(ctx context.Context, command *cli.Command) error {
 	_, err = levelbuild.BakeAll(ctx, ".", options, func(report levelbuild.BakeReport) {
 		fmt.Fprintf(
 			os.Stdout,
-			"Baked %s in %s: %d receiver texels, %d rays, %d samples, %d bounces\n  %s\n",
+			"Baked %s in %s: %d receiver texels, %d rays, %d samples, %d bounces\n  Denoise: %s (%s)\n  %s\n",
 			report.Name,
 			report.Duration.Round(time.Millisecond),
 			report.Stats.ReceiverTexels,
 			report.Stats.Rays,
 			report.Stats.Samples,
 			report.Stats.Bounces,
+			report.Stats.Denoise,
+			report.Stats.DenoiseDuration.Round(time.Millisecond),
 			report.Manifest,
 		)
 
 		if !report.Automatic {
-			fmt.Fprintln(os.Stdout, "  Set [lightmap] offline = true and remove explicit prebake paths to package this generated bake.")
+			fmt.Fprintln(
+				os.Stdout,
+				"  Set [lightmap] offline = true in this level's level.toml and remove explicit prebake paths to package this generated bake.",
+			)
 		}
 	})
 

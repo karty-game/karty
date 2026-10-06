@@ -15,7 +15,7 @@ type Game struct {
 }
 
 //go:wasmexport karty_register
-func main() { engine.Run(&Game{}) }
+func main() { game := &Game{}; engine.Run(game.Hooks()) }
 
 func (game *Game) Initialize() {
 	background := game.NewSprite2D(assets.TextureGalleryBackground, engine.NewVec2D(480, 270))
@@ -70,34 +70,41 @@ func (game *Game) addButton(x float32, color engine.Color, title, subtitle strin
 	detail.SetLayer(12)
 }
 
-func (game *Game) Update(frame engine.Frame) {
-	for _, event := range frame.Events {
-		if event.Type == engine.EventPointerUp && event.Y >= 120 && event.Y < 340 && event.X >= 300 && event.X <= 660 {
-			if event.X < 480 {
-				game.PlayVideo(assets.VideoDemoPattern, 300, 130, 360, 180)
-				game.status.SetText("Playing MPEG-1 + MP2; click right of center to stop")
-			} else {
-				game.StopVideo()
-				game.status.SetText("Video stopped; click left of center to replay")
-			}
-			continue
-		}
-		if event.Type != engine.EventPointerUp || event.Y < 400 {
-			continue
-		}
+func (game *Game) Hooks() engine.Hooks {
+	return engine.Hooks{OnStart: game.Initialize, OnUpdate: game.advanceBurst,
+		OnStop: game.Shutdown, OnPointerReleased: game.onPointerReleased}
+}
 
-		switch {
-		case event.X < 320:
-			game.PlaySound(assets.SoundEffectsClick)
-			game.status.SetText("Played one short 8-bit source through QOA")
-		case event.X < 640:
-			game.burstRemaining = 36
-			game.status.SetText("Burst started: overlapping the same QOA sample")
-		default:
-			game.toggleMusic()
-		}
+func (game *Game) onPointerReleased(event engine.PointerEvent) {
+	if event.Button != engine.PointerPrimary {
+		return
 	}
+	if event.Y >= 120 && event.Y < 340 && event.X >= 300 && event.X <= 660 {
+		if event.X < 480 {
+			game.PlayVideo(assets.VideoDemoPattern, 300, 130, 360, 180)
+			game.status.SetText("Playing MPEG-1 + MP2; click right of center to stop")
+		} else {
+			game.StopVideo()
+			game.status.SetText("Video stopped; click left of center to replay")
+		}
+		return
+	}
+	if event.Y < 400 {
+		return
+	}
+	switch {
+	case event.X < 320:
+		game.PlaySound(assets.SoundEffectsClick)
+		game.status.SetText("Played one short 8-bit source through QOA")
+	case event.X < 640:
+		game.burstRemaining = 36
+		game.status.SetText("Burst started: overlapping the same QOA sample")
+	default:
+		game.toggleMusic()
+	}
+}
 
+func (game *Game) advanceBurst(engine.Frame) {
 	// Two starts per frame deliberately exceed the host's 32-voice limit before
 	// this relatively long effect finishes. The host must stay responsive.
 	for starts := 0; starts < 2 && game.burstRemaining > 0; starts++ {

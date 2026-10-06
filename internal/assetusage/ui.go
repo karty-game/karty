@@ -11,11 +11,6 @@ import (
 // AnalyzeUI retains named UI references and conservatively retains the complete
 // UI scope when a lookup is dynamic, a method escapes, or typing is incomplete.
 func AnalyzeUI(directory, modulePath string, names []string) Result {
-	return AnalyzeUIViews(directory, modulePath, names, nil)
-}
-
-// AnalyzeUIViews also retains assets reached through generated component methods.
-func AnalyzeUIViews(directory, modulePath string, names []string, views map[string]string) Result {
 	fileSet, enginePackage, _, files, info, err := loadTypeInfo(directory, modulePath)
 	if err != nil {
 		return keepAll(err)
@@ -64,14 +59,6 @@ func AnalyzeUIViews(directory, modulePath string, names []string, views map[stri
 
 	inspectUIUses(enginePackage, info, known, direct, &result)
 
-	for _, object := range info.Uses {
-		if object.Pkg() == enginePackage {
-			if name := views[object.Name()]; known[name] {
-				result.Live[name] = "typed UI component reference"
-			}
-		}
-	}
-
 	return result
 }
 
@@ -82,7 +69,7 @@ func reachableUI(fileSet *token.FileSet, files []*ast.File, info *types.Info) ([
 
 	for _, file := range files {
 		name := fileSet.Position(file.Pos()).Filename
-		if !strings.HasSuffix(name, ".ui") {
+		if !isUISource(name) {
 			live[name] = true
 		}
 	}
@@ -96,7 +83,7 @@ func reachableUI(fileSet *token.FileSet, files []*ast.File, info *types.Info) ([
 			}
 
 			target := fileSet.Position(object.Pos()).Filename
-			if strings.HasSuffix(target, ".ui") && !live[target] {
+			if isUISource(target) && !live[target] {
 				live[target] = true
 				changed = true
 			}
@@ -146,4 +133,8 @@ func inspectUIUses(enginePackage *types.Package, info *types.Info, known map[str
 			result.Live[constant.StringVal(value.Val())] = "typed UI reference"
 		}
 	}
+}
+
+func isUISource(name string) bool {
+	return strings.HasSuffix(name, ".kui")
 }

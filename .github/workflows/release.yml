@@ -1,7 +1,7 @@
 name: Release CLI
 on:
   push:
-    tags: ['v*']
+    tags: ["v*"]
 permissions:
   contents: write
 jobs:
@@ -19,6 +19,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: jdx/mise-action@v4
+      - run: mise run check-fmt
       - run: mise run test
       - run: mise run lint
       - run: sudo apt-get update && sudo apt-get install --yes libgl1-mesa-dev xorg-dev xvfb
@@ -82,7 +83,7 @@ jobs:
       - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
-          version: '~> v2'
+          version: "~> v2"
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

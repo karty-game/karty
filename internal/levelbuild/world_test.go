@@ -149,15 +149,15 @@ rooms:
 		t.Fatal(err)
 	}
 
-	first, err := levelbuild.BuildAll(root)
+	first, err := levelbuild.BuildAllWithAssets(t.Context(), root, 2, "", textureSDK(asset.ProcessorQOIv1))
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := levelbuild.BuildAll(root)
+	second, err := levelbuild.BuildAllWithAssets(t.Context(), root, 2, "", textureSDK(asset.ProcessorQOIv1))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(first) != 1 || !slices.Equal(first[0].Features, []string{sdkworld.Feature}) ||
+	if len(first) != 1 || !slices.Equal(first[0].Features, []string{cartridge.FeatureTextureQOIv1, sdkworld.Feature}) ||
 		first[0].ContentSHA256 != second[0].ContentSHA256 {
 		t.Fatalf("world artifacts = %+v", first)
 	}

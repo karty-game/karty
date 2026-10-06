@@ -52,9 +52,6 @@ func TestWorldLightingCapabilityGateAndPackagedWASM(t *testing.T) {
 	}
 
 	root := lightingLevelFixture(t, "version: 4\n"+lightingRoomYAML+levelLightingYAML(50))
-	if _, err := BuildAll(root); !errors.Is(err, ErrManifest) {
-		t.Fatalf("no selected SDK accepted authored lighting: %v", err)
-	}
 
 	if artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
 		t.Fatalf("released SDK accepted candidate lighting: %+v, %v", artifacts, err)

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "sequences": [
+    {
+      "name": "verify",
+      "steps": [
+        {
+          "condition": "fixture.ready",
+          "args": { "actor": { "actor": "room/marker" } },
+          "then": [
+            { "waitFrames": 2 },
+            { "action": "fixture.complete", "args": { "target": { "actor": "room/marker" } } }
+          ]
+        }
+      ]
+    }
+  ]
+}

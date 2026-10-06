@@ -1,0 +1,71 @@
+package main
+
+import (
+	"testing"
+
+	"example.com/ui-demo/.karty/config"
+	"example.com/ui-demo/.karty/engine"
+)
+
+func TestFlightConsoleControlsAndLifecycle(t *testing.T) {
+	game := &Game{}
+	engine.Run(game.Hooks())
+	engine.FixtureStart()
+	defer engine.FixtureStop()
+	game.mount("levels.first")
+	engine.FixtureFrame(engine.Frame{Number: 1, Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(game.request), Handle: 9}}})
+	if !game.playing || game.shape == nil {
+		t.Fatal("flight did not start")
+	}
+	change := func(frame uint64, element uint32, value string) {
+		engine.FixtureFrame(engine.Frame{Number: frame, Events: []engine.InputEvent{{Type: engine.EventUIChange, Instance: engine.FixtureUIID(), Element: element, UIValue: value}}})
+	}
+	change(2, config.FlightTabs, "2")
+	change(3, config.FlightName, "Aster")
+	change(4, config.FlightPower, "75")
+	change(5, config.FlightShip, "2")
+	if game.flight.CallSign != "Aster" || game.flight.Power != 75 || game.flight.Ship != 2 || game.flight.Tab != 2 {
+		t.Fatal("widget values did not reach persistent model", game.flight)
+	}
+	x := game.shape.Position.X
+	engine.FixtureFrame(engine.Frame{Number: 6})
+	if game.shape.Position.X-x != 4.5 {
+		t.Fatal("ship and power did not affect flight")
+	}
+	change(7, config.FlightAutopilot, "false")
+	x = game.shape.Position.X
+	engine.FixtureFrame(engine.Frame{Number: 8})
+	if game.shape.Position.X != x {
+		t.Fatal("disabled autopilot still moves")
+	}
+	if len(engine.FixtureCommands()) != 24 {
+		t.Fatal("idle console projected commands")
+	}
+	game.deliver()
+	if game.deliveries != 1 {
+		t.Fatal("delivery did not update game state")
+	}
+	engine.FixtureFrame(engine.Frame{Number: 9, Events: []engine.InputEvent{{Type: engine.EventKeyDown, Key: engine.KeyEscape}}})
+	if game.playing {
+		t.Fatal("Escape did not pause")
+	}
+	game.resume()
+	engine.FixtureFrame(engine.Frame{Number: 10})
+	if game.flight.CallSign != "Aster" || game.flight.Tab != 2 || game.flight.Autopilot {
+		t.Fatal("resume reset flight preferences")
+	}
+	game.leave()
+	game.levelReleased(engine.LevelReleased{RequestID: game.release, Handle: 10})
+	if game.handle != 9 {
+		t.Fatal("unrelated release cleared live level")
+	}
+	engine.FixtureFrame(engine.Frame{Number: 11, Events: []engine.InputEvent{{Type: engine.EventLevelReleased, RequestID: uint32(game.release), Handle: 9}}})
+	if game.handle != 0 || game.shape != nil || game.playing {
+		t.Fatal("release retained flight")
+	}
+	game.mount("levels.second")
+	engine.FixtureFrame(engine.Frame{Number: 12, Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(game.request), Handle: 19}}})
+	if !game.playing || game.flight.CallSign != "Aster" || game.flight.Ship != 2 {
+		t.Fatal("new arena reset pilot preferences")
+	}
+}

@@ -159,7 +159,7 @@ func run(ctx context.Context, command *cli.Command) error {
 		"-build.poll", "true",
 		"-build.poll_interval", "500",
 		"-build.exclude_regex", generatedSourcePattern,
-		"-build.exclude_dir", "dist",
+		"-build.exclude_dir", ".karty,dist",
 		"-tmp_dir", airRuntimeDirectory,
 		"-build.log", airBuildLog,
 		"-build.stop_on_error", "false",

@@ -6,15 +6,20 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
-// A local patch SDK retains the current released API and templates.
+// A local patch SDK retains the current candidate API and SFC templates.
 func TestLocalUIScreenReachabilityPatchSDK(t *testing.T) {
-	manifest, err := sdk.Resolve(release.SDKVersion())
+	if os.Getenv("KARTY_TEST_SDK") != release.SampleSDK {
+		t.Skip("requires candidate SFC templates; set KARTY_TEST_SDK=0.0.9")
+	}
+
+	manifest, err := sdk.Resolve(release.SampleSDK)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +56,7 @@ func TestLocalUIScreenReachabilityPatchSDK(t *testing.T) {
 		}
 
 		if file.Name == "manifest.toml" {
-			data = bytes.Replace(data, []byte("version = '"+release.SDKVersion()+"'"), []byte("version = '9.9.9'"), 1)
+			data = bytes.Replace(data, []byte("version = '"+release.SampleSDK+"'"), []byte("version = '9.9.9'"), 1)
 		}
 
 		entry, err := writer.Create(file.Name)
@@ -73,5 +78,5 @@ func TestLocalUIScreenReachabilityPatchSDK(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testLocalUIScreenReachability(t, "9.9.9")
+	testLocalUIScreenReachability(t, "9.9.9", ".kui")
 }

@@ -1,152 +1,157 @@
+# $schema: ../../.karty/schemas/levels/showcase.schema.json
 version: 6
 
 rooms:
   - id: hall
     boundary:
-      - {id: south, start: {x: 0, y: 0}, end: {x: 4, y: 0}, material: wall}
-      - {id: doorway, start: {x: 4, y: 0}, end: {x: 4, y: 2}, material: wall}
-      - {id: inset-south, start: {x: 4, y: 2}, end: {x: 2, y: 2}, material: wall}
-      - {id: inset-east, start: {x: 2, y: 2}, end: {x: 2, y: 6}, material: wall}
-      - {id: north, start: {x: 2, y: 6}, end: {x: 0, y: 6}, material: wall}
-      - {id: west, start: {x: 0, y: 6}, end: {x: 0, y: 4}, material: wall}
-      - {id: courtyard, start: {x: 0, y: 4}, end: {x: 0, y: 0}, material: wall}
-    floor: {a: 0.08, b: 0, c: 0}
-    ceiling: {a: 0, b: 0, c: 4.6}
+      - { id: south, start: { x: 0, y: 0 }, end: { x: 4, y: 0 }, material: wall }
+      - { id: doorway, start: { x: 4, y: 0 }, end: { x: 4, y: 2 }, material: wall }
+      - { id: inset-south, start: { x: 4, y: 2 }, end: { x: 2, y: 2 }, material: wall }
+      - { id: inset-east, start: { x: 2, y: 2 }, end: { x: 2, y: 6 }, material: wall }
+      - { id: north, start: { x: 2, y: 6 }, end: { x: 0, y: 6 }, material: wall }
+      - { id: west, start: { x: 0, y: 6 }, end: { x: 0, y: 4 }, material: wall }
+      - { id: courtyard, start: { x: 0, y: 4 }, end: { x: 0, y: 0 }, material: wall }
+    floor: { a: 0.08, b: 0, c: 0 }
+    ceiling: { a: 0, b: 0, c: 4.6 }
     floor_material: floor
     ceiling_material: ceiling
     contents:
-      - {id: player-spawn, kind: spawn, position: {x: 1, y: 1, z: 1.7}}
+      - { id: player-spawn, kind: spawn, position: { x: 1, y: 1, z: 1.7 } }
       - id: player-marker
         kind: actor
-        position: {x: 1.34, y: 1, z: 1.733}
+        position: { x: 1.34, y: 1, z: 1.733 }
         actor:
           tags: [player-marker]
-          sprite: {texture: decal, facing: camera-facing, alpha: cutout, width: 1, height: 1, origin_x: 0.5, origin_y: 0.5}
+          sprite:
+            { texture: decal, facing: camera-facing, alpha: cutout, width: 1, height: 1, origin_x: 0.5, origin_y: 0.5 }
       - id: camera-facing-adventurer
         kind: actor
-        position: {x: 3.2, y: 0.55, z: 0.27}
+        position: { x: 3.2, y: 0.55, z: 0.27 }
         actor:
           tags: [billboard, interactive]
-          sprite: {texture: character, facing: upright, alpha: cutout, width: 1.4, height: 2, origin_x: 0.5, origin_y: 1}
+          sprite:
+            { texture: character, facing: upright, alpha: cutout, width: 1.4, height: 2, origin_x: 0.5, origin_y: 1 }
       - id: upright-adventurer
         kind: actor
-        position: {x: 1, y: 3.5, z: 0.09}
+        position: { x: 1, y: 3.5, z: 0.09 }
         actor:
           yaw_degrees: 25
           tags: [interactive, upright]
-          sprite: {texture: character, facing: upright, alpha: cutout, width: 1.05, height: 1.8, origin_x: 0.5, origin_y: 1}
+          sprite:
+            { texture: character, facing: upright, alpha: cutout, width: 1.05, height: 1.8, origin_x: 0.5, origin_y: 1 }
       - id: blended-ghost
         kind: actor
-        position: {x: 3.1, y: 1.45, z: 0.26}
+        position: { x: 3.1, y: 1.45, z: 0.26 }
         actor:
-          scale: {x: 0.8, y: 0.8, z: 0.8}
+          scale: { x: 0.8, y: 0.8, z: 0.8 }
           tags: [blend, interactive]
-          sprite: {texture: ghost, facing: upright, alpha: blend, width: 1.2, height: 1.7, origin_x: 0.5, origin_y: 1}
+          sprite: { texture: ghost, facing: upright, alpha: blend, width: 1.2, height: 1.7, origin_x: 0.5, origin_y: 1 }
       - id: fixed-sign
         kind: actor
-        position: {x: 1, y: 5.88, z: 1.6}
+        position: { x: 1, y: 5.88, z: 1.6 }
         actor:
           tags: [fixed, interactive]
-          sprite: {texture: sign, facing: fixed, alpha: cutout, width: 1.5, height: 1, origin_x: 0.5, origin_y: 0.5}
+          sprite: { texture: sign, facing: fixed, alpha: cutout, width: 1.5, height: 1, origin_x: 0.5, origin_y: 0.5 }
       - id: slope-decal
         kind: actor
-        position: {x: 2.5, y: 1.2, z: 0.205}
+        position: { x: 2.5, y: 1.2, z: 0.205 }
         actor:
           yaw_degrees: -90
           pitch_degrees: 85.4260787400991
           tags: [decal, interactive]
-          sprite: {texture: decal, facing: fixed, alpha: blend, width: 1.2, height: 1.2, origin_x: 0.5, origin_y: 0.5}
+          sprite: { texture: decal, facing: fixed, alpha: blend, width: 1.2, height: 1.2, origin_x: 0.5, origin_y: 0.5 }
 
 prefabs:
   - id: gallery
     rooms:
       - id: room
         boundary:
-          - {id: south, start: {x: 0, y: 0}, end: {x: 4, y: 0}, material: wall}
-          - {id: exit, start: {x: 4, y: 0}, end: {x: 4, y: 2}, material: wall}
-          - {id: north, start: {x: 4, y: 2}, end: {x: 0, y: 2}, material: wall}
-          - {id: entrance, start: {x: 0, y: 2}, end: {x: 0, y: 0}, material: wall}
-        floor: {a: 0, b: 0, c: 0.32}
-        ceiling: {a: 0, b: 0, c: 4.6}
+          - { id: south, start: { x: 0, y: 0 }, end: { x: 4, y: 0 }, material: wall }
+          - { id: exit, start: { x: 4, y: 0 }, end: { x: 4, y: 2 }, material: wall }
+          - { id: north, start: { x: 4, y: 2 }, end: { x: 0, y: 2 }, material: wall }
+          - { id: entrance, start: { x: 0, y: 2 }, end: { x: 0, y: 0 }, material: wall }
+        floor: { a: 0, b: 0, c: 0.32 }
+        ceiling: { a: 0, b: 0, c: 4.6 }
         floor_material: floor
         ceiling_material: ceiling
         contents:
           - id: marker
             kind: actor
-            position: {x: 2, y: 0.65, z: 0.33}
+            position: { x: 2, y: 0.65, z: 0.33 }
             actor:
               yaw_degrees: 45
               tags: [cross, gallery]
-              sprite: {texture: tree, facing: cross, alpha: cutout, width: 1.4, height: 3, origin_x: 0.5, origin_y: 1}
+              sprite: { texture: tree, facing: cross, alpha: cutout, width: 1.4, height: 3, origin_x: 0.5, origin_y: 1 }
     ports:
-      - {id: entrance, endpoint: {room: room, edge: entrance}}
-      - {id: exit, endpoint: {room: room, edge: exit}}
+      - { id: entrance, endpoint: { room: room, edge: entrance } }
+      - { id: exit, endpoint: { room: room, edge: exit } }
 
   - id: corner
     rooms:
       - id: room
         boundary:
-          - {id: south, start: {x: 0, y: 0}, end: {x: 2, y: 0}, material: wall}
-          - {id: east, start: {x: 2, y: 0}, end: {x: 2, y: 2}, material: wall}
-          - {id: exit, start: {x: 2, y: 2}, end: {x: 0, y: 2}, material: wall}
-          - {id: entrance, start: {x: 0, y: 2}, end: {x: 0, y: 0}, material: wall}
-        floor: {a: 0.12, b: 0, c: 0.32}
-        ceiling: {a: 0, b: 0, c: 4.6}
+          - { id: south, start: { x: 0, y: 0 }, end: { x: 2, y: 0 }, material: wall }
+          - { id: east, start: { x: 2, y: 0 }, end: { x: 2, y: 2 }, material: wall }
+          - { id: exit, start: { x: 2, y: 2 }, end: { x: 0, y: 2 }, material: wall }
+          - { id: entrance, start: { x: 0, y: 2 }, end: { x: 0, y: 0 }, material: wall }
+        floor: { a: 0.12, b: 0, c: 0.32 }
+        ceiling: { a: 0, b: 0, c: 4.6 }
         floor_material: floor
         ceiling_material: ceiling
         contents:
           - id: corner-sign
             kind: actor
-            position: {x: 1.88, y: 1, z: 2.3}
+            position: { x: 1.88, y: 1, z: 2.3 }
             actor:
               yaw_degrees: -90
               tags: [corner, fixed]
-              sprite: {texture: sign, facing: fixed, alpha: cutout, width: 1.4, height: 0.95, origin_x: 0.5, origin_y: 0.5}
+              sprite:
+                { texture: sign, facing: fixed, alpha: cutout, width: 1.4, height: 0.95, origin_x: 0.5, origin_y: 0.5 }
     ports:
-      - {id: entrance, endpoint: {room: room, edge: entrance}}
-      - {id: exit, endpoint: {room: room, edge: exit}}
+      - { id: entrance, endpoint: { room: room, edge: entrance } }
+      - { id: exit, endpoint: { room: room, edge: exit } }
 
   - id: ascent
     rooms:
       - id: room
         boundary:
-          - {id: entrance, start: {x: 0, y: 0}, end: {x: 2, y: 0}, material: wall}
-          - {id: east, start: {x: 2, y: 0}, end: {x: 2, y: 4}, material: wall}
-          - {id: exit, start: {x: 2, y: 4}, end: {x: 0, y: 4}, material: wall}
-          - {id: west, start: {x: 0, y: 4}, end: {x: 0, y: 0}, material: wall}
-        floor: {a: 0.12, b: 0.16, c: 0.32}
-        ceiling: {a: 0, b: 0, c: 3.2}
+          - { id: entrance, start: { x: 0, y: 0 }, end: { x: 2, y: 0 }, material: wall }
+          - { id: east, start: { x: 2, y: 0 }, end: { x: 2, y: 4 }, material: wall }
+          - { id: exit, start: { x: 2, y: 4 }, end: { x: 0, y: 4 }, material: wall }
+          - { id: west, start: { x: 0, y: 4 }, end: { x: 0, y: 0 }, material: wall }
+        floor: { a: 0.12, b: 0.16, c: 0.32 }
+        ceiling: { a: 0, b: 0, c: 3.2 }
         floor_material: floor
         ceiling_material: ceiling
         contents:
           - id: beacon
             kind: actor
-            position: {x: 1, y: 2.8, z: 1.4}
+            position: { x: 1, y: 2.8, z: 1.4 }
             actor:
               tags: [beacon, corridor]
-              sprite: {texture: ghost, facing: upright, alpha: blend, width: 1.1, height: 1.7, origin_x: 0.5, origin_y: 1}
+              sprite:
+                { texture: ghost, facing: upright, alpha: blend, width: 1.1, height: 1.7, origin_x: 0.5, origin_y: 1 }
     ports:
-      - {id: entrance, endpoint: {room: room, edge: entrance}}
-      - {id: exit, endpoint: {room: room, edge: exit}}
-
+      - { id: entrance, endpoint: { room: room, edge: entrance } }
+      - { id: exit, endpoint: { room: room, edge: exit } }
 
   # Reusable opaque shafts, independent of room partitioning and portal seams.
   - id: roman-column
     solids:
       - id: shaft
         footprint:
-          - {x: 0.5, y: 0}
-          - {x: 0.404508, y: 0.293893}
-          - {x: 0.154508, y: 0.475528}
-          - {x: -0.154508, y: 0.475528}
-          - {x: -0.404508, y: 0.293893}
-          - {x: -0.5, y: 0}
-          - {x: -0.404508, y: -0.293893}
-          - {x: -0.154508, y: -0.475528}
-          - {x: 0.154508, y: -0.475528}
-          - {x: 0.404508, y: -0.293893}
-        bottom: {c: 0}
-        top: {c: 12}
+          - { x: 0.5, y: 0 }
+          - { x: 0.404508, y: 0.293893 }
+          - { x: 0.154508, y: 0.475528 }
+          - { x: -0.154508, y: 0.475528 }
+          - { x: -0.404508, y: 0.293893 }
+          - { x: -0.5, y: 0 }
+          - { x: -0.404508, y: -0.293893 }
+          - { x: -0.154508, y: -0.475528 }
+          - { x: 0.154508, y: -0.475528 }
+          - { x: 0.404508, y: -0.293893 }
+        bottom: { c: 0 }
+        top: { c: 12 }
         side_material: z-court-marble
         top_material: z-court-marble
         bottom_material: z-court-marble
@@ -156,774 +161,930 @@ prefabs:
     instances:
       - id: column-0
         prefab: roman-column
-        transform: {translation: {x: -12, y: 0, z: 0}}
+        transform: { translation: { x: -12, y: 0, z: 0 } }
       - id: column-1
         prefab: roman-column
-        transform: {translation: {x: -8, y: 0, z: 0}}
+        transform: { translation: { x: -8, y: 0, z: 0 } }
       - id: column-2
         prefab: roman-column
-        transform: {translation: {x: -4, y: 0, z: 0}}
+        transform: { translation: { x: -4, y: 0, z: 0 } }
       - id: column-3
         prefab: roman-column
-        transform: {translation: {x: -12, y: 4, z: 0}}
+        transform: { translation: { x: -12, y: 4, z: 0 } }
       - id: column-4
         prefab: roman-column
-        transform: {translation: {x: -4, y: 4, z: 0}}
+        transform: { translation: { x: -4, y: 4, z: 0 } }
       - id: column-5
         prefab: roman-column
-        transform: {translation: {x: -12, y: 8, z: 0}}
+        transform: { translation: { x: -12, y: 8, z: 0 } }
       - id: column-6
         prefab: roman-column
-        transform: {translation: {x: -8, y: 8, z: 0}}
+        transform: { translation: { x: -8, y: 8, z: 0 } }
       - id: column-7
         prefab: roman-column
-        transform: {translation: {x: -4, y: 8, z: 0}}
+        transform: { translation: { x: -4, y: 8, z: 0 } }
     rooms:
       - id: bay-0-0
         boundary:
-          - {id: south, start: {x: -16, y: -4}, end: {x: -12, y: -4}, material: z-court-plaster}
-          - {id: east, start: {x: -12, y: -4}, end: {x: -12, y: 0}, material: z-court-plaster}
-          - {id: north, start: {x: -12, y: 0}, end: {x: -16, y: 0}, material: z-court-plaster}
-          - {id: west, start: {x: -16, y: 0}, end: {x: -16, y: -4}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -16, y: -4 }, end: { x: -12, y: -4 }, material: z-court-plaster }
+          - { id: east, start: { x: -12, y: -4 }, end: { x: -12, y: 0 }, material: z-court-plaster }
+          - { id: north, start: { x: -12, y: 0 }, end: { x: -16, y: 0 }, material: z-court-plaster }
+          - { id: west, start: { x: -16, y: 0 }, end: { x: -16, y: -4 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-1-0
         boundary:
-          - {id: south, start: {x: -12, y: -4}, end: {x: -8, y: -4}, material: z-court-plaster}
-          - {id: east, start: {x: -8, y: -4}, end: {x: -8, y: 0}, material: z-court-plaster}
-          - {id: north, start: {x: -8, y: 0}, end: {x: -12, y: 0}, material: z-court-plaster}
-          - {id: west, start: {x: -12, y: 0}, end: {x: -12, y: -4}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -12, y: -4 }, end: { x: -8, y: -4 }, material: z-court-plaster }
+          - { id: east, start: { x: -8, y: -4 }, end: { x: -8, y: 0 }, material: z-court-plaster }
+          - { id: north, start: { x: -8, y: 0 }, end: { x: -12, y: 0 }, material: z-court-plaster }
+          - { id: west, start: { x: -12, y: 0 }, end: { x: -12, y: -4 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-2-0
         boundary:
-          - {id: south, start: {x: -8, y: -4}, end: {x: -4, y: -4}, material: z-court-plaster}
-          - {id: east, start: {x: -4, y: -4}, end: {x: -4, y: 0}, material: z-court-plaster}
-          - {id: north, start: {x: -4, y: 0}, end: {x: -8, y: 0}, material: z-court-plaster}
-          - {id: west, start: {x: -8, y: 0}, end: {x: -8, y: -4}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -8, y: -4 }, end: { x: -4, y: -4 }, material: z-court-plaster }
+          - { id: east, start: { x: -4, y: -4 }, end: { x: -4, y: 0 }, material: z-court-plaster }
+          - { id: north, start: { x: -4, y: 0 }, end: { x: -8, y: 0 }, material: z-court-plaster }
+          - { id: west, start: { x: -8, y: 0 }, end: { x: -8, y: -4 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-3-0
         boundary:
-          - {id: south, start: {x: -4, y: -4}, end: {x: 0, y: -4}, material: z-court-plaster}
-          - {id: east, start: {x: 0, y: -4}, end: {x: 0, y: 0}, material: z-court-plaster}
-          - {id: north, start: {x: 0, y: 0}, end: {x: -4, y: 0}, material: z-court-plaster}
-          - {id: west, start: {x: -4, y: 0}, end: {x: -4, y: -4}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -4, y: -4 }, end: { x: 0, y: -4 }, material: z-court-plaster }
+          - { id: east, start: { x: 0, y: -4 }, end: { x: 0, y: 0 }, material: z-court-plaster }
+          - { id: north, start: { x: 0, y: 0 }, end: { x: -4, y: 0 }, material: z-court-plaster }
+          - { id: west, start: { x: -4, y: 0 }, end: { x: -4, y: -4 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-0-1
         boundary:
-          - {id: south, start: {x: -16, y: 0}, end: {x: -12, y: 0}, material: z-court-plaster}
-          - {id: east, start: {x: -12, y: 0}, end: {x: -12, y: 4}, material: z-court-plaster}
-          - {id: north, start: {x: -12, y: 4}, end: {x: -16, y: 4}, material: z-court-plaster}
-          - {id: west, start: {x: -16, y: 4}, end: {x: -16, y: 0}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -16, y: 0 }, end: { x: -12, y: 0 }, material: z-court-plaster }
+          - { id: east, start: { x: -12, y: 0 }, end: { x: -12, y: 4 }, material: z-court-plaster }
+          - { id: north, start: { x: -12, y: 4 }, end: { x: -16, y: 4 }, material: z-court-plaster }
+          - { id: west, start: { x: -16, y: 4 }, end: { x: -16, y: 0 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-1-1
         boundary:
-          - {id: south, start: {x: -12, y: 0}, end: {x: -8, y: 0}, material: z-court-plaster}
-          - {id: east, start: {x: -8, y: 0}, end: {x: -8, y: 1.575129}, material: z-court-plaster}
-          - {id: basin-5, start: {x: -8, y: 1.575129}, end: {x: -9.4, y: 1.575129}, material: z-court-marble}
-          - {id: basin-4, start: {x: -9.4, y: 1.575129}, end: {x: -10.8, y: 4}, material: z-court-marble}
-          - {id: north, start: {x: -10.8, y: 4}, end: {x: -12, y: 4}, material: z-court-plaster}
-          - {id: west, start: {x: -12, y: 4}, end: {x: -12, y: 0}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 12}
+          - { id: south, start: { x: -12, y: 0 }, end: { x: -8, y: 0 }, material: z-court-plaster }
+          - { id: east, start: { x: -8, y: 0 }, end: { x: -8, y: 1.575129 }, material: z-court-plaster }
+          - { id: basin-5, start: { x: -8, y: 1.575129 }, end: { x: -9.4, y: 1.575129 }, material: z-court-marble }
+          - { id: basin-4, start: { x: -9.4, y: 1.575129 }, end: { x: -10.8, y: 4 }, material: z-court-marble }
+          - { id: north, start: { x: -10.8, y: 4 }, end: { x: -12, y: 4 }, material: z-court-plaster }
+          - { id: west, start: { x: -12, y: 4 }, end: { x: -12, y: 0 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 12 }
         floor_material: z-court-paving
         ceiling_material: z-court-sky
       - id: bay-2-1
         boundary:
-          - {id: south, start: {x: -8, y: 0}, end: {x: -4, y: 0}, material: z-court-plaster}
-          - {id: east, start: {x: -4, y: 0}, end: {x: -4, y: 4}, material: z-court-plaster}
-          - {id: north, start: {x: -4, y: 4}, end: {x: -5.2, y: 4}, material: z-court-plaster}
-          - {id: basin-7, start: {x: -5.2, y: 4}, end: {x: -6.6, y: 1.575129}, material: z-court-marble}
-          - {id: basin-6, start: {x: -6.6, y: 1.575129}, end: {x: -8, y: 1.575129}, material: z-court-marble}
-          - {id: west, start: {x: -8, y: 1.575129}, end: {x: -8, y: 0}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 12}
+          - { id: south, start: { x: -8, y: 0 }, end: { x: -4, y: 0 }, material: z-court-plaster }
+          - { id: east, start: { x: -4, y: 0 }, end: { x: -4, y: 4 }, material: z-court-plaster }
+          - { id: north, start: { x: -4, y: 4 }, end: { x: -5.2, y: 4 }, material: z-court-plaster }
+          - { id: basin-7, start: { x: -5.2, y: 4 }, end: { x: -6.6, y: 1.575129 }, material: z-court-marble }
+          - { id: basin-6, start: { x: -6.6, y: 1.575129 }, end: { x: -8, y: 1.575129 }, material: z-court-marble }
+          - { id: west, start: { x: -8, y: 1.575129 }, end: { x: -8, y: 0 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 12 }
         floor_material: z-court-paving
         ceiling_material: z-court-sky
       - id: bay-3-1
         boundary:
-          - {id: south, start: {x: -4, y: 0}, end: {x: 0, y: 0}, material: z-court-plaster}
-          - {id: east, start: {x: 0, y: 0}, end: {x: 0, y: 4}, material: z-court-plaster}
-          - {id: north, start: {x: 0, y: 4}, end: {x: -4, y: 4}, material: z-court-plaster}
-          - {id: west, start: {x: -4, y: 4}, end: {x: -4, y: 0}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -4, y: 0 }, end: { x: 0, y: 0 }, material: z-court-plaster }
+          - { id: east, start: { x: 0, y: 0 }, end: { x: 0, y: 4 }, material: z-court-plaster }
+          - { id: north, start: { x: 0, y: 4 }, end: { x: -4, y: 4 }, material: z-court-plaster }
+          - { id: west, start: { x: -4, y: 4 }, end: { x: -4, y: 0 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-0-2
         boundary:
-          - {id: south, start: {x: -16, y: 4}, end: {x: -12, y: 4}, material: z-court-plaster}
-          - {id: east, start: {x: -12, y: 4}, end: {x: -12, y: 8}, material: z-court-plaster}
-          - {id: north, start: {x: -12, y: 8}, end: {x: -16, y: 8}, material: z-court-plaster}
-          - {id: west, start: {x: -16, y: 8}, end: {x: -16, y: 4}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -16, y: 4 }, end: { x: -12, y: 4 }, material: z-court-plaster }
+          - { id: east, start: { x: -12, y: 4 }, end: { x: -12, y: 8 }, material: z-court-plaster }
+          - { id: north, start: { x: -12, y: 8 }, end: { x: -16, y: 8 }, material: z-court-plaster }
+          - { id: west, start: { x: -16, y: 8 }, end: { x: -16, y: 4 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-1-2
         boundary:
-          - {id: south, start: {x: -12, y: 4}, end: {x: -10.8, y: 4}, material: z-court-plaster}
-          - {id: basin-3, start: {x: -10.8, y: 4}, end: {x: -9.4, y: 6.424871}, material: z-court-marble}
-          - {id: basin-2, start: {x: -9.4, y: 6.424871}, end: {x: -8, y: 6.424871}, material: z-court-marble}
-          - {id: east, start: {x: -8, y: 6.424871}, end: {x: -8, y: 8}, material: z-court-plaster}
-          - {id: north, start: {x: -8, y: 8}, end: {x: -12, y: 8}, material: z-court-plaster}
-          - {id: west, start: {x: -12, y: 8}, end: {x: -12, y: 4}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 12}
+          - { id: south, start: { x: -12, y: 4 }, end: { x: -10.8, y: 4 }, material: z-court-plaster }
+          - { id: basin-3, start: { x: -10.8, y: 4 }, end: { x: -9.4, y: 6.424871 }, material: z-court-marble }
+          - { id: basin-2, start: { x: -9.4, y: 6.424871 }, end: { x: -8, y: 6.424871 }, material: z-court-marble }
+          - { id: east, start: { x: -8, y: 6.424871 }, end: { x: -8, y: 8 }, material: z-court-plaster }
+          - { id: north, start: { x: -8, y: 8 }, end: { x: -12, y: 8 }, material: z-court-plaster }
+          - { id: west, start: { x: -12, y: 8 }, end: { x: -12, y: 4 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 12 }
         floor_material: z-court-paving
         ceiling_material: z-court-sky
       - id: bay-2-2
         boundary:
-          - {id: south, start: {x: -5.2, y: 4}, end: {x: -4, y: 4}, material: z-court-plaster}
-          - {id: east, start: {x: -4, y: 4}, end: {x: -4, y: 8}, material: z-court-plaster}
-          - {id: north, start: {x: -4, y: 8}, end: {x: -8, y: 8}, material: z-court-plaster}
-          - {id: west, start: {x: -8, y: 8}, end: {x: -8, y: 6.424871}, material: z-court-plaster}
-          - {id: basin-1, start: {x: -8, y: 6.424871}, end: {x: -6.6, y: 6.424871}, material: z-court-marble}
-          - {id: basin-0, start: {x: -6.6, y: 6.424871}, end: {x: -5.2, y: 4}, material: z-court-marble}
-        floor: {c: 0}
-        ceiling: {c: 12}
+          - { id: south, start: { x: -5.2, y: 4 }, end: { x: -4, y: 4 }, material: z-court-plaster }
+          - { id: east, start: { x: -4, y: 4 }, end: { x: -4, y: 8 }, material: z-court-plaster }
+          - { id: north, start: { x: -4, y: 8 }, end: { x: -8, y: 8 }, material: z-court-plaster }
+          - { id: west, start: { x: -8, y: 8 }, end: { x: -8, y: 6.424871 }, material: z-court-plaster }
+          - { id: basin-1, start: { x: -8, y: 6.424871 }, end: { x: -6.6, y: 6.424871 }, material: z-court-marble }
+          - { id: basin-0, start: { x: -6.6, y: 6.424871 }, end: { x: -5.2, y: 4 }, material: z-court-marble }
+        floor: { c: 0 }
+        ceiling: { c: 12 }
         floor_material: z-court-paving
         ceiling_material: z-court-sky
       - id: bay-3-2
         boundary:
-          - {id: south, start: {x: -4, y: 4}, end: {x: 0, y: 4}, material: z-court-plaster}
-          - {id: east, start: {x: 0, y: 4}, end: {x: 0, y: 8}, material: z-court-plaster}
-          - {id: north, start: {x: 0, y: 8}, end: {x: -4, y: 8}, material: z-court-plaster}
-          - {id: west, start: {x: -4, y: 8}, end: {x: -4, y: 4}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -4, y: 4 }, end: { x: 0, y: 4 }, material: z-court-plaster }
+          - { id: east, start: { x: 0, y: 4 }, end: { x: 0, y: 8 }, material: z-court-plaster }
+          - { id: north, start: { x: 0, y: 8 }, end: { x: -4, y: 8 }, material: z-court-plaster }
+          - { id: west, start: { x: -4, y: 8 }, end: { x: -4, y: 4 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-0-3
         boundary:
-          - {id: south, start: {x: -16, y: 8}, end: {x: -12, y: 8}, material: z-court-plaster}
-          - {id: east, start: {x: -12, y: 8}, end: {x: -12, y: 12}, material: z-court-plaster}
-          - {id: north, start: {x: -12, y: 12}, end: {x: -16, y: 12}, material: z-court-plaster}
-          - {id: west, start: {x: -16, y: 12}, end: {x: -16, y: 8}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -16, y: 8 }, end: { x: -12, y: 8 }, material: z-court-plaster }
+          - { id: east, start: { x: -12, y: 8 }, end: { x: -12, y: 12 }, material: z-court-plaster }
+          - { id: north, start: { x: -12, y: 12 }, end: { x: -16, y: 12 }, material: z-court-plaster }
+          - { id: west, start: { x: -16, y: 12 }, end: { x: -16, y: 8 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-1-3
         boundary:
-          - {id: south, start: {x: -12, y: 8}, end: {x: -8, y: 8}, material: z-court-plaster}
-          - {id: east, start: {x: -8, y: 8}, end: {x: -8, y: 12}, material: z-court-plaster}
-          - {id: north, start: {x: -8, y: 12}, end: {x: -12, y: 12}, material: z-court-plaster}
-          - {id: west, start: {x: -12, y: 12}, end: {x: -12, y: 8}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -12, y: 8 }, end: { x: -8, y: 8 }, material: z-court-plaster }
+          - { id: east, start: { x: -8, y: 8 }, end: { x: -8, y: 12 }, material: z-court-plaster }
+          - { id: north, start: { x: -8, y: 12 }, end: { x: -12, y: 12 }, material: z-court-plaster }
+          - { id: west, start: { x: -12, y: 12 }, end: { x: -12, y: 8 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-2-3
         boundary:
-          - {id: south, start: {x: -8, y: 8}, end: {x: -4, y: 8}, material: z-court-plaster}
-          - {id: east, start: {x: -4, y: 8}, end: {x: -4, y: 12}, material: z-court-plaster}
-          - {id: north, start: {x: -4, y: 12}, end: {x: -8, y: 12}, material: z-court-plaster}
-          - {id: west, start: {x: -8, y: 12}, end: {x: -8, y: 8}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -8, y: 8 }, end: { x: -4, y: 8 }, material: z-court-plaster }
+          - { id: east, start: { x: -4, y: 8 }, end: { x: -4, y: 12 }, material: z-court-plaster }
+          - { id: north, start: { x: -4, y: 12 }, end: { x: -8, y: 12 }, material: z-court-plaster }
+          - { id: west, start: { x: -8, y: 12 }, end: { x: -8, y: 8 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-3-3
         boundary:
-          - {id: south, start: {x: -4, y: 8}, end: {x: 0, y: 8}, material: z-court-plaster}
-          - {id: east, start: {x: 0, y: 8}, end: {x: 0, y: 12}, material: z-court-plaster}
-          - {id: north, start: {x: 0, y: 12}, end: {x: -4, y: 12}, material: z-court-plaster}
-          - {id: west, start: {x: -4, y: 12}, end: {x: -4, y: 8}, material: z-court-plaster}
-        floor: {c: 0}
-        ceiling: {c: 4.6}
+          - { id: south, start: { x: -4, y: 8 }, end: { x: 0, y: 8 }, material: z-court-plaster }
+          - { id: east, start: { x: 0, y: 8 }, end: { x: 0, y: 12 }, material: z-court-plaster }
+          - { id: north, start: { x: 0, y: 12 }, end: { x: -4, y: 12 }, material: z-court-plaster }
+          - { id: west, start: { x: -4, y: 12 }, end: { x: -4, y: 8 }, material: z-court-plaster }
+        floor: { c: 0 }
+        ceiling: { c: 4.6 }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       # Concentric hexagonal steps and a recessed basin; split at bay seams.
       - id: basin-step-1-0
         boundary:
-          - {id: outer, start: {x: -5.2, y: 4}, end: {x: -6.6, y: 6.424871}, material: z-court-marble}
-          - {id: next, start: {x: -6.6, y: 6.424871}, end: {x: -6.725, y: 6.208365}, material: z-court-marble}
-          - {id: inner, start: {x: -6.725, y: 6.208365}, end: {x: -5.45, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -5.45, y: 4}, end: {x: -5.2, y: 4}, material: z-court-marble}
-        floor: {c: 0.12}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -5.2, y: 4 }, end: { x: -6.6, y: 6.424871 }, material: z-court-marble }
+          - { id: next, start: { x: -6.6, y: 6.424871 }, end: { x: -6.725, y: 6.208365 }, material: z-court-marble }
+          - { id: inner, start: { x: -6.725, y: 6.208365 }, end: { x: -5.45, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -5.45, y: 4 }, end: { x: -5.2, y: 4 }, material: z-court-marble }
+        floor: { c: 0.12 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-1-1
         boundary:
-          - {id: outer, start: {x: -6.6, y: 6.424871}, end: {x: -8, y: 6.424871}, material: z-court-marble}
-          - {id: next, start: {x: -8, y: 6.424871}, end: {x: -8, y: 6.208365}, material: z-court-marble}
-          - {id: inner, start: {x: -8, y: 6.208365}, end: {x: -6.725, y: 6.208365}, material: z-court-marble}
-          - {id: previous, start: {x: -6.725, y: 6.208365}, end: {x: -6.6, y: 6.424871}, material: z-court-marble}
-        floor: {c: 0.12}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -6.6, y: 6.424871 }, end: { x: -8, y: 6.424871 }, material: z-court-marble }
+          - { id: next, start: { x: -8, y: 6.424871 }, end: { x: -8, y: 6.208365 }, material: z-court-marble }
+          - { id: inner, start: { x: -8, y: 6.208365 }, end: { x: -6.725, y: 6.208365 }, material: z-court-marble }
+          - { id: previous, start: { x: -6.725, y: 6.208365 }, end: { x: -6.6, y: 6.424871 }, material: z-court-marble }
+        floor: { c: 0.12 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-1-2
         boundary:
-          - {id: outer, start: {x: -8, y: 6.424871}, end: {x: -9.4, y: 6.424871}, material: z-court-marble}
-          - {id: next, start: {x: -9.4, y: 6.424871}, end: {x: -9.275, y: 6.208365}, material: z-court-marble}
-          - {id: inner, start: {x: -9.275, y: 6.208365}, end: {x: -8, y: 6.208365}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 6.208365}, end: {x: -8, y: 6.424871}, material: z-court-marble}
-        floor: {c: 0.12}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8, y: 6.424871 }, end: { x: -9.4, y: 6.424871 }, material: z-court-marble }
+          - { id: next, start: { x: -9.4, y: 6.424871 }, end: { x: -9.275, y: 6.208365 }, material: z-court-marble }
+          - { id: inner, start: { x: -9.275, y: 6.208365 }, end: { x: -8, y: 6.208365 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 6.208365 }, end: { x: -8, y: 6.424871 }, material: z-court-marble }
+        floor: { c: 0.12 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-1-3
         boundary:
-          - {id: outer, start: {x: -9.4, y: 6.424871}, end: {x: -10.8, y: 4}, material: z-court-marble}
-          - {id: next, start: {x: -10.8, y: 4}, end: {x: -10.55, y: 4}, material: z-court-marble}
-          - {id: inner, start: {x: -10.55, y: 4}, end: {x: -9.275, y: 6.208365}, material: z-court-marble}
-          - {id: previous, start: {x: -9.275, y: 6.208365}, end: {x: -9.4, y: 6.424871}, material: z-court-marble}
-        floor: {c: 0.12}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -9.4, y: 6.424871 }, end: { x: -10.8, y: 4 }, material: z-court-marble }
+          - { id: next, start: { x: -10.8, y: 4 }, end: { x: -10.55, y: 4 }, material: z-court-marble }
+          - { id: inner, start: { x: -10.55, y: 4 }, end: { x: -9.275, y: 6.208365 }, material: z-court-marble }
+          - { id: previous, start: { x: -9.275, y: 6.208365 }, end: { x: -9.4, y: 6.424871 }, material: z-court-marble }
+        floor: { c: 0.12 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-1-4
         boundary:
-          - {id: outer, start: {x: -10.8, y: 4}, end: {x: -9.4, y: 1.575129}, material: z-court-marble}
-          - {id: next, start: {x: -9.4, y: 1.575129}, end: {x: -9.275, y: 1.791635}, material: z-court-marble}
-          - {id: inner, start: {x: -9.275, y: 1.791635}, end: {x: -10.55, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -10.55, y: 4}, end: {x: -10.8, y: 4}, material: z-court-marble}
-        floor: {c: 0.12}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -10.8, y: 4 }, end: { x: -9.4, y: 1.575129 }, material: z-court-marble }
+          - { id: next, start: { x: -9.4, y: 1.575129 }, end: { x: -9.275, y: 1.791635 }, material: z-court-marble }
+          - { id: inner, start: { x: -9.275, y: 1.791635 }, end: { x: -10.55, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -10.55, y: 4 }, end: { x: -10.8, y: 4 }, material: z-court-marble }
+        floor: { c: 0.12 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-1-5
         boundary:
-          - {id: outer, start: {x: -9.4, y: 1.575129}, end: {x: -8, y: 1.575129}, material: z-court-marble}
-          - {id: next, start: {x: -8, y: 1.575129}, end: {x: -8, y: 1.791635}, material: z-court-marble}
-          - {id: inner, start: {x: -8, y: 1.791635}, end: {x: -9.275, y: 1.791635}, material: z-court-marble}
-          - {id: previous, start: {x: -9.275, y: 1.791635}, end: {x: -9.4, y: 1.575129}, material: z-court-marble}
-        floor: {c: 0.12}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -9.4, y: 1.575129 }, end: { x: -8, y: 1.575129 }, material: z-court-marble }
+          - { id: next, start: { x: -8, y: 1.575129 }, end: { x: -8, y: 1.791635 }, material: z-court-marble }
+          - { id: inner, start: { x: -8, y: 1.791635 }, end: { x: -9.275, y: 1.791635 }, material: z-court-marble }
+          - { id: previous, start: { x: -9.275, y: 1.791635 }, end: { x: -9.4, y: 1.575129 }, material: z-court-marble }
+        floor: { c: 0.12 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-1-6
         boundary:
-          - {id: outer, start: {x: -8, y: 1.575129}, end: {x: -6.6, y: 1.575129}, material: z-court-marble}
-          - {id: next, start: {x: -6.6, y: 1.575129}, end: {x: -6.725, y: 1.791635}, material: z-court-marble}
-          - {id: inner, start: {x: -6.725, y: 1.791635}, end: {x: -8, y: 1.791635}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 1.791635}, end: {x: -8, y: 1.575129}, material: z-court-marble}
-        floor: {c: 0.12}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8, y: 1.575129 }, end: { x: -6.6, y: 1.575129 }, material: z-court-marble }
+          - { id: next, start: { x: -6.6, y: 1.575129 }, end: { x: -6.725, y: 1.791635 }, material: z-court-marble }
+          - { id: inner, start: { x: -6.725, y: 1.791635 }, end: { x: -8, y: 1.791635 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 1.791635 }, end: { x: -8, y: 1.575129 }, material: z-court-marble }
+        floor: { c: 0.12 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-1-7
         boundary:
-          - {id: outer, start: {x: -6.6, y: 1.575129}, end: {x: -5.2, y: 4}, material: z-court-marble}
-          - {id: next, start: {x: -5.2, y: 4}, end: {x: -5.45, y: 4}, material: z-court-marble}
-          - {id: inner, start: {x: -5.45, y: 4}, end: {x: -6.725, y: 1.791635}, material: z-court-marble}
-          - {id: previous, start: {x: -6.725, y: 1.791635}, end: {x: -6.6, y: 1.575129}, material: z-court-marble}
-        floor: {c: 0.12}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -6.6, y: 1.575129 }, end: { x: -5.2, y: 4 }, material: z-court-marble }
+          - { id: next, start: { x: -5.2, y: 4 }, end: { x: -5.45, y: 4 }, material: z-court-marble }
+          - { id: inner, start: { x: -5.45, y: 4 }, end: { x: -6.725, y: 1.791635 }, material: z-court-marble }
+          - { id: previous, start: { x: -6.725, y: 1.791635 }, end: { x: -6.6, y: 1.575129 }, material: z-court-marble }
+        floor: { c: 0.12 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-2-0
         boundary:
-          - {id: outer, start: {x: -5.45, y: 4}, end: {x: -6.725, y: 6.208365}, material: z-court-marble}
-          - {id: next, start: {x: -6.725, y: 6.208365}, end: {x: -6.85, y: 5.991858}, material: z-court-marble}
-          - {id: inner, start: {x: -6.85, y: 5.991858}, end: {x: -5.7, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -5.7, y: 4}, end: {x: -5.45, y: 4}, material: z-court-marble}
-        floor: {c: 0.24}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -5.45, y: 4 }, end: { x: -6.725, y: 6.208365 }, material: z-court-marble }
+          - { id: next, start: { x: -6.725, y: 6.208365 }, end: { x: -6.85, y: 5.991858 }, material: z-court-marble }
+          - { id: inner, start: { x: -6.85, y: 5.991858 }, end: { x: -5.7, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -5.7, y: 4 }, end: { x: -5.45, y: 4 }, material: z-court-marble }
+        floor: { c: 0.24 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-2-1
         boundary:
-          - {id: outer, start: {x: -6.725, y: 6.208365}, end: {x: -8, y: 6.208365}, material: z-court-marble}
-          - {id: next, start: {x: -8, y: 6.208365}, end: {x: -8, y: 5.991858}, material: z-court-marble}
-          - {id: inner, start: {x: -8, y: 5.991858}, end: {x: -6.85, y: 5.991858}, material: z-court-marble}
-          - {id: previous, start: {x: -6.85, y: 5.991858}, end: {x: -6.725, y: 6.208365}, material: z-court-marble}
-        floor: {c: 0.24}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -6.725, y: 6.208365 }, end: { x: -8, y: 6.208365 }, material: z-court-marble }
+          - { id: next, start: { x: -8, y: 6.208365 }, end: { x: -8, y: 5.991858 }, material: z-court-marble }
+          - { id: inner, start: { x: -8, y: 5.991858 }, end: { x: -6.85, y: 5.991858 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -6.85, y: 5.991858 },
+              end: { x: -6.725, y: 6.208365 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.24 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-2-2
         boundary:
-          - {id: outer, start: {x: -8, y: 6.208365}, end: {x: -9.275, y: 6.208365}, material: z-court-marble}
-          - {id: next, start: {x: -9.275, y: 6.208365}, end: {x: -9.15, y: 5.991858}, material: z-court-marble}
-          - {id: inner, start: {x: -9.15, y: 5.991858}, end: {x: -8, y: 5.991858}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 5.991858}, end: {x: -8, y: 6.208365}, material: z-court-marble}
-        floor: {c: 0.24}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8, y: 6.208365 }, end: { x: -9.275, y: 6.208365 }, material: z-court-marble }
+          - { id: next, start: { x: -9.275, y: 6.208365 }, end: { x: -9.15, y: 5.991858 }, material: z-court-marble }
+          - { id: inner, start: { x: -9.15, y: 5.991858 }, end: { x: -8, y: 5.991858 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 5.991858 }, end: { x: -8, y: 6.208365 }, material: z-court-marble }
+        floor: { c: 0.24 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-2-3
         boundary:
-          - {id: outer, start: {x: -9.275, y: 6.208365}, end: {x: -10.55, y: 4}, material: z-court-marble}
-          - {id: next, start: {x: -10.55, y: 4}, end: {x: -10.3, y: 4}, material: z-court-marble}
-          - {id: inner, start: {x: -10.3, y: 4}, end: {x: -9.15, y: 5.991858}, material: z-court-marble}
-          - {id: previous, start: {x: -9.15, y: 5.991858}, end: {x: -9.275, y: 6.208365}, material: z-court-marble}
-        floor: {c: 0.24}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -9.275, y: 6.208365 }, end: { x: -10.55, y: 4 }, material: z-court-marble }
+          - { id: next, start: { x: -10.55, y: 4 }, end: { x: -10.3, y: 4 }, material: z-court-marble }
+          - { id: inner, start: { x: -10.3, y: 4 }, end: { x: -9.15, y: 5.991858 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -9.15, y: 5.991858 },
+              end: { x: -9.275, y: 6.208365 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.24 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-2-4
         boundary:
-          - {id: outer, start: {x: -10.55, y: 4}, end: {x: -9.275, y: 1.791635}, material: z-court-marble}
-          - {id: next, start: {x: -9.275, y: 1.791635}, end: {x: -9.15, y: 2.008142}, material: z-court-marble}
-          - {id: inner, start: {x: -9.15, y: 2.008142}, end: {x: -10.3, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -10.3, y: 4}, end: {x: -10.55, y: 4}, material: z-court-marble}
-        floor: {c: 0.24}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -10.55, y: 4 }, end: { x: -9.275, y: 1.791635 }, material: z-court-marble }
+          - { id: next, start: { x: -9.275, y: 1.791635 }, end: { x: -9.15, y: 2.008142 }, material: z-court-marble }
+          - { id: inner, start: { x: -9.15, y: 2.008142 }, end: { x: -10.3, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -10.3, y: 4 }, end: { x: -10.55, y: 4 }, material: z-court-marble }
+        floor: { c: 0.24 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-2-5
         boundary:
-          - {id: outer, start: {x: -9.275, y: 1.791635}, end: {x: -8, y: 1.791635}, material: z-court-marble}
-          - {id: next, start: {x: -8, y: 1.791635}, end: {x: -8, y: 2.008142}, material: z-court-marble}
-          - {id: inner, start: {x: -8, y: 2.008142}, end: {x: -9.15, y: 2.008142}, material: z-court-marble}
-          - {id: previous, start: {x: -9.15, y: 2.008142}, end: {x: -9.275, y: 1.791635}, material: z-court-marble}
-        floor: {c: 0.24}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -9.275, y: 1.791635 }, end: { x: -8, y: 1.791635 }, material: z-court-marble }
+          - { id: next, start: { x: -8, y: 1.791635 }, end: { x: -8, y: 2.008142 }, material: z-court-marble }
+          - { id: inner, start: { x: -8, y: 2.008142 }, end: { x: -9.15, y: 2.008142 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -9.15, y: 2.008142 },
+              end: { x: -9.275, y: 1.791635 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.24 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-2-6
         boundary:
-          - {id: outer, start: {x: -8, y: 1.791635}, end: {x: -6.725, y: 1.791635}, material: z-court-marble}
-          - {id: next, start: {x: -6.725, y: 1.791635}, end: {x: -6.85, y: 2.008142}, material: z-court-marble}
-          - {id: inner, start: {x: -6.85, y: 2.008142}, end: {x: -8, y: 2.008142}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 2.008142}, end: {x: -8, y: 1.791635}, material: z-court-marble}
-        floor: {c: 0.24}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8, y: 1.791635 }, end: { x: -6.725, y: 1.791635 }, material: z-court-marble }
+          - { id: next, start: { x: -6.725, y: 1.791635 }, end: { x: -6.85, y: 2.008142 }, material: z-court-marble }
+          - { id: inner, start: { x: -6.85, y: 2.008142 }, end: { x: -8, y: 2.008142 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 2.008142 }, end: { x: -8, y: 1.791635 }, material: z-court-marble }
+        floor: { c: 0.24 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-2-7
         boundary:
-          - {id: outer, start: {x: -6.725, y: 1.791635}, end: {x: -5.45, y: 4}, material: z-court-marble}
-          - {id: next, start: {x: -5.45, y: 4}, end: {x: -5.7, y: 4}, material: z-court-marble}
-          - {id: inner, start: {x: -5.7, y: 4}, end: {x: -6.85, y: 2.008142}, material: z-court-marble}
-          - {id: previous, start: {x: -6.85, y: 2.008142}, end: {x: -6.725, y: 1.791635}, material: z-court-marble}
-        floor: {c: 0.24}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -6.725, y: 1.791635 }, end: { x: -5.45, y: 4 }, material: z-court-marble }
+          - { id: next, start: { x: -5.45, y: 4 }, end: { x: -5.7, y: 4 }, material: z-court-marble }
+          - { id: inner, start: { x: -5.7, y: 4 }, end: { x: -6.85, y: 2.008142 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -6.85, y: 2.008142 },
+              end: { x: -6.725, y: 1.791635 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.24 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-3-0
         boundary:
-          - {id: outer, start: {x: -5.7, y: 4}, end: {x: -6.85, y: 5.991858}, material: z-court-marble}
-          - {id: next, start: {x: -6.85, y: 5.991858}, end: {x: -6.975, y: 5.775352}, material: z-court-marble}
-          - {id: inner, start: {x: -6.975, y: 5.775352}, end: {x: -5.95, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -5.95, y: 4}, end: {x: -5.7, y: 4}, material: z-court-marble}
-        floor: {c: 0.36}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -5.7, y: 4 }, end: { x: -6.85, y: 5.991858 }, material: z-court-marble }
+          - { id: next, start: { x: -6.85, y: 5.991858 }, end: { x: -6.975, y: 5.775352 }, material: z-court-marble }
+          - { id: inner, start: { x: -6.975, y: 5.775352 }, end: { x: -5.95, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -5.95, y: 4 }, end: { x: -5.7, y: 4 }, material: z-court-marble }
+        floor: { c: 0.36 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-3-1
         boundary:
-          - {id: outer, start: {x: -6.85, y: 5.991858}, end: {x: -8, y: 5.991858}, material: z-court-marble}
-          - {id: next, start: {x: -8, y: 5.991858}, end: {x: -8, y: 5.775352}, material: z-court-marble}
-          - {id: inner, start: {x: -8, y: 5.775352}, end: {x: -6.975, y: 5.775352}, material: z-court-marble}
-          - {id: previous, start: {x: -6.975, y: 5.775352}, end: {x: -6.85, y: 5.991858}, material: z-court-marble}
-        floor: {c: 0.36}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -6.85, y: 5.991858 }, end: { x: -8, y: 5.991858 }, material: z-court-marble }
+          - { id: next, start: { x: -8, y: 5.991858 }, end: { x: -8, y: 5.775352 }, material: z-court-marble }
+          - { id: inner, start: { x: -8, y: 5.775352 }, end: { x: -6.975, y: 5.775352 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -6.975, y: 5.775352 },
+              end: { x: -6.85, y: 5.991858 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.36 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-3-2
         boundary:
-          - {id: outer, start: {x: -8, y: 5.991858}, end: {x: -9.15, y: 5.991858}, material: z-court-marble}
-          - {id: next, start: {x: -9.15, y: 5.991858}, end: {x: -9.025, y: 5.775352}, material: z-court-marble}
-          - {id: inner, start: {x: -9.025, y: 5.775352}, end: {x: -8, y: 5.775352}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 5.775352}, end: {x: -8, y: 5.991858}, material: z-court-marble}
-        floor: {c: 0.36}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8, y: 5.991858 }, end: { x: -9.15, y: 5.991858 }, material: z-court-marble }
+          - { id: next, start: { x: -9.15, y: 5.991858 }, end: { x: -9.025, y: 5.775352 }, material: z-court-marble }
+          - { id: inner, start: { x: -9.025, y: 5.775352 }, end: { x: -8, y: 5.775352 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 5.775352 }, end: { x: -8, y: 5.991858 }, material: z-court-marble }
+        floor: { c: 0.36 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-3-3
         boundary:
-          - {id: outer, start: {x: -9.15, y: 5.991858}, end: {x: -10.3, y: 4}, material: z-court-marble}
-          - {id: next, start: {x: -10.3, y: 4}, end: {x: -10.05, y: 4}, material: z-court-marble}
-          - {id: inner, start: {x: -10.05, y: 4}, end: {x: -9.025, y: 5.775352}, material: z-court-marble}
-          - {id: previous, start: {x: -9.025, y: 5.775352}, end: {x: -9.15, y: 5.991858}, material: z-court-marble}
-        floor: {c: 0.36}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -9.15, y: 5.991858 }, end: { x: -10.3, y: 4 }, material: z-court-marble }
+          - { id: next, start: { x: -10.3, y: 4 }, end: { x: -10.05, y: 4 }, material: z-court-marble }
+          - { id: inner, start: { x: -10.05, y: 4 }, end: { x: -9.025, y: 5.775352 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -9.025, y: 5.775352 },
+              end: { x: -9.15, y: 5.991858 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.36 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-3-4
         boundary:
-          - {id: outer, start: {x: -10.3, y: 4}, end: {x: -9.15, y: 2.008142}, material: z-court-marble}
-          - {id: next, start: {x: -9.15, y: 2.008142}, end: {x: -9.025, y: 2.224648}, material: z-court-marble}
-          - {id: inner, start: {x: -9.025, y: 2.224648}, end: {x: -10.05, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -10.05, y: 4}, end: {x: -10.3, y: 4}, material: z-court-marble}
-        floor: {c: 0.36}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -10.3, y: 4 }, end: { x: -9.15, y: 2.008142 }, material: z-court-marble }
+          - { id: next, start: { x: -9.15, y: 2.008142 }, end: { x: -9.025, y: 2.224648 }, material: z-court-marble }
+          - { id: inner, start: { x: -9.025, y: 2.224648 }, end: { x: -10.05, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -10.05, y: 4 }, end: { x: -10.3, y: 4 }, material: z-court-marble }
+        floor: { c: 0.36 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-3-5
         boundary:
-          - {id: outer, start: {x: -9.15, y: 2.008142}, end: {x: -8, y: 2.008142}, material: z-court-marble}
-          - {id: next, start: {x: -8, y: 2.008142}, end: {x: -8, y: 2.224648}, material: z-court-marble}
-          - {id: inner, start: {x: -8, y: 2.224648}, end: {x: -9.025, y: 2.224648}, material: z-court-marble}
-          - {id: previous, start: {x: -9.025, y: 2.224648}, end: {x: -9.15, y: 2.008142}, material: z-court-marble}
-        floor: {c: 0.36}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -9.15, y: 2.008142 }, end: { x: -8, y: 2.008142 }, material: z-court-marble }
+          - { id: next, start: { x: -8, y: 2.008142 }, end: { x: -8, y: 2.224648 }, material: z-court-marble }
+          - { id: inner, start: { x: -8, y: 2.224648 }, end: { x: -9.025, y: 2.224648 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -9.025, y: 2.224648 },
+              end: { x: -9.15, y: 2.008142 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.36 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-3-6
         boundary:
-          - {id: outer, start: {x: -8, y: 2.008142}, end: {x: -6.85, y: 2.008142}, material: z-court-marble}
-          - {id: next, start: {x: -6.85, y: 2.008142}, end: {x: -6.975, y: 2.224648}, material: z-court-marble}
-          - {id: inner, start: {x: -6.975, y: 2.224648}, end: {x: -8, y: 2.224648}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 2.224648}, end: {x: -8, y: 2.008142}, material: z-court-marble}
-        floor: {c: 0.36}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8, y: 2.008142 }, end: { x: -6.85, y: 2.008142 }, material: z-court-marble }
+          - { id: next, start: { x: -6.85, y: 2.008142 }, end: { x: -6.975, y: 2.224648 }, material: z-court-marble }
+          - { id: inner, start: { x: -6.975, y: 2.224648 }, end: { x: -8, y: 2.224648 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 2.224648 }, end: { x: -8, y: 2.008142 }, material: z-court-marble }
+        floor: { c: 0.36 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-step-3-7
         boundary:
-          - {id: outer, start: {x: -6.85, y: 2.008142}, end: {x: -5.7, y: 4}, material: z-court-marble}
-          - {id: next, start: {x: -5.7, y: 4}, end: {x: -5.95, y: 4}, material: z-court-marble}
-          - {id: inner, start: {x: -5.95, y: 4}, end: {x: -6.975, y: 2.224648}, material: z-court-marble}
-          - {id: previous, start: {x: -6.975, y: 2.224648}, end: {x: -6.85, y: 2.008142}, material: z-court-marble}
-        floor: {c: 0.36}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -6.85, y: 2.008142 }, end: { x: -5.7, y: 4 }, material: z-court-marble }
+          - { id: next, start: { x: -5.7, y: 4 }, end: { x: -5.95, y: 4 }, material: z-court-marble }
+          - { id: inner, start: { x: -5.95, y: 4 }, end: { x: -6.975, y: 2.224648 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -6.975, y: 2.224648 },
+              end: { x: -6.85, y: 2.008142 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.36 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-rim-0
         boundary:
-          - {id: outer, start: {x: -5.95, y: 4}, end: {x: -6.975, y: 5.775352}, material: z-court-marble}
-          - {id: next, start: {x: -6.975, y: 5.775352}, end: {x: -7.14, y: 5.489564}, material: z-court-marble}
-          - {id: inner, start: {x: -7.14, y: 5.489564}, end: {x: -6.28, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -6.28, y: 4}, end: {x: -5.95, y: 4}, material: z-court-marble}
-        floor: {c: 0.64}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -5.95, y: 4 }, end: { x: -6.975, y: 5.775352 }, material: z-court-marble }
+          - { id: next, start: { x: -6.975, y: 5.775352 }, end: { x: -7.14, y: 5.489564 }, material: z-court-marble }
+          - { id: inner, start: { x: -7.14, y: 5.489564 }, end: { x: -6.28, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -6.28, y: 4 }, end: { x: -5.95, y: 4 }, material: z-court-marble }
+        floor: { c: 0.64 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-rim-1
         boundary:
-          - {id: outer, start: {x: -6.975, y: 5.775352}, end: {x: -8, y: 5.775352}, material: z-court-marble}
-          - {id: next, start: {x: -8, y: 5.775352}, end: {x: -8, y: 5.489564}, material: z-court-marble}
-          - {id: inner, start: {x: -8, y: 5.489564}, end: {x: -7.14, y: 5.489564}, material: z-court-marble}
-          - {id: previous, start: {x: -7.14, y: 5.489564}, end: {x: -6.975, y: 5.775352}, material: z-court-marble}
-        floor: {c: 0.64}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -6.975, y: 5.775352 }, end: { x: -8, y: 5.775352 }, material: z-court-marble }
+          - { id: next, start: { x: -8, y: 5.775352 }, end: { x: -8, y: 5.489564 }, material: z-court-marble }
+          - { id: inner, start: { x: -8, y: 5.489564 }, end: { x: -7.14, y: 5.489564 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -7.14, y: 5.489564 },
+              end: { x: -6.975, y: 5.775352 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.64 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-rim-2
         boundary:
-          - {id: outer, start: {x: -8, y: 5.775352}, end: {x: -9.025, y: 5.775352}, material: z-court-marble}
-          - {id: next, start: {x: -9.025, y: 5.775352}, end: {x: -8.86, y: 5.489564}, material: z-court-marble}
-          - {id: inner, start: {x: -8.86, y: 5.489564}, end: {x: -8, y: 5.489564}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 5.489564}, end: {x: -8, y: 5.775352}, material: z-court-marble}
-        floor: {c: 0.64}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8, y: 5.775352 }, end: { x: -9.025, y: 5.775352 }, material: z-court-marble }
+          - { id: next, start: { x: -9.025, y: 5.775352 }, end: { x: -8.86, y: 5.489564 }, material: z-court-marble }
+          - { id: inner, start: { x: -8.86, y: 5.489564 }, end: { x: -8, y: 5.489564 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 5.489564 }, end: { x: -8, y: 5.775352 }, material: z-court-marble }
+        floor: { c: 0.64 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-rim-3
         boundary:
-          - {id: outer, start: {x: -9.025, y: 5.775352}, end: {x: -10.05, y: 4}, material: z-court-marble}
-          - {id: next, start: {x: -10.05, y: 4}, end: {x: -9.72, y: 4}, material: z-court-marble}
-          - {id: inner, start: {x: -9.72, y: 4}, end: {x: -8.86, y: 5.489564}, material: z-court-marble}
-          - {id: previous, start: {x: -8.86, y: 5.489564}, end: {x: -9.025, y: 5.775352}, material: z-court-marble}
-        floor: {c: 0.64}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -9.025, y: 5.775352 }, end: { x: -10.05, y: 4 }, material: z-court-marble }
+          - { id: next, start: { x: -10.05, y: 4 }, end: { x: -9.72, y: 4 }, material: z-court-marble }
+          - { id: inner, start: { x: -9.72, y: 4 }, end: { x: -8.86, y: 5.489564 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -8.86, y: 5.489564 },
+              end: { x: -9.025, y: 5.775352 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.64 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-rim-4
         boundary:
-          - {id: outer, start: {x: -10.05, y: 4}, end: {x: -9.025, y: 2.224648}, material: z-court-marble}
-          - {id: next, start: {x: -9.025, y: 2.224648}, end: {x: -8.86, y: 2.510436}, material: z-court-marble}
-          - {id: inner, start: {x: -8.86, y: 2.510436}, end: {x: -9.72, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -9.72, y: 4}, end: {x: -10.05, y: 4}, material: z-court-marble}
-        floor: {c: 0.64}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -10.05, y: 4 }, end: { x: -9.025, y: 2.224648 }, material: z-court-marble }
+          - { id: next, start: { x: -9.025, y: 2.224648 }, end: { x: -8.86, y: 2.510436 }, material: z-court-marble }
+          - { id: inner, start: { x: -8.86, y: 2.510436 }, end: { x: -9.72, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -9.72, y: 4 }, end: { x: -10.05, y: 4 }, material: z-court-marble }
+        floor: { c: 0.64 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-rim-5
         boundary:
-          - {id: outer, start: {x: -9.025, y: 2.224648}, end: {x: -8, y: 2.224648}, material: z-court-marble}
-          - {id: next, start: {x: -8, y: 2.224648}, end: {x: -8, y: 2.510436}, material: z-court-marble}
-          - {id: inner, start: {x: -8, y: 2.510436}, end: {x: -8.86, y: 2.510436}, material: z-court-marble}
-          - {id: previous, start: {x: -8.86, y: 2.510436}, end: {x: -9.025, y: 2.224648}, material: z-court-marble}
-        floor: {c: 0.64}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -9.025, y: 2.224648 }, end: { x: -8, y: 2.224648 }, material: z-court-marble }
+          - { id: next, start: { x: -8, y: 2.224648 }, end: { x: -8, y: 2.510436 }, material: z-court-marble }
+          - { id: inner, start: { x: -8, y: 2.510436 }, end: { x: -8.86, y: 2.510436 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -8.86, y: 2.510436 },
+              end: { x: -9.025, y: 2.224648 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.64 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-rim-6
         boundary:
-          - {id: outer, start: {x: -8, y: 2.224648}, end: {x: -6.975, y: 2.224648}, material: z-court-marble}
-          - {id: next, start: {x: -6.975, y: 2.224648}, end: {x: -7.14, y: 2.510436}, material: z-court-marble}
-          - {id: inner, start: {x: -7.14, y: 2.510436}, end: {x: -8, y: 2.510436}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 2.510436}, end: {x: -8, y: 2.224648}, material: z-court-marble}
-        floor: {c: 0.64}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8, y: 2.224648 }, end: { x: -6.975, y: 2.224648 }, material: z-court-marble }
+          - { id: next, start: { x: -6.975, y: 2.224648 }, end: { x: -7.14, y: 2.510436 }, material: z-court-marble }
+          - { id: inner, start: { x: -7.14, y: 2.510436 }, end: { x: -8, y: 2.510436 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 2.510436 }, end: { x: -8, y: 2.224648 }, material: z-court-marble }
+        floor: { c: 0.64 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-rim-7
         boundary:
-          - {id: outer, start: {x: -6.975, y: 2.224648}, end: {x: -5.95, y: 4}, material: z-court-marble}
-          - {id: next, start: {x: -5.95, y: 4}, end: {x: -6.28, y: 4}, material: z-court-marble}
-          - {id: inner, start: {x: -6.28, y: 4}, end: {x: -7.14, y: 2.510436}, material: z-court-marble}
-          - {id: previous, start: {x: -7.14, y: 2.510436}, end: {x: -6.975, y: 2.224648}, material: z-court-marble}
-        floor: {c: 0.64}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -6.975, y: 2.224648 }, end: { x: -5.95, y: 4 }, material: z-court-marble }
+          - { id: next, start: { x: -5.95, y: 4 }, end: { x: -6.28, y: 4 }, material: z-court-marble }
+          - { id: inner, start: { x: -6.28, y: 4 }, end: { x: -7.14, y: 2.510436 }, material: z-court-marble }
+          - {
+              id: previous,
+              start: { x: -7.14, y: 2.510436 },
+              end: { x: -6.975, y: 2.224648 },
+              material: z-court-marble,
+            }
+        floor: { c: 0.64 }
+        ceiling: { c: 12 }
         floor_material: z-court-marble
         ceiling_material: z-court-sky
       - id: basin-water-0
         boundary:
-          - {id: outer, start: {x: -6.28, y: 4}, end: {x: -7.14, y: 5.489564}, material: z-court-marble}
-          - {id: next, start: {x: -7.14, y: 5.489564}, end: {x: -8, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 4}, end: {x: -6.28, y: 4}, material: z-court-marble}
-        floor: {c: 0.50}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -6.28, y: 4 }, end: { x: -7.14, y: 5.489564 }, material: z-court-marble }
+          - { id: next, start: { x: -7.14, y: 5.489564 }, end: { x: -8, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 4 }, end: { x: -6.28, y: 4 }, material: z-court-marble }
+        floor: { c: 0.50 }
+        ceiling: { c: 12 }
         floor_material: z-court-water
         ceiling_material: z-court-sky
       - id: basin-water-1
         boundary:
-          - {id: outer, start: {x: -7.14, y: 5.489564}, end: {x: -8, y: 5.489564}, material: z-court-marble}
-          - {id: next, start: {x: -8, y: 5.489564}, end: {x: -8, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 4}, end: {x: -7.14, y: 5.489564}, material: z-court-marble}
-        floor: {c: 0.50}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -7.14, y: 5.489564 }, end: { x: -8, y: 5.489564 }, material: z-court-marble }
+          - { id: next, start: { x: -8, y: 5.489564 }, end: { x: -8, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 4 }, end: { x: -7.14, y: 5.489564 }, material: z-court-marble }
+        floor: { c: 0.50 }
+        ceiling: { c: 12 }
         floor_material: z-court-water
         ceiling_material: z-court-sky
       - id: basin-water-2
         boundary:
-          - {id: outer, start: {x: -8, y: 5.489564}, end: {x: -8.86, y: 5.489564}, material: z-court-marble}
-          - {id: next, start: {x: -8.86, y: 5.489564}, end: {x: -8, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 4}, end: {x: -8, y: 5.489564}, material: z-court-marble}
-        floor: {c: 0.50}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8, y: 5.489564 }, end: { x: -8.86, y: 5.489564 }, material: z-court-marble }
+          - { id: next, start: { x: -8.86, y: 5.489564 }, end: { x: -8, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 4 }, end: { x: -8, y: 5.489564 }, material: z-court-marble }
+        floor: { c: 0.50 }
+        ceiling: { c: 12 }
         floor_material: z-court-water
         ceiling_material: z-court-sky
       - id: basin-water-3
         boundary:
-          - {id: outer, start: {x: -8.86, y: 5.489564}, end: {x: -9.72, y: 4}, material: z-court-marble}
-          - {id: next, start: {x: -9.72, y: 4}, end: {x: -8, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 4}, end: {x: -8.86, y: 5.489564}, material: z-court-marble}
-        floor: {c: 0.50}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8.86, y: 5.489564 }, end: { x: -9.72, y: 4 }, material: z-court-marble }
+          - { id: next, start: { x: -9.72, y: 4 }, end: { x: -8, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 4 }, end: { x: -8.86, y: 5.489564 }, material: z-court-marble }
+        floor: { c: 0.50 }
+        ceiling: { c: 12 }
         floor_material: z-court-water
         ceiling_material: z-court-sky
       - id: basin-water-4
         boundary:
-          - {id: outer, start: {x: -9.72, y: 4}, end: {x: -8.86, y: 2.510436}, material: z-court-marble}
-          - {id: next, start: {x: -8.86, y: 2.510436}, end: {x: -8, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 4}, end: {x: -9.72, y: 4}, material: z-court-marble}
-        floor: {c: 0.50}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -9.72, y: 4 }, end: { x: -8.86, y: 2.510436 }, material: z-court-marble }
+          - { id: next, start: { x: -8.86, y: 2.510436 }, end: { x: -8, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 4 }, end: { x: -9.72, y: 4 }, material: z-court-marble }
+        floor: { c: 0.50 }
+        ceiling: { c: 12 }
         floor_material: z-court-water
         ceiling_material: z-court-sky
       - id: basin-water-5
         boundary:
-          - {id: outer, start: {x: -8.86, y: 2.510436}, end: {x: -8, y: 2.510436}, material: z-court-marble}
-          - {id: next, start: {x: -8, y: 2.510436}, end: {x: -8, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 4}, end: {x: -8.86, y: 2.510436}, material: z-court-marble}
-        floor: {c: 0.50}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8.86, y: 2.510436 }, end: { x: -8, y: 2.510436 }, material: z-court-marble }
+          - { id: next, start: { x: -8, y: 2.510436 }, end: { x: -8, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 4 }, end: { x: -8.86, y: 2.510436 }, material: z-court-marble }
+        floor: { c: 0.50 }
+        ceiling: { c: 12 }
         floor_material: z-court-water
         ceiling_material: z-court-sky
       - id: basin-water-6
         boundary:
-          - {id: outer, start: {x: -8, y: 2.510436}, end: {x: -7.14, y: 2.510436}, material: z-court-marble}
-          - {id: next, start: {x: -7.14, y: 2.510436}, end: {x: -8, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 4}, end: {x: -8, y: 2.510436}, material: z-court-marble}
-        floor: {c: 0.50}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -8, y: 2.510436 }, end: { x: -7.14, y: 2.510436 }, material: z-court-marble }
+          - { id: next, start: { x: -7.14, y: 2.510436 }, end: { x: -8, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 4 }, end: { x: -8, y: 2.510436 }, material: z-court-marble }
+        floor: { c: 0.50 }
+        ceiling: { c: 12 }
         floor_material: z-court-water
         ceiling_material: z-court-sky
       - id: basin-water-7
         boundary:
-          - {id: outer, start: {x: -7.14, y: 2.510436}, end: {x: -6.28, y: 4}, material: z-court-marble}
-          - {id: next, start: {x: -6.28, y: 4}, end: {x: -8, y: 4}, material: z-court-marble}
-          - {id: previous, start: {x: -8, y: 4}, end: {x: -7.14, y: 2.510436}, material: z-court-marble}
-        floor: {c: 0.50}
-        ceiling: {c: 12}
+          - { id: outer, start: { x: -7.14, y: 2.510436 }, end: { x: -6.28, y: 4 }, material: z-court-marble }
+          - { id: next, start: { x: -6.28, y: 4 }, end: { x: -8, y: 4 }, material: z-court-marble }
+          - { id: previous, start: { x: -8, y: 4 }, end: { x: -7.14, y: 2.510436 }, material: z-court-marble }
+        floor: { c: 0.50 }
+        ceiling: { c: 12 }
         floor_material: z-court-water
         ceiling_material: z-court-sky
     connections:
-      - {id: east-0-0, a: {room: bay-0-0, edge: east}, b: {room: bay-1-0, edge: west}}
-      - {id: north-0-0, a: {room: bay-0-0, edge: north}, b: {room: bay-0-1, edge: south}}
-      - {id: east-1-0, a: {room: bay-1-0, edge: east}, b: {room: bay-2-0, edge: west}}
-      - {id: north-1-0, a: {room: bay-1-0, edge: north}, b: {room: bay-1-1, edge: south}}
-      - {id: east-2-0, a: {room: bay-2-0, edge: east}, b: {room: bay-3-0, edge: west}}
-      - {id: north-2-0, a: {room: bay-2-0, edge: north}, b: {room: bay-2-1, edge: south}}
-      - {id: north-3-0, a: {room: bay-3-0, edge: north}, b: {room: bay-3-1, edge: south}}
-      - {id: east-0-1, a: {room: bay-0-1, edge: east}, b: {room: bay-1-1, edge: west}}
-      - {id: north-0-1, a: {room: bay-0-1, edge: north}, b: {room: bay-0-2, edge: south}}
-      - {id: east-1-1, a: {room: bay-1-1, edge: east}, b: {room: bay-2-1, edge: west}}
-      - {id: north-1-1, a: {room: bay-1-1, edge: north}, b: {room: bay-1-2, edge: south}}
-      - {id: east-2-1, a: {room: bay-2-1, edge: east}, b: {room: bay-3-1, edge: west}}
-      - {id: north-2-1, a: {room: bay-2-1, edge: north}, b: {room: bay-2-2, edge: south}}
-      - {id: north-3-1, a: {room: bay-3-1, edge: north}, b: {room: bay-3-2, edge: south}}
-      - {id: east-0-2, a: {room: bay-0-2, edge: east}, b: {room: bay-1-2, edge: west}}
-      - {id: north-0-2, a: {room: bay-0-2, edge: north}, b: {room: bay-0-3, edge: south}}
-      - {id: east-1-2, a: {room: bay-1-2, edge: east}, b: {room: bay-2-2, edge: west}}
-      - {id: north-1-2, a: {room: bay-1-2, edge: north}, b: {room: bay-1-3, edge: south}}
-      - {id: east-2-2, a: {room: bay-2-2, edge: east}, b: {room: bay-3-2, edge: west}}
-      - {id: north-2-2, a: {room: bay-2-2, edge: north}, b: {room: bay-2-3, edge: south}}
-      - {id: north-3-2, a: {room: bay-3-2, edge: north}, b: {room: bay-3-3, edge: south}}
-      - {id: east-0-3, a: {room: bay-0-3, edge: east}, b: {room: bay-1-3, edge: west}}
-      - {id: east-1-3, a: {room: bay-1-3, edge: east}, b: {room: bay-2-3, edge: west}}
-      - {id: east-2-3, a: {room: bay-2-3, edge: east}, b: {room: bay-3-3, edge: west}}
-      - {id: basin-step-1-0-around, a: {room: basin-step-1-0, edge: next}, b: {room: basin-step-1-1, edge: previous}}
-      - {id: basin-step-1-0-court, a: {room: basin-step-1-0, edge: outer}, b: {room: bay-2-2, edge: basin-0}}
-      - {id: basin-step-1-1-around, a: {room: basin-step-1-1, edge: next}, b: {room: basin-step-1-2, edge: previous}}
-      - {id: basin-step-1-1-court, a: {room: basin-step-1-1, edge: outer}, b: {room: bay-2-2, edge: basin-1}}
-      - {id: basin-step-1-2-around, a: {room: basin-step-1-2, edge: next}, b: {room: basin-step-1-3, edge: previous}}
-      - {id: basin-step-1-2-court, a: {room: basin-step-1-2, edge: outer}, b: {room: bay-1-2, edge: basin-2}}
-      - {id: basin-step-1-3-around, a: {room: basin-step-1-3, edge: next}, b: {room: basin-step-1-4, edge: previous}}
-      - {id: basin-step-1-3-court, a: {room: basin-step-1-3, edge: outer}, b: {room: bay-1-2, edge: basin-3}}
-      - {id: basin-step-1-4-around, a: {room: basin-step-1-4, edge: next}, b: {room: basin-step-1-5, edge: previous}}
-      - {id: basin-step-1-4-court, a: {room: basin-step-1-4, edge: outer}, b: {room: bay-1-1, edge: basin-4}}
-      - {id: basin-step-1-5-around, a: {room: basin-step-1-5, edge: next}, b: {room: basin-step-1-6, edge: previous}}
-      - {id: basin-step-1-5-court, a: {room: basin-step-1-5, edge: outer}, b: {room: bay-1-1, edge: basin-5}}
-      - {id: basin-step-1-6-around, a: {room: basin-step-1-6, edge: next}, b: {room: basin-step-1-7, edge: previous}}
-      - {id: basin-step-1-6-court, a: {room: basin-step-1-6, edge: outer}, b: {room: bay-2-1, edge: basin-6}}
-      - {id: basin-step-1-7-around, a: {room: basin-step-1-7, edge: next}, b: {room: basin-step-1-0, edge: previous}}
-      - {id: basin-step-1-7-court, a: {room: basin-step-1-7, edge: outer}, b: {room: bay-2-1, edge: basin-7}}
-      - {id: basin-step-2-0-around, a: {room: basin-step-2-0, edge: next}, b: {room: basin-step-2-1, edge: previous}}
-      - {id: basin-step-2-0-rise, a: {room: basin-step-1-0, edge: inner}, b: {room: basin-step-2-0, edge: outer}}
-      - {id: basin-step-2-1-around, a: {room: basin-step-2-1, edge: next}, b: {room: basin-step-2-2, edge: previous}}
-      - {id: basin-step-2-1-rise, a: {room: basin-step-1-1, edge: inner}, b: {room: basin-step-2-1, edge: outer}}
-      - {id: basin-step-2-2-around, a: {room: basin-step-2-2, edge: next}, b: {room: basin-step-2-3, edge: previous}}
-      - {id: basin-step-2-2-rise, a: {room: basin-step-1-2, edge: inner}, b: {room: basin-step-2-2, edge: outer}}
-      - {id: basin-step-2-3-around, a: {room: basin-step-2-3, edge: next}, b: {room: basin-step-2-4, edge: previous}}
-      - {id: basin-step-2-3-rise, a: {room: basin-step-1-3, edge: inner}, b: {room: basin-step-2-3, edge: outer}}
-      - {id: basin-step-2-4-around, a: {room: basin-step-2-4, edge: next}, b: {room: basin-step-2-5, edge: previous}}
-      - {id: basin-step-2-4-rise, a: {room: basin-step-1-4, edge: inner}, b: {room: basin-step-2-4, edge: outer}}
-      - {id: basin-step-2-5-around, a: {room: basin-step-2-5, edge: next}, b: {room: basin-step-2-6, edge: previous}}
-      - {id: basin-step-2-5-rise, a: {room: basin-step-1-5, edge: inner}, b: {room: basin-step-2-5, edge: outer}}
-      - {id: basin-step-2-6-around, a: {room: basin-step-2-6, edge: next}, b: {room: basin-step-2-7, edge: previous}}
-      - {id: basin-step-2-6-rise, a: {room: basin-step-1-6, edge: inner}, b: {room: basin-step-2-6, edge: outer}}
-      - {id: basin-step-2-7-around, a: {room: basin-step-2-7, edge: next}, b: {room: basin-step-2-0, edge: previous}}
-      - {id: basin-step-2-7-rise, a: {room: basin-step-1-7, edge: inner}, b: {room: basin-step-2-7, edge: outer}}
-      - {id: basin-step-3-0-around, a: {room: basin-step-3-0, edge: next}, b: {room: basin-step-3-1, edge: previous}}
-      - {id: basin-step-3-0-rise, a: {room: basin-step-2-0, edge: inner}, b: {room: basin-step-3-0, edge: outer}}
-      - {id: basin-step-3-1-around, a: {room: basin-step-3-1, edge: next}, b: {room: basin-step-3-2, edge: previous}}
-      - {id: basin-step-3-1-rise, a: {room: basin-step-2-1, edge: inner}, b: {room: basin-step-3-1, edge: outer}}
-      - {id: basin-step-3-2-around, a: {room: basin-step-3-2, edge: next}, b: {room: basin-step-3-3, edge: previous}}
-      - {id: basin-step-3-2-rise, a: {room: basin-step-2-2, edge: inner}, b: {room: basin-step-3-2, edge: outer}}
-      - {id: basin-step-3-3-around, a: {room: basin-step-3-3, edge: next}, b: {room: basin-step-3-4, edge: previous}}
-      - {id: basin-step-3-3-rise, a: {room: basin-step-2-3, edge: inner}, b: {room: basin-step-3-3, edge: outer}}
-      - {id: basin-step-3-4-around, a: {room: basin-step-3-4, edge: next}, b: {room: basin-step-3-5, edge: previous}}
-      - {id: basin-step-3-4-rise, a: {room: basin-step-2-4, edge: inner}, b: {room: basin-step-3-4, edge: outer}}
-      - {id: basin-step-3-5-around, a: {room: basin-step-3-5, edge: next}, b: {room: basin-step-3-6, edge: previous}}
-      - {id: basin-step-3-5-rise, a: {room: basin-step-2-5, edge: inner}, b: {room: basin-step-3-5, edge: outer}}
-      - {id: basin-step-3-6-around, a: {room: basin-step-3-6, edge: next}, b: {room: basin-step-3-7, edge: previous}}
-      - {id: basin-step-3-6-rise, a: {room: basin-step-2-6, edge: inner}, b: {room: basin-step-3-6, edge: outer}}
-      - {id: basin-step-3-7-around, a: {room: basin-step-3-7, edge: next}, b: {room: basin-step-3-0, edge: previous}}
-      - {id: basin-step-3-7-rise, a: {room: basin-step-2-7, edge: inner}, b: {room: basin-step-3-7, edge: outer}}
-      - {id: basin-rim-0-around, a: {room: basin-rim-0, edge: next}, b: {room: basin-rim-1, edge: previous}}
-      - {id: basin-rim-0-rise, a: {room: basin-step-3-0, edge: inner}, b: {room: basin-rim-0, edge: outer}}
-      - {id: basin-rim-1-around, a: {room: basin-rim-1, edge: next}, b: {room: basin-rim-2, edge: previous}}
-      - {id: basin-rim-1-rise, a: {room: basin-step-3-1, edge: inner}, b: {room: basin-rim-1, edge: outer}}
-      - {id: basin-rim-2-around, a: {room: basin-rim-2, edge: next}, b: {room: basin-rim-3, edge: previous}}
-      - {id: basin-rim-2-rise, a: {room: basin-step-3-2, edge: inner}, b: {room: basin-rim-2, edge: outer}}
-      - {id: basin-rim-3-around, a: {room: basin-rim-3, edge: next}, b: {room: basin-rim-4, edge: previous}}
-      - {id: basin-rim-3-rise, a: {room: basin-step-3-3, edge: inner}, b: {room: basin-rim-3, edge: outer}}
-      - {id: basin-rim-4-around, a: {room: basin-rim-4, edge: next}, b: {room: basin-rim-5, edge: previous}}
-      - {id: basin-rim-4-rise, a: {room: basin-step-3-4, edge: inner}, b: {room: basin-rim-4, edge: outer}}
-      - {id: basin-rim-5-around, a: {room: basin-rim-5, edge: next}, b: {room: basin-rim-6, edge: previous}}
-      - {id: basin-rim-5-rise, a: {room: basin-step-3-5, edge: inner}, b: {room: basin-rim-5, edge: outer}}
-      - {id: basin-rim-6-around, a: {room: basin-rim-6, edge: next}, b: {room: basin-rim-7, edge: previous}}
-      - {id: basin-rim-6-rise, a: {room: basin-step-3-6, edge: inner}, b: {room: basin-rim-6, edge: outer}}
-      - {id: basin-rim-7-around, a: {room: basin-rim-7, edge: next}, b: {room: basin-rim-0, edge: previous}}
-      - {id: basin-rim-7-rise, a: {room: basin-step-3-7, edge: inner}, b: {room: basin-rim-7, edge: outer}}
-      - {id: basin-water-0-rim, a: {room: basin-rim-0, edge: inner}, b: {room: basin-water-0, edge: outer}}
-      - {id: basin-water-0-around, a: {room: basin-water-0, edge: next}, b: {room: basin-water-1, edge: previous}}
-      - {id: basin-water-1-rim, a: {room: basin-rim-1, edge: inner}, b: {room: basin-water-1, edge: outer}}
-      - {id: basin-water-1-around, a: {room: basin-water-1, edge: next}, b: {room: basin-water-2, edge: previous}}
-      - {id: basin-water-2-rim, a: {room: basin-rim-2, edge: inner}, b: {room: basin-water-2, edge: outer}}
-      - {id: basin-water-2-around, a: {room: basin-water-2, edge: next}, b: {room: basin-water-3, edge: previous}}
-      - {id: basin-water-3-rim, a: {room: basin-rim-3, edge: inner}, b: {room: basin-water-3, edge: outer}}
-      - {id: basin-water-3-around, a: {room: basin-water-3, edge: next}, b: {room: basin-water-4, edge: previous}}
-      - {id: basin-water-4-rim, a: {room: basin-rim-4, edge: inner}, b: {room: basin-water-4, edge: outer}}
-      - {id: basin-water-4-around, a: {room: basin-water-4, edge: next}, b: {room: basin-water-5, edge: previous}}
-      - {id: basin-water-5-rim, a: {room: basin-rim-5, edge: inner}, b: {room: basin-water-5, edge: outer}}
-      - {id: basin-water-5-around, a: {room: basin-water-5, edge: next}, b: {room: basin-water-6, edge: previous}}
-      - {id: basin-water-6-rim, a: {room: basin-rim-6, edge: inner}, b: {room: basin-water-6, edge: outer}}
-      - {id: basin-water-6-around, a: {room: basin-water-6, edge: next}, b: {room: basin-water-7, edge: previous}}
-      - {id: basin-water-7-rim, a: {room: basin-rim-7, edge: inner}, b: {room: basin-water-7, edge: outer}}
-      - {id: basin-water-7-around, a: {room: basin-water-7, edge: next}, b: {room: basin-water-0, edge: previous}}
+      - { id: east-0-0, a: { room: bay-0-0, edge: east }, b: { room: bay-1-0, edge: west } }
+      - { id: north-0-0, a: { room: bay-0-0, edge: north }, b: { room: bay-0-1, edge: south } }
+      - { id: east-1-0, a: { room: bay-1-0, edge: east }, b: { room: bay-2-0, edge: west } }
+      - { id: north-1-0, a: { room: bay-1-0, edge: north }, b: { room: bay-1-1, edge: south } }
+      - { id: east-2-0, a: { room: bay-2-0, edge: east }, b: { room: bay-3-0, edge: west } }
+      - { id: north-2-0, a: { room: bay-2-0, edge: north }, b: { room: bay-2-1, edge: south } }
+      - { id: north-3-0, a: { room: bay-3-0, edge: north }, b: { room: bay-3-1, edge: south } }
+      - { id: east-0-1, a: { room: bay-0-1, edge: east }, b: { room: bay-1-1, edge: west } }
+      - { id: north-0-1, a: { room: bay-0-1, edge: north }, b: { room: bay-0-2, edge: south } }
+      - { id: east-1-1, a: { room: bay-1-1, edge: east }, b: { room: bay-2-1, edge: west } }
+      - { id: north-1-1, a: { room: bay-1-1, edge: north }, b: { room: bay-1-2, edge: south } }
+      - { id: east-2-1, a: { room: bay-2-1, edge: east }, b: { room: bay-3-1, edge: west } }
+      - { id: north-2-1, a: { room: bay-2-1, edge: north }, b: { room: bay-2-2, edge: south } }
+      - { id: north-3-1, a: { room: bay-3-1, edge: north }, b: { room: bay-3-2, edge: south } }
+      - { id: east-0-2, a: { room: bay-0-2, edge: east }, b: { room: bay-1-2, edge: west } }
+      - { id: north-0-2, a: { room: bay-0-2, edge: north }, b: { room: bay-0-3, edge: south } }
+      - { id: east-1-2, a: { room: bay-1-2, edge: east }, b: { room: bay-2-2, edge: west } }
+      - { id: north-1-2, a: { room: bay-1-2, edge: north }, b: { room: bay-1-3, edge: south } }
+      - { id: east-2-2, a: { room: bay-2-2, edge: east }, b: { room: bay-3-2, edge: west } }
+      - { id: north-2-2, a: { room: bay-2-2, edge: north }, b: { room: bay-2-3, edge: south } }
+      - { id: north-3-2, a: { room: bay-3-2, edge: north }, b: { room: bay-3-3, edge: south } }
+      - { id: east-0-3, a: { room: bay-0-3, edge: east }, b: { room: bay-1-3, edge: west } }
+      - { id: east-1-3, a: { room: bay-1-3, edge: east }, b: { room: bay-2-3, edge: west } }
+      - { id: east-2-3, a: { room: bay-2-3, edge: east }, b: { room: bay-3-3, edge: west } }
+      - {
+          id: basin-step-1-0-around,
+          a: { room: basin-step-1-0, edge: next },
+          b: { room: basin-step-1-1, edge: previous },
+        }
+      - { id: basin-step-1-0-court, a: { room: basin-step-1-0, edge: outer }, b: { room: bay-2-2, edge: basin-0 } }
+      - {
+          id: basin-step-1-1-around,
+          a: { room: basin-step-1-1, edge: next },
+          b: { room: basin-step-1-2, edge: previous },
+        }
+      - { id: basin-step-1-1-court, a: { room: basin-step-1-1, edge: outer }, b: { room: bay-2-2, edge: basin-1 } }
+      - {
+          id: basin-step-1-2-around,
+          a: { room: basin-step-1-2, edge: next },
+          b: { room: basin-step-1-3, edge: previous },
+        }
+      - { id: basin-step-1-2-court, a: { room: basin-step-1-2, edge: outer }, b: { room: bay-1-2, edge: basin-2 } }
+      - {
+          id: basin-step-1-3-around,
+          a: { room: basin-step-1-3, edge: next },
+          b: { room: basin-step-1-4, edge: previous },
+        }
+      - { id: basin-step-1-3-court, a: { room: basin-step-1-3, edge: outer }, b: { room: bay-1-2, edge: basin-3 } }
+      - {
+          id: basin-step-1-4-around,
+          a: { room: basin-step-1-4, edge: next },
+          b: { room: basin-step-1-5, edge: previous },
+        }
+      - { id: basin-step-1-4-court, a: { room: basin-step-1-4, edge: outer }, b: { room: bay-1-1, edge: basin-4 } }
+      - {
+          id: basin-step-1-5-around,
+          a: { room: basin-step-1-5, edge: next },
+          b: { room: basin-step-1-6, edge: previous },
+        }
+      - { id: basin-step-1-5-court, a: { room: basin-step-1-5, edge: outer }, b: { room: bay-1-1, edge: basin-5 } }
+      - {
+          id: basin-step-1-6-around,
+          a: { room: basin-step-1-6, edge: next },
+          b: { room: basin-step-1-7, edge: previous },
+        }
+      - { id: basin-step-1-6-court, a: { room: basin-step-1-6, edge: outer }, b: { room: bay-2-1, edge: basin-6 } }
+      - {
+          id: basin-step-1-7-around,
+          a: { room: basin-step-1-7, edge: next },
+          b: { room: basin-step-1-0, edge: previous },
+        }
+      - { id: basin-step-1-7-court, a: { room: basin-step-1-7, edge: outer }, b: { room: bay-2-1, edge: basin-7 } }
+      - {
+          id: basin-step-2-0-around,
+          a: { room: basin-step-2-0, edge: next },
+          b: { room: basin-step-2-1, edge: previous },
+        }
+      - { id: basin-step-2-0-rise, a: { room: basin-step-1-0, edge: inner }, b: { room: basin-step-2-0, edge: outer } }
+      - {
+          id: basin-step-2-1-around,
+          a: { room: basin-step-2-1, edge: next },
+          b: { room: basin-step-2-2, edge: previous },
+        }
+      - { id: basin-step-2-1-rise, a: { room: basin-step-1-1, edge: inner }, b: { room: basin-step-2-1, edge: outer } }
+      - {
+          id: basin-step-2-2-around,
+          a: { room: basin-step-2-2, edge: next },
+          b: { room: basin-step-2-3, edge: previous },
+        }
+      - { id: basin-step-2-2-rise, a: { room: basin-step-1-2, edge: inner }, b: { room: basin-step-2-2, edge: outer } }
+      - {
+          id: basin-step-2-3-around,
+          a: { room: basin-step-2-3, edge: next },
+          b: { room: basin-step-2-4, edge: previous },
+        }
+      - { id: basin-step-2-3-rise, a: { room: basin-step-1-3, edge: inner }, b: { room: basin-step-2-3, edge: outer } }
+      - {
+          id: basin-step-2-4-around,
+          a: { room: basin-step-2-4, edge: next },
+          b: { room: basin-step-2-5, edge: previous },
+        }
+      - { id: basin-step-2-4-rise, a: { room: basin-step-1-4, edge: inner }, b: { room: basin-step-2-4, edge: outer } }
+      - {
+          id: basin-step-2-5-around,
+          a: { room: basin-step-2-5, edge: next },
+          b: { room: basin-step-2-6, edge: previous },
+        }
+      - { id: basin-step-2-5-rise, a: { room: basin-step-1-5, edge: inner }, b: { room: basin-step-2-5, edge: outer } }
+      - {
+          id: basin-step-2-6-around,
+          a: { room: basin-step-2-6, edge: next },
+          b: { room: basin-step-2-7, edge: previous },
+        }
+      - { id: basin-step-2-6-rise, a: { room: basin-step-1-6, edge: inner }, b: { room: basin-step-2-6, edge: outer } }
+      - {
+          id: basin-step-2-7-around,
+          a: { room: basin-step-2-7, edge: next },
+          b: { room: basin-step-2-0, edge: previous },
+        }
+      - { id: basin-step-2-7-rise, a: { room: basin-step-1-7, edge: inner }, b: { room: basin-step-2-7, edge: outer } }
+      - {
+          id: basin-step-3-0-around,
+          a: { room: basin-step-3-0, edge: next },
+          b: { room: basin-step-3-1, edge: previous },
+        }
+      - { id: basin-step-3-0-rise, a: { room: basin-step-2-0, edge: inner }, b: { room: basin-step-3-0, edge: outer } }
+      - {
+          id: basin-step-3-1-around,
+          a: { room: basin-step-3-1, edge: next },
+          b: { room: basin-step-3-2, edge: previous },
+        }
+      - { id: basin-step-3-1-rise, a: { room: basin-step-2-1, edge: inner }, b: { room: basin-step-3-1, edge: outer } }
+      - {
+          id: basin-step-3-2-around,
+          a: { room: basin-step-3-2, edge: next },
+          b: { room: basin-step-3-3, edge: previous },
+        }
+      - { id: basin-step-3-2-rise, a: { room: basin-step-2-2, edge: inner }, b: { room: basin-step-3-2, edge: outer } }
+      - {
+          id: basin-step-3-3-around,
+          a: { room: basin-step-3-3, edge: next },
+          b: { room: basin-step-3-4, edge: previous },
+        }
+      - { id: basin-step-3-3-rise, a: { room: basin-step-2-3, edge: inner }, b: { room: basin-step-3-3, edge: outer } }
+      - {
+          id: basin-step-3-4-around,
+          a: { room: basin-step-3-4, edge: next },
+          b: { room: basin-step-3-5, edge: previous },
+        }
+      - { id: basin-step-3-4-rise, a: { room: basin-step-2-4, edge: inner }, b: { room: basin-step-3-4, edge: outer } }
+      - {
+          id: basin-step-3-5-around,
+          a: { room: basin-step-3-5, edge: next },
+          b: { room: basin-step-3-6, edge: previous },
+        }
+      - { id: basin-step-3-5-rise, a: { room: basin-step-2-5, edge: inner }, b: { room: basin-step-3-5, edge: outer } }
+      - {
+          id: basin-step-3-6-around,
+          a: { room: basin-step-3-6, edge: next },
+          b: { room: basin-step-3-7, edge: previous },
+        }
+      - { id: basin-step-3-6-rise, a: { room: basin-step-2-6, edge: inner }, b: { room: basin-step-3-6, edge: outer } }
+      - {
+          id: basin-step-3-7-around,
+          a: { room: basin-step-3-7, edge: next },
+          b: { room: basin-step-3-0, edge: previous },
+        }
+      - { id: basin-step-3-7-rise, a: { room: basin-step-2-7, edge: inner }, b: { room: basin-step-3-7, edge: outer } }
+      - { id: basin-rim-0-around, a: { room: basin-rim-0, edge: next }, b: { room: basin-rim-1, edge: previous } }
+      - { id: basin-rim-0-rise, a: { room: basin-step-3-0, edge: inner }, b: { room: basin-rim-0, edge: outer } }
+      - { id: basin-rim-1-around, a: { room: basin-rim-1, edge: next }, b: { room: basin-rim-2, edge: previous } }
+      - { id: basin-rim-1-rise, a: { room: basin-step-3-1, edge: inner }, b: { room: basin-rim-1, edge: outer } }
+      - { id: basin-rim-2-around, a: { room: basin-rim-2, edge: next }, b: { room: basin-rim-3, edge: previous } }
+      - { id: basin-rim-2-rise, a: { room: basin-step-3-2, edge: inner }, b: { room: basin-rim-2, edge: outer } }
+      - { id: basin-rim-3-around, a: { room: basin-rim-3, edge: next }, b: { room: basin-rim-4, edge: previous } }
+      - { id: basin-rim-3-rise, a: { room: basin-step-3-3, edge: inner }, b: { room: basin-rim-3, edge: outer } }
+      - { id: basin-rim-4-around, a: { room: basin-rim-4, edge: next }, b: { room: basin-rim-5, edge: previous } }
+      - { id: basin-rim-4-rise, a: { room: basin-step-3-4, edge: inner }, b: { room: basin-rim-4, edge: outer } }
+      - { id: basin-rim-5-around, a: { room: basin-rim-5, edge: next }, b: { room: basin-rim-6, edge: previous } }
+      - { id: basin-rim-5-rise, a: { room: basin-step-3-5, edge: inner }, b: { room: basin-rim-5, edge: outer } }
+      - { id: basin-rim-6-around, a: { room: basin-rim-6, edge: next }, b: { room: basin-rim-7, edge: previous } }
+      - { id: basin-rim-6-rise, a: { room: basin-step-3-6, edge: inner }, b: { room: basin-rim-6, edge: outer } }
+      - { id: basin-rim-7-around, a: { room: basin-rim-7, edge: next }, b: { room: basin-rim-0, edge: previous } }
+      - { id: basin-rim-7-rise, a: { room: basin-step-3-7, edge: inner }, b: { room: basin-rim-7, edge: outer } }
+      - { id: basin-water-0-rim, a: { room: basin-rim-0, edge: inner }, b: { room: basin-water-0, edge: outer } }
+      - { id: basin-water-0-around, a: { room: basin-water-0, edge: next }, b: { room: basin-water-1, edge: previous } }
+      - { id: basin-water-1-rim, a: { room: basin-rim-1, edge: inner }, b: { room: basin-water-1, edge: outer } }
+      - { id: basin-water-1-around, a: { room: basin-water-1, edge: next }, b: { room: basin-water-2, edge: previous } }
+      - { id: basin-water-2-rim, a: { room: basin-rim-2, edge: inner }, b: { room: basin-water-2, edge: outer } }
+      - { id: basin-water-2-around, a: { room: basin-water-2, edge: next }, b: { room: basin-water-3, edge: previous } }
+      - { id: basin-water-3-rim, a: { room: basin-rim-3, edge: inner }, b: { room: basin-water-3, edge: outer } }
+      - { id: basin-water-3-around, a: { room: basin-water-3, edge: next }, b: { room: basin-water-4, edge: previous } }
+      - { id: basin-water-4-rim, a: { room: basin-rim-4, edge: inner }, b: { room: basin-water-4, edge: outer } }
+      - { id: basin-water-4-around, a: { room: basin-water-4, edge: next }, b: { room: basin-water-5, edge: previous } }
+      - { id: basin-water-5-rim, a: { room: basin-rim-5, edge: inner }, b: { room: basin-water-5, edge: outer } }
+      - { id: basin-water-5-around, a: { room: basin-water-5, edge: next }, b: { room: basin-water-6, edge: previous } }
+      - { id: basin-water-6-rim, a: { room: basin-rim-6, edge: inner }, b: { room: basin-water-6, edge: outer } }
+      - { id: basin-water-6-around, a: { room: basin-water-6, edge: next }, b: { room: basin-water-7, edge: previous } }
+      - { id: basin-water-7-rim, a: { room: basin-rim-7, edge: inner }, b: { room: basin-water-7, edge: outer } }
+      - { id: basin-water-7-around, a: { room: basin-water-7, edge: next }, b: { room: basin-water-0, edge: previous } }
     ports:
-      - {id: entrance, endpoint: {room: bay-3-1, edge: east}}
+      - { id: entrance, endpoint: { room: bay-3-1, edge: east } }
 
 instances:
   - id: roman-court
     prefab: roman-peristyle
-    transform: {scale: 1}
+    transform: { scale: 1 }
   - id: gallery-a
     prefab: gallery
-    transform: {translation: {x: 4, y: 0, z: 0}, scale: 1}
+    transform: { translation: { x: 4, y: 0, z: 0 }, scale: 1 }
     tags: [gallery, gallery-a, spinner]
   - id: gallery-b
     prefab: gallery
-    transform: {translation: {x: 8, y: 0, z: 0}, scale: 1}
+    transform: { translation: { x: 8, y: 0, z: 0 }, scale: 1 }
     tags: [gallery, gallery-b]
   - id: gallery-c
     prefab: gallery
-    transform: {translation: {x: 12, y: 0, z: 0}, scale: 1}
+    transform: { translation: { x: 12, y: 0, z: 0 }, scale: 1 }
     tags: [gallery, gallery-c]
   - id: east-corner
     prefab: corner
-    transform: {translation: {x: 16, y: 0, z: 0}, scale: 1}
+    transform: { translation: { x: 16, y: 0, z: 0 }, scale: 1 }
   - id: north-ascent
     prefab: ascent
-    transform: {translation: {x: 16, y: 2, z: 0}, scale: 1}
+    transform: { translation: { x: 16, y: 2, z: 0 }, scale: 1 }
 
 connections:
   - id: hall-to-courtyard
-    a: {room: hall, edge: courtyard}
-    b: {instance: roman-court, port: entrance}
+    a: { room: hall, edge: courtyard }
+    b: { instance: roman-court, port: entrance }
   - id: hall-to-gallery-a
-    a: {room: hall, edge: doorway}
-    b: {instance: gallery-a, port: entrance}
+    a: { room: hall, edge: doorway }
+    b: { instance: gallery-a, port: entrance }
   - id: gallery-a-to-gallery-b
-    a: {instance: gallery-a, port: exit}
-    b: {instance: gallery-b, port: entrance}
+    a: { instance: gallery-a, port: exit }
+    b: { instance: gallery-b, port: entrance }
   - id: gallery-b-to-gallery-c
-    a: {instance: gallery-b, port: exit}
-    b: {instance: gallery-c, port: entrance}
+    a: { instance: gallery-b, port: exit }
+    b: { instance: gallery-c, port: entrance }
   - id: gallery-c-to-corner
-    a: {instance: gallery-c, port: exit}
-    b: {instance: east-corner, port: entrance}
+    a: { instance: gallery-c, port: exit }
+    b: { instance: east-corner, port: entrance }
   - id: corner-to-ascent
-    a: {instance: east-corner, port: exit}
-    b: {instance: north-ascent, port: entrance}
+    a: { instance: east-corner, port: exit }
+    b: { instance: north-ascent, port: entrance }
   - id: ascent-to-hall
-    a: {instance: north-ascent, port: exit}
-    b: {room: hall, edge: north}
+    a: { instance: north-ascent, port: exit }
+    b: { room: hall, edge: north }
     non_euclidean: true
 
 # World-space mapping is compiled into material UVs.
 uv:
   mode: triplanar
-  scale: {x: 1, y: 1}
+  scale: { x: 1, y: 1 }
 
 lighting:
   version: 1
   actors: true
-  ambient: {x: 0.08, y: 0.08, z: 0.09}
+  ambient: { x: 0.08, y: 0.08, z: 0.09 }
   ambient_cube:
-    positive_x: {x: 0.11, y: 0.12, z: 0.14}
-    negative_x: {x: 0.07, y: 0.08, z: 0.095}
-    positive_y: {x: 0.12, y: 0.135, z: 0.15}
-    negative_y: {x: 0.075, y: 0.085, z: 0.10}
-    positive_z: {x: 0.30, y: 0.36, z: 0.44}
-    negative_z: {x: 0.04, y: 0.045, z: 0.04}
+    positive_x: { x: 0.11, y: 0.12, z: 0.14 }
+    negative_x: { x: 0.07, y: 0.08, z: 0.095 }
+    positive_y: { x: 0.12, y: 0.135, z: 0.15 }
+    negative_y: { x: 0.075, y: 0.085, z: 0.10 }
+    positive_z: { x: 0.30, y: 0.36, z: 0.44 }
+    negative_z: { x: 0.04, y: 0.045, z: 0.04 }
   lights:
-    - {id: court-daylight, position: {x: -10.5, y: 2, z: 7}, color: {x: 0.88, y: 0.91, z: 0.96}, radius: 12}
-    - {id: west-brazier, position: {x: -14, y: 4, z: 2.4}, color: {x: 1, y: 0.42, z: 0.18}, radius: 6}
-    - {id: east-brazier, position: {x: -2, y: 4, z: 2.4}, color: {x: 1, y: 0.62, z: 0.30}, radius: 6}
-    - {id: north-cool-fill, position: {x: -8, y: 10, z: 2.8}, color: {x: 0.22, y: 0.58, z: 0.88}, radius: 6}
-    - {id: hall-fill, position: {x: 2, y: 1, z: 3}, color: {x: 0.92, y: 0.83, z: 0.68}, radius: 7}
-    - {id: gallery-fill, position: {x: 10, y: 1, z: 3}, color: {x: 0.74, y: 0.87, z: 1}, radius: 9}
+    - { id: court-daylight, position: { x: -10.5, y: 2, z: 7 }, color: { x: 0.88, y: 0.91, z: 0.96 }, radius: 12 }
+    - { id: west-brazier, position: { x: -14, y: 4, z: 2.4 }, color: { x: 1, y: 0.42, z: 0.18 }, radius: 6 }
+    - { id: east-brazier, position: { x: -2, y: 4, z: 2.4 }, color: { x: 1, y: 0.62, z: 0.30 }, radius: 6 }
+    - { id: north-cool-fill, position: { x: -8, y: 10, z: 2.8 }, color: { x: 0.22, y: 0.58, z: 0.88 }, radius: 6 }
+    - { id: hall-fill, position: { x: 2, y: 1, z: 3 }, color: { x: 0.92, y: 0.83, z: 0.68 }, radius: 7 }
+    - { id: gallery-fill, position: { x: 10, y: 1, z: 3 }, color: { x: 0.74, y: 0.87, z: 1 }, radius: 9 }
     # Unbaked moving light: passes the corridor trees and the hall actors.
     - id: corridor-wanderer
-      position: {x: 3, y: 1, z: 2.2}
-      color: {x: 1, y: 0.28, z: 0.06}
+      position: { x: 3, y: 1, z: 2.2 }
+      color: { x: 1, y: 0.28, z: 0.06 }
       radius: 4
       motion:
         version: 1
-        offset: {x: 12, y: 0, z: 0.8}
+        offset: { x: 12, y: 0, z: 0.8 }
         period_seconds: 12

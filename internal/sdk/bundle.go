@@ -105,8 +105,15 @@ func readBundle(version string, data []byte) (Manifest, error) {
 		return Manifest{}, err
 	}
 
-	if compatibility.Format != 1 || compatibility.UISchema != 9 || compatibility.ProjectCodegen != 1 {
+	if compatibility.Format != 1 || (compatibility.UISchema != 9 && compatibility.UISchema != 10 && compatibility.UISchema != 11) ||
+		(compatibility.ProjectCodegen != 1 && compatibility.ProjectCodegen != 2) {
 		return Manifest{}, bundleError("SDK requires unsupported bundle, UI schema or project generator; upgrade Karty")
+	}
+
+	if compatibility.ProjectCodegen == authoredActionProjectCodegen {
+		if _, err := fs.ReadFile(archive, "contracts/actions-v1.schema.json"); err != nil {
+			return Manifest{}, bundleError("SDK project generator requires the authored action schema")
+		}
 	}
 
 	raw, err := fs.ReadFile(archive, "manifest.toml")
@@ -341,3 +348,5 @@ func readBundleFile(path string) ([]byte, error) {
 
 	return data, nil
 }
+
+const authoredActionProjectCodegen = 2

@@ -1,0 +1,25 @@
+{
+  "$schema": "../../.karty/actions/levels/showcase.schema.json",
+  "version": 1,
+  "sequences": [
+    {
+      "name": "welcome",
+      "onRepeat": "restart",
+      "steps": [
+        {
+          "condition": "actor.ready",
+          "args": { "actor": { "actor": "hall/player-marker" } },
+          "then": [
+            { "waitFrames": 2 },
+            {
+              "action": "actor.tag",
+              "args": { "actor": { "actor": "hall/player-marker" }, "tag": "player-marker" }
+            }
+          ],
+          "else": [{ "waitFrames": 1 }],
+          "onFailure": [{ "waitFrames": 1 }]
+        }
+      ]
+    }
+  ]
+}

@@ -7,8 +7,9 @@ See [Implemented behavior](implemented.md) for the current inventory.
 
 - **Optimized/Brotli web hosts:** add explicit artifact selection and delivery
   with correct HTTP encoding; current builds and Pages use the regular host.
-- **Image transforms/import:** cropping, atlases and streaming/tiled imports
+- **Image transforms/import:** cropping, sprite atlases and streaming/tiled imports
   need bounded allocation and deterministic, versioned processing recipes.
+  World material atlases and mip chains are already supported.
 - **Resize coordinate mapping:** preserve logical UI sizes and sprite regions
   through an explicit consumer contract rather than silently changing layout.
 - **Cache retention:** automatic size-based eviction; manual cache deletion

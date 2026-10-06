@@ -1,5 +1,9 @@
 # Image and sound assets
 
+Authored world YAML supports [editor schemas](level-yaml-schema-v1.md) with level
+texture/material completions. Run `karty schema` to refresh them; builds also
+validate the YAML before processing assets.
+
 Builds convert images to lossless QOI textures and WAV audio to lossy QOA.
 Profiles/capabilities come from the project's pinned SDK, not an automatic upgrade.
 Image/audio conversion needs no FFmpeg, ImageMagick, CGO or separate tools;
@@ -38,14 +42,14 @@ channels = "mono"
 
 Omitted fields inherit the SDK profile. The CLI's selected SDK defines:
 
-| Profile | Default processing |
-| --- | --- |
-| `sprite` | QOI, fit within 4096×4096, `nearest`, 8-bit channels |
-| `interface` | QOI, fit within 4096×4096, `smooth-lanczos3`, 8-bit channels |
-| `environment` | QOI, fit within 4096×4096, `smooth-lanczos3`, 8-bit channels |
-| `effect` | QOA at 48000 Hz, preserve mono or stereo |
-| `music` | Streaming QOA at 48000 Hz, preserve mono or stereo |
-| `environment` (audio) | Streaming QOA at 48000 Hz, preserve mono or stereo |
+| Profile               | Default processing                                           |
+| --------------------- | ------------------------------------------------------------ |
+| `sprite`              | QOI, fit within 4096×4096, `nearest`, 8-bit channels         |
+| `interface`           | QOI, fit within 4096×4096, `smooth-lanczos3`, 8-bit channels |
+| `environment`         | QOI, fit within 4096×4096, `smooth-lanczos3`, 8-bit channels |
+| `effect`              | QOA at 48000 Hz, preserve mono or stereo                     |
+| `music`               | Streaming QOA at 48000 Hz, preserve mono or stereo           |
+| `environment` (audio) | Streaming QOA at 48000 Hz, preserve mono or stereo           |
 
 Image resizing preserves the aspect ratio and never upscales. `max_width` and
 `max_height` replace the inherited bounds when set. The only filters are
@@ -184,7 +188,8 @@ exact. Height/AO average linearly, preserving zero AO as data. The combined tail
 interleaves albedo/data cells by material in canonical shelf bands, with each
 dimension at most 4096. Its linear QOI tag describes raw storage; albedo cells
 still contain sRGB bytes. Runtime selects fractional LOD and blends adjacent
-levels with shared relief UV/channel filtering. Older L0-only payloads remain
+levels with shared relief UV/channel filtering and bounded 8× anisotropic
+sampling. Older L0-only payloads remain
 valid and keep their previous behavior.
 
 Optional per-texture material controls live in `level.toml`:
@@ -287,10 +292,18 @@ The cartridge records `world/material-mapping@1` alongside `world/sectors@1`;
 the marker and all per-surface records must be present together. Geometry,
 geometric depth, authored identities and portal connectivity remain unchanged.
 
-## Authored static world lighting (SDK 0.0.8)
+## Authored world lighting (SDK 0.0.8)
 
-World source version 4 may add a top-level `lighting` payload. The selected SDK
-must advertise `world/lighting@1`; SDK 0.0.7 rejects authored lighting. Lighting
+Each level's world source (selected by `[world].source` in its `level.toml`)
+owns its lighting. World source version 4 may add a top-level `lighting` payload.
+Light IDs and ambient settings belong to that level and are embedded in its KLD,
+including when multiple levels use the same light IDs. Author lights in that
+world file; `karty.toml` and project-root `lighting.yaml` do not define lighting.
+Per-level bake controls live in the same level's `[lightmap]` table; generated
+offline output lives under the project `.karty/bakes/` directory as described
+in [Lightmaps](lightmaps.md).
+
+The selected SDK must advertise `world/lighting@1`; SDK 0.0.7 rejects authored lighting. Lighting
 and material atlas capabilities are independent, so a lighting-capable SDK can
 use ordinary surface textures without invoking Materialize.
 
@@ -318,10 +331,11 @@ Compiled worlds retain this optional payload in `@world/main`. Lighting adds
 `world/lighting@1` alongside `world/sectors@1` to the cartridge's required
 features. An ambient-only payload still requires lighting capability. Omit
 `lighting` to retain the existing rendering and packaging behavior, including
-source versions 1–3. Static lighting uses squared Half-Lambert diffuse with
+source versions 1–3. Live lighting uses squared Half-Lambert diffuse with
 bounded radius falloff. With a material atlas, generated normals affect diffuse
 lighting and AO scales only ambient light, once in linear RGB; direct light
-remains unoccluded. The lit albedo diagnostic shows albedo without baked AO.
+is unshadowed unless selected for a supported static lightmap recipe. The lit
+albedo diagnostic shows albedo without baked AO.
 Normal and depth diagnostics retain their meanings; material height never
 changes geometric depth, silhouettes, sprite placement or UI.
 
@@ -335,9 +349,21 @@ view Fresnel term and only actual front-facing direct lights, with coefficient
 0.08; it is not an ambient glow or a PBR/specular material parameter.
 
 Worlds without authored lighting retain their existing AO-baked unlit output
-and do not use height parallax or rim lighting. Shadows and portal light
-transport remain unsupported. These rendering changes add no wire fields,
-material-atlas schema or SDK manifest version.
+and do not use height parallax or rim lighting. Static shadows and sampled
+diffuse bounces use the separate [lightmap workflow](lightmaps.md).
+Moving shadows and transformed-portal light transport remain unsupported.
+
+Optional `ambient_cube` supplies six linear RGB colors for positive/negative
+X/Y/Z directions; `actors: true` lights world sprites with geometric normals
+in Full output. Actors use live direct light and ambient rather than baked
+environment shadow visibility. Ordinary 2D content and UI remain unlit.
+
+A point light may carry `motion: {version: 1, offset: {x: 12, y: 0, z: 0.8},
+period_seconds: 12}`. Periods are 0.1–3600 seconds; base and end positions must
+remain in world bounds. Mounted cameras share the motion clock, which resets
+on remount. Moving lights cannot be selected by `[lightmap].light` or `lights`.
+See the project's pinned lighting reference for exact nested records and the
+[world-camera sample](../samples/world-camera/README.md) for authored motion.
 
 ## MPEG-1 video
 

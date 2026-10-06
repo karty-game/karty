@@ -1,5 +1,10 @@
 # World camera, actor gallery, and Roman court
 
+Run `karty schema` from this sample's directory before editing the world YAML.
+Its schema header provides field diagnostics and material/texture completions;
+`karty schema --check` validates the YAML without processing images or lighting.
+See [world YAML schemas](../../docs/level-yaml-schema-v1.md).
+
 This renderer sample packages a high-level YAML world with
 a concave entry hall, three sloped galleries, a 90-degree corner, and a steeper
 ascending corridor, plus a Roman-inspired peristyle connected to the hall's
@@ -54,7 +59,7 @@ instances replace the prefab actor's tags. The client also queries the authored
 `interactive` tag after mounting and changes matching actors to
 `interactive,verified`, exercising authored identity, tag lookup, and mutation.
 
-Controls are authored in [KartUI](ui/views/controls.ui), rendered at display
+Controls are authored in [KartUI](ui/views/controls.kui), rendered at display
 density, and reflow at 600 CSS pixels. Buttons are at least 44 pixels tall, and
 the bottom space keeps them clear of the browser shell's fullscreen button.
 
@@ -90,18 +95,22 @@ corrections), the isometric pose when active, and the active projection settings
 Angles are in radians; position and angle values retain float32 precision. Include
 this panel in screenshots of portal edge artifacts to identify the affected view.
 
-The sample requires released SDK 0.0.8 with `world/static-solids@1` and
-`world/material-mapping@1`; SDK 0.0.7 cannot mount this level. From the CLI root:
+The sample now requires SDK 0.0.9 / API 0.0.7 for its typed hooks and authored
+actions, plus the existing static solids/material mapping extensions. SDK 0.0.9
+is currently a candidate: install a matching candidate bundle with
+`karty sdk install --archive /path/to/sdk-0.0.9.zip --sha256 CHECKSUM 0.0.9` and
+supply its matching host. Once published, use the normal installation below.
+From the CLI root:
 
 ```sh
 mise run build
-./dist/karty sdk install 0.0.8
+./dist/karty sdk install 0.0.9
 cd samples/world-camera
 ../../dist/karty dev --port 4242
 ```
 
 Open `http://localhost:4242/`. An optional `--host` selects a local renderer;
-it does not install the matching SDK. All CLI samples use the released SDK pin.
+it does not install the matching SDK. This sample now pins SDK 0.0.9.
 
 Build and serve the browser sample from the CLI repository root:
 
@@ -110,7 +119,7 @@ mise run build-world-camera-web
 mise run serve-world-camera --addr 127.0.0.1:8094
 ```
 
-The repository integration check starts from a clean copy of these authored
+The optional full-scene diagnostic check starts from a clean copy of these authored
 inputs, builds it twice, compares every staged byte, then executes the guest and
 mounted level through the native host checker:
 
@@ -140,35 +149,7 @@ The TinyGo sample can also be built for the browser with the matching web host:
 
 Web overrides require their matching `wasm_exec.js` beside the host WASM.
 
-## Candidate lighting preview
-
-With SDK 0.0.8 installed, prepare a derived lighting preview under ignored `dist/world-camera-lighting`:
-
-```sh
-mise run prepare-world-camera-lighting
-mise run build-world-camera-lighting
-mise run serve-world-camera-lighting --addr 127.0.0.1:8095
-```
-
-Preparation copies only authored inputs, selects SDK 0.0.8 in the derived
-project, preserves source version 6 and the nested static solids, and applies [lighting.yaml](lighting.yaml) using structured YAML/TOML
-parsers. Both tracked and derived sources use world-space triplanar mapping
-for rooms and solid caps, one world unit per repeat; unmapped solid sides use
-the geometric per-edge fallback. The compiler bakes UV planes and weights after
-prefab expansion. The preset uses six asymmetric directional ambient colors, offset daylight,
-warm perimeter lights and cool northern fill. Full shows lighting; Albedo,
-Normal and Depth let you compare its inputs. The SDK-pinned Materialize tool
-generates the material atlas, including tangent normals, height and AO.
-Preparation also adds per-material strengths to the derived level manifest:
-marble veins and plaster paint receive shallow relief, while paving, mosaic
-and coffers receive stronger cavity AO. The sky surface has no material relief,
-and the water retains gentle normals. These controls change packaged metadata
-without regenerating Materialize's cached maps.
-For the filtering comparison, court paving disables height-driven UV shifts
-while retaining normals and cavity AO; gallery bricks disable the additive rim
-highlight while retaining their normal and height relief.
-Headless Linux builds need an OpenGL display, for example `xvfb-run -a` with
-`LIBGL_ALWAYS_SOFTWARE=1`. Re-preparing replaces the derived preview and its cache.
+## Moving lighting
 
 The corridor also has a warm orange `corridor-wanderer` point light. It travels
 from (3, 1, 2.2) to (15, 1, 3) and back every 12 seconds, passing the hall actors
@@ -176,21 +157,20 @@ and gallery trees. Select **Gallery** and **Full**, then stop camera movement to
 watch its light sweep across brick walls, floor tiles and actors. Its radius is
 four metres. **Albedo**, **Normal** and **Depth** provide stable comparisons.
 Reload restarts the motion. The path is authored with `motion` in
-[world.yaml](levels/showcase/world.yaml) and the derived [lighting preset](lighting.yaml).
+[world.yaml](levels/showcase/world.yaml) in the normal sample.
 It is an unbaked direct light and does not cast moving shadows; keep it out of
 `[lightmap].lights`. The published SDK 0.0.8 host supports the motion extension.
 
 The normal sample now packages a six-light directional lightmap. Static walls
 and columns cast shadows, while material normals, texture AO and height relief
-remain active. The derived lighting preview remains useful for material comparisons. Physical
-phone GPU performance and manual device interaction remain separate checks.
+remain active. Physical phone GPU performance and manual device interaction remain separate checks.
 
 ## Packaged baked lighting
 
 The normal sample includes authored ambient/point lighting, compiled
 world-space material UVs, nearest-sampled retro materials and an automatic
 offline RNM3 bake with diffuse radiosity. Its level manifest enables
-`offline = true`, with 64 samples and two indirect bounces. Generate its ignored
+`offline = true`, with 196 samples and one indirect bounce. Generate its ignored
 cache before building:
 
 ```sh
@@ -198,11 +178,13 @@ cd samples/world-camera
 ../../dist/karty bake --level showcase
 ```
 
-The result lives in `levels/showcase/.karty/bakes/`. A matching build loads the atlas immediately with
+The result lives in the project's `.karty/bakes/showcase/`. Light definitions remain
+in `levels/showcase/world.yaml`, and bake settings in `levels/showcase/level.toml`.
+A matching build loads the atlas immediately with
 zero runtime bake stages; changing the camera does not rebake lighting.
 
-Use SDK 0.0.8, which advertises
-`world/lightmaps-prebaked@1`, then build and serve from the CLI root:
+SDK 0.0.9 retains SDK 0.0.8's
+`world/lightmaps-prebaked@1` support. Build and serve from the CLI root:
 
 ```sh
 mise run build-world-camera-web
@@ -214,9 +196,8 @@ argument. The published host is selected by default.
 Geometry, selected lights, material UVs, source albedo or requested quality edits
 invalidate the automatic bake. A missing, stale or corrupt automatic cache
 falls back to direct runtime baking with a diagnostic; rerun `karty bake` to
-restore bounced lighting and skip startup baking. Original explicit direct
-prebake files remain in `levels/showcase/bakes` as a reference and are no longer
-selected. Explicit manual pairs still fail validation when stale.
+restore bounced lighting and skip startup baking. Explicit manual pairs still
+fail validation when stale.
 The first offline baker has hard point-light shadows and finite-sample noise;
 it does not add moving-object shadows, actor GI probes or transformed-portal
 light transport. Higher sample counts reduce indirect noise; configure them
@@ -248,14 +229,13 @@ perform debug readbacks. Escape or **Close** dismisses the screen.
 **AA: On/Off** switches SMAA for Full output. It survives camera switches and
 level remounts within the page. Normal, Depth and Albedo remain unchanged.
 
-Wall detail at distance depends on material sampling: the current isotropic mip
-level follows the largest screen-pixel UV footprint. The footprint stretches
-along corridor walls at grazing angles, selecting coarse mips in both texture
-axes. Averaging opposing normal directions makes brick normals approach the
-flat surface normal, and albedo/height contrast also diminishes. Bounded relief
-additionally fades at grazing angles. The AA toggle operates after material
-sampling; preserving more detail along these walls requires anisotropic
-material filtering rather than an AA change.
+Wall detail at distance uses bounded 8× anisotropic filtering. The short
+screen-pixel UV axis selects mip LOD, while eight taps filter along the long
+axis; very elongated footprints widen to respect the cap. This preserves more
+grazing-wall detail than the earlier isotropic filter while still reducing
+distant shimmer. Filtered normal vectors approach the flat normal when detail
+averages out, and bounded relief fades at grazing angles. The AA toggle operates
+after material sampling and does not change the material filter.
 
 ## Camera configuration
 
@@ -282,3 +262,46 @@ changes render detail; they do not add anti-aliasing. The current SDK camera
 contract supports at most 1280×720 and rejects larger configured camera sizes
 at build time. Scene poses and the authored diagnostic route remain sample
 content.
+
+Offline bakes now use `bake_denoise = "medium"` in showcase's `[lightmap]`
+settings to reduce indirect-light grain without filtering material textures
+or direct shadows. Run `karty bake --level showcase`, then rebuild/restart the
+normal sample with the current host. Set `bake_denoise = "off"` to compare.
+
+## Hook and component usage
+
+The main [client](src/main.go) runs `engine.Hooks` directly. Its frame handler
+only clears the one-frame input guard and advances camera movement and spinner
+animation. Lifecycle, input and actor-query events have typed handlers; there
+is no event switch in `Update`.
+
+- [Camera controller](src/cameras.go) owns held/touch input, walking, the authored
+  tour and isometric orbit. `WatchTransform` calls its component handlers after
+  the SDK applies accepted host poses, including portal corrections.
+- [Marker follower](src/actors.go) reacts to accepted FPS movement, with an
+  initial update when its authored actor resolves. Identical feedback emits no
+  command. Orbiting the isometric camera leaves the player marker in place.
+- [Camera HUD](src/camera_hud.go) refreshes on accepted camera changes and explicit
+  view/channel/viewpoint changes, rather than formatting text every frame.
+- Spinner animation advances once per frame. Release/reload clears actor
+  references immediately and rejects late results from the old mount.
+
+The authored [welcome sequence](levels/showcase/actions.json) demonstrates a
+condition, wait and action using the stable `hall/player-marker` identity. The
+old [candidate directory](client-hooks/README.md) points to this single source.
+
+Routine validation uses a small CPU harness with real public SDK components and
+a captured host transport. It reads only client/component source and UI source;
+it loads no sample geometry, textures, bake, graphical host or browser:
+
+```sh
+mise run check-world-camera-components
+KARTY_HOME=/path/to/candidate-sdk-cache mise run check-world-camera-hooks
+```
+
+The first task also runs in the ordinary unit suite using the released SDK's
+compatible camera/actor types. The second requires SDK 0.0.9 and exercises the
+actual typed hook registrations, authored adapters, mount/remount, accepted
+feedback and immediate UI refresh. Both cap test execution at nine seconds;
+build/install time is separate. Full-scene graphics and manual/device review
+remain explicit diagnostics, not prerequisites for these behavior tests.

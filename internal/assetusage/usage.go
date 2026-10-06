@@ -348,10 +348,6 @@ func appendUIFiles(fileSet *token.FileSet, directory, modulePath string, sourceF
 	}
 
 	for _, view := range views {
-		if !view.Local {
-			continue
-		}
-
 		for _, generated := range [][]byte{clientFiles[view.Source], packageFiles[view.Source]} {
 			file, err := parser.ParseFile(fileSet, view.Source, generated, parser.AllErrors)
 			if err != nil {

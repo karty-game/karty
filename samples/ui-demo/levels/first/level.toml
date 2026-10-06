@@ -7,4 +7,4 @@ source = "arena.json"
 
 [[ui]]
 name = "ui.hud"
-source = "hud.ui"
+source = "hud.kui"

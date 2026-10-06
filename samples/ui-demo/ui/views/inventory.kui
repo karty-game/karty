@@ -1,0 +1,105 @@
+<template>
+  <WindowLayout onBack={ props.Back }>
+    <fragment slot="title"><label class="title">Inventory</label></fragment>
+    <panel class="inventory-actions">
+      <button class="secondary" onClick={ props.Back }>Back</button>
+      <button class="primary" enabled={ len(items) < 10 } onClick={ add }>Add</button>
+      <button class="primary" enabled={ len(items) > 0 } onClick={ remove }>Remove</button>
+      <button class="primary" enabled={ len(items) > 1 } onClick={ reverse }>Reverse</button>
+    </panel>
+    <panel class="inventory-list">
+      if len(items) == 0 {
+        <label class="empty">Your inventory is empty.</label>
+      } else {
+        for _, id := range items {
+          <ItemRow key={ id } props={ ItemRowProps{ID: id, Quantity: props.Quantity, Use: props.UsePotion, Changed: invalidate} } />
+        }
+      }
+    </panel>
+    <fragment slot="footer"><label class="hint">Keyed rows keep their state.</label></fragment>
+  </WindowLayout>
+</template>
+
+<script setup lang="go">
+// InventoryProps is the portable domain interface for this view.
+type InventoryProps struct {
+	Quantity  func() int
+	UsePotion func() bool
+	Back      func()
+}
+
+func setup(props InventoryProps) {
+	items := []uint32{1, 2}
+	nextID := uint32(3)
+	add := func() {
+		if len(items) >= 10 {
+			return
+		}
+		items = append(items, nextID)
+		nextID++
+		invalidate()
+	}
+	remove := func() {
+		if len(items) > 0 {
+			items = items[1:]
+			invalidate()
+		}
+	}
+	reverse := func() {
+		for left, right := 0, len(items)-1; left < right; left, right = left+1, right-1 {
+			items[left], items[right] = items[right], items[left]
+		}
+		invalidate()
+	}
+}
+</script>
+
+<style>
+.title
+  color: theme.colors.accent
+  font-size: theme.typography.title
+.hint
+  color: theme.colors.text-disabled
+  flex-grow: 1
+.empty
+  color: theme.colors.accent
+  margin: 8
+.inventory-actions
+  gap: 4
+  direction: row
+  align: stretch
+.inventory-list
+  gap: 3
+  min-height: 118
+  max-height: 118
+  min-width: 480
+  align: stretch
+  overflow: scroll
+.primary
+  background: theme.colors.primary
+  color: theme.colors.text
+  min-height: 38
+  font-size: 16
+  flex-grow: 1
+.primary:hover
+  background: theme.colors.primary-hover
+  color: theme.colors.accent
+.primary:pressed
+  background: theme.colors.primary-pressed
+.primary:disabled
+  background: theme.colors.disabled
+  color: theme.colors.text-disabled
+.secondary
+  background: theme.colors.surface-raised
+  color: theme.colors.text
+  min-height: 38
+  font-size: 16
+  flex-grow: 1
+.secondary:hover
+  background: theme.colors.primary-hover
+.secondary:pressed
+  background: theme.colors.primary-pressed
+@media (max-width: 480)
+  .title
+    font-size: 24px
+</style>

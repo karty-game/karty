@@ -1,0 +1,10 @@
+[level]
+name = "levels.hooks"
+kind = "world"
+
+[world]
+source = "world.yaml"
+
+[[textures]]
+name = "surface"
+source = "surface.png"

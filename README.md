@@ -45,20 +45,20 @@ the [development guide](docs/development.md) for setup details and the
 
 ## Make it yours
 
-| | What you can do |
-| --- | --- |
-| **Build with Go** | Write game logic in Go and use Karty's game runtime and typed APIs. |
-| **Design with KartUI** | Create game interfaces with a declarative UI language and reusable components. |
-| **Bring in assets** | Package levels, textures, sounds, music, and video with your game. Image and audio processing is built into the pipeline. |
-| **Develop in the browser** | Run a live web build that watches your source, UI, levels, and supported assets for changes. |
-| **Ship across platforms** | Build browser games and native desktop distributions. The CLI and game hosts have separate platform support. |
+|                            | What you can do                                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Build with Go**          | Write game logic in Go and use Karty's game runtime and typed APIs.                                                       |
+| **Design with KartUI**     | Create game interfaces with a declarative UI language and reusable components.                                            |
+| **Bring in assets**        | Package levels, textures, sounds, music, and video with your game. Image and audio processing is built into the pipeline. |
+| **Develop in the browser** | Run a live web build that watches your source, UI, levels, and supported assets for changes.                              |
+| **Ship across platforms**  | Build browser games and native desktop distributions. The CLI and game hosts have separate platform support.              |
 
 ## Explore the samples
 
 Start with a small game, then explore UI, rendering, and media examples:
 
-- [Pong](samples/pong) — a compact playable game and a good first project.
-- [UI demo](samples/ui-demo) — menus, inventory, and interactive KartUI components.
+- [Pong](samples/pong) — sprites, input and level lifecycle in a small client.
+- [UI demo](samples/ui-demo) — a flight deck with tabs, ship selection, settings and inventory.
 - [World camera](samples/world-camera) — authored worlds with perspective and isometric cameras.
 - [Media lab](samples/media-lab) — image and audio processing examples.
 
@@ -72,6 +72,8 @@ karty dev                 # Build and serve a live browser preview
 karty build               # Build a native game
 karty build --target web  # Build a browser game
 karty bake                # Bake static directional lighting and diffuse radiosity
+karty schema              # Refresh world YAML editor completions
+karty schema --check      # Validate world YAML without building assets
 ```
 
 Run `karty --help` or `karty <command> --help` for options. The CLI also

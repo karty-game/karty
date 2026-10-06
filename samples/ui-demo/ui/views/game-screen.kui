@@ -1,0 +1,177 @@
+<template>
+  <panel modal="false" class="flight-screen">
+    <panel class="flight-header">
+      <panel class="pilot">
+        <label class="eyebrow">ORBITAL // FLIGHT DECK</label>
+        <label class="title">{ props.Flight.CallSign + " · " + props.Destination() }</label>
+        <label class="hint">{ "Deliveries complete: " + strconv.Itoa(int(props.Deliveries())) }</label>
+      </panel>
+      <button class="pause" onClick={ props.Pause } tooltip="Pause flight. Escape also opens the pause menu.">Pause</button>
+    </panel>
+    <panel class="console">
+      <tabs class="sections" selected={ props.Flight.Tab } onChange={ func(tab uint32) { props.Flight.Tab = tab } }>
+        <tab title="Mission" class="section">
+          <label class="section-title">{ "Courier run · " + props.Destination() }</label>
+          <label>Keep the supply route moving. Each delivery earns one mission credit.</label>
+          <panel class="actions">
+            <button onClick={ props.Deliver } tooltip="Record a completed delivery and refresh the mission counter.">Complete delivery</button>
+            <button onClick={ props.Pause }>Open pause menu</button>
+          </panel>
+          <label class="hint">Flight continues while you use the console. Pause to open your supplies inventory.</label>
+        </tab>
+        <tab title="Loadout" class="section">
+          <label class="section-title">Select your ship</label>
+          <combo rows={ ships } selected={ props.Flight.Ship } onChange={ chooseShip } tooltip="Explorer cruises steadily; Interceptor flies 50% faster."/>
+          <label>{ "Thruster power: " + strconv.Itoa(int(props.Flight.Power)) + "%" }</label>
+          <label class="hint">Changing ship updates its color and speed immediately. The freighter is locked.</label>
+        </tab>
+        <tab title="Settings" class="section">
+          <panel class="settings-row">
+            <panel class="settings-column">
+              <label>Call sign</label>
+              <input value={ props.Flight.CallSign } onChange={ func(name string) { props.Flight.CallSign = name } } placeholder="Your pilot name" tooltip="Typing captures game keys until you move focus away."/>
+              <checkbox checked={ props.Flight.Autopilot } onChange={ func(on bool) { props.Flight.Autopilot = on } } tooltip="Turn this off to hold the ship in place.">Autopilot</checkbox>
+            </panel>
+            <panel class="settings-column">
+              <label>{ "Thruster power · " + strconv.Itoa(int(props.Flight.Power)) + "%" }</label>
+              <slider min="0" max="100" value={ props.Flight.Power } onChange={ func(power int32) { props.Flight.Power = power } } tooltip="Controls the speed of the ship in the scene above."/>
+              <button onClick={ reset }>Reset flight settings</button>
+            </panel>
+          </panel>
+        </tab>
+      </tabs>
+    </panel>
+  </panel>
+</template>
+
+<script setup lang="go">
+import (
+	"strconv"
+
+	"example.com/ui-demo/.karty/engine"
+)
+
+func setup(props AppProps) {
+	ships := []engine.UIRow{
+		{ID: 1, Text: "Explorer · balanced", Enabled: true},
+		{ID: 2, Text: "Interceptor · fast", Enabled: true},
+		{ID: 3, Text: "Heavy freighter · locked", Enabled: false},
+	}
+	chooseShip := func(id uint32) {
+		if id != 1 && id != 2 {
+			return
+		}
+		props.Flight.Ship = id
+		props.Configure()
+	}
+	reset := func() {
+		*props.Flight = FlightSettings{CallSign: "Nova", Ship: 1, Power: 50, Autopilot: true, Tab: 2}
+		props.Configure()
+		invalidate()
+	}
+}
+</script>
+
+<style>
+.flight-screen
+  width: 100%
+  height: 100%
+  background: theme.colors.transparent
+  padding: 16px
+  gap: 12px
+  align: stretch
+  justify: space-between
+.flight-header
+  direction: row
+  align: start
+  justify: space-between
+  gap: 16px
+.pilot
+  background: theme.colors.scrim
+  padding: 12px
+  gap: 4px
+.eyebrow
+  color: theme.colors.accent
+  font-size: 12px
+.title
+  color: theme.colors.text
+  font-size: 22px
+.hint
+  color: theme.colors.text-disabled
+  font-size: 14px
+.pause
+  width: 110px
+.console
+  height: 264px
+  background: theme.colors.surface
+  padding: 12px
+  align: stretch
+.sections
+  width: 100%
+  height: 100%
+.section
+  background: theme.colors.surface-raised
+  padding: 14px
+  gap: 12px
+  align: stretch
+.section-title
+  color: theme.colors.accent
+  font-size: 20px
+.actions
+  direction: row
+  gap: 12px
+  align: stretch
+.settings-row
+  direction: row
+  gap: 20px
+  align: stretch
+.settings-column
+  width: 48%
+  gap: 8px
+  align: stretch
+label
+  font-size: 16px
+button
+  background: theme.colors.primary
+  color: theme.colors.text
+  min-height: 40px
+  font-size: 16px
+  flex-grow: 1
+button:hover
+  background: theme.colors.primary-hover
+combo
+  background: theme.colors.primary
+  color: theme.colors.text
+  height: 42px
+  font-size: 16px
+input
+  background: theme.colors.scrim
+  color: theme.colors.text
+  height: 42px
+  font-size: 16px
+checkbox
+  color: theme.colors.text
+  min-height: 36px
+  font-size: 16px
+slider
+  height: 36px
+@media (max-width: 600)
+  .flight-screen
+    padding: 8px
+  .title
+    font-size: 16px
+  .console
+    height: 288px
+    padding: 6px
+  .section
+    padding: 8px
+    gap: 8px
+  .settings-row
+    direction: column
+    gap: 8px
+  .settings-column
+    width: 100%
+    gap: 4px
+  label
+    font-size: 14px
+</style>

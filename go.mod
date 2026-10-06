@@ -8,8 +8,9 @@ require (
 	github.com/charmbracelet/log v1.0.0
 	github.com/cwbudde/algo-dsp v0.10.2
 	github.com/disintegration/imaging v1.6.2
-	github.com/karty-game/karty-sdk v0.0.8
-	github.com/karty-game/karty-ui v0.0.4
+	github.com/google/jsonschema-go v0.4.3
+	github.com/karty-game/karty-sdk v0.0.9
+	github.com/karty-game/karty-ui v0.0.5
 	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.3.7

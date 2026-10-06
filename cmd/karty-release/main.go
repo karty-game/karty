@@ -1,4 +1,4 @@
-// karty-release synchronizes sample pins with the released SDK default.
+// karty-release synchronizes sample pins with their declared SDK versions.
 package main
 
 import (
@@ -26,9 +26,9 @@ func main() {
 }
 
 func run(root string, check bool) error {
-	version := release.SDKVersion()
+	version := release.SampleSDK
 	if !regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`).MatchString(version) {
-		return fmt.Errorf("invalid CurrentSDK %q: %w", release.CurrentSDK, os.ErrInvalid)
+		return fmt.Errorf("invalid SampleSDK %q: %w", release.SampleSDK, os.ErrInvalid)
 	}
 
 	paths, err := filepath.Glob(filepath.Join(root, "samples", "*", "karty.toml"))

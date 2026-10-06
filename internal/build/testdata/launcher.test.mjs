@@ -11,15 +11,26 @@ const directory = mock ? null : process.argv[2];
 const source = await readFile(mock ? process.argv[3] : join(directory, "karty.js"), "utf8");
 if (!mock) {
   const html = await readFile(join(directory, "index.html"), "utf8");
-  const scripts = [...html.matchAll(/<script\s+src="([^"]+)"\s*>/g)].map(match => match[1]);
-  assert.deepEqual(scripts.map(path => path.split("?")[0]), ["wasm_exec.js", "karty.js"], "runtime must load before the launcher");
+  const scripts = [...html.matchAll(/<script\s+src="([^"]+)"\s*>/g)].map((match) => match[1]);
+  assert.deepEqual(
+    scripts.map((path) => path.split("?")[0]),
+    ["wasm_exec.js", "karty.js"],
+    "runtime must load before the launcher",
+  );
   for (const path of scripts) {
     const [name, query] = path.split("?");
     const bytes = await readFile(join(directory, name));
     assert.equal(query, "v=" + createHash("sha256").update(bytes).digest("hex").slice(0, 16));
   }
   for (const text of [html, source]) {
-    for (const warning of ["DO NOT EDIT", "DO NOT MODIFY", "WILL BE OVERWRITTEN", "Source of truth:", "Regenerate with:"]) assert.ok(text.includes(warning));
+    for (const warning of [
+      "DO NOT EDIT",
+      "DO NOT MODIFY",
+      "WILL BE OVERWRITTEN",
+      "Source of truth:",
+      "Regenerate with:",
+    ])
+      assert.ok(text.includes(warning));
   }
 }
 let imports;
@@ -29,15 +40,25 @@ let started = false;
 let memory;
 let eventPointer = 65536;
 let resolveDone, rejectDone;
-const done = new Promise((resolve, reject) => { resolveDone = resolve; rejectDone = reject; });
-const timer = setTimeout(() => rejectDone(new Error("launcher did not start host")), 10000);
-const elements = new Map(["loading", "status", "progress", "retry", "error-detail", "game-title", "fullscreen"].map(id => [id, {
-  hidden: ["retry", "error-detail", "fullscreen"].includes(id),
-  textContent: "",
-  attributes: {},
-  setAttribute(key, value) { this.attributes[key] = value; },
-  addEventListener() {},
-}]));
+const done = new Promise((resolve, reject) => {
+  resolveDone = resolve;
+  rejectDone = reject;
+});
+const timer = setTimeout(() => rejectDone(new Error("launcher did not start host")), 9000);
+const elements = new Map(
+  ["loading", "status", "progress", "retry", "error-detail", "game-title", "fullscreen"].map((id) => [
+    id,
+    {
+      hidden: ["retry", "error-detail", "fullscreen"].includes(id),
+      textContent: "",
+      attributes: {},
+      setAttribute(key, value) {
+        this.attributes[key] = value;
+      },
+      addEventListener() {},
+    },
+  ]),
+);
 const failure = process.env.KARTY_TEST_HTTP_FAILURE === "1";
 const fallback = process.env.KARTY_TEST_WASM_FALLBACK === "1";
 const soundSections = process.env.KARTY_TEST_SOUND_SECTIONS || "present";
@@ -57,15 +78,24 @@ for (const scenario of ["syntax", "download", "rejection", "timeout"]) {
   const nodes = new Map();
   const listeners = {};
   let timeout;
-  const window = { addEventListener: (name, listener) => { listeners[name] = listener; } };
+  const window = {
+    addEventListener: (name, listener) => {
+      listeners[name] = listener;
+    },
+  };
   const documentElement = { dataset: {} };
   runInNewContext(bootstrap, {
     window,
-    document: { documentElement, getElementById: id => {
-      if (!nodes.has(id)) nodes.set(id, { hidden: true, setAttribute() {} });
-      return nodes.get(id);
-    } },
-    setTimeout: callback => { timeout = callback; },
+    document: {
+      documentElement,
+      getElementById: (id) => {
+        if (!nodes.has(id)) nodes.set(id, { hidden: true, setAttribute() {} });
+        return nodes.get(id);
+      },
+    },
+    setTimeout: (callback) => {
+      timeout = callback;
+    },
   });
   if (scenario === "syntax") listeners.error({ message: "SyntaxError", filename: "karty.js", lineno: 7 });
   if (scenario === "download") listeners.error({ target: { tagName: "SCRIPT", src: "wasm_exec.js" } });
@@ -103,21 +133,28 @@ function commands(frame) {
 const context = {
   document: {
     documentElement: { dataset: {} },
-    getElementById: id => elements.get(id),
+    getElementById: (id) => elements.get(id),
     addEventListener() {},
     querySelector: () => ({ focus() {} }),
     fullscreenEnabled: true,
   },
-  Uint8Array, DataView, TextDecoder, BigInt,
+  Uint8Array,
+  DataView,
+  TextDecoder,
+  BigInt,
   crypto: globalThis.crypto,
-  console: { warn: console.warn, error: (...args) => {
-    if (expectedFailure) setTimeout(resolveDone, 0);
-    else rejectDone(new Error(args.map(String).join(" ")));
-  } },
+  console: {
+    log: () => {},
+    warn: console.warn,
+    error: (...args) => {
+      if (expectedFailure) setTimeout(resolveDone, 0);
+      else rejectDone(new Error(args.map(String).join(" ")));
+    },
+  },
   fetch: async (url) => ({
     ok: !failure,
     status: failure ? 503 : 200,
-    headers: { get: () => fallback ? "application/octet-stream" : "application/wasm" },
+    headers: { get: () => (fallback ? "application/octet-stream" : "application/wasm") },
     url,
     arrayBuffer: async () => {
       if (mock) return new TextEncoder().encode(url).buffer;
@@ -128,7 +165,7 @@ const context = {
   }),
   URL,
   WebAssembly: {
-    compile: async bytes => mock ? { bytes } : WebAssembly.compile(bytes),
+    compile: async (bytes) => (mock ? { bytes } : WebAssembly.compile(bytes)),
     Module: {
       customSections: (module, name) => {
         if (!mock) return WebAssembly.Module.customSections(module, name);
@@ -150,13 +187,16 @@ const context = {
         const bundle = new Uint8Array(20 + project.length + compiler.length);
         bundle.set([0x4b, 0x54, 0x59, 0x4d, 1, 0, project.length, 0, compiler.length, 0]);
         const view = new DataView(bundle.buffer);
-        view.setUint32(12, 960, true); view.setUint32(16, 540, true);
-        bundle.set(project, 20); bundle.set(compiler, 20 + project.length);
+        view.setUint32(12, 960, true);
+        view.setUint32(16, 540, true);
+        bundle.set(project, 20);
+        bundle.set(compiler, 20 + project.length);
         return [bundle.buffer];
       },
     },
     instantiate: async (module, loadedImports) => {
-      if (mock && module.bytes) return (await context.WebAssembly.instantiateStreaming({ url: "game.kart" }, loadedImports)).instance;
+      if (mock && module.bytes)
+        return (await context.WebAssembly.instantiateStreaming({ url: "game.kart" }, loadedImports)).instance;
       if (loadedImports.hostTest) {
         if (!mock) assert.ok(WebAssembly.validate(module));
         return { instance: {} };
@@ -179,23 +219,54 @@ const context = {
         const bytes = new Uint8Array(memory.buffer, 0, 24);
         bytes.fill(0);
         const view = new DataView(memory.buffer);
-        view.setUint32(0, 0x4259544b, true); view.setUint16(4, protocolVersion, true);
-        view.setUint8(6, 2); view.setBigUint64(8, frame, true);
+        view.setUint32(0, 0x4259544b, true);
+        view.setUint16(4, protocolVersion, true);
+        view.setUint8(6, 2);
+        view.setBigUint64(8, frame, true);
         imports.karty.submit_commands(0, 24);
       };
-      return { instance: { exports: {
-        memory,
-        _initialize: () => { started = true; },
-        karty_register: () => { assert.ok(started); registered = true; },
-        initialize: () => { assert.ok(registered); submit(0n); },
-        event_buffer: () => eventPointer,
-        update: (frame, length) => {
-          const view = new DataView(memory.buffer, eventPointer, length);
-          assert.equal(view.getBigUint64(8, true), frame);
-          submit(frame);
+      return {
+        instance: {
+          exports: {
+            memory,
+            _initialize: () => {
+              const view = new DataView(memory.buffer);
+              for (const name of ["args_sizes_get", "environ_sizes_get"]) {
+                view.setUint32(16, 99, true);
+                view.setUint32(20, 99, true);
+                assert.equal(imports.wasi_snapshot_preview1[name](16, 20), 0);
+                assert.equal(view.getUint32(16, true), 0);
+                assert.equal(view.getUint32(20, true), 0);
+              }
+              assert.equal(imports.wasi_snapshot_preview1.args_get(0, 0), 0);
+              assert.equal(imports.wasi_snapshot_preview1.environ_get(0, 0), 0);
+              new Uint8Array(memory.buffer, 100, 5).set(new TextEncoder().encode("hello"));
+              view.setUint32(24, 100, true);
+              view.setUint32(28, 5, true);
+              assert.equal(imports.wasi_snapshot_preview1.fd_write(1, 24, 1, 32), 0);
+              assert.equal(view.getUint32(32, true), 5);
+              assert.equal(imports.wasi_snapshot_preview1.fd_write(1, memory.buffer.byteLength, 1, 32), 21);
+              assert.equal(imports.wasi_snapshot_preview1.fd_write(99, 24, 1, 32), 8);
+              started = true;
+            },
+            karty_register: () => {
+              assert.ok(started);
+              registered = true;
+            },
+            initialize: () => {
+              assert.ok(registered);
+              submit(0n);
+            },
+            event_buffer: () => eventPointer,
+            update: (frame, length) => {
+              const view = new DataView(memory.buffer, eventPointer, length);
+              assert.equal(view.getBigUint64(8, true), frame);
+              submit(frame);
+            },
+            shutdown: () => submit(2n),
+          },
         },
-        shutdown: () => submit(2n),
-      } } };
+      };
     },
   },
   Go: class {
@@ -203,9 +274,19 @@ const context = {
     run() {
       try {
         if (mock) {
-          if (soundSections === "present") assert.equal(context.kartySoundBundle, mockSoundBundle, "sound bundle must be installed before host startup");
-          if (soundSections === "absent") assert.equal(context.kartySoundBundle, null, "absent sound section must clear the global bundle");
-          assert.equal(context.kartyAudioStreamBundle, null, "absent streaming audio section must clear the global bundle");
+          if (soundSections === "present")
+            assert.equal(
+              context.kartySoundBundle,
+              mockSoundBundle,
+              "sound bundle must be installed before host startup",
+            );
+          if (soundSections === "absent")
+            assert.equal(context.kartySoundBundle, null, "absent sound section must clear the global bundle");
+          assert.equal(
+            context.kartyAudioStreamBundle,
+            null,
+            "absent streaming audio section must clear the global bundle",
+          );
           assert.equal(context.kartyAudioStreamBaseURL, "http://localhost/game.kart?v=@@CLIENT_HASH@@");
         }
         context.kartyHostLog = () => {};
@@ -228,17 +309,28 @@ const context = {
           const pointer = frame === 2n;
           const events = new Uint8Array(pointer ? 36 : 29);
           const view = new DataView(events.buffer);
-          view.setUint32(0, 0x4259544b, true); view.setUint16(4, protocolVersion, true); view.setUint8(6, 1);
-          view.setBigUint64(8, frame, true); view.setUint32(16, 1, true); view.setUint32(20, events.length - 24, true);
-          view.setUint8(24, pointer ? 3 : 1); view.setUint16(25, pointer ? 9 : 2, true);
-          if (pointer) { view.setFloat32(27, 20, true); view.setFloat32(31, 30, true); view.setUint8(35, 1); }
-          else view.setUint16(27, 1, true);
+          view.setUint32(0, 0x4259544b, true);
+          view.setUint16(4, protocolVersion, true);
+          view.setUint8(6, 1);
+          view.setBigUint64(8, frame, true);
+          view.setUint32(16, 1, true);
+          view.setUint32(20, events.length - 24, true);
+          view.setUint8(24, pointer ? 3 : 1);
+          view.setUint16(25, pointer ? 9 : 2, true);
+          if (pointer) {
+            view.setFloat32(27, 20, true);
+            view.setFloat32(31, 30, true);
+            view.setUint8(35, 1);
+          } else view.setUint16(27, 1, true);
           context.kartyClientUpdate(frame, events);
           assert.equal(elements.get("loading").hidden, true);
           assert.equal(elements.get("loading").attributes["aria-busy"], "false");
           assert.equal(elements.get("fullscreen").hidden, false);
           const tags = commands(frame);
-          if (!mock) { assert.ok(tags.includes(4)); if (pointer) assert.ok(tags.includes(9)); }
+          if (!mock) {
+            assert.ok(tags.includes(4));
+            if (pointer) assert.ok(tags.includes(9));
+          }
         }
         assert.throws(() => context.kartyClientUpdate(3n, new Uint8Array(65537)), /invalid client event buffer/);
         imports.karty.submit_commands(0xffffffff, 32);
@@ -248,10 +340,13 @@ const context = {
           eventPointer = 0xffffffff;
           assert.throws(() => context.kartyClientUpdate(3n, new Uint8Array(24)), /invalid client event buffer/);
         }
-        context.kartyClientShutdown(); commands(2n);
+        context.kartyClientShutdown();
+        commands(2n);
         resolveDone();
         return new Promise(() => {}); // A running Go host does not exit.
-      } catch (error) { rejectDone(error); }
+      } catch (error) {
+        rejectDone(error);
+      }
     }
   },
 };
@@ -273,5 +368,9 @@ try {
     }
     assert.equal(registered, false);
   }
-  console.log(`Launcher checks passed (${mock ? `fixture, sounds ${soundSections}` : "actual TinyGo cartridge"}; host rendering mocked).`);
-} finally { clearTimeout(timer); }
+  console.log(
+    `Launcher checks passed (${mock ? `fixture, sounds ${soundSections}` : "actual TinyGo cartridge"}; host rendering mocked).`,
+  );
+} finally {
+  clearTimeout(timer);
+}

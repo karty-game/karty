@@ -55,16 +55,16 @@ func TestReleaseCheckDetectsAndPreparationRepairsDrift(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(updated), release.SDKVersion()) {
+	if !strings.Contains(string(updated), release.SampleSDK) {
 		t.Fatal("current SDK not selected")
 	}
 }
 
-func TestAllSamplesUseCurrentSDK(t *testing.T) {
+func TestPreparationPinsAllSamplesToCurrentCandidate(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
-	for _, sample := range []string{"world-camera", "pong"} {
+	for _, sample := range []string{"world-camera", "pong", "ui-demo", "media-lab"} {
 		path := filepath.Join(root, "samples", sample, "karty.toml")
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
@@ -83,14 +83,14 @@ func TestAllSamplesUseCurrentSDK(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, sample := range []string{"world-camera", "pong"} {
+	for _, sample := range []string{"world-camera", "pong", "ui-demo", "media-lab"} {
 		data, err := os.ReadFile(filepath.Join(root, "samples", sample, "karty.toml"))
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if !strings.Contains(string(data), release.SDKVersion()) {
-			t.Fatalf("%s unexpectedly migrated: %s", sample, data)
+		if !strings.Contains(string(data), "0.0.9") {
+			t.Fatalf("%s has the wrong SDK: %s", sample, data)
 		}
 	}
 }

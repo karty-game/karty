@@ -38,12 +38,7 @@ func embedUIAssets(
 		return err
 	}
 
-	methods := map[string]string{}
-	for _, view := range views {
-		methods["Show"+view.Name] = view.Asset
-	}
-
-	usage := assetusage.AnalyzeUIViews(directory, module, names, methods)
+	usage := assetusage.AnalyzeUI(directory, module, names)
 
 	assets := make([]cartridge.Asset, 0, len(entries))
 	theme := uicompiler.DefaultTheme()
@@ -72,7 +67,7 @@ func embedUIAssets(
 
 		var template ui.Template
 
-		if strings.HasSuffix(entry.Source, ".ui") {
+		if strings.HasSuffix(entry.Source, ".kui") {
 			var component uicompiler.Component
 
 			component, err = compileUIEntry(entry.Source, data, theme, views)

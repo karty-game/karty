@@ -1,5 +1,0 @@
-kartui Hud() {
-    <panel modal="false">
-        <label>Tap the game to pause</label>
-    </panel>
-}

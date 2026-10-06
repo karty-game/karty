@@ -209,7 +209,7 @@ func checkMaterializeFixtureInstall(t *testing.T, badHash bool) {
 		t.Skip("no released Materialize for this platform")
 	}
 
-	contents := materialFixture(t, "zip",
+	contents := materialFixture(t,
 		materialFixtureMember{name: artifact.Executable, body: "fixture; never executed", mode: 0o600},
 		materialFixtureMember{name: "NOTICE.txt", body: "preserved notice", mode: 0o600})
 	if !badHash {

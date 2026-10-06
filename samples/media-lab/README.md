@@ -16,7 +16,7 @@ Build the sample from the repository root:
 
 ```sh
 mise run build
-./dist/karty sdk install 0.0.8
+./dist/karty sdk install 0.0.9
 cd samples/media-lab
 ../../dist/karty build --target web
 ../../dist/karty dev
@@ -25,7 +25,9 @@ cd samples/media-lab
 The video is an original three-second synthetic test pattern with a 440 Hz tone.
 Click center-left (above the sound panels) to play/replay; center-right stops it.
 It is staged under `content/`, outside the Brotli level data. The final frame remains
-visible until stopped. The sample uses the published SDK 0.0.7 bundle and matching host.
+visible until stopped. The sample uses SDK 0.0.9 typed pointer/frame hooks and its matching host.
+Until publication, follow the [candidate setup](../README.md) rather than the
+normal public installation command above.
 
 Regenerate the clip with FFmpeg:
 

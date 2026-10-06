@@ -1,36 +1,65 @@
 # Samples
 
-Stable samples follow `CurrentSDK` in [internal/release/version.go](../internal/release/version.go).
-All four samples select released SDK 0.0.8, including world-camera for static solids.
-Build the CLI and install that SDK before working on a sample:
+All four samples use SDK **0.0.9 / API 0.0.7**, selected by `SampleSDK` in
+[internal/release/version.go](../internal/release/version.go). They use typed
+lifecycle/input hooks. Authored interfaces use `.kui` single-file components with
+Go setup, templates and indented styles; UI demo showcases the current widgets.
+The released CLI default remains separate from this candidate sample baseline.
+
+SDK 0.0.9 is currently a candidate. Build the CLI, install a checksummed candidate
+bundle and select its matching host:
 
 ```sh
 mise run build
-./dist/karty sdk install "$(./dist/karty sdk current)"
-cd samples/pong
-../../dist/karty build --target web
-../../dist/karty dev
+./dist/karty sdk install --archive /path/to/sdk-0.0.9.zip --sha256 CHECKSUM 0.0.9
+cd samples/ui-demo
+KARTY_HOST_WEB=/path/to/matching/karty-host.wasm ../../dist/karty dev
 ```
 
-Use `samples/ui-demo` for KartUI composition and game menus. Generated `.karty`
-and `dist` directories are derived and excluded from Git.
+After publication, `./dist/karty sdk install 0.0.9` supplies the public bundle and
+normal builds select its published host. Local host overrides do not install an
+SDK or change project pins. Generated `.karty/` and `dist/` outputs remain derived.
 
-Use `samples/media-lab` for PNG/JPEG/WebP conversion, WAV/QOA conversion,
-overlapping one-shot stress, a host-owned streaming QOA music loop with
-crossfades, and MPEG-1 video with MP2 audio. Browser audio requires user interaction.
-See [Assets](../docs/assets.md) for discovery, transforms and playback APIs.
+- [UI demo](ui-demo/README.md): an Orbital flight deck with Mission, Loadout and
+  Settings tabs, a ship combo, call-sign input, thruster slider, autopilot checkbox,
+  tooltips, pause/navigation and a keyed inventory.
+- [Pong](pong/README.md): sprites, vectors, keyboard/pointer input and independent
+  level mount/release/remount.
+- [Media lab](media-lab/README.md): image/audio conversion, overlapping sounds,
+  streaming music and MPEG-1 video. Browser audio requires user interaction.
+- [World camera](world-camera/README.md): portal worlds, camera controls, authored
+  actors/actions and accepted-pose component hooks. Its UI includes view and
+  G-buffer channel switching.
 
-Use `samples/world-camera` for the portal renderer, perspective/isometric camera
-switching, authored world actors, sprite modes, tag queries, and the live camera
-diagnostic panel. Its current input handlers do not expose G-buffer switching.
+## Focused validation
+
+From the CLI root with the candidate bundle installed:
+
+```sh
+KARTY_HOME=/path/to/candidate-sdk-cache mise run check-sample-clients
+```
+
+This compiles every actual sample client against public SDK bindings, compiles
+all `.kui` components/layouts and checks source diagnostics. A small CPU flight
+fixture dispatches real generated widget callbacks and checks gameplay effects,
+persistent preferences, pause/remount and an idle console that emits no commands.
+The world-camera component fixtures also run. Only source, theme and metadata
+are read: sample textures, media, geometry, bakes and graphical hosts are not loaded.
+Native transport is captured; this does not claim WASM or graphics execution.
+Each test process has a nine-second timeout. Compilation/setup is separate.
+
+The ordinary `mise run test` checks sample pins and compiles the UI sources without
+requiring candidate SDK installation. The explicit task additionally checks all
+candidate client bindings and executes the CPU behavior fixtures. Full sample
+builds/previews are for running the examples, separate from this validation.
 
 ## Published demos and pull request previews
 
 `mise run build-samples` builds all four checked-in samples into `dist/samples-site/`,
 including an index page and redistribution notices. It installs each sample's
 exact published SDK and downloads the compatible host and Go browser runtime.
-It needs no private engine access; all selected SDKs are available from public releases.
-The task pins Python for TOML parsing.
+It needs no private engine access. The selected candidate SDK/host must be published
+before this public-only task can build the updated samples.
 
 The **Build samples** workflow runs for `main` pushes and pull requests, including
 forks, and uploads a `sample-site` artifact. It can also be dispatched manually.
@@ -72,9 +101,9 @@ contain demos only, with no credentials or authenticated application data.
 
 Pages serves the regular WASM host. The Brotli artifact is not selected because
 this deployment does not configure the required `Content-Encoding` response.
-To update the SDK used by the demos, update `CurrentSDK` and run the documented
-[release preparation](../docs/releases.md#one-sdk-pin) after compatible public
-engine artifacts are available. Preparation updates all sample pins;
+To update the SDK used by the demos, update `SampleSDK` and run the documented
+[release preparation](../docs/releases.md#sdk-pins). Public previews also require
+compatible published engine artifacts. Preparation updates all sample pins;
 tests reject drift. The Go module version alone does not select the sample SDK.
 
 The publisher queues deployments with GitHub's [concurrency queue](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)

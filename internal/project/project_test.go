@@ -376,7 +376,11 @@ func TestLoadLayoutSources(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := os.WriteFile(filepath.Join(directory, "ui", "layouts", "window.ui"), []byte("layout Window {}"), 0o600); err != nil {
+	if err := os.WriteFile(
+		filepath.Join(directory, "ui", "layouts", "window.kui"),
+		[]byte(`<template><panel><slot/></panel></template>`),
+		0o600,
+	); err != nil {
 		t.Fatal(err)
 	}
 
@@ -385,19 +389,19 @@ name = "demo"
 [sdk]
 version = "0.0.1"
 [[assets.layout]]
-source = "ui/layouts/window.ui"
+source = "ui/layouts/window.kui"
 `
 	if err := os.WriteFile(filepath.Join(directory, "karty.toml"), []byte(manifest), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	config, err := project.Load(directory)
-	if err != nil || len(config.Assets.Layouts) != 1 || config.Assets.Layouts[0].Source != "ui/layouts/window.ui" {
+	if err != nil || len(config.Assets.Layouts) != 1 || config.Assets.Layouts[0].Source != "ui/layouts/window.kui" {
 		t.Fatalf("layout config = %+v, %v", config.Assets.Layouts, err)
 	}
 
 	duplicated := manifest + `[[assets.layout]]
-source = "ui/layouts/window.ui"
+source = "ui/layouts/window.kui"
 `
 	if err := os.WriteFile(filepath.Join(directory, "karty.toml"), []byte(duplicated), 0o600); err != nil {
 		t.Fatal(err)
@@ -408,14 +412,25 @@ source = "ui/layouts/window.ui"
 	}
 }
 
-//nolint:wsl_v5 // The fixture deliberately groups filesystem setup and assertions.
 func TestLoadDiscoversConventionalAssetsAndMergesSparseOverrides(t *testing.T) {
 	t.Parallel()
 
+	for _, extension := range []string{".kui"} {
+		t.Run(extension, func(t *testing.T) {
+			t.Parallel()
+			checkConventionalAssetDiscovery(t, extension)
+		})
+	}
+}
+
+//nolint:wsl_v5 // Conventional UI discovery shares sparse override rules.
+func checkConventionalAssetDiscovery(t *testing.T, extension string) {
+	t.Helper()
+
 	directory := t.TempDir()
 	for _, path := range []string{
-		"assets/textures/sprites/player.png", "ui/views/menu.ui", "ui/components/item-row.ui",
-		"ui/layouts/window.ui", "ui/theme.toml",
+		"assets/textures/sprites/player.png", "ui/views/menu" + extension, "ui/components/item-row.kui",
+		"ui/layouts/window" + extension, "ui/theme.toml",
 	} {
 		fullPath := filepath.Join(directory, path)
 		if err := os.MkdirAll(filepath.Dir(fullPath), 0o700); err != nil {

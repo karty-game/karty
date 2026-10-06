@@ -1,0 +1,22 @@
+<template>
+  <WindowLayout>
+    <fragment slot="title"><label class="title">Leaving level</label></fragment>
+    <label>Landing your ship and closing the flight deck.</label>
+    <fragment slot="footer"><label class="hint">You will return to the main menu.</label></fragment>
+  </WindowLayout>
+</template>
+
+<script setup lang="go">
+func setup(props AppProps) {}
+</script>
+
+<style>
+.title
+  color: theme.colors.accent
+  font-size: theme.typography.title
+.hint
+  color: theme.colors.text-disabled
+@media (max-width: 480)
+  .title
+    font-size: 24px
+</style>

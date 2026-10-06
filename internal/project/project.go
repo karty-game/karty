@@ -372,7 +372,7 @@ func discoverSounds(directory string) ([]Sound, error) {
 func discoverUI(directory string) ([]Texture, error) {
 	result := make([]Texture, 0)
 	for _, root := range []string{"ui", "assets/ui"} {
-		files, err := discoverFiles(directory, root, ".ui")
+		files, err := discoverFiles(directory, root, ".kui")
 		if err != nil {
 			return nil, err
 		}
@@ -380,7 +380,7 @@ func discoverUI(directory string) ([]Texture, error) {
 			if strings.HasPrefix(source, root+"/layouts/") {
 				continue
 			}
-			result = append(result, Texture{Name: "ui." + strings.TrimSuffix(filepath.Base(source), ".ui"), Source: source})
+			result = append(result, Texture{Name: "ui." + strings.TrimSuffix(filepath.Base(source), filepath.Ext(source)), Source: source})
 		}
 	}
 	slices.SortFunc(result, func(left, right Texture) int { return strings.Compare(left.Source, right.Source) })
@@ -389,7 +389,7 @@ func discoverUI(directory string) ([]Texture, error) {
 
 //nolint:wsl_v5,nlreturn // Discovery helpers keep filesystem steps together.
 func discoverLayouts(directory string) ([]Layout, error) {
-	files, err := discoverFiles(directory, "ui/layouts", ".ui")
+	files, err := discoverFiles(directory, "ui/layouts", ".kui")
 	if err != nil {
 		return nil, err
 	}
@@ -417,7 +417,7 @@ func discoverFonts(directory string) ([]Font, error) {
 }
 
 //nolint:wsl_v5,nlreturn // Walking a confined conventional root is one operation.
-func discoverFiles(directory, root, extension string) ([]string, error) {
+func discoverFiles(directory, root string, extensions ...string) ([]string, error) {
 	path := filepath.Join(directory, filepath.FromSlash(root))
 	entries := make([]string, 0)
 	err := filepath.WalkDir(path, func(current string, entry fs.DirEntry, walkErr error) error {
@@ -430,7 +430,8 @@ func discoverFiles(directory, root, extension string) ([]string, error) {
 		if entry.IsDir() {
 			return nil
 		}
-		if !entry.Type().IsRegular() || (extension != "" && strings.ToLower(filepath.Ext(current)) != extension) {
+		extension := strings.ToLower(filepath.Ext(current))
+		if !entry.Type().IsRegular() || (!slices.Contains(extensions, "") && !slices.Contains(extensions, extension)) {
 			return nil
 		}
 		relative, err := filepath.Rel(directory, current)

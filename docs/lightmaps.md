@@ -18,12 +18,18 @@ shadow_size = 512
 ```
 
 These numeric values are the defaults. Omit both `light` and `lights` to build
-coordinates only. Set it to an ID in the YAML root's existing `lighting.lights`
+coordinates only. Set it to an ID in this level's world YAML `lighting.lights`
 list to request a `point-visibility@1` startup bake for that specific authored
 point light. This does not freeze the light or choose the first authored light
 implicitly. Authored lighting continues to require its own existing
 `world/lighting@1` capability. Source YAML and compiled world versions are
 unchanged by the new build table.
+
+Each level owns its light definitions, ambient settings and bake recipe. Put
+`lighting` in the world source selected by that level's `[world].source`, and
+`[lightmap]` in its `level.toml`. Compiled lighting is embedded in that level's
+KLD `@world/main` entry; light IDs are local to the level. There is no global
+lighting configuration in `karty.toml` or a project-root `lighting.yaml`.
 
 For directional static direct diffuse from several authored lights, replace the
 `light` line with:
@@ -54,14 +60,15 @@ two-texel span protect narrow receivers such as the Roman basin steps.
 The KLD includes canonical `@world/lightmaps/layout` data and the
 `kartyWorldLightmaps` metadata marker. Its cartridge requires
 `world/lightmaps@1`, so an SDK that does not advertise the capability fails
-before processing textures. Released SDKs are unchanged. The geometry digest
+before processing textures. Earlier SDK contracts remain unchanged. The geometry digest
 lets the host reject stale layouts after geometry changes while reusing them
 when camera, actor, material or light state changes.
 
-The first host implementation consumes one ordinary physical component and one
+The current host consumes one ordinary physical component and one
 page. A runtime recipe fails at build time if sectors remain disconnected
 through ordinary reciprocal portals, any selected light is outside the sector
-volumes, or a solid has no conservative XY receiver association. Layout-only
+volumes, a selected light has motion, or a solid has no conservative XY receiver
+association. Transformed/one-way physical connections are rejected. Layout-only
 builds permit those cases. The visibility encoding stores direct static shadow data. Direct RNM stores
 three horizontal RGBM coefficient tiles per logical page, preserving runtime
 normal-map response with a Source-inspired directional approximation. Its
@@ -85,8 +92,8 @@ Export a completed direct RNM atlas using a host preview/tool, then add both
 explicit paths to the same `[lightmap]` table:
 
 ```toml
-prebake = "bakes/roman.prebake.json"
-prebake_image = "bakes/roman.prebake.qoi"
+prebake = ".karty/imports/roman.prebake.json"
+prebake_image = ".karty/imports/roman.prebake.qoi"
 ```
 
 These controls require an enabled direct recipe using `lights = [...]`. Both
@@ -150,10 +157,24 @@ lighting only. Workers affect throughput, not pixels. The initial deterministic
 seed is 1. `--level` accepts a level directory or its logical name; omitting it
 bakes every enabled directional recipe.
 
-The command writes only generated files below each level's `.karty/bakes/`:
-content-addressed `lightmap-<sha256>.qoi` images and an atomically published
-`lightmap-prebake.json`. It does not overwrite explicit authored prebakes or
-modify the level manifest. Previous generated images can remain cached.
+The command writes generated files under the **project root's**
+`.karty/bakes/<level-directory>/`: content-addressed `lightmap-<sha256>.qoi`
+images and an atomically published `lightmap-prebake.json`. For example:
+
+```text
+karty.toml
+levels/showcase/level.toml       # [world] source and [lightmap] recipe
+levels/showcase/world.yaml       # authored lighting and geometry
+.karty/bakes/showcase/lightmap-prebake.json
+.karty/bakes/showcase/lightmap-<sha256>.qoi
+```
+
+The cache key is the directory under `levels/`, regardless of the logical
+`[level].name`. Baking does not create output in level source or asset
+directories, overwrite explicit imported prebakes, or modify manifests.
+Previous generated images can remain cached. After upgrading from the old
+`levels/<level-directory>/.karty/bakes/` location, rerun `karty bake`; old caches
+are ignored and can be removed. See [bake storage v1](bake-storage-v1.md).
 
 Normal `karty build` and `karty dev` package a matching offline pair. If no pair
 exists, it is corrupt, or geometry, light, surface UV/material assignment,
@@ -163,6 +184,10 @@ strict errors for corrupt or stale data. Command quality overrides differing
 from explicit `bake_samples`/`bake_bounces` expectations require updating those
 settings before packaging the generated pair.
 
+Bake before starting `karty dev`, or restart the dev session after baking.
+The existing dev watcher skips hidden `.karty/` directories, so publishing a
+cache alone does not trigger a rebuild.
+
 Offline output uses algorithm 2 of the same separately versioned prebake
 manifest and records its producer, reflectance/surface identities, sample count,
 bounce count and seed. Older algorithm 1 direct imports remain valid. The same
@@ -171,3 +196,46 @@ opaque static geometry in one ordinary physical component; transformed portal
 transport, emissive textures, moving shadows and indirect actor probes remain
 future work. Increasing samples reduces stochastic noise; this first slice
 does not include an automatic denoiser.
+
+## Offline indirect denoising
+
+The CPU baker defaults to a pure Go spatial denoiser at medium strength.
+Choose the preset in each level's `level.toml`:
+
+```toml
+[lightmap]
+# Keep your enabled recipe, lights, density and other settings here.
+offline = true
+bake_samples = 196
+bake_bounces = 2
+bake_denoise = "medium" # off, low, medium
+```
+
+Then run `karty bake --level showcase`, followed by the usual `karty dev`
+or `karty build`. Baking does not hot-replace an already running cartridge.
+The generated pair lives in project `.karty/bakes/showcase/`.
+The updated CLI and host are required for the new denoised producer identity.
+
+`karty bake --denoise off` or `--denoise low` overrides the level preset for
+that invocation. To package an override, set the same `bake_denoise` in the
+level config: a differing preset makes the cached bake stale. The command
+prints filter time separately from the complete bake duration.
+
+Only noisy indirect bounce lighting is filtered, before RGBM encoding.
+Direct shadows and retro material textures remain sharp. The filter observes
+chart coverage and geometry barriers, and has no runtime frame cost. Low
+uses two passes and medium three; direct-only bakes skip filtering. Very
+small indirect features can soften, and residual noise or chart seams can
+still require more samples. Preset changes require rebaking.
+
+## CPU bake acceleration
+
+`karty bake` uses Go's portable SIMD triangle kernel with precomputed geometry
+and early-exit shadow visibility. Go selects the hardware width and provides
+emulation on unsupported processors; there is no user-facing SIMD switch or
+runtime requirement for the prebuilt CLI. Sampling, denoising presets and cache
+identity remain unchanged. This accelerates offline CPU baking; the GPU runtime
+fallback keeps its existing implementation.
+
+When building the CLI from source with Go 1.27, use the pinned root mise tasks
+(they enable `GOEXPERIMENT=simd`) or set that experiment for direct Go commands.

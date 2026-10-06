@@ -1,0 +1,145 @@
+package main
+
+import (
+	"encoding/binary"
+	"example.com/world-camera/.karty/engine"
+	"math"
+	"strings"
+	"testing"
+)
+
+func commandCount() uint32 { return binary.LittleEndian.Uint32(engine.FixtureCommands()[16:20]) }
+func controllerFixture() cameraController {
+	var game engine.Game
+	fps := perspectiveCamera(0)
+	orbit := isometricCamera(.9)
+	return cameraController{camera: game.NewCamera3D(9, fps), orbitCamera: game.NewCamera3D(9, orbit), fps: fps, orbitPose: orbit, orbit: .9, output: engine.CameraOutputFull}
+}
+func TestIdleAndStoppedMovement(t *testing.T) {
+	engine.FixtureBegin()
+	controller := controllerFixture()
+	engine.FixtureBegin()
+	controller.Update()
+	if count := commandCount(); count != 0 {
+		t.Fatal("idle movement emitted commands", count)
+	}
+	controller.forward, controller.strafeRight, controller.orbitLeft = true, true, true
+	controller.touchMove, controller.touchStrafe, controller.touchOrbit, controller.touchPitch = 1, 1, 1, 1
+	controller.Stop()
+	engine.FixtureBegin()
+	controller.Update()
+	if count := commandCount(); count != 0 {
+		t.Fatal("stopped input remained active", count)
+	}
+	controller.right = true
+	controller.path = controller.routeEnd()
+	engine.FixtureBegin()
+	controller.Update()
+	if count := commandCount(); count != 0 {
+		t.Fatal("clamped tour emitted an unchanged camera", count)
+	}
+}
+func TestWalkNormalizationAndOrbitIsolation(t *testing.T) {
+	settings := perspectiveCamera(0)
+	settings.Position = engine.NewVec3D(0, 0, 2)
+	settings.Yaw = 0
+	next := walkingCamera(settings, 1, 1)
+	if distance := math.Hypot(float64(next.Position.X), float64(next.Position.Y)); math.Abs(distance-.04) > 1e-6 || next.Position.Z != 2 {
+		t.Fatal("diagonal speed/height", next)
+	}
+	engine.FixtureBegin()
+	controller := controllerFixture()
+	before := controller.fps
+	controller.isometric = true
+	controller.strafeLeft = true
+	engine.FixtureBegin()
+	controller.Update()
+	if count := commandCount(); count != 1 || controller.fps != before || controller.orbitCamera.Settings.Yaw >= .9 {
+		t.Fatal("orbit changed the FPS baseline", count, controller)
+	}
+}
+func TestAcceptedPoseDrivesMarkerAndHUD(t *testing.T) {
+	engine.FixtureBegin()
+	controller := controllerFixture()
+	var hud cameraHUD
+	var follower markerFollower
+	follower.Bind(engine.WorldActorRef{ID: 10})
+	controller.onMoved = func(pose engine.Transform3D) { follower.Follow(pose); hud.Refresh(&controller) }
+	if !hud.Refresh(&controller) {
+		t.Fatal("initial HUD missing")
+	}
+	controller.forward = true
+	engine.FixtureBegin()
+	controller.Update()
+	if hud.Refresh(&controller) {
+		t.Fatal("HUD published a proposed, unaccepted movement")
+	}
+	accepted := engine.NewTransform3D(engine.NewVec3D(7, 2, 3))
+	accepted.Yaw = math.Pi / 2
+	accepted.Pitch = math.Pi / 6
+	if !controller.camera.ApplyAuthoritativeTransform(engine.InputEvent{Type: engine.EventAuthoritativeTransform, EntityID: controller.camera.ID, Transform3D: accepted}) {
+		t.Fatal("accepted transform rejected")
+	}
+	engine.FixtureBegin()
+	controller.OnTransformChanged(accepted)
+	commands := engine.FixtureCommands()
+	if controller.fps.Position != accepted.Position || !strings.Contains(hud.cameraInfo, "x=7") || binary.LittleEndian.Uint32(commands[16:20]) != 1 || commands[24] != 30 {
+		t.Fatal("missing accepted pose reaction", controller.fps, hud.cameraInfo, commands)
+	}
+	readFloat := func(offset int) float64 {
+		return float64(math.Float32frombits(binary.LittleEndian.Uint32(commands[offset : offset+4])))
+	}
+	if math.Abs(readFloat(31)-(7-.16*math.Cos(math.Pi/6))) > 1e-6 || math.Abs(readFloat(35)-2) > 1e-6 || math.Abs(readFloat(39)-(3-.08)) > 1e-6 {
+		t.Fatal("marker did not follow the accepted eye", commands)
+	}
+	engine.FixtureBegin()
+	controller.OnTransformChanged(accepted)
+	if count := commandCount(); count != 0 || hud.Refresh(&controller) {
+		t.Fatal("identical feedback did work", count)
+	}
+	controller.isometric = true
+	hud.Refresh(&controller)
+	controller.onOrbitMoved = func() { hud.Refresh(&controller) }
+	controller.orbitCamera.Settings.Position.X = 12
+	engine.FixtureBegin()
+	controller.OnOrbitTransformChanged(engine.Transform3D{})
+	if count := commandCount(); count != 0 || !strings.Contains(hud.cameraInfo, "ISO\nx=12") || controller.fps.Position != accepted.Position {
+		t.Fatal("orbit changed player marker/FPS", count, hud.cameraInfo)
+	}
+}
+func TestDisposedActorsAndFreshBindings(t *testing.T) {
+	var follower markerFollower
+	var spinner spinnerAnimation
+	follower.Bind(engine.WorldActorRef{ID: 10})
+	spinner.Bind(engine.WorldActorRef{ID: 11})
+	follower.Reset()
+	spinner.Reset()
+	engine.FixtureBegin()
+	follower.Follow(engine.NewTransform3D(engine.NewVec3D(1, 2, 3)))
+	spinner.Update(5)
+	if count := commandCount(); count != 0 {
+		t.Fatal("released actors received commands", count)
+	}
+	follower.Bind(engine.WorldActorRef{ID: 20})
+	spinner.Bind(engine.WorldActorRef{ID: 21})
+	engine.FixtureBegin()
+	follower.Follow(engine.NewTransform3D(engine.NewVec3D(1, 2, 3)))
+	if bytes := engine.FixtureCommands(); binary.LittleEndian.Uint32(bytes[27:31]) != 20 {
+		t.Fatal("marker retained stale actor", bytes)
+	}
+	engine.FixtureBegin()
+	spinner.Update(5)
+	spinner.Update(5)
+	if bytes := engine.FixtureCommands(); binary.LittleEndian.Uint32(bytes[16:20]) != 1 || binary.LittleEndian.Uint32(bytes[27:31]) != 21 {
+		t.Fatal("spinner retained actor/duplicated a frame", bytes)
+	}
+	engine.FixtureBegin()
+	controller := controllerFixture()
+	controller.Close()
+	engine.FixtureBegin()
+	controller.Update()
+	controller.OnTransformChanged(engine.Transform3D{})
+	if count := commandCount(); count != 0 {
+		t.Fatal("disposed cameras received commands", count)
+	}
+}

@@ -16,7 +16,7 @@ func TestNewIncludesTopLevelCommands(t *testing.T) {
 		names[child.Name] = true
 	}
 
-	for _, name := range []string{"new", "build", "bake", "dev", "serve", "toolchain"} {
+	for _, name := range []string{"new", "build", "bake", "schema", "dev", "serve", "toolchain"} {
 		if !names[name] {
 			t.Errorf("root command missing %q", name)
 		}

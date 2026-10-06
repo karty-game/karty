@@ -93,6 +93,10 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 
 	options.rendererDebug = config.Project.Debug.Renderer
 
+	if _, err := levelbuild.GenerateSchemas(directory, true); err != nil {
+		return err
+	}
+
 	manifest, err := sdk.Resolve(config.SDK.Version)
 	if err != nil {
 		return err
@@ -224,8 +228,9 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
-	generated["engine/ui-views.go"], err = codegen.UIViewFile(views)
-	if err != nil {
+	project.ReportUIWarnings(views)
+
+	if err := validateWidgetSDK(views, manifest); err != nil {
 		return err
 	}
 
@@ -304,11 +309,21 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 
 	artifact := filepath.Join(rawDirectory, "game.kart")
 
+	uiSchema := sdkUISchema(manifest)
+	levels, err := buildAndStageLevels(ctx, directory, rawDirectory, uiSchema, config.Assets.Theme.Source, manifest)
+	if err != nil {
+		return err
+	}
+	actionsSource, err := compileAuthoredActions(directory, modulePath, manifest, levels)
+	if err != nil {
+		return err
+	}
+
 	var clientSource string
 
 	var cleanup func()
 
-	clientSource, cleanup, err = stageUIClient(directory, modulePath, views)
+	clientSource, cleanup, err = stageClient(directory, modulePath, views, actionsSource)
 	if err != nil {
 		return err
 	}
@@ -348,13 +363,6 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 
 	if err := removeStagedAssets(rawDirectory); err != nil {
-		return err
-	}
-
-	uiSchema := ui.SchemaInteractionPolish
-
-	levels, err := buildAndStageLevels(ctx, directory, rawDirectory, uiSchema, config.Assets.Theme.Source, manifest)
-	if err != nil {
 		return err
 	}
 

@@ -1,0 +1,5 @@
+<template>
+  <panel modal="false">
+    <label>Use Pause or Escape</label>
+  </panel>
+</template>

@@ -51,10 +51,6 @@ func writeUIPackage(directory, module string, views []uicompiler.Component) erro
 	wanted := map[string]bool{}
 
 	for _, view := range views {
-		if !view.Local {
-			continue
-		}
-
 		name := "karty_ui_" + view.Name + ".go"
 
 		wanted[name] = true

@@ -1,4 +1,4 @@
-// karty-check runs reproducible integration checks using isolated sample copies.
+// karty-check runs reproducible integration checks with isolated projects.
 package main
 
 import (
@@ -18,7 +18,7 @@ import (
 	"github.com/karty-game/karty/internal/toolchain"
 )
 
-var errCheckMode = errors.New("select exactly one of --web, --browser, --watcher, --allocations, or --world-camera")
+var errCheckMode = errors.New("select exactly one of --web, --browser, --watcher, --allocations, --ui, --world-camera, or --client-hooks")
 var errWatcherPlatform = errors.New("watcher integration check currently requires macOS or Linux")
 
 func main() {
@@ -26,12 +26,38 @@ func main() {
 	browser := flag.Bool("browser", false, "execute the Go/Ebiten host and TinyGo client in Chromium")
 	watcher := flag.Bool("watcher", false, "check managed Air rebuild and generated-file exclusion behavior")
 	allocations := flag.Bool("allocations", false, "check actual TinyGo guest allocation counters")
-	ui := flag.Bool("ui", false, "scaffold and execute the UI template in native WASM and Chromium")
+	checkUI := flag.Bool("ui", false, "scaffold and execute the UI template in native WASM and Chromium")
 	worldCamera := flag.Bool("world-camera", false, "build the packaged world sample twice and verify native/browser camera switching")
+	clientHooks := flag.Bool("client-hooks", false, "execute a crafted SDK 0.0.9 hook/action fixture through native WASM and Chromium")
+	nativeOnly := flag.Bool("native-only", false, "with --client-hooks, run deterministic native builds and the WASM lifecycle check")
 
 	flag.Parse()
 
-	if *ui {
+	if *nativeOnly && !*clientHooks {
+		fmt.Fprintln(os.Stderr, "--native-only requires --client-hooks")
+		os.Exit(1)
+	}
+
+	if *clientHooks {
+		if *web || *browser || *watcher || *allocations || *checkUI || *worldCamera {
+			fmt.Fprintln(os.Stderr, errCheckMode)
+			os.Exit(1)
+		}
+
+		root, err := os.Getwd()
+		if err == nil {
+			err = runClientHooksCheck(context.Background(), root, *nativeOnly)
+		}
+
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "client hooks check:", err)
+			os.Exit(1)
+		}
+
+		return
+	}
+
+	if *checkUI {
 		if *web || *browser || *watcher || *allocations || *worldCamera {
 			fmt.Fprintln(os.Stderr, errCheckMode)
 			os.Exit(1)
@@ -89,7 +115,7 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 		}
 
 		return command(ctx, root, []string{"KARTY_TEST_AIR=" + air}, "go", "test",
-			"./internal/commands/dev", "-run", "TestAirWatcherLifecycle", "-count=1")
+			"./internal/commands/dev", "-timeout=9s", "-run", "TestAirWatcherLifecycle", "-count=1")
 	}
 
 	if _, err := exec.LookPath("node"); err != nil {

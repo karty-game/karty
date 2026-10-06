@@ -17,4 +17,4 @@ ortho_height = 30
 renderer = true
 
 [sdk]
-version = "0.0.8"
+version = "0.0.9"
