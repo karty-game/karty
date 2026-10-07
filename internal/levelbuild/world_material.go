@@ -22,9 +22,15 @@ type worldMaterialBuild struct {
 	metadata []byte
 	textures []assetpipeline.Texture
 	features []string
+	sources  []level.SourceEntry
 }
 
-func compileMaterialWorld(directory string, definition manifest, textures []metadataTexture) (world.Document, []byte, error) {
+func compileMaterialWorld(
+	directory string,
+	definition manifest,
+	textures []metadataTexture,
+	sources []level.SourceEntry,
+) (world.Document, []byte, error) {
 	expanded, err := worldsource.Load(directory, definition.World.Source)
 	if err != nil {
 		return world.Document{}, nil, fmt.Errorf("compile level %q world source: %w", definition.Level.Name, err)
@@ -40,6 +46,12 @@ func compileMaterialWorld(directory string, definition manifest, textures []meta
 		return world.Document{}, nil, fmt.Errorf("compile level %q world geometry: %w", definition.Level.Name, err)
 	}
 
+	if err := classifyBandSources(compiled, textures, sources); err != nil {
+		return world.Document{}, nil, err
+	}
+
+	classifyCompiledFrames(&compiled, textures)
+
 	encoded, err := world.Encode(compiled)
 	if err != nil {
 		return world.Document{}, nil, fmt.Errorf("encode level %q world: %w", definition.Level.Name, err)
@@ -48,11 +60,65 @@ func compileMaterialWorld(directory string, definition manifest, textures []meta
 	return compiled, encoded, nil
 }
 
+//nolint:gocognit // Coverage proofs walk the complete compiled partition before packaging.
+func classifyCompiledFrames(document *world.Document, textures []metadataTexture) {
+	classes := make(map[uint32]string, len(textures))
+	for _, texture := range textures {
+		classes[texture.ID] = texture.Coverage
+	}
+
+	for si := range document.Sectors {
+		sector := &document.Sectors[si]
+		for wi := range sector.Walls {
+			wall := &sector.Walls[wi]
+			for ri := range wall.FrameRegions {
+				region := &wall.FrameRegions[ri]
+				switch classes[region.Material] {
+				case "empty":
+					region.Material, region.Coverage, region.UV = wall.Material, world.FrameCoverageMain, nil
+					region.RepeatU, region.RepeatV = false, false
+				case "opaque":
+					if region.UV == nil {
+						continue
+					}
+
+					projection := region.UV.Projections[0]
+					covered := true
+
+					for _, vertex := range region.Vertices {
+						x := wall.Start.X + (wall.End.X-wall.Start.X)*vertex.X
+						y := wall.Start.Y + (wall.End.Y-wall.Start.Y)*vertex.X
+						u := projection.U.X*x + projection.U.Y*y + projection.U.Z*vertex.Y + projection.U.Offset
+
+						v := projection.V.X*x + projection.V.Y*y + projection.V.Z*vertex.Y + projection.V.Offset
+						if (!region.RepeatU && (u < 0 || u > 1)) || (!region.RepeatV && (v < 0 || v > 1)) {
+							covered = false
+
+							break
+						}
+					}
+
+					if covered {
+						region.Coverage = world.FrameCoverageOpaque
+					}
+				}
+			}
+		}
+	}
+}
+
 func compileWorldAssets(ctx context.Context, directory string, definition manifest, textureMetadata []metadataTexture,
 	textures, data []level.SourceEntry, metadata []byte, assets *assetBuild) (worldMaterialBuild, error) {
-	compiled, encoded, err := compileMaterialWorld(directory, definition, textureMetadata)
+	compiled, encoded, err := compileMaterialWorld(directory, definition, textureMetadata, textures)
 	if err != nil {
 		return worldMaterialBuild{}, err
+	}
+
+	if compiled.MaterialLayers != nil && (assets == nil ||
+		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialLayersV1) ||
+		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV2)) {
+		return worldMaterialBuild{}, fmt.Errorf("advanced wall materials require %s and %s: %w",
+			asset.CapabilityWorldMaterialLayersV1, asset.CapabilityWorldMaterialAtlasV2, ErrManifest)
 	}
 
 	lighting, err := worldLightingFeatures(assets, compiled)
@@ -97,6 +163,7 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 	atlas.features = append(atlas.features, solids...)
 	atlas.features = append(atlas.features, lightmaps...)
 	atlas.features = append(atlas.features, world.Feature)
+	atlas.sources = textures
 
 	return atlas, nil
 }
@@ -104,7 +171,8 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 func buildWorldMaterials(ctx context.Context, assets *assetBuild, document world.Document,
 	textures, data []level.SourceEntry, metadata []byte, strengths map[uint32]*worldmaterial.Strengths) (worldMaterialBuild, error) {
 	result := worldMaterialBuild{data: data, metadata: metadata}
-	if assets == nil || !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1) {
+	if assets == nil || (!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1) &&
+		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV2)) {
 		return result, nil
 	}
 
@@ -136,6 +204,10 @@ func buildWorldMaterials(ctx context.Context, assets *assetBuild, document world
 		return worldMaterialBuild{}, err
 	}
 
+	if document.MaterialLayers != nil && pair.Layout.Schema != worldmaterial.SchemaV2 {
+		return worldMaterialBuild{}, worldmaterial.ErrAtlas
+	}
+
 	pair.Layout = applyMaterialStrengths(pair.Layout, strengths)
 
 	result.data, result.metadata, err = packageWorldMaterials(data, metadata, document, pair)
@@ -144,7 +216,11 @@ func buildWorldMaterials(ctx context.Context, assets *assetBuild, document world
 	}
 
 	result.textures = describeWorldMaterials(pair, cached)
+
 	result.features = []string{worldmaterial.Feature}
+	if pair.Layout.Schema == worldmaterial.SchemaV2 {
+		result.features = []string{worldmaterial.FeatureV2, world.FeatureMaterialLayers}
+	}
 
 	return result, nil
 }
@@ -179,13 +255,21 @@ func describeWorldMaterials(pair worldmaterial.Pair, cached assetpipeline.Artifa
 			Kind: "world-material", Name: name, Profile: "world-material", Source: world.EntryName,
 			Output: checksum + ".qoi", ContentSHA256: checksum, OutputSHA256: checksum,
 			SourceSHA256: cached.SourceDigest, CacheKey: cached.CacheKey, CacheHit: cached.CacheHit,
-			Processor: worldmaterial.Feature, Encoding: "qoi", Width: width, Height: height,
+			Processor: materialAtlasFeature(pair.Layout), Encoding: "qoi", Width: width, Height: height,
 			OutputBytes:           int64(len(encoded)),
 			EstimatedDecodedBytes: int64(width) * int64(height) * pixelBytes,
 		})
 	}
 
 	return result
+}
+
+func materialAtlasFeature(layout worldmaterial.Layout) string {
+	if layout.Schema == worldmaterial.SchemaV2 {
+		return worldmaterial.FeatureV2
+	}
+
+	return worldmaterial.Feature
 }
 
 func packageWorldMaterials(data []level.SourceEntry, metadata []byte,
@@ -223,7 +307,7 @@ func packageWorldMaterials(data []level.SourceEntry, metadata []byte,
 		return nil, nil, ErrManifest
 	}
 
-	identity[worldmaterial.MetadataKey], err = json.Marshal(worldmaterial.Schema)
+	identity[worldmaterial.MetadataKey], err = json.Marshal(pair.Layout.Schema)
 	if err != nil {
 		return nil, nil, err
 	}

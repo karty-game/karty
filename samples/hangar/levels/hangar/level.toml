@@ -1,0 +1,199 @@
+# Hangar materials and baked lighting.
+[level]
+name = "levels.hangar"
+kind = "world"
+
+[world]
+source = "world.yaml"
+
+[[textures]]
+name = "olive"
+source = "olive.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "ribbed"
+source = "ribbed.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "brick"
+source = "brick.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "floor"
+source = "floor.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "grate"
+source = "grate.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "ceiling"
+source = "ceiling.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "concrete"
+source = "concrete.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "hazard"
+source = "hazard.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "steel"
+source = "steel.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "crate"
+source = "crate.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "recess"
+source = "recess.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "toxic"
+source = "toxic.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.80
+height = 0.10
+ao = 0.80
+rim = 0.1
+
+[[textures]]
+name = "lamp"
+source = "lamp.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.00
+height = 0.00
+ao = 0.00
+rim = 0.1
+
+[[textures]]
+name = "screen"
+source = "screen.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.00
+height = 0.00
+ao = 0.00
+rim = 0.1
+
+[[textures]]
+name = "arrival-sign"
+source = "arrival-sign.png"
+profile = "interface"
+
+[[textures]]
+name = "reactor-sign"
+source = "reactor-sign.png"
+profile = "interface"
+
+[[textures]]
+name = "exit-sign"
+source = "exit-sign.png"
+profile = "interface"
+
+[lightmap]
+enabled = true
+density = 5
+page_size = 1024
+padding = 4
+max_pages = 1
+max_texels = 1048576
+shadow_size = 256
+lights = [
+  "arrival-key",
+  "reactor-overhead",
+  "control-fill",
+  "zig-key",
+  "zig-far",
+  "extraction-key",
+  "loading-key",
+  "window-key",
+]
+offline = true
+bake_samples = 32
+bake_bounces = 2
+bake_denoise = "medium"

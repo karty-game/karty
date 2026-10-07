@@ -23,7 +23,7 @@ const (
 	defaultPort          = "4242"
 	airRuntimeDirectory  = ".karty/log"
 	airBuildLog          = "build-errors.log"
-	airWatchedExtensions = "go,ui,json,toml,yaml,yml,png,jpg,jpeg,webp,wav,mpg"
+	airWatchedExtensions = "go,kui,ui,json,toml,yaml,yml,png,jpg,jpeg,webp,wav,mpg"
 )
 
 type staticError string

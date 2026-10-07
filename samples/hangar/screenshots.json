@@ -1,0 +1,80 @@
+[
+  {
+    "position": [9, -4, 1.7],
+    "yaw": -18,
+    "pitch": 0,
+    "output": "dist/screenshots/arrival.png"
+  },
+  {
+    "position": [4.1, 16.5, 1.7],
+    "yaw": 24,
+    "pitch": 3.4,
+    "output": "dist/screenshots/reactor.png"
+  },
+  {
+    "position": [-8, 17.8, 2.9],
+    "yaw": -37.2,
+    "pitch": -2.9,
+    "output": "dist/screenshots/control.png"
+  },
+  {
+    "position": [27.5, 21.8, 1.9],
+    "yaw": 24,
+    "pitch": -9,
+    "output": "dist/screenshots/zigzag.png"
+  },
+  {
+    "position": [21.2, 6, 2.1],
+    "yaw": 95,
+    "pitch": 3.4,
+    "output": "dist/screenshots/loading.png"
+  },
+  {
+    "position": [25, 40, 1.7],
+    "yaw": 50,
+    "pitch": 0,
+    "output": "dist/screenshots/extraction.png"
+  },
+  {
+    "position": [8, 6, 1.7],
+    "yaw": -114,
+    "pitch": 0,
+    "output": "dist/screenshots/windows.png"
+  },
+  {
+    "position": [5, 21.5, 1.7],
+    "yaw": -90,
+    "pitch": -8,
+    "output": "dist/screenshots/control-stairs.png"
+  },
+  {
+    "position": [13, 21.8, 1.7],
+    "yaw": 90,
+    "pitch": 0,
+    "output": "dist/screenshots/east-passage.png"
+  },
+  {
+    "position": [8, 5, 1.7],
+    "yaw": 90,
+    "pitch": 0,
+    "output": "dist/screenshots/service-entrance.png"
+  },
+  {
+    "position": [23, 25.4, 0.5],
+    "yaw": 0,
+    "pitch": 4,
+    "output": "dist/screenshots/west-trench-stairs.png"
+  },
+  {
+    "position": [38, 22, 0.5],
+    "yaw": 90,
+    "pitch": 4,
+    "output": "dist/screenshots/east-trench-stairs.png"
+  },
+  {
+    "position": [31, 27, 1.9],
+    "yaw": -98,
+    "pitch": -23,
+    "output": "dist/screenshots/toxic-basin.png"
+  }
+]

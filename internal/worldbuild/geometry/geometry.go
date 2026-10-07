@@ -236,6 +236,10 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 		return sdkworld.Document{}, fmt.Errorf("%d materials exceeds %d: %w", len(usedMaterials), MaxMaterials, ErrMaterial)
 	}
 
+	if err := compileMaterialLayers(&document, expanded, materials, roomSectors); err != nil {
+		return sdkworld.Document{}, fmt.Errorf("compile material layers: %w", err)
+	}
+
 	if err := sdkworld.Validate(&document); err != nil {
 		return sdkworld.Document{}, fmt.Errorf("validate compiled world: %w", err)
 	}

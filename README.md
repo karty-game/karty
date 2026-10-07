@@ -59,8 +59,8 @@ Try the [browser demos](https://karty-game.github.io/karty/main/), then make the
 
 - [Orbital flight deck](samples/ui-demo) — choose a ship, tune its thrusters and manage your inventory.
 - [Roman court & galleries](samples/world-camera) — walk through a lit 3D world or explore it from above.
+- [The Hangar](samples/hangar) — explore an industrial environment with service windows, a reactor, control deck and zigzag trench.
 - [Media lab](samples/media-lab) — mix effects over music and play a video in the same scene.
-- [Sprite playground](samples/pong) — move a character among animated sprites, shapes and text.
 
 See [how to build and run the samples](samples/README.md).
 
@@ -72,12 +72,14 @@ karty dev                 # Build and serve a live browser preview
 karty build               # Build a native game
 karty build --target web  # Build a browser game
 karty bake                # Bake static directional lighting and diffuse radiosity
+karty screenshot <level> # Save a native PNG at an explicit camera pose and exit
 karty schema              # Refresh world YAML editor completions
 karty schema --check      # Validate world YAML without building assets
 ```
 
 Run `karty --help` or `karty <command> --help` for options. The CLI also
 includes commands to install an SDK and manage its pinned toolchain.
+See [native screenshots](docs/screenshot.md) for camera options and local host selection.
 
 ## License
 

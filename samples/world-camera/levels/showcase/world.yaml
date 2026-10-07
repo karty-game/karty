@@ -1,8 +1,12 @@
 # $schema: ../../.karty/schemas/levels/showcase.schema.json
-version: 6
+version: 7
 
 rooms:
   - id: hall
+    wall_uv: { mode: wrap }
+    wall_bands:
+      top: { texture: wall-top, height: 0.5, repeat_width: 2 }
+      bottom: { texture: wall-bottom, height: 0.5, repeat_width: 2 }
     boundary:
       - { id: south, start: { x: 0, y: 0 }, end: { x: 4, y: 0 }, material: wall }
       - { id: doorway, start: { x: 4, y: 0 }, end: { x: 4, y: 2 }, material: wall }
@@ -65,6 +69,10 @@ prefabs:
   - id: gallery
     rooms:
       - id: room
+        wall_uv: { mode: wrap }
+        wall_bands:
+          top: { texture: wall-top, height: 0.5, repeat_width: 2 }
+          bottom: { texture: wall-bottom, height: 0.5, repeat_width: 2 }
         boundary:
           - { id: south, start: { x: 0, y: 0 }, end: { x: 4, y: 0 }, material: wall }
           - { id: exit, start: { x: 4, y: 0 }, end: { x: 4, y: 2 }, material: wall }
@@ -89,6 +97,10 @@ prefabs:
   - id: corner
     rooms:
       - id: room
+        wall_uv: { mode: wrap }
+        wall_bands:
+          top: { texture: wall-top, height: 0.5, repeat_width: 2 }
+          bottom: { texture: wall-bottom, height: 0.5, repeat_width: 2 }
         boundary:
           - { id: south, start: { x: 0, y: 0 }, end: { x: 2, y: 0 }, material: wall }
           - { id: east, start: { x: 2, y: 0 }, end: { x: 2, y: 2 }, material: wall }
@@ -114,6 +126,10 @@ prefabs:
   - id: ascent
     rooms:
       - id: room
+        wall_uv: { mode: wrap }
+        wall_bands:
+          top: { texture: wall-top, height: 0.5, repeat_width: 2 }
+          bottom: { texture: wall-bottom, height: 0.5, repeat_width: 2 }
         boundary:
           - { id: entrance, start: { x: 0, y: 0 }, end: { x: 2, y: 0 }, material: wall }
           - { id: east, start: { x: 2, y: 0 }, end: { x: 2, y: 4 }, material: wall }

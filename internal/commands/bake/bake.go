@@ -6,16 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"time"
 
+	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/worldlightmap"
 	"github.com/karty-game/karty/internal/levelbuild"
 	"github.com/karty-game/karty/internal/project"
+	"github.com/karty-game/karty/internal/sdk"
 	"github.com/urfave/cli/v3"
 )
 
 var (
-	ErrSDK     = errors.New("offline baking currently requires SDK 0.0.8")
+	ErrSDK     = errors.New("offline baking requires an SDK supporting world/lightmaps-prebaked@1")
 	ErrOptions = errors.New("invalid bake options")
 )
 
@@ -45,8 +48,13 @@ func run(ctx context.Context, command *cli.Command) error {
 		return err
 	}
 
-	if config.SDK.Version != "0.0.8" {
-		return fmt.Errorf("%w; project selects %s", ErrSDK, config.SDK.Version)
+	manifest, err := sdk.Resolve(config.SDK.Version)
+	if err != nil {
+		return err
+	}
+
+	if err := validateBakeSDK(manifest); err != nil {
+		return err
 	}
 
 	options := levelbuild.BakeOptions{Level: command.String("level"), Workers: command.Int("workers")}
@@ -109,4 +117,12 @@ func run(ctx context.Context, command *cli.Command) error {
 	})
 
 	return err
+}
+
+func validateBakeSDK(manifest sdk.Manifest) error {
+	if !slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsPrebakedV1) {
+		return fmt.Errorf("%w; project selects %s", ErrSDK, manifest.Version)
+	}
+
+	return nil
 }

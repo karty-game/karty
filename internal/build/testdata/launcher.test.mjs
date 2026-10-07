@@ -38,6 +38,7 @@ let submissions = [];
 let registered = false;
 let started = false;
 let memory;
+let memoryViews = 0;
 let eventPointer = 65536;
 let resolveDone, rejectDone;
 const done = new Promise((resolve, reject) => {
@@ -138,7 +139,12 @@ const context = {
     querySelector: () => ({ focus() {} }),
     fullscreenEnabled: true,
   },
-  Uint8Array,
+  Uint8Array: new Proxy(Uint8Array, {
+    construct(target, args) {
+      if (memory && args[0] === memory.buffer) memoryViews++;
+      return Reflect.construct(target, args);
+    },
+  }),
   DataView,
   TextDecoder,
   BigInt,
@@ -202,7 +208,9 @@ const context = {
         return { instance: {} };
       }
       imports = loadedImports;
-      return WebAssembly.instantiate(module, imports);
+      const result = await WebAssembly.instantiate(module, imports);
+      memory = result.exports.memory;
+      return result;
     },
     instantiateStreaming: async (responsePromise, loadedImports) => {
       const response = await responsePromise;
@@ -261,6 +269,8 @@ const context = {
             update: (frame, length) => {
               const view = new DataView(memory.buffer, eventPointer, length);
               assert.equal(view.getBigUint64(8, true), frame);
+              // Submission must refresh views if the guest grows during update.
+              if (frame === 2n) memory.grow(1);
               submit(frame);
             },
             shutdown: () => submit(2n),
@@ -306,6 +316,8 @@ const context = {
         const initial = commands(0n);
         if (!mock) for (const tag of [1, 8, 10]) assert.ok(initial.includes(tag), `missing create tag ${tag}`);
         for (const frame of [1n, 2n]) {
+          const previousMemoryViews = memoryViews;
+          if (mock && frame === 2n) memory.grow(1);
           const pointer = frame === 2n;
           const events = new Uint8Array(pointer ? 36 : 29);
           const view = new DataView(events.buffer);
@@ -323,6 +335,18 @@ const context = {
             view.setUint8(35, 1);
           } else view.setUint16(27, 1, true);
           context.kartyClientUpdate(frame, events);
+          assert.equal(context.kartyFrame, frame, "counter must preserve uint64 frame identity");
+          assert.equal(
+            context.document.documentElement.dataset.kartyFrame,
+            undefined,
+            "normal updates must not mutate the DOM counter",
+          );
+          if (mock)
+            assert.equal(
+              memoryViews - previousMemoryViews,
+              frame === 2n ? 2 : 0,
+              "views must only be recreated on memory growth",
+            );
           assert.equal(elements.get("loading").hidden, true);
           assert.equal(elements.get("loading").attributes["aria-busy"], "false");
           assert.equal(elements.get("fullscreen").hidden, false);
@@ -337,6 +361,14 @@ const context = {
         assert.equal(submissions[0].length, 0, "invalid guest range must reach host validation as rejected input");
         submissions = [];
         if (mock) {
+          const frame = (1n << 60n) + 17n;
+          const events = new Uint8Array(24);
+          new DataView(events.buffer).setBigUint64(8, frame, true);
+          context.kartyFrameDOMDiagnostics = true;
+          context.kartyClientUpdate(frame, events);
+          commands(frame);
+          assert.equal(context.kartyFrame, frame);
+          assert.equal(context.document.documentElement.dataset.kartyFrame, String(frame));
           eventPointer = 0xffffffff;
           assert.throws(() => context.kartyClientUpdate(3n, new Uint8Array(24)), /invalid client event buffer/);
         }

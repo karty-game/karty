@@ -105,36 +105,45 @@ func downsampleMaterial(albedo, data *image.NRGBA) (*image.NRGBA, *image.NRGBA) 
 	for row := range size {
 		for column := range size {
 			var (
-				linear, normal    [3]float64
-				height, occlusion float64
+				linear, normal              [3]float64
+				height, occlusion, coverage float64
 			)
 
 			for sample := range materialMipSamples {
 				x, y := materialMipScale*column+sample%materialMipScale, materialMipScale*row+sample/materialMipScale
 				albedoPixel, dataPixel := albedo.NRGBAAt(x, y), data.NRGBAAt(x, y)
-				linear[0] += srgb[albedoPixel.R]
-				linear[1] += srgb[albedoPixel.G]
-				linear[2] += srgb[albedoPixel.B]
+				weight := float64(albedoPixel.A) / materialOpaque
+				coverage += weight
+				linear[0] += srgb[albedoPixel.R] * weight
+				linear[1] += srgb[albedoPixel.G] * weight
+				linear[2] += srgb[albedoPixel.B] * weight
 
 				n := materialDecodeNormal(dataPixel.R, dataPixel.G)
 				for axis := range normal {
-					normal[axis] += n[axis]
+					normal[axis] += n[axis] * weight
 				}
 
-				height += float64(dataPixel.B)
-				occlusion += float64(dataPixel.A)
+				height += float64(dataPixel.B) * weight
+				occlusion += float64(dataPixel.A) * weight
+			}
+
+			if coverage == 0 {
+				resultAlbedo.SetNRGBA(column, row, color.NRGBA{})
+				resultData.SetNRGBA(column, row, color.NRGBA{R: materialNeutral, G: materialNeutral, A: materialOpaque})
+
+				continue
 			}
 
 			normal = materialNormalizeNormal(normal)
 
 			resultAlbedo.SetNRGBA(column, row, color.NRGBA{
-				R: materialEncodeSRGB(linear[0] / materialMipSamples),
-				G: materialEncodeSRGB(linear[1] / materialMipSamples),
-				B: materialEncodeSRGB(linear[2] / materialMipSamples), A: materialOpaque,
+				R: materialEncodeSRGB(linear[0] / coverage),
+				G: materialEncodeSRGB(linear[1] / coverage),
+				B: materialEncodeSRGB(linear[2] / coverage), A: uint8(math.Round(coverage * materialOpaque / materialMipSamples)),
 			})
 			resultData.SetNRGBA(column, row, color.NRGBA{
 				R: materialEncodeNormal(normal[0]), G: materialEncodeNormal(normal[1]),
-				B: uint8(math.Round(height / materialMipSamples)), A: uint8(math.Round(occlusion / materialMipSamples)),
+				B: uint8(math.Round(height / coverage)), A: uint8(math.Round(occlusion / coverage)),
 			})
 		}
 	}

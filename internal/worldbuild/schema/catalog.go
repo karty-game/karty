@@ -38,8 +38,13 @@ func Level(value any, textures []string) *jsonschema.Schema {
 
 	materials := sortedChoices(textures)
 	prefabMaterials := sortedChoices(append(slices.Clone(textures), aliases...))
+
 	fields := scopeCatalog(materials, sortedChoices(prefabNames))
-	fields["prefabs"] = &jsonschema.Schema{Items: &jsonschema.Schema{Properties: scopeCatalog(prefabMaterials, sortedChoices(prefabNames))}}
+	fields["prefabs"] = &jsonschema.Schema{
+		Items: &jsonschema.Schema{
+			Properties: scopeCatalog(prefabMaterials, sortedChoices(prefabNames)),
+		},
+	}
 
 	return &jsonschema.Schema{
 		Schema:     draft,
@@ -59,14 +64,31 @@ func sortedChoices(names []string) *jsonschema.Schema {
 }
 
 func scopeCatalog(materials, prefabs *jsonschema.Schema) map[string]*jsonschema.Schema {
+	bands := &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
+		"top":    {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+		"bottom": {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+	}}
 	content := &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
 		"actor": {Properties: map[string]*jsonschema.Schema{"sprite": {Properties: map[string]*jsonschema.Schema{"texture": materials}}}},
 	}}
 
 	return map[string]*jsonschema.Schema{
 		"rooms": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
-			"floor_material": materials, "ceiling_material": materials,
-			"boundary": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"material": materials}}},
+			"floor_material":    materials,
+			"ceiling_material":  materials,
+			"wall_bands":        bands,
+			"floor_secondary":   {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+			"ceiling_secondary": {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+			"wall_secondary":    {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+			"boundary": {
+				Items: &jsonschema.Schema{
+					Properties: map[string]*jsonschema.Schema{
+						"material":  materials,
+						"bands":     bands,
+						"secondary": {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+					},
+				},
+			},
 			"contents": {Items: content},
 		}}},
 		"solids": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{

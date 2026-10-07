@@ -28,7 +28,7 @@ func Command() *cli.Command {
 }
 
 func run(ctx context.Context, command *cli.Command) error {
-	return ui.RunTask(ctx, "Building client", func(taskContext context.Context) error {
+	return ui.RunTaskWithProgress(ctx, "Building game", func(taskContext context.Context, progress func(string)) error {
 		return buildservice.RunWithOptions(taskContext, ".", buildservice.Options{
 			Go:        command.String("go"),
 			TinyGo:    command.String("tinygo"),
@@ -37,6 +37,7 @@ func run(ctx context.Context, command *cli.Command) error {
 			Target:    command.String("target"),
 			Platform:  command.String("platform"),
 			AirProxy:  os.Getenv("KARTY_AIR_PROXY") == "1",
+			Progress:  progress,
 		})
 	})
 }

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"example.com/pong/.karty/assets"
-	"example.com/pong/.karty/engine"
+	"example.com/runtime-probe/.karty/assets"
+	"example.com/runtime-probe/.karty/engine"
 )
 
 // Game represents the main game structure, containing its general state and entities.

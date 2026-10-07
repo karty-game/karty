@@ -129,3 +129,37 @@ func TestYAMLParsingRejectsAmbiguousAndUnboundedInputs(t *testing.T) {
 		})
 	}
 }
+
+func TestDirectBandSchemaTextureChoicesAndLegacyRejection(t *testing.T) {
+	t.Parallel()
+
+	rooms, _, _ := strings.Cut(tinyWorld, "prefabs:")
+	input := strings.Replace(rooms, "version: 6", "version: 7", 1)
+
+	input = strings.Replace(
+		input,
+		"    ceiling:",
+		"    wall_bands: {top: {texture: trim, height: 0.5}, bottom: {texture: surface, height: 0.25}}\n    ceiling:",
+		1,
+	)
+	for name, fixture := range map[string]string{
+		"valid":           input,
+		"unknown texture": strings.Replace(input, "texture: trim", "texture: missing", 1),
+		"null band":       strings.Replace(input, "top: {texture: trim, height: 0.5}", "top: null", 1),
+		"null enabled":    strings.Replace(input, "height: 0.5", "height: 0.5, enabled: null", 1),
+		"null bands":      strings.Replace(input, "wall_bands: {top: {texture: trim, height: 0.5}, bottom: {texture: surface, height: 0.25}}", "wall_bands: null", 1),
+		"legacy frame":    strings.Replace(input, "top: {texture: trim, height: 0.5}", "frame: trim", 1),
+		"vertical":        strings.Replace(input, "top: {texture: trim, height: 0.5}", "vertical: {width: 0.2}", 1),
+		"old source":      strings.Replace(input, "version: 7", "version: 6", 1),
+	} {
+		value, err := schema.Parse([]byte(fixture))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = schema.Validate(value, schema.Level(value, []string{"surface", "trim"}))
+		if (name == "valid") != (err == nil) {
+			t.Fatalf("%s: %v", name, err)
+		}
+	}
+}

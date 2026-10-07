@@ -9,13 +9,15 @@ import (
 	"testing"
 
 	"github.com/karty-game/karty-ui/codegen"
-	"github.com/karty-game/karty-ui/compiler"
+	uicompiler "github.com/karty-game/karty-ui/compiler"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
-func currentSamples() []string { return []string{"pong", "ui-demo", "media-lab", "world-camera"} }
+func currentSamples() []string {
+	return []string{"ui-demo", "media-lab", "world-camera"}
+}
 
 // Read source and metadata only; never build a sample's assets or run its baker.
 func TestSampleUISources(t *testing.T) {
@@ -34,7 +36,13 @@ func checkSampleUISources(t *testing.T, name string) {
 	t.Helper()
 
 	directory, config, views := sampleUISources(t, name)
-	if config.SDK.Version != release.SampleSDK {
+	expected := release.SampleSDK
+
+	if name == "world-camera" {
+		expected = release.WorldCameraSDK
+	}
+
+	if config.SDK.Version != expected {
 		t.Fatal("sample is not pinned to current SDK")
 	}
 

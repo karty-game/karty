@@ -15,7 +15,7 @@ func sampleFixture(t *testing.T) (string, string) {
 		t.Fatal(err)
 	}
 
-	for _, name := range []string{"index.html", "pong/index.html", "ui-demo/index.html", "media-lab/index.html"} {
+	for _, name := range []string{"index.html", "ui-demo/index.html", "media-lab/index.html"} {
 		writeFixture(t, filepath.Join(source, filepath.FromSlash(name)), "sample")
 	}
 
@@ -44,7 +44,7 @@ func TestAssembleIsolatesPreviewsAndRemovesClosedPRs(t *testing.T) {
 		}
 	}
 
-	writeFixture(t, filepath.Join(source, "pong", "index.html"), "updated")
+	writeFixture(t, filepath.Join(source, "ui-demo", "index.html"), "updated")
 	writeFixture(t, filepath.Join(source, "world-camera", "index.html"), "camera")
 
 	if err := assemble(state, source, "pr/1", false, nil); err != nil {
@@ -52,7 +52,7 @@ func TestAssembleIsolatesPreviewsAndRemovesClosedPRs(t *testing.T) {
 	}
 
 	for destination, expected := range map[string]string{"main": "sample", "pr/2": "sample", "pr/1": "updated"} {
-		data, err := os.ReadFile(filepath.Join(state, filepath.FromSlash(destination), "pong", "index.html"))
+		data, err := os.ReadFile(filepath.Join(state, filepath.FromSlash(destination), "ui-demo", "index.html"))
 		if err != nil || string(data) != expected {
 			t.Fatalf("%s preview changed: %s, %v", destination, data, err)
 		}
@@ -91,21 +91,21 @@ func TestAssembleRejectsArtifactsBeforeReplacingPreview(t *testing.T) {
 
 			switch invalid {
 			case "symlink":
-				if err := os.Symlink(filepath.Join(state, "index.html"), filepath.Join(source, "pong", "leak")); err != nil {
+				if err := os.Symlink(filepath.Join(state, "index.html"), filepath.Join(source, "ui-demo", "leak")); err != nil {
 					t.Fatal(err)
 				}
 			case "metadata":
-				writeFixture(t, filepath.Join(source, "pong", ".git", "config"), "metadata")
+				writeFixture(t, filepath.Join(source, "ui-demo", ".git", "config"), "metadata")
 			case "unexpected":
 				writeFixture(t, filepath.Join(source, "CNAME"), "unexpected.example")
 			case "missing":
-				if err := os.Remove(filepath.Join(source, "pong", "index.html")); err != nil {
+				if err := os.Remove(filepath.Join(source, "ui-demo", "index.html")); err != nil {
 					t.Fatal(err)
 				}
 			case "camera":
 				writeFixture(t, filepath.Join(source, "world-camera", "fixture.wasm"), "incomplete")
 			case "oversize":
-				path := filepath.Join(source, "pong", "fixture.wasm")
+				path := filepath.Join(source, "ui-demo", "fixture.wasm")
 				writeFixture(t, path, "")
 
 				if err := os.Truncate(path, maxSampleBytes+1); err != nil {
@@ -117,7 +117,7 @@ func TestAssembleRejectsArtifactsBeforeReplacingPreview(t *testing.T) {
 				t.Fatal("invalid artifact accepted")
 			}
 
-			if err := requireFile(filepath.Join(state, "pr", "1", "pong", "index.html")); err != nil {
+			if err := requireFile(filepath.Join(state, "pr", "1", "ui-demo", "index.html")); err != nil {
 				t.Fatal("working preview replaced before validation", err)
 			}
 		})

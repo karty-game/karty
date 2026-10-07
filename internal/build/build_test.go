@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -18,14 +19,14 @@ import (
 
 func TestRunBuildsSelfDescribingClient(t *testing.T) {
 	t.Parallel()
-	directory := filepath.Join(t.TempDir(), "pong")
+	directory := filepath.Join(t.TempDir(), "test-game")
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	createErr := scaffold.CreateGame(directory, "pong", manifest)
+	createErr := scaffold.CreateGame(directory, "test-game", manifest)
 	if createErr != nil {
 		t.Fatalf("CreateGame() error = %v", createErr)
 	}
@@ -40,9 +41,22 @@ func TestRunBuildsSelfDescribingClient(t *testing.T) {
 
 	tinyGo, wasmTools := buildTools(t)
 
-	runErr := build.RunWithOptions(context.Background(), directory, build.Options{TinyGo: tinyGo, WasmTools: wasmTools})
+	var activities []string
+
+	runErr := build.RunWithOptions(context.Background(), directory, build.Options{
+		TinyGo: tinyGo, WasmTools: wasmTools,
+		Progress: func(label string) { activities = append(activities, label) },
+	})
 	if runErr != nil {
 		t.Fatalf("Run() error = %v", runErr)
+	}
+
+	if !slices.Equal(activities, []string{
+		"Reading project", "Validating levels", "Loading SDK", "Preparing tools",
+		"Generating game code", "Processing images and audio", "Building levels",
+		"Compiling Go game", "Packaging game", "Preparing runtime",
+	}) {
+		t.Fatalf("build activities: %v", activities)
 	}
 
 	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/assets/textures.go", "dist/raw/game.kart", "dist/raw/asset-report.json"} {
@@ -60,14 +74,14 @@ func TestRunBuildsSelfDescribingClient(t *testing.T) {
 func TestRunBuildsAndStagesLevelCartridges(t *testing.T) {
 	t.Parallel()
 
-	directory := filepath.Join(t.TempDir(), "pong")
+	directory := filepath.Join(t.TempDir(), "test-game")
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := scaffold.CreateGame(directory, "pong", manifest); err != nil {
+	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
 		t.Fatal(err)
 	}
 
@@ -203,14 +217,14 @@ func assertTextureFileCount(t *testing.T, distribution string, expected int) {
 
 func TestRunStagesNativeTarget(t *testing.T) {
 	t.Parallel()
-	directory := filepath.Join(t.TempDir(), "pong")
+	directory := filepath.Join(t.TempDir(), "test-game")
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := scaffold.CreateGame(directory, "pong", manifest); err != nil {
+	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
 		t.Fatal(err)
 	}
 
@@ -240,14 +254,14 @@ func TestRunStagesNativeTarget(t *testing.T) {
 
 func TestRunStagesWebTarget(t *testing.T) {
 	t.Parallel()
-	directory := filepath.Join(t.TempDir(), "pong")
+	directory := filepath.Join(t.TempDir(), "test-game")
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := scaffold.CreateGame(directory, "pong", manifest); err != nil {
+	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
 		t.Fatal(err)
 	}
 
@@ -355,21 +369,21 @@ func TestRunStagesWebTarget(t *testing.T) {
 func TestRunRemovesStaleStrippedTextureOutput(t *testing.T) {
 	t.Parallel()
 
-	directory := filepath.Join(t.TempDir(), "pong")
+	directory := filepath.Join(t.TempDir(), "test-game")
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := scaffold.CreateGame(directory, "pong", manifest); err != nil {
+	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
 		t.Fatal(err)
 	}
 
 	addUnusedTexture(t, directory)
 
 	dynamicSource := `package main
-import "example.com/pong/.karty/engine"
+import "example.com/test-game/.karty/engine"
 var retainedTexture = engine.DynamicTexture("sprites.unused")
 `
 	dynamicPath := filepath.Join(directory, "src", "dynamic.go")
@@ -401,14 +415,14 @@ var retainedTexture = engine.DynamicTexture("sprites.unused")
 func TestRunRetainsExplicitlyKeptTexture(t *testing.T) {
 	t.Parallel()
 
-	directory := filepath.Join(t.TempDir(), "pong")
+	directory := filepath.Join(t.TempDir(), "test-game")
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := scaffold.CreateGame(directory, "pong", manifest); err != nil {
+	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
 		t.Fatal(err)
 	}
 

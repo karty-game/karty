@@ -6,7 +6,8 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import { extname, normalize, relative, resolve } from "node:path";
 import { chromium } from "playwright";
 
-const directory = resolve(process.argv[2] || "samples/pong/dist/web");
+assert.ok(process.argv[2], "Usage: browser.test.mjs <staged-web-directory>");
+const directory = resolve(process.argv[2]);
 await stat(resolve(directory, "index.html"));
 const levelArtifacts = await readdir(resolve(directory, "content"));
 
@@ -85,12 +86,14 @@ async function checkRuntime(prefix, options = {}) {
       `browser runtime did not start (state=${state}, detail=${detail}, pageErrors=${errors.join("; ")}): ${error.message}`,
     );
   }
-  const firstFrame = BigInt(await page.locator("html").getAttribute("data-karty-frame"));
+  const firstFrame = BigInt(
+    await page.evaluate(() => globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame),
+  );
   await page.waitForFunction(
-    (frame) => BigInt(document.documentElement.dataset.kartyFrame) > BigInt(frame),
+    (frame) => BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) > BigInt(frame),
     String(firstFrame),
   );
-  assert.equal(await page.title(), "pong - Powered by Karty");
+  assert.equal(await page.title(), "runtime-probe - Powered by Karty");
   assert.equal(await page.locator("#loading").isHidden(), true);
 
   const canvas = page.locator("canvas");

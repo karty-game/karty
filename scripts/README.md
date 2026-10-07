@@ -8,6 +8,7 @@
 
 Sample-site building and validated Pages assembly live in `cmd/karty-samples`.
 The tracked sample artwork generator lives in `cmd/world-camera-materials`.
+
 Native Materialize builds belong to the public `karty-tools` repository; the CLI
 consumes released binaries. The former Python scaffolding and duplicate candidate
 lighting preview are retired.

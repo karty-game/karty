@@ -31,6 +31,12 @@ SDK cache root. Existing versions cannot be replaced with different bytes.
 Cached contents are rehashed on use; corruption is an error, not a fallback.
 Do not track SDK ZIPs or signing keys in this repository.
 
+Hosts are downloaded separately into `~/.karty/hosts/VERSION/PLATFORM`. Installing
+an SDK does not refresh this cache. Builds verify cached native hosts, web hosts
+and `wasm_exec.js` against the selected SDK's checksum before reuse. A mismatch
+stops the build and names the host directory to remove before retrying. Use
+`--host` for an intentional local engine build.
+
 Local candidates use `karty sdk install --archive FILE --sha256 HASH VERSION`.
 The supplied checksum is their trust input, not a release-signature claim.
 

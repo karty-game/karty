@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	worldMaterialProcessor = "world-material-atlas@3"
+	worldMaterialProcessor = "world-material-atlas@4"
 	materialPixelBytes     = 4
 	materialOpaque         = 255
 	materialMidpoint       = 127
@@ -52,34 +52,7 @@ func materializeArguments(inputPath, directory string) []string {
 
 // WorldMaterialIDs uses the public compiled world's stable first-surface order.
 func WorldMaterialIDs(document world.Document) []uint32 {
-	var ids []uint32
-
-	seen := make(map[uint32]bool)
-	add := func(id uint32) {
-		if !seen[id] {
-			seen[id] = true
-			ids = append(ids, id)
-		}
-	}
-
-	for _, sector := range document.Sectors {
-		add(sector.FloorMaterial)
-		add(sector.CeilingMaterial)
-
-		for _, wall := range sector.Walls {
-			add(wall.Material)
-		}
-	}
-
-	if document.StaticSolids != nil {
-		for _, solid := range document.StaticSolids.Items {
-			add(solid.SideMaterial)
-			add(solid.TopMaterial)
-			add(solid.BottomMaterial)
-		}
-	}
-
-	return ids
+	return world.MaterialIDs(&document)
 }
 
 // packWorldAlbedo preserves authored pixel edges with nearest sampling and
@@ -131,7 +104,7 @@ func packWorldAlbedo(ctx context.Context, layout worldmaterial.Layout, textures 
 		var source *image.NRGBA
 
 		if rect.MaterialID != 0 {
-			decoded, err := decodeMaterialAlbedo(textures[rect.MaterialID])
+			decoded, err := decodeMaterialLayer(textures[rect.MaterialID], rect.Coverage)
 			if err != nil {
 				return nil, fmt.Errorf("material %d: %w", rect.MaterialID, err)
 			}
@@ -166,14 +139,14 @@ func sampleRepeatingMaterial(source *image.NRGBA, column, row, width, height int
 	return source.NRGBAAt(column*source.Bounds().Dx()/width, row*source.Bounds().Dy()/height)
 }
 
-func decodeMaterialAlbedo(encoded []byte) (*image.NRGBA, error) {
+func decodeMaterialLayer(encoded []byte, coverage string) (*image.NRGBA, error) {
 	_, decoded, err := qoi.Decode(encoded)
 	if err != nil {
 		return nil, err
 	}
 
 	for offset := materialPixelBytes - 1; offset < len(decoded.Pix); offset += materialPixelBytes {
-		if decoded.Pix[offset] != materialOpaque {
+		if coverage != worldmaterial.CoverageMasked && decoded.Pix[offset] != materialOpaque {
 			return nil, worldmaterial.ErrAtlas
 		}
 	}
@@ -191,7 +164,8 @@ func ProcessWorldMaterials(ctx context.Context, projectRoot string, manifest sdk
 
 func processWorldMaterials(ctx context.Context, projectRoot string, manifest sdk.Manifest,
 	document world.Document, textures map[uint32][]byte, execute materializeExecutor) (worldmaterial.Pair, Artifact, error) {
-	if execute == nil || !slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1) {
+	if execute == nil || (!slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1) &&
+		!slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV2)) {
 		return worldmaterial.Pair{}, Artifact{}, fmt.Errorf(
 			"SDK %s does not enable %s: %w", manifest.Version, worldmaterial.Feature, ErrCacheRecipe)
 	}
@@ -213,6 +187,17 @@ func processWorldMaterials(ctx context.Context, projectRoot string, manifest sdk
 	}
 
 	layout, err := worldmaterial.NewLayout(WorldMaterialIDs(document))
+	if document.MaterialLayers != nil {
+		layout, err = worldmaterial.NewLayoutV2(WorldMaterialIDs(document))
+		if err == nil {
+			for index := range layout.Materials {
+				if isMaskedFrameMaterial(document, layout.Materials[index].MaterialID) {
+					layout.Materials[index].Coverage = worldmaterial.CoverageMasked
+				}
+			}
+		}
+	}
+
 	if err != nil {
 		return worldmaterial.Pair{}, Artifact{}, err
 	}
@@ -240,7 +225,16 @@ func processWorldMaterials(ctx context.Context, projectRoot string, manifest sdk
 
 		return input.Write(encoded)
 	})
-	if err := png.Encode(writer, albedo); err != nil {
+
+	generation, err := materialGenerationInput(ctx, layout, albedo)
+	if err != nil {
+		return worldmaterial.Pair{}, Artifact{}, err
+	}
+
+	secondaryOnly := secondaryOnlyMaterials(document)
+	neutralizeSecondaryTiles(layout, generation, secondaryOnly, color.NRGBA{128, 128, 128, 255})
+
+	if err := png.Encode(writer, generation); err != nil {
 		return worldmaterial.Pair{}, Artifact{}, err
 	}
 
@@ -249,14 +243,22 @@ func processWorldMaterials(ctx context.Context, projectRoot string, manifest sdk
 		return worldmaterial.Pair{}, Artifact{}, err
 	}
 
-	recipe, err := worldMaterialRecipe(manifest, layout, textures, platform, pin.SHA256, materializeArguments("atlas.png", "."))
+	recipe, err := worldMaterialRecipe(
+		manifest,
+		layout,
+		textures,
+		platform,
+		pin.SHA256,
+		materializeArguments("atlas.png", "."),
+		secondaryOnly,
+	)
 	if err != nil {
 		return worldmaterial.Pair{}, Artifact{}, err
 	}
 
 	artifact, err := NewProjectCache(projectRoot).Resolve(ctx, snapshot, recipe,
 		func(ctx context.Context, source SourceSnapshot, _ Recipe) (Processed, error) {
-			return generateWorldMaterials(ctx, manifest, source, layout, albedo, execute)
+			return generateWorldMaterials(ctx, manifest, source, layout, albedo, secondaryOnly, execute)
 		})
 	if err != nil {
 		return worldmaterial.Pair{}, Artifact{}, err
@@ -268,7 +270,7 @@ func processWorldMaterials(ctx context.Context, projectRoot string, manifest sdk
 }
 
 func generateWorldMaterials(ctx context.Context, manifest sdk.Manifest, source SourceSnapshot,
-	layout worldmaterial.Layout, albedo *image.NRGBA, execute materializeExecutor) (Processed, error) {
+	layout worldmaterial.Layout, albedo *image.NRGBA, secondaryOnly map[uint32]bool, execute materializeExecutor) (Processed, error) {
 	ctx, cancel := context.WithTimeout(ctx, worldMaterialTimeout)
 	defer cancel()
 
@@ -291,6 +293,22 @@ func generateWorldMaterials(ctx context.Context, manifest sdk.Manifest, source S
 	for _, name := range []string{"normal", "height", "ao"} {
 		if err := mergeMaterialMap(ctx, directory, name, data); err != nil {
 			return Processed{}, err
+		}
+	}
+
+	neutralizeSecondaryTiles(layout, data, secondaryOnly, color.NRGBA{128, 128, 0, 255})
+
+	for _, rect := range layout.Materials {
+		if rect.Coverage != worldmaterial.CoverageMasked {
+			continue
+		}
+
+		for y := range rect.Height {
+			for x := range rect.Width {
+				if albedo.NRGBAAt(rect.X+x, rect.Y+y).A == 0 {
+					data.SetNRGBA(rect.X+x, rect.Y+y, color.NRGBA{128, 128, 0, 255})
+				}
+			}
 		}
 	}
 
@@ -440,7 +458,7 @@ func loadWorldMaterialPair(ctx context.Context, artifact Artifact, layout worldm
 }
 
 func worldMaterialRecipe(manifest sdk.Manifest, layout worldmaterial.Layout, textures map[uint32][]byte,
-	platform, checksum string, arguments []string) (Recipe, error) {
+	platform, checksum string, arguments []string, colorOnly ...map[uint32]bool) (Recipe, error) {
 	// Hash the complete referenced QOI, not only sampled atlas pixels. Changing
 	// an unsampled source texel still invalidates the asset recipe.
 	sources := sha256.New()
@@ -463,11 +481,21 @@ func worldMaterialRecipe(manifest sdk.Manifest, layout worldmaterial.Layout, tex
 		return Recipe{}, err
 	}
 
+	var roles []uint32
+
+	if len(colorOnly) > 0 {
+		for _, rect := range layout.Materials {
+			if colorOnly[0][rect.MaterialID] {
+				roles = append(roles, rect.MaterialID)
+			}
+		}
+	}
+
 	layoutDigest := sha256.Sum256(layoutJSON)
 
 	return NewRecipe("world-material", worldMaterialProcessor, []Revision{
-		{Name: "packer", Version: "4"}, {Name: "merge", Version: "1"},
-		{Name: "material-mips", Version: "1"},
+		{Name: "packer", Version: "5"}, {Name: "merge", Version: "1"},
+		{Name: "material-mips", Version: "2"}, {Name: "coverage-extension", Version: "1"},
 		{Name: "materialize", Version: manifest.Tools.MaterializeRevision},
 		{Name: "tool-version", Version: manifest.Tools.Materialize},
 		{Name: "archive", Version: checksum}, {Name: "qoi", Version: "1"},
@@ -476,7 +504,8 @@ func worldMaterialRecipe(manifest sdk.Manifest, layout worldmaterial.Layout, tex
 		Sources   string   `json:"sources"`
 		Platform  string   `json:"platform"`
 		Arguments []string `json:"arguments"`
-	}{hex.EncodeToString(layoutDigest[:]), hex.EncodeToString(sources.Sum(nil)), platform, arguments})
+		ColorOnly []uint32 `json:"colorOnly,omitempty"`
+	}{hex.EncodeToString(layoutDigest[:]), hex.EncodeToString(sources.Sum(nil)), platform, arguments, roles})
 }
 
 func readBoundedMaterialFile(path string, maximum int64) ([]byte, error) {

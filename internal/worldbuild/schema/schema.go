@@ -196,6 +196,13 @@ func (g *grammar) constraints() {
 		"scale",
 		&jsonschema.Schema{AnyOf: []*jsonschema.Schema{vector("xy", worldsource.MinUVScale, worldsource.MaxCoordinate), {Type: "null"}}},
 	)
+	set("SecondarySettings", "strength", number(0, 1))
+	g.nonNullableLayers()
+
+	for _, field := range []string{"height", "repeat_width"} {
+		set("HorizontalBandSettings", field, number(worldsource.MinUVScale, worldsource.MaxCoordinate))
+	}
+
 	set("Lighting", "version", &jsonschema.Schema{Type: "integer", Enum: []any{world.LightingVersion}})
 	set("Lighting", "ambient", vector("xyz", 0, 1))
 
@@ -269,6 +276,10 @@ func (g *grammar) versionRules() {
 				"boundary": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"uv": {Type: "null"}}}},
 			}}},
 		}},
+		{worldsource.MaterialsVersion, map[string]*jsonschema.Schema{"rooms": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
+			"wall_bands": deny(), "floor_secondary": deny(), "ceiling_secondary": deny(), "wall_secondary": deny(),
+			"boundary": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"bands": deny(), "secondary": deny()}}},
+		}}}}},
 		{worldsource.SolidsVersion, map[string]*jsonschema.Schema{"solids": deny(), "contents": deny()}},
 	} {
 		fields := rule.fields
@@ -297,5 +308,19 @@ func (g *grammar) versionRules() {
 
 	g.definitions["Solid"].Properties["side_uv"].AllOf = []*jsonschema.Schema{
 		{Properties: map[string]*jsonschema.Schema{"mode": choice("", "planar"), "anchor": choice("", "world")}},
+	}
+}
+
+func (g *grammar) nonNullableLayers() {
+	for _, scope := range []string{"Room", "Edge", "BandSettings", "HorizontalBandSettings", "SecondarySettings"} {
+		for name, property := range g.definitions[scope].Properties {
+			if (scope == "Room" && (name == "wall_bands" || strings.HasSuffix(name, "_secondary"))) ||
+				(scope == "Edge" && (name == "bands" || name == "secondary")) ||
+				scope == "BandSettings" || scope == "HorizontalBandSettings" || scope == "SecondarySettings" {
+				if property.Then != nil {
+					g.definitions[scope].Properties[name] = property.Then
+				}
+			}
+		}
 	}
 }

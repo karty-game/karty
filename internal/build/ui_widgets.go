@@ -12,7 +12,7 @@ import (
 const currentUISchema uint32 = 11
 
 func sdkUISchema(manifest sdk.Manifest) uint32 {
-	if manifest.API.Version == "0.0.7" {
+	if manifest.API.Version == "0.0.7" || manifest.API.Version == "0.0.8" {
 		return currentUISchema
 	}
 

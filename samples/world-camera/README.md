@@ -32,3 +32,16 @@ prepare the lighting and open the preview:
 
 The lighting is saved for your next launch. Prepare it again after changing
 the world, its materials or its static lights.
+
+## Edit the corridor trim
+
+The galleries use separate [top](levels/showcase/wall-top.png) and
+[bottom](levels/showcase/wall-bottom.png) brick strips, declared as ordinary
+textures in [level.toml](levels/showcase/level.toml). Room `wall_bands` settings
+in [world.yaml](levels/showcase/world.yaml) select each texture, height and
+horizontal repeat distance; edge `bands` overrides those defaults.
+
+The 128×32 images cover 2×0.5 metres, matching the main wall's 64 pixels per
+metre and 0.5×0.25-metre bricks. Their darker colour and alpha masks remove
+whole bricks along the inner edge. Bands follow the sloping floors and ceilings.
+Change the artwork or YAML and rebuild to update them.

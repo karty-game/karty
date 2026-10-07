@@ -1,0 +1,16 @@
+[project]
+name = "hangar"
+compiler = "tinygo"
+
+[project.resolution]
+width = 1280
+height = 720
+
+[project.camera]
+fov_y_degrees = 68
+near = 0.05
+far = 120
+ortho_height = 50
+
+[sdk]
+version = "0.0.10"

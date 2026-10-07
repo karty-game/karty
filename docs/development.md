@@ -44,6 +44,21 @@ Prebuilt CLI/host users do not need a runtime flag.
 
 ## Customer integration and overrides
 
+`karty dev` reports the active build stage, including asset processing, level
+building and Go compilation. It watches `.kui` edits along with Go, level and
+asset sources. TinyGo still runs whole-program optimization on rebuilds;
+the ordinary build settings also apply in dev. A warm compiler cache avoids
+some setup work but does not eliminate optimization and linking.
+
+SDK 0.0.9's generated hooks decode level metadata with `encoding/json`, bringing
+its reflection code into even small clients. Source-only profiling with the same
+TinyGo 0.42 toolchain measured a warm empty client at about 0.9 seconds on SDK
+0.0.8 and 9.2 seconds on SDK 0.0.9; adding the metadata decoder alone to the
+0.0.8 fixture reproduced the overhead. This excludes assets, lighting and browsers.
+The engine's SDK 0.0.10 candidate removes that dependency with a bounded metadata
+identity reader; projects get the fix when they upgrade after publication.
+Published 0.0.9 bindings remain immutable.
+
 Install the selected SDK with `karty sdk install VERSION`; `KARTY_TEST_SDK=VERSION`
 overrides the default integration selection. Run `mise run install-browser`, then
 `mise run check-integration`. Linux needs Xvfb and graphics libraries. The suite
@@ -132,7 +147,9 @@ These checks run in the normal Go test suite.
 
 The publisher disables Git hooks only for its generated-site commit and push.
 That worktree shares source repository hooks but contains static previews rather
-than a mise/hk project. Source commits retain the pinned hk checks.
+than a mise/hk project. `core.hooksPath` disables script hooks; command-scoped
+`hook.pre-commit.enabled=false` and `hook.pre-push.enabled=false` also disable
+Git 2.54+ configured hooks used by hk. Source commits retain the pinned checks.
 
 The sample artwork generator lives in `cmd/world-camera-materials`; use the normal
 world-camera sample for lighting and renderer checks. Native Materialize builds
@@ -140,3 +157,14 @@ and releases belong to
 [karty-tools](https://github.com/karty-game/karty-tools); the CLI installs SDK-pinned
 released binaries.
 The remaining scripts run customer integration, native smoke and browser video checks.
+
+## Browser bridge diagnostics
+
+The launcher reuses cartridge memory views and its text decoder. Views are
+refreshed whenever `memory.buffer` changes, including when a cartridge grows
+memory during an update before submitting commands.
+
+The current frame is available as the BigInt `globalThis.kartyFrame`. Routine
+updates do not write a DOM attribute. Diagnostic tools that need the previous
+`data-karty-frame` mirror can set `globalThis.kartyFrameDOMDiagnostics = true`;
+browser checks support both counters to remain compatible with older launchers.

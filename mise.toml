@@ -95,7 +95,8 @@ run = "go run ./cmd/world-camera-materials"
 run = "hk check --all"
 
 [tasks.lint-go]
-run = "golangci-lint run ./..."
+description = "Lint CLI source packages, excluding ignored build output"
+run = "golangci-lint run ./cmd/... ./internal/..."
 
 [tasks.check-integration]
 run = "bash scripts/check-integration.sh"

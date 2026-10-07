@@ -61,16 +61,21 @@ func main() {
 func generate(only string) error {
 	generated := false
 
-	for _, name := range []string{"floor", "wall", "ceiling", "z-court-marble", "z-court-mosaic", "z-court-paving", "z-court-plaster", "z-court-coffer", "z-court-sky", "z-court-water"} {
+	for _, name := range []string{"wall-top", "wall-bottom", "floor", "wall", "ceiling", "z-court-marble", "z-court-mosaic", "z-court-paving", "z-court-plaster", "z-court-coffer", "z-court-sky", "z-court-water"} {
 		if only != "" && name != only {
 			continue
 		}
 
 		generated = true
 
-		texture := image.NewNRGBA(image.Rect(0, 0, textureSize, textureSize))
-		for y := range textureSize {
-			for x := range textureSize {
+		width, height := textureSize, textureSize
+		if name == "wall-top" || name == "wall-bottom" {
+			width, height = 128, 32
+		}
+
+		texture := image.NewNRGBA(image.Rect(0, 0, width, height))
+		for y := range height {
+			for x := range width {
 				texture.SetNRGBA(x, y, pixel(name, x, y))
 			}
 		}
@@ -105,6 +110,8 @@ func pixel(name string, column, row int) color.NRGBA {
 	grain := uint8((column*grainColumnWeight + row*grainRowWeight) % grainLevels)
 
 	switch name {
+	case "wall-top", "wall-bottom":
+		return bandPixel(name, column, row)
 	case "z-court-marble", "z-court-mosaic", "z-court-paving", "z-court-plaster", "z-court-coffer", "z-court-sky", "z-court-water":
 		return courtPixel(name, column, row, grain)
 	default:
@@ -286,4 +293,29 @@ func galleryPixel(name string, column, row int, grain uint8) color.NRGBA {
 
 func grainTint(red, green, blue, grain uint8) color.NRGBA {
 	return color.NRGBA{R: red + grain, G: green + grain, B: blue + grain, A: opaqueAlpha}
+}
+
+// A 128x32 strip mapped over 2x0.5 meters matches the main wall's texel
+// density and 0.5x0.25-meter bricks. Coverage removes whole inner-edge bricks;
+// horizontal repetition keeps the outer course continuous.
+//
+//nolint:mnd // Pixel constants describe the authored brick artwork.
+func bandPixel(name string, column, row int) color.NRGBA {
+	depthRow := row
+	if name == "wall-bottom" {
+		depthRow = 31 - row
+	}
+	// Paired edge columns make the alpha pattern tile without a border jump.
+	depths := [...]int{16, 32, 32, 16}
+	if depthRow >= depths[column/panelSize] {
+		return color.NRGBA{}
+	}
+
+	grain := uint8((column*grainColumnWeight + row*grainRowWeight) % grainLevels)
+	result := galleryPixel("wall", column, row, grain)
+	result.R -= 20
+	result.G -= 12
+	result.B -= 8
+
+	return result
 }

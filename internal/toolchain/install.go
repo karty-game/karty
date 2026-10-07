@@ -103,6 +103,10 @@ func InstallTinyGo(ctx context.Context, options InstallTinyGoOptions) (string, e
 }
 
 func kartyHome(cacheDir string) (string, error) {
+	if cacheDir == "" {
+		cacheDir = os.Getenv("KARTY_HOME")
+	}
+
 	if cacheDir != "" {
 		return cacheDir, nil
 	}

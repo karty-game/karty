@@ -3,11 +3,13 @@ package toolchain
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -57,8 +59,66 @@ func TestInstallDistributionHostUsesDestinationPlatform(t *testing.T) {
 	}
 
 	asset.SHA256 = fmt.Sprintf("%064x", 0)
+	if _, err := installHost(t.Context(), cache, "0.0.4", "windows-arm64", asset); !errors.Is(err, errHostChecksum) {
+		t.Fatalf("cached host with a different pinned checksum was accepted: %v", err)
+	}
+
 	if _, err := installHost(context.Background(), t.TempDir(), "0.0.4", "windows-arm64", asset); err == nil {
 		t.Fatal("incorrect checksum accepted")
+	}
+}
+
+//nolint:paralleltest // Subtests share KARTY_HOME and a download counter.
+func TestEnsureHostVerifiesCachedArtifacts(t *testing.T) {
+	t.Setenv("KARTY_HOME", t.TempDir())
+
+	data := []byte("SDK-pinned host artifact")
+
+	var requests atomic.Int64
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+
+		_, _ = w.Write(data)
+	}))
+	defer server.Close()
+
+	asset := sdk.ToolArtifact{URL: server.URL, SHA256: fmt.Sprintf("%x", sha256.Sum256(data))}
+
+	var manifest sdk.Manifest
+
+	manifest.Version = "0.0.10"
+	manifest.Host.Version = "0.0.10"
+	manifest.Artifacts.Host.Native = map[string]sdk.ToolArtifact{"darwin-arm64": asset}
+	manifest.Artifacts.Host.Web = asset
+	manifest.Artifacts.Host.WebRuntime = asset
+
+	for _, target := range []string{"darwin-arm64", "web", "web-runtime"} {
+		t.Run(target, func(t *testing.T) {
+			path, err := EnsureHost(t.Context(), manifest, target)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			before := requests.Load()
+
+			if _, err := EnsureHost(t.Context(), manifest, target); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := os.WriteFile(path, []byte("outdated pre-release host"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+
+			if _, err := EnsureHost(t.Context(), manifest, target); !errors.Is(err, errHostChecksum) ||
+				!strings.Contains(err.Error(), filepath.Dir(path)) {
+				t.Fatalf("expected an actionable checksum error for cached %s: %v", target, err)
+			}
+
+			if requests.Load() != before {
+				t.Fatal("warm cache validation unexpectedly downloaded a host")
+			}
+		})
 	}
 }
 

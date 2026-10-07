@@ -88,6 +88,9 @@ for exact identities, bounds and versioning.
 ## Import a completed prebake
 
 SDK 0.0.8 additionally advertises `world/lightmaps-prebaked@1`.
+
+`karty bake` checks this advertised capability rather than requiring that exact
+SDK version. Later SDKs that retain it can use the same offline bake workflow.
 Export a completed direct RNM atlas using a host preview/tool, then add both
 explicit paths to the same `[lightmap]` table:
 

@@ -1,0 +1,3700 @@
+# Original Hangar environment.
+# All connected wall spans are open; door mechanisms are deferred.
+version: 6
+uv: { mode: triplanar, anchor: world, scale: { x: 2, y: 2 } }
+rooms:
+  - id: arrival
+    floor: { c: 0.00 }
+    ceiling: { c: 4.80 }
+    floor_material: floor
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 0.00, y: -6.00 }, end: { x: 2.00, y: -8.00 }, material: olive }
+      - { id: edge-1, start: { x: 2.00, y: -8.00 }, end: { x: 10.00, y: -8.00 }, material: olive }
+      - { id: edge-2, start: { x: 10.00, y: -8.00 }, end: { x: 12.00, y: -6.00 }, material: olive }
+      - { id: edge-3, start: { x: 12.00, y: -6.00 }, end: { x: 12.00, y: -3.00 }, material: olive }
+      - { id: edge-4, start: { x: 12.00, y: -3.00 }, end: { x: 12.00, y: 0.00 }, material: olive }
+      - { id: edge-5, start: { x: 12.00, y: 0.00 }, end: { x: 12.00, y: 3.00 }, material: olive }
+      - { id: edge-6, start: { x: 12.00, y: 3.00 }, end: { x: 12.00, y: 7.00 }, material: olive }
+      - { id: edge-7, start: { x: 12.00, y: 7.00 }, end: { x: 12.00, y: 8.00 }, material: olive }
+      - { id: edge-8, start: { x: 12.00, y: 8.00 }, end: { x: 10.00, y: 10.00 }, material: olive }
+      - { id: edge-9, start: { x: 10.00, y: 10.00 }, end: { x: 8.00, y: 10.00 }, material: olive }
+      - { id: edge-10, start: { x: 8.00, y: 10.00 }, end: { x: 4.00, y: 10.00 }, material: olive }
+      - { id: edge-11, start: { x: 4.00, y: 10.00 }, end: { x: 0.00, y: 10.00 }, material: olive }
+      - { id: edge-12, start: { x: 0.00, y: 10.00 }, end: { x: 0.00, y: 9.00 }, material: olive }
+      - { id: edge-13, start: { x: 0.00, y: 9.00 }, end: { x: 0.00, y: 6.00 }, material: olive }
+      - { id: edge-14, start: { x: 0.00, y: 6.00 }, end: { x: 0.00, y: 4.00 }, material: olive }
+      - { id: edge-15, start: { x: 0.00, y: 4.00 }, end: { x: 0.00, y: 1.00 }, material: olive }
+      - { id: edge-16, start: { x: 0.00, y: 1.00 }, end: { x: 0.00, y: -1.00 }, material: olive }
+      - { id: edge-17, start: { x: 0.00, y: -1.00 }, end: { x: 0.00, y: -4.00 }, material: olive }
+      - { id: edge-18, start: { x: 0.00, y: -4.00 }, end: { x: 0.00, y: -6.00 }, material: olive }
+  - id: threshold
+    floor: { c: 0.20 }
+    ceiling: { c: 2.80 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 4.00, y: 10.00 }, end: { x: 8.00, y: 10.00 }, material: ribbed }
+      - { id: edge-1, start: { x: 8.00, y: 10.00 }, end: { x: 9.00, y: 12.00 }, material: ribbed }
+      - { id: edge-2, start: { x: 9.00, y: 12.00 }, end: { x: 8.00, y: 14.00 }, material: ribbed }
+      - { id: edge-3, start: { x: 8.00, y: 14.00 }, end: { x: 4.00, y: 14.00 }, material: ribbed }
+      - { id: edge-4, start: { x: 4.00, y: 14.00 }, end: { x: 3.00, y: 12.00 }, material: ribbed }
+      - { id: edge-5, start: { x: 3.00, y: 12.00 }, end: { x: 4.00, y: 10.00 }, material: ribbed }
+  - id: reactor
+    floor: { c: 0.00 }
+    ceiling: { c: 7.20 }
+    floor_material: floor
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 0.00, y: 14.00 }, end: { x: 4.00, y: 14.00 }, material: olive }
+      - { id: edge-1, start: { x: 4.00, y: 14.00 }, end: { x: 8.00, y: 14.00 }, material: olive }
+      - { id: edge-2, start: { x: 8.00, y: 14.00 }, end: { x: 16.00, y: 14.00 }, material: olive }
+      - { id: edge-3, start: { x: 16.00, y: 14.00 }, end: { x: 16.00, y: 20.00 }, material: olive }
+      - { id: edge-4, start: { x: 16.00, y: 20.00 }, end: { x: 16.00, y: 24.00 }, material: olive }
+      - { id: edge-5, start: { x: 16.00, y: 24.00 }, end: { x: 16.00, y: 30.00 }, material: olive }
+      - { id: edge-6, start: { x: 16.00, y: 30.00 }, end: { x: 12.00, y: 30.00 }, material: olive }
+      - { id: edge-7, start: { x: 12.00, y: 30.00 }, end: { x: 0.00, y: 30.00 }, material: olive }
+      - { id: edge-8, start: { x: 0.00, y: 30.00 }, end: { x: 0.00, y: 24.00 }, material: olive }
+      - { id: edge-9, start: { x: 0.00, y: 24.00 }, end: { x: 0.00, y: 20.00 }, material: olive }
+      - { id: edge-10, start: { x: 0.00, y: 20.00 }, end: { x: 0.00, y: 14.00 }, material: olive }
+  - id: east-link
+    floor: { c: 0.20 }
+    ceiling: { c: 3.10 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 16.00, y: 20.00 }, end: { x: 18.00, y: 20.00 }, material: ribbed }
+      - { id: edge-1, start: { x: 18.00, y: 20.00 }, end: { x: 20.00, y: 18.00 }, material: ribbed }
+      - { id: edge-2, start: { x: 20.00, y: 18.00 }, end: { x: 22.00, y: 20.00 }, material: ribbed }
+      - { id: edge-3, start: { x: 22.00, y: 20.00 }, end: { x: 22.00, y: 24.00 }, material: ribbed }
+      - { id: edge-4, start: { x: 22.00, y: 24.00 }, end: { x: 20.00, y: 24.00 }, material: ribbed }
+      - { id: edge-5, start: { x: 20.00, y: 24.00 }, end: { x: 18.00, y: 22.00 }, material: ribbed }
+      - { id: edge-6, start: { x: 18.00, y: 22.00 }, end: { x: 16.00, y: 24.00 }, material: ribbed }
+      - { id: edge-7, start: { x: 16.00, y: 24.00 }, end: { x: 16.00, y: 20.00 }, material: ribbed }
+  - id: extraction-link
+    floor: { c: 0.20 }
+    ceiling: { c: 2.80 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 26.00, y: 34.00 }, end: { x: 30.00, y: 34.00 }, material: ribbed }
+      - { id: edge-1, start: { x: 30.00, y: 34.00 }, end: { x: 30.00, y: 38.00 }, material: ribbed }
+      - { id: edge-2, start: { x: 30.00, y: 38.00 }, end: { x: 26.00, y: 38.00 }, material: ribbed }
+      - { id: edge-3, start: { x: 26.00, y: 38.00 }, end: { x: 26.00, y: 34.00 }, material: ribbed }
+  - id: extraction
+    floor: { c: 0.00 }
+    ceiling: { c: 4.80 }
+    floor_material: floor
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 38.00 }, end: { x: 26.00, y: 38.00 }, material: olive }
+      - { id: edge-1, start: { x: 26.00, y: 38.00 }, end: { x: 30.00, y: 38.00 }, material: olive }
+      - { id: edge-2, start: { x: 30.00, y: 38.00 }, end: { x: 32.00, y: 38.00 }, material: olive }
+      - { id: edge-3, start: { x: 32.00, y: 38.00 }, end: { x: 36.00, y: 42.00 }, material: olive }
+      - { id: edge-4, start: { x: 36.00, y: 42.00 }, end: { x: 36.00, y: 46.00 }, material: olive }
+      - { id: edge-5, start: { x: 36.00, y: 46.00 }, end: { x: 25.00, y: 46.00 }, material: olive }
+      - { id: edge-6, start: { x: 25.00, y: 46.00 }, end: { x: 22.00, y: 43.00 }, material: olive }
+      - { id: edge-7, start: { x: 22.00, y: 43.00 }, end: { x: 22.00, y: 38.00 }, material: olive }
+  - id: service
+    floor: { c: 0.20 }
+    ceiling: { c: 2.70 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 12.00, y: 3.00 }, end: { x: 15.00, y: 3.00 }, material: ribbed }
+      - { id: edge-1, start: { x: 15.00, y: 3.00 }, end: { x: 18.00, y: 0.00 }, material: ribbed }
+      - { id: edge-2, start: { x: 18.00, y: 0.00 }, end: { x: 20.00, y: 0.00 }, material: ribbed }
+      - { id: edge-3, start: { x: 20.00, y: 0.00 }, end: { x: 20.00, y: 4.00 }, material: ribbed }
+      - { id: edge-4, start: { x: 20.00, y: 4.00 }, end: { x: 17.00, y: 7.00 }, material: ribbed }
+      - { id: edge-5, start: { x: 17.00, y: 7.00 }, end: { x: 12.00, y: 7.00 }, material: ribbed }
+      - { id: edge-6, start: { x: 12.00, y: 7.00 }, end: { x: 12.00, y: 3.00 }, material: ribbed }
+  - id: loading
+    floor: { c: 0.40 }
+    ceiling: { c: 6.20 }
+    floor_material: concrete
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 20.00, y: -3.00 }, end: { x: 22.00, y: -5.00 }, material: brick }
+      - { id: edge-1, start: { x: 22.00, y: -5.00 }, end: { x: 33.00, y: -5.00 }, material: brick }
+      - { id: edge-2, start: { x: 33.00, y: -5.00 }, end: { x: 36.00, y: -2.00 }, material: brick }
+      - { id: edge-3, start: { x: 36.00, y: -2.00 }, end: { x: 36.00, y: 7.00 }, material: brick }
+      - { id: edge-4, start: { x: 36.00, y: 7.00 }, end: { x: 33.00, y: 10.00 }, material: brick }
+      - { id: edge-5, start: { x: 33.00, y: 10.00 }, end: { x: 20.00, y: 10.00 }, material: brick }
+      - { id: edge-6, start: { x: 20.00, y: 10.00 }, end: { x: 20.00, y: 4.00 }, material: brick }
+      - { id: edge-7, start: { x: 20.00, y: 4.00 }, end: { x: 20.00, y: 0.00 }, material: brick }
+      - { id: edge-8, start: { x: 20.00, y: 0.00 }, end: { x: 20.00, y: -3.00 }, material: brick }
+  - id: control
+    floor: { c: 1.20 }
+    ceiling: { c: 5.80 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -14.00, y: 16.00 }, end: { x: -6.00, y: 16.00 }, material: olive }
+      - { id: edge-1, start: { x: -6.00, y: 16.00 }, end: { x: -6.00, y: 20.00 }, material: olive }
+      - { id: edge-2, start: { x: -6.00, y: 20.00 }, end: { x: -6.00, y: 24.00 }, material: olive }
+      - { id: edge-3, start: { x: -6.00, y: 24.00 }, end: { x: -6.00, y: 28.00 }, material: olive }
+      - { id: edge-4, start: { x: -6.00, y: 28.00 }, end: { x: -14.00, y: 28.00 }, material: olive }
+      - { id: edge-5, start: { x: -14.00, y: 28.00 }, end: { x: -14.00, y: 16.00 }, material: olive }
+  - id: window-bay
+    floor: { c: 0.40 }
+    ceiling: { c: 5.60 }
+    floor_material: concrete
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -12.00, y: -6.00 }, end: { x: -0.45, y: -6.00 }, material: brick }
+      - { id: edge-1, start: { x: -0.45, y: -6.00 }, end: { x: -0.45, y: -4.00 }, material: brick }
+      - { id: edge-2, start: { x: -0.45, y: -4.00 }, end: { x: -0.45, y: -1.00 }, material: brick }
+      - { id: edge-3, start: { x: -0.45, y: -1.00 }, end: { x: -0.45, y: 1.00 }, material: brick }
+      - { id: edge-4, start: { x: -0.45, y: 1.00 }, end: { x: -0.45, y: 4.00 }, material: brick }
+      - { id: edge-5, start: { x: -0.45, y: 4.00 }, end: { x: -0.45, y: 6.00 }, material: brick }
+      - { id: edge-6, start: { x: -0.45, y: 6.00 }, end: { x: -0.45, y: 9.00 }, material: brick }
+      - { id: edge-7, start: { x: -0.45, y: 9.00 }, end: { x: -0.45, y: 10.00 }, material: brick }
+      - { id: edge-8, start: { x: -0.45, y: 10.00 }, end: { x: -12.00, y: 10.00 }, material: brick }
+      - { id: edge-9, start: { x: -12.00, y: 10.00 }, end: { x: -12.00, y: 9.00 }, material: brick }
+      - { id: edge-10, start: { x: -12.00, y: 9.00 }, end: { x: -12.00, y: 6.00 }, material: brick }
+      - { id: edge-11, start: { x: -12.00, y: 6.00 }, end: { x: -12.00, y: -6.00 }, material: brick }
+  - id: bay-access
+    floor: { c: 0.20 }
+    ceiling: { c: 2.70 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -0.45, y: -6.00 }, end: { x: 0.00, y: -6.00 }, material: steel }
+      - { id: edge-1, start: { x: 0.00, y: -6.00 }, end: { x: 0.00, y: -4.00 }, material: steel }
+      - { id: edge-2, start: { x: 0.00, y: -4.00 }, end: { x: -0.45, y: -4.00 }, material: steel }
+      - { id: edge-3, start: { x: -0.45, y: -4.00 }, end: { x: -0.45, y: -6.00 }, material: steel }
+  - id: trench-south
+    floor: { c: -1.20 }
+    ceiling: { c: 5.60 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 16.00 }, end: { x: 40.00, y: 16.00 }, material: brick }
+      - { id: edge-1, start: { x: 40.00, y: 16.00 }, end: { x: 40.00, y: 20.00 }, material: brick }
+      - { id: edge-2, start: { x: 40.00, y: 20.00 }, end: { x: 30.00, y: 20.00 }, material: brick }
+      - { id: edge-3, start: { x: 30.00, y: 20.00 }, end: { x: 22.00, y: 20.00 }, material: brick }
+      - { id: edge-4, start: { x: 22.00, y: 20.00 }, end: { x: 22.00, y: 16.00 }, material: brick }
+  - id: zig-entry
+    floor: { c: 0.20 }
+    ceiling: { c: 5.60 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 20.00 }, end: { x: 30.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: 30.00, y: 20.00 }, end: { x: 30.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: 30.00, y: 24.00 }, end: { x: 26.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: 26.00, y: 24.00 }, end: { x: 22.00, y: 24.00 }, material: steel }
+      - { id: edge-4, start: { x: 22.00, y: 24.00 }, end: { x: 22.00, y: 20.00 }, material: steel }
+  - id: trench-entry-east
+    floor: { c: -1.20 }
+    ceiling: { c: 5.60 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 30.00, y: 20.00 }, end: { x: 40.00, y: 20.00 }, material: brick }
+      - { id: edge-1, start: { x: 40.00, y: 20.00 }, end: { x: 40.00, y: 24.00 }, material: brick }
+      - { id: edge-2, start: { x: 40.00, y: 24.00 }, end: { x: 30.00, y: 24.00 }, material: brick }
+      - { id: edge-3, start: { x: 30.00, y: 24.00 }, end: { x: 30.00, y: 20.00 }, material: brick }
+  - id: return-gallery
+    floor: { c: 0.00 }
+    ceiling: { c: 3.10 }
+    floor_material: floor
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 12.00, y: 30.00 }, end: { x: 16.00, y: 30.00 }, material: ribbed }
+      - { id: edge-1, start: { x: 16.00, y: 30.00 }, end: { x: 22.00, y: 30.00 }, material: ribbed }
+      - { id: edge-2, start: { x: 22.00, y: 30.00 }, end: { x: 22.00, y: 31.00 }, material: ribbed }
+      - { id: edge-3, start: { x: 22.00, y: 31.00 }, end: { x: 22.00, y: 32.00 }, material: ribbed }
+      - { id: edge-4, start: { x: 22.00, y: 32.00 }, end: { x: 22.00, y: 34.00 }, material: ribbed }
+      - { id: edge-5, start: { x: 22.00, y: 34.00 }, end: { x: 12.00, y: 34.00 }, material: ribbed }
+      - { id: edge-6, start: { x: 12.00, y: 34.00 }, end: { x: 12.00, y: 30.00 }, material: ribbed }
+  - id: inspection-alcove
+    floor: { c: 0.20 }
+    ceiling: { c: 2.60 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 12.00, y: -3.00 }, end: { x: 16.00, y: -3.00 }, material: steel }
+      - { id: edge-1, start: { x: 16.00, y: -3.00 }, end: { x: 16.00, y: 0.00 }, material: steel }
+      - { id: edge-2, start: { x: 16.00, y: 0.00 }, end: { x: 12.00, y: 0.00 }, material: steel }
+      - { id: edge-3, start: { x: 12.00, y: 0.00 }, end: { x: 12.00, y: -3.00 }, material: steel }
+  - id: maintenance-niche
+    floor: { c: 0.20 }
+    ceiling: { c: 2.80 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -16.00, y: 6.00 }, end: { x: -12.00, y: 6.00 }, material: ribbed }
+      - { id: edge-1, start: { x: -12.00, y: 6.00 }, end: { x: -12.00, y: 9.00 }, material: ribbed }
+      - { id: edge-2, start: { x: -12.00, y: 9.00 }, end: { x: -16.00, y: 9.00 }, material: ribbed }
+      - { id: edge-3, start: { x: -16.00, y: 9.00 }, end: { x: -16.00, y: 6.00 }, material: ribbed }
+  - id: trench-egress
+    floor: { c: 0.20 }
+    ceiling: { c: 3.20 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 46.00, y: 20.00 }, end: { x: 50.00, y: 20.00 }, material: ribbed }
+      - { id: edge-1, start: { x: 50.00, y: 20.00 }, end: { x: 50.00, y: 34.00 }, material: ribbed }
+      - { id: edge-2, start: { x: 50.00, y: 34.00 }, end: { x: 46.00, y: 34.00 }, material: ribbed }
+      - { id: edge-3, start: { x: 46.00, y: 34.00 }, end: { x: 46.00, y: 24.00 }, material: ribbed }
+      - { id: edge-4, start: { x: 46.00, y: 24.00 }, end: { x: 46.00, y: 20.00 }, material: ribbed }
+  - id: egress-return
+    floor: { c: 0.20 }
+    ceiling: { c: 3.20 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 30.00, y: 34.00 }, end: { x: 40.00, y: 34.00 }, material: ribbed }
+      - { id: edge-1, start: { x: 40.00, y: 34.00 }, end: { x: 46.00, y: 34.00 }, material: ribbed }
+      - { id: edge-2, start: { x: 46.00, y: 34.00 }, end: { x: 50.00, y: 34.00 }, material: ribbed }
+      - { id: edge-3, start: { x: 50.00, y: 34.00 }, end: { x: 50.00, y: 38.00 }, material: ribbed }
+      - { id: edge-4, start: { x: 50.00, y: 38.00 }, end: { x: 32.00, y: 38.00 }, material: ribbed }
+      - { id: edge-5, start: { x: 32.00, y: 38.00 }, end: { x: 30.00, y: 38.00 }, material: ribbed }
+      - { id: edge-6, start: { x: 30.00, y: 38.00 }, end: { x: 30.00, y: 34.00 }, material: ribbed }
+  - id: trench-stair-0
+    floor: { c: -1.00 }
+    ceiling: { c: 3.20 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 40.00, y: 20.00 }, end: { x: 41.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: 41.00, y: 20.00 }, end: { x: 41.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: 41.00, y: 24.00 }, end: { x: 40.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: 40.00, y: 24.00 }, end: { x: 40.00, y: 20.00 }, material: steel }
+  - id: west-trench-stair-0
+    floor: { c: -1.00 }
+    ceiling: { c: 3.10 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 26.00 }, end: { x: 24.00, y: 26.00 }, material: steel }
+      - { id: edge-1, start: { x: 24.00, y: 26.00 }, end: { x: 24.00, y: 27.00 }, material: steel }
+      - { id: edge-2, start: { x: 24.00, y: 27.00 }, end: { x: 22.00, y: 27.00 }, material: steel }
+      - { id: edge-3, start: { x: 22.00, y: 27.00 }, end: { x: 22.00, y: 26.00 }, material: steel }
+  - id: trench-stair-1
+    floor: { c: -0.80 }
+    ceiling: { c: 3.20 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 41.00, y: 20.00 }, end: { x: 42.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: 42.00, y: 20.00 }, end: { x: 42.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: 42.00, y: 24.00 }, end: { x: 41.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: 41.00, y: 24.00 }, end: { x: 41.00, y: 20.00 }, material: steel }
+  - id: west-trench-stair-1
+    floor: { c: -0.80 }
+    ceiling: { c: 3.10 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 27.00 }, end: { x: 24.00, y: 27.00 }, material: steel }
+      - { id: edge-1, start: { x: 24.00, y: 27.00 }, end: { x: 24.00, y: 28.00 }, material: steel }
+      - { id: edge-2, start: { x: 24.00, y: 28.00 }, end: { x: 22.00, y: 28.00 }, material: steel }
+      - { id: edge-3, start: { x: 22.00, y: 28.00 }, end: { x: 22.00, y: 27.00 }, material: steel }
+  - id: trench-stair-2
+    floor: { c: -0.60 }
+    ceiling: { c: 3.20 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 42.00, y: 20.00 }, end: { x: 43.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: 43.00, y: 20.00 }, end: { x: 43.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: 43.00, y: 24.00 }, end: { x: 42.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: 42.00, y: 24.00 }, end: { x: 42.00, y: 20.00 }, material: steel }
+  - id: west-trench-stair-2
+    floor: { c: -0.60 }
+    ceiling: { c: 3.10 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 28.00 }, end: { x: 24.00, y: 28.00 }, material: steel }
+      - { id: edge-1, start: { x: 24.00, y: 28.00 }, end: { x: 24.00, y: 29.00 }, material: steel }
+      - { id: edge-2, start: { x: 24.00, y: 29.00 }, end: { x: 22.00, y: 29.00 }, material: steel }
+      - { id: edge-3, start: { x: 22.00, y: 29.00 }, end: { x: 22.00, y: 28.00 }, material: steel }
+  - id: trench-stair-3
+    floor: { c: -0.40 }
+    ceiling: { c: 3.20 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 43.00, y: 20.00 }, end: { x: 44.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: 44.00, y: 20.00 }, end: { x: 44.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: 44.00, y: 24.00 }, end: { x: 43.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: 43.00, y: 24.00 }, end: { x: 43.00, y: 20.00 }, material: steel }
+  - id: west-trench-stair-3
+    floor: { c: -0.40 }
+    ceiling: { c: 3.10 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 29.00 }, end: { x: 24.00, y: 29.00 }, material: steel }
+      - { id: edge-1, start: { x: 24.00, y: 29.00 }, end: { x: 24.00, y: 30.00 }, material: steel }
+      - { id: edge-2, start: { x: 24.00, y: 30.00 }, end: { x: 22.00, y: 30.00 }, material: steel }
+      - { id: edge-3, start: { x: 22.00, y: 30.00 }, end: { x: 22.00, y: 29.00 }, material: steel }
+  - id: trench-stair-4
+    floor: { c: -0.20 }
+    ceiling: { c: 3.20 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 44.00, y: 20.00 }, end: { x: 45.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: 45.00, y: 20.00 }, end: { x: 45.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: 45.00, y: 24.00 }, end: { x: 44.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: 44.00, y: 24.00 }, end: { x: 44.00, y: 20.00 }, material: steel }
+  - id: west-trench-stair-4
+    floor: { c: -0.20 }
+    ceiling: { c: 3.10 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 30.00 }, end: { x: 24.00, y: 30.00 }, material: steel }
+      - { id: edge-1, start: { x: 24.00, y: 30.00 }, end: { x: 24.00, y: 31.00 }, material: steel }
+      - { id: edge-2, start: { x: 24.00, y: 31.00 }, end: { x: 22.00, y: 31.00 }, material: steel }
+      - { id: edge-3, start: { x: 22.00, y: 31.00 }, end: { x: 22.00, y: 30.00 }, material: steel }
+  - id: trench-stair-5
+    floor: { c: 0.00 }
+    ceiling: { c: 3.20 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 45.00, y: 20.00 }, end: { x: 46.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: 46.00, y: 20.00 }, end: { x: 46.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: 46.00, y: 24.00 }, end: { x: 45.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: 45.00, y: 24.00 }, end: { x: 45.00, y: 20.00 }, material: steel }
+  - id: west-trench-stair-5
+    floor: { c: 0.00 }
+    ceiling: { c: 3.10 }
+    floor_material: floor
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 31.00 }, end: { x: 24.00, y: 31.00 }, material: steel }
+      - { id: edge-1, start: { x: 24.00, y: 31.00 }, end: { x: 24.00, y: 32.00 }, material: steel }
+      - { id: edge-2, start: { x: 24.00, y: 32.00 }, end: { x: 22.00, y: 32.00 }, material: steel }
+      - { id: edge-3, start: { x: 22.00, y: 32.00 }, end: { x: 22.00, y: 31.00 }, material: steel }
+  - id: window-0
+    floor: { c: 1.00 }
+    ceiling: { c: 3.10 }
+    floor_material: steel
+    ceiling_material: steel
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -0.45, y: -4.00 }, end: { x: 0.00, y: -4.00 }, material: steel }
+      - { id: edge-1, start: { x: 0.00, y: -4.00 }, end: { x: 0.00, y: -1.00 }, material: steel }
+      - { id: edge-2, start: { x: 0.00, y: -1.00 }, end: { x: -0.45, y: -1.00 }, material: steel }
+      - { id: edge-3, start: { x: -0.45, y: -1.00 }, end: { x: -0.45, y: -4.00 }, material: steel }
+  - id: window-1
+    floor: { c: 1.00 }
+    ceiling: { c: 3.10 }
+    floor_material: steel
+    ceiling_material: steel
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -0.45, y: 1.00 }, end: { x: 0.00, y: 1.00 }, material: steel }
+      - { id: edge-1, start: { x: 0.00, y: 1.00 }, end: { x: 0.00, y: 4.00 }, material: steel }
+      - { id: edge-2, start: { x: 0.00, y: 4.00 }, end: { x: -0.45, y: 4.00 }, material: steel }
+      - { id: edge-3, start: { x: -0.45, y: 4.00 }, end: { x: -0.45, y: 1.00 }, material: steel }
+  - id: window-2
+    floor: { c: 1.00 }
+    ceiling: { c: 3.10 }
+    floor_material: steel
+    ceiling_material: steel
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -0.45, y: 6.00 }, end: { x: 0.00, y: 6.00 }, material: steel }
+      - { id: edge-1, start: { x: 0.00, y: 6.00 }, end: { x: 0.00, y: 9.00 }, material: steel }
+      - { id: edge-2, start: { x: 0.00, y: 9.00 }, end: { x: -0.45, y: 9.00 }, material: steel }
+      - { id: edge-3, start: { x: -0.45, y: 9.00 }, end: { x: -0.45, y: 6.00 }, material: steel }
+  - id: zig-walk-0
+    floor: { c: 0.20 }
+    ceiling: { c: 5.60 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 26.00, y: 24.00 }, end: { x: 30.00, y: 24.00 }, material: steel }
+      - { id: edge-1, start: { x: 30.00, y: 24.00 }, end: { x: 36.00, y: 28.00 }, material: steel }
+      - { id: edge-2, start: { x: 36.00, y: 28.00 }, end: { x: 32.00, y: 28.00 }, material: steel }
+      - { id: edge-3, start: { x: 32.00, y: 28.00 }, end: { x: 26.00, y: 24.00 }, material: steel }
+  - id: zig-west-0
+    floor: { c: -1.10 }
+    ceiling: { c: 5.60 }
+    floor_material: toxic
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 24.00 }, end: { x: 26.00, y: 24.00 }, material: brick }
+      - { id: edge-1, start: { x: 26.00, y: 24.00 }, end: { x: 32.00, y: 28.00 }, material: brick }
+      - { id: edge-2, start: { x: 32.00, y: 28.00 }, end: { x: 24.00, y: 28.00 }, material: brick }
+      - { id: edge-3, start: { x: 24.00, y: 28.00 }, end: { x: 24.00, y: 27.00 }, material: brick }
+      - { id: edge-4, start: { x: 24.00, y: 27.00 }, end: { x: 24.00, y: 26.00 }, material: brick }
+      - { id: edge-5, start: { x: 24.00, y: 26.00 }, end: { x: 22.00, y: 26.00 }, material: brick }
+      - { id: edge-6, start: { x: 22.00, y: 26.00 }, end: { x: 22.00, y: 24.00 }, material: brick }
+  - id: zig-east-0
+    floor: { c: -1.20 }
+    ceiling: { c: 5.60 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 30.00, y: 24.00 }, end: { x: 40.00, y: 24.00 }, material: brick }
+      - { id: edge-1, start: { x: 40.00, y: 24.00 }, end: { x: 40.00, y: 28.00 }, material: brick }
+      - { id: edge-2, start: { x: 40.00, y: 28.00 }, end: { x: 36.00, y: 28.00 }, material: brick }
+      - { id: edge-3, start: { x: 36.00, y: 28.00 }, end: { x: 30.00, y: 24.00 }, material: brick }
+  - id: zig-walk-1
+    floor: { c: 0.20 }
+    ceiling: { c: 5.60 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 32.00, y: 28.00 }, end: { x: 36.00, y: 28.00 }, material: steel }
+      - { id: edge-1, start: { x: 36.00, y: 28.00 }, end: { x: 30.00, y: 32.00 }, material: steel }
+      - { id: edge-2, start: { x: 30.00, y: 32.00 }, end: { x: 26.00, y: 32.00 }, material: steel }
+      - { id: edge-3, start: { x: 26.00, y: 32.00 }, end: { x: 32.00, y: 28.00 }, material: steel }
+  - id: zig-west-1
+    floor: { c: -1.20 }
+    ceiling: { c: 5.60 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 24.00, y: 28.00 }, end: { x: 32.00, y: 28.00 }, material: brick }
+      - { id: edge-1, start: { x: 32.00, y: 28.00 }, end: { x: 26.00, y: 32.00 }, material: brick }
+      - { id: edge-2, start: { x: 26.00, y: 32.00 }, end: { x: 24.00, y: 32.00 }, material: brick }
+      - { id: edge-3, start: { x: 24.00, y: 32.00 }, end: { x: 24.00, y: 31.00 }, material: brick }
+      - { id: edge-4, start: { x: 24.00, y: 31.00 }, end: { x: 24.00, y: 30.00 }, material: brick }
+      - { id: edge-5, start: { x: 24.00, y: 30.00 }, end: { x: 24.00, y: 29.00 }, material: brick }
+      - { id: edge-6, start: { x: 24.00, y: 29.00 }, end: { x: 24.00, y: 28.00 }, material: brick }
+  - id: zig-east-1
+    floor: { c: -1.20 }
+    ceiling: { c: 5.60 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 36.00, y: 28.00 }, end: { x: 40.00, y: 28.00 }, material: brick }
+      - { id: edge-1, start: { x: 40.00, y: 28.00 }, end: { x: 40.00, y: 32.00 }, material: brick }
+      - { id: edge-2, start: { x: 40.00, y: 32.00 }, end: { x: 30.00, y: 32.00 }, material: brick }
+      - { id: edge-3, start: { x: 30.00, y: 32.00 }, end: { x: 36.00, y: 28.00 }, material: brick }
+  - id: zig-walk-2
+    floor: { c: 0.20 }
+    ceiling: { c: 5.60 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 26.00, y: 32.00 }, end: { x: 30.00, y: 32.00 }, material: steel }
+      - { id: edge-1, start: { x: 30.00, y: 32.00 }, end: { x: 30.00, y: 34.00 }, material: steel }
+      - { id: edge-2, start: { x: 30.00, y: 34.00 }, end: { x: 26.00, y: 34.00 }, material: steel }
+      - { id: edge-3, start: { x: 26.00, y: 34.00 }, end: { x: 26.00, y: 32.00 }, material: steel }
+  - id: zig-west-2
+    floor: { c: 0.00 }
+    ceiling: { c: 3.10 }
+    floor_material: floor
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 22.00, y: 32.00 }, end: { x: 24.00, y: 32.00 }, material: ribbed }
+      - { id: edge-1, start: { x: 24.00, y: 32.00 }, end: { x: 26.00, y: 32.00 }, material: ribbed }
+      - { id: edge-2, start: { x: 26.00, y: 32.00 }, end: { x: 26.00, y: 34.00 }, material: ribbed }
+      - { id: edge-3, start: { x: 26.00, y: 34.00 }, end: { x: 22.00, y: 34.00 }, material: ribbed }
+      - { id: edge-4, start: { x: 22.00, y: 34.00 }, end: { x: 22.00, y: 32.00 }, material: ribbed }
+  - id: zig-east-2
+    floor: { c: -1.20 }
+    ceiling: { c: 5.60 }
+    floor_material: recess
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: 30.00, y: 32.00 }, end: { x: 40.00, y: 32.00 }, material: brick }
+      - { id: edge-1, start: { x: 40.00, y: 32.00 }, end: { x: 40.00, y: 34.00 }, material: brick }
+      - { id: edge-2, start: { x: 40.00, y: 34.00 }, end: { x: 30.00, y: 34.00 }, material: brick }
+      - { id: edge-3, start: { x: 30.00, y: 34.00 }, end: { x: 30.00, y: 32.00 }, material: brick }
+  - id: step-0
+    floor: { c: 0.20 }
+    ceiling: { c: 4.80 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -1.00, y: 20.00 }, end: { x: 0.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: 0.00, y: 20.00 }, end: { x: 0.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: 0.00, y: 24.00 }, end: { x: -1.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: -1.00, y: 24.00 }, end: { x: -1.00, y: 20.00 }, material: steel }
+  - id: step-1
+    floor: { c: 0.40 }
+    ceiling: { c: 4.80 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -2.00, y: 20.00 }, end: { x: -1.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: -1.00, y: 20.00 }, end: { x: -1.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: -1.00, y: 24.00 }, end: { x: -2.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: -2.00, y: 24.00 }, end: { x: -2.00, y: 20.00 }, material: steel }
+  - id: step-2
+    floor: { c: 0.60 }
+    ceiling: { c: 4.80 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -3.00, y: 20.00 }, end: { x: -2.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: -2.00, y: 20.00 }, end: { x: -2.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: -2.00, y: 24.00 }, end: { x: -3.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: -3.00, y: 24.00 }, end: { x: -3.00, y: 20.00 }, material: steel }
+  - id: step-3
+    floor: { c: 0.80 }
+    ceiling: { c: 4.80 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -4.00, y: 20.00 }, end: { x: -3.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: -3.00, y: 20.00 }, end: { x: -3.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: -3.00, y: 24.00 }, end: { x: -4.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: -4.00, y: 24.00 }, end: { x: -4.00, y: 20.00 }, material: steel }
+  - id: step-4
+    floor: { c: 1.00 }
+    ceiling: { c: 4.80 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -5.00, y: 20.00 }, end: { x: -4.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: -4.00, y: 20.00 }, end: { x: -4.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: -4.00, y: 24.00 }, end: { x: -5.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: -5.00, y: 24.00 }, end: { x: -5.00, y: 20.00 }, material: steel }
+  - id: step-5
+    floor: { c: 1.20 }
+    ceiling: { c: 4.80 }
+    floor_material: grate
+    ceiling_material: ceiling
+    wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
+    boundary:
+      - { id: edge-0, start: { x: -6.00, y: 20.00 }, end: { x: -5.00, y: 20.00 }, material: steel }
+      - { id: edge-1, start: { x: -5.00, y: 20.00 }, end: { x: -5.00, y: 24.00 }, material: steel }
+      - { id: edge-2, start: { x: -5.00, y: 24.00 }, end: { x: -6.00, y: 24.00 }, material: steel }
+      - { id: edge-3, start: { x: -6.00, y: 24.00 }, end: { x: -6.00, y: 20.00 }, material: steel }
+connections:
+  - id: passage-0
+    a: { room: arrival, edge: edge-4 }
+    b: { room: inspection-alcove, edge: edge-3 }
+  - id: passage-1
+    a: { room: arrival, edge: edge-6 }
+    b: { room: service, edge: edge-6 }
+  - id: passage-2
+    a: { room: arrival, edge: edge-10 }
+    b: { room: threshold, edge: edge-0 }
+  - id: passage-3
+    a: { room: arrival, edge: edge-13 }
+    b: { room: window-2, edge: edge-1 }
+  - id: passage-4
+    a: { room: arrival, edge: edge-15 }
+    b: { room: window-1, edge: edge-1 }
+  - id: passage-5
+    a: { room: arrival, edge: edge-17 }
+    b: { room: window-0, edge: edge-1 }
+  - id: passage-6
+    a: { room: arrival, edge: edge-18 }
+    b: { room: bay-access, edge: edge-1 }
+  - id: passage-7
+    a: { room: threshold, edge: edge-3 }
+    b: { room: reactor, edge: edge-1 }
+  - id: passage-8
+    a: { room: reactor, edge: edge-4 }
+    b: { room: east-link, edge: edge-7 }
+  - id: passage-9
+    a: { room: reactor, edge: edge-6 }
+    b: { room: return-gallery, edge: edge-0 }
+  - id: passage-10
+    a: { room: reactor, edge: edge-9 }
+    b: { room: step-0, edge: edge-1 }
+  - id: passage-11
+    a: { room: east-link, edge: edge-3 }
+    b: { room: zig-entry, edge: edge-4 }
+  - id: passage-12
+    a: { room: extraction-link, edge: edge-0 }
+    b: { room: zig-walk-2, edge: edge-2 }
+  - id: passage-13
+    a: { room: extraction-link, edge: edge-1 }
+    b: { room: egress-return, edge: edge-6 }
+  - id: passage-14
+    a: { room: extraction-link, edge: edge-2 }
+    b: { room: extraction, edge: edge-1 }
+  - id: passage-15
+    a: { room: extraction, edge: edge-2 }
+    b: { room: egress-return, edge: edge-5 }
+  - id: passage-16
+    a: { room: service, edge: edge-3 }
+    b: { room: loading, edge: edge-7 }
+  - id: passage-17
+    a: { room: control, edge: edge-2 }
+    b: { room: step-5, edge: edge-3 }
+  - id: passage-18
+    a: { room: window-bay, edge: edge-1 }
+    b: { room: bay-access, edge: edge-3 }
+  - id: passage-19
+    a: { room: window-bay, edge: edge-2 }
+    b: { room: window-0, edge: edge-3 }
+  - id: passage-20
+    a: { room: window-bay, edge: edge-4 }
+    b: { room: window-1, edge: edge-3 }
+  - id: passage-21
+    a: { room: window-bay, edge: edge-6 }
+    b: { room: window-2, edge: edge-3 }
+  - id: passage-22
+    a: { room: window-bay, edge: edge-10 }
+    b: { room: maintenance-niche, edge: edge-1 }
+  - id: passage-23
+    a: { room: bay-access, edge: edge-2 }
+    b: { room: window-0, edge: edge-0 }
+  - id: passage-24
+    a: { room: trench-south, edge: edge-2 }
+    b: { room: trench-entry-east, edge: edge-0 }
+  - id: passage-25
+    a: { room: trench-south, edge: edge-3 }
+    b: { room: zig-entry, edge: edge-0 }
+  - id: passage-26
+    a: { room: zig-entry, edge: edge-1 }
+    b: { room: trench-entry-east, edge: edge-3 }
+  - id: passage-27
+    a: { room: zig-entry, edge: edge-2 }
+    b: { room: zig-walk-0, edge: edge-0 }
+  - id: passage-28
+    a: { room: zig-entry, edge: edge-3 }
+    b: { room: zig-west-0, edge: edge-0 }
+  - id: passage-29
+    a: { room: trench-entry-east, edge: edge-1 }
+    b: { room: trench-stair-0, edge: edge-3 }
+  - id: passage-30
+    a: { room: trench-entry-east, edge: edge-2 }
+    b: { room: zig-east-0, edge: edge-0 }
+  - id: passage-31
+    a: { room: return-gallery, edge: edge-2 }
+    b: { room: west-trench-stair-4, edge: edge-3 }
+  - id: passage-32
+    a: { room: return-gallery, edge: edge-3 }
+    b: { room: west-trench-stair-5, edge: edge-3 }
+  - id: passage-33
+    a: { room: return-gallery, edge: edge-4 }
+    b: { room: zig-west-2, edge: edge-4 }
+  - id: passage-34
+    a: { room: trench-egress, edge: edge-2 }
+    b: { room: egress-return, edge: edge-2 }
+  - id: passage-35
+    a: { room: trench-egress, edge: edge-4 }
+    b: { room: trench-stair-5, edge: edge-1 }
+  - id: passage-36
+    a: { room: egress-return, edge: edge-0 }
+    b: { room: zig-east-2, edge: edge-2 }
+  - id: passage-37
+    a: { room: trench-stair-0, edge: edge-1 }
+    b: { room: trench-stair-1, edge: edge-3 }
+  - id: passage-38
+    a: { room: west-trench-stair-0, edge: edge-0 }
+    b: { room: zig-west-0, edge: edge-5 }
+  - id: passage-39
+    a: { room: west-trench-stair-0, edge: edge-1 }
+    b: { room: zig-west-0, edge: edge-4 }
+  - id: passage-40
+    a: { room: west-trench-stair-0, edge: edge-2 }
+    b: { room: west-trench-stair-1, edge: edge-0 }
+  - id: passage-41
+    a: { room: trench-stair-1, edge: edge-1 }
+    b: { room: trench-stair-2, edge: edge-3 }
+  - id: passage-42
+    a: { room: west-trench-stair-1, edge: edge-1 }
+    b: { room: zig-west-0, edge: edge-3 }
+  - id: passage-43
+    a: { room: west-trench-stair-1, edge: edge-2 }
+    b: { room: west-trench-stair-2, edge: edge-0 }
+  - id: passage-44
+    a: { room: trench-stair-2, edge: edge-1 }
+    b: { room: trench-stair-3, edge: edge-3 }
+  - id: passage-45
+    a: { room: west-trench-stair-2, edge: edge-1 }
+    b: { room: zig-west-1, edge: edge-6 }
+  - id: passage-46
+    a: { room: west-trench-stair-2, edge: edge-2 }
+    b: { room: west-trench-stair-3, edge: edge-0 }
+  - id: passage-47
+    a: { room: trench-stair-3, edge: edge-1 }
+    b: { room: trench-stair-4, edge: edge-3 }
+  - id: passage-48
+    a: { room: west-trench-stair-3, edge: edge-1 }
+    b: { room: zig-west-1, edge: edge-5 }
+  - id: passage-49
+    a: { room: west-trench-stair-3, edge: edge-2 }
+    b: { room: west-trench-stair-4, edge: edge-0 }
+  - id: passage-50
+    a: { room: trench-stair-4, edge: edge-1 }
+    b: { room: trench-stair-5, edge: edge-3 }
+  - id: passage-51
+    a: { room: west-trench-stair-4, edge: edge-1 }
+    b: { room: zig-west-1, edge: edge-4 }
+  - id: passage-52
+    a: { room: west-trench-stair-4, edge: edge-2 }
+    b: { room: west-trench-stair-5, edge: edge-0 }
+  - id: passage-53
+    a: { room: west-trench-stair-5, edge: edge-1 }
+    b: { room: zig-west-1, edge: edge-3 }
+  - id: passage-54
+    a: { room: west-trench-stair-5, edge: edge-2 }
+    b: { room: zig-west-2, edge: edge-0 }
+  - id: passage-55
+    a: { room: zig-walk-0, edge: edge-1 }
+    b: { room: zig-east-0, edge: edge-3 }
+  - id: passage-56
+    a: { room: zig-walk-0, edge: edge-2 }
+    b: { room: zig-walk-1, edge: edge-0 }
+  - id: passage-57
+    a: { room: zig-walk-0, edge: edge-3 }
+    b: { room: zig-west-0, edge: edge-1 }
+  - id: passage-58
+    a: { room: zig-west-0, edge: edge-2 }
+    b: { room: zig-west-1, edge: edge-0 }
+  - id: passage-59
+    a: { room: zig-east-0, edge: edge-2 }
+    b: { room: zig-east-1, edge: edge-0 }
+  - id: passage-60
+    a: { room: zig-walk-1, edge: edge-1 }
+    b: { room: zig-east-1, edge: edge-3 }
+  - id: passage-61
+    a: { room: zig-walk-1, edge: edge-2 }
+    b: { room: zig-walk-2, edge: edge-0 }
+  - id: passage-62
+    a: { room: zig-walk-1, edge: edge-3 }
+    b: { room: zig-west-1, edge: edge-1 }
+  - id: passage-63
+    a: { room: zig-west-1, edge: edge-2 }
+    b: { room: zig-west-2, edge: edge-1 }
+  - id: passage-64
+    a: { room: zig-east-1, edge: edge-2 }
+    b: { room: zig-east-2, edge: edge-0 }
+  - id: passage-65
+    a: { room: zig-walk-2, edge: edge-1 }
+    b: { room: zig-east-2, edge: edge-3 }
+  - id: passage-66
+    a: { room: zig-walk-2, edge: edge-3 }
+    b: { room: zig-west-2, edge: edge-2 }
+  - id: passage-67
+    a: { room: step-0, edge: edge-3 }
+    b: { room: step-1, edge: edge-1 }
+  - id: passage-68
+    a: { room: step-1, edge: edge-3 }
+    b: { room: step-2, edge: edge-1 }
+  - id: passage-69
+    a: { room: step-2, edge: edge-3 }
+    b: { room: step-3, edge: edge-1 }
+  - id: passage-70
+    a: { room: step-3, edge: edge-3 }
+    b: { room: step-4, edge: edge-1 }
+  - id: passage-71
+    a: { room: step-4, edge: edge-3 }
+    b: { room: step-5, edge: edge-1 }
+solids:
+  - id: frame-arrival-inspection-alcove-edge-4-jamb-0
+    footprint: [{ x: 11.910, y: -3.240 }, { x: 12.090, y: -3.240 }, { x: 12.090, y: -3.060 }, { x: 11.910, y: -3.060 }]
+    bottom: { c: 0.200 }
+    top: { c: 2.600 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-arrival-inspection-alcove-edge-4-jamb-1
+    footprint: [{ x: 11.910, y: 0.060 }, { x: 12.090, y: 0.060 }, { x: 12.090, y: 0.240 }, { x: 11.910, y: 0.240 }]
+    bottom: { c: 0.200 }
+    top: { c: 2.600 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-arrival-inspection-alcove-edge-4-head
+    footprint:
+      - { x: 11.8900, y: -3.0000 }
+      - { x: 12.1100, y: -3.0000 }
+      - { x: 12.1100, y: 0.0000 }
+      - { x: 11.8900, y: 0.0000 }
+    bottom: { c: 2.420 }
+    top: { c: 2.600 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-arrival-service-edge-6-jamb-0
+    footprint: [{ x: 11.910, y: 2.760 }, { x: 12.090, y: 2.760 }, { x: 12.090, y: 2.940 }, { x: 11.910, y: 2.940 }]
+    bottom: { c: 0.200 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-arrival-service-edge-6-jamb-1
+    footprint: [{ x: 11.910, y: 7.060 }, { x: 12.090, y: 7.060 }, { x: 12.090, y: 7.240 }, { x: 11.910, y: 7.240 }]
+    bottom: { c: 0.200 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-arrival-service-edge-6-head
+    footprint:
+      - { x: 11.8900, y: 3.0000 }
+      - { x: 12.1100, y: 3.0000 }
+      - { x: 12.1100, y: 7.0000 }
+      - { x: 11.8900, y: 7.0000 }
+    bottom: { c: 2.520 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-arrival-threshold-edge-10-jamb-0
+    footprint: [{ x: 8.060, y: 9.910 }, { x: 8.240, y: 9.910 }, { x: 8.240, y: 10.090 }, { x: 8.060, y: 10.090 }]
+    bottom: { c: 0.200 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-arrival-threshold-edge-10-jamb-1
+    footprint: [{ x: 3.760, y: 9.910 }, { x: 3.940, y: 9.910 }, { x: 3.940, y: 10.090 }, { x: 3.760, y: 10.090 }]
+    bottom: { c: 0.200 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-arrival-threshold-edge-10-head
+    footprint:
+      - { x: 8.0000, y: 9.8900 }
+      - { x: 8.0000, y: 10.1100 }
+      - { x: 4.0000, y: 10.1100 }
+      - { x: 4.0000, y: 9.8900 }
+    bottom: { c: 2.620 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-arrival-bay-access-edge-18-head
+    footprint:
+      - { x: 0.1100, y: -4.0000 }
+      - { x: -0.1100, y: -4.0000 }
+      - { x: -0.1100, y: -6.0000 }
+      - { x: 0.1100, y: -6.0000 }
+    bottom: { c: 2.520 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-threshold-reactor-edge-3-jamb-0
+    footprint: [{ x: 8.060, y: 13.910 }, { x: 8.240, y: 13.910 }, { x: 8.240, y: 14.090 }, { x: 8.060, y: 14.090 }]
+    bottom: { c: 0.200 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-threshold-reactor-edge-3-jamb-1
+    footprint: [{ x: 3.760, y: 13.910 }, { x: 3.940, y: 13.910 }, { x: 3.940, y: 14.090 }, { x: 3.760, y: 14.090 }]
+    bottom: { c: 0.200 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-threshold-reactor-edge-3-head
+    footprint:
+      - { x: 8.0000, y: 13.8900 }
+      - { x: 8.0000, y: 14.1100 }
+      - { x: 4.0000, y: 14.1100 }
+      - { x: 4.0000, y: 13.8900 }
+    bottom: { c: 2.620 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-reactor-east-link-edge-4-jamb-0
+    footprint: [{ x: 15.910, y: 19.760 }, { x: 16.090, y: 19.760 }, { x: 16.090, y: 19.940 }, { x: 15.910, y: 19.940 }]
+    bottom: { c: 0.200 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-reactor-east-link-edge-4-jamb-1
+    footprint: [{ x: 15.910, y: 24.060 }, { x: 16.090, y: 24.060 }, { x: 16.090, y: 24.240 }, { x: 15.910, y: 24.240 }]
+    bottom: { c: 0.200 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-reactor-east-link-edge-4-head
+    footprint:
+      - { x: 15.8900, y: 20.0000 }
+      - { x: 16.1100, y: 20.0000 }
+      - { x: 16.1100, y: 24.0000 }
+      - { x: 15.8900, y: 24.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-reactor-return-gallery-edge-6-jamb-0
+    footprint: [{ x: 16.060, y: 29.910 }, { x: 16.240, y: 29.910 }, { x: 16.240, y: 30.090 }, { x: 16.060, y: 30.090 }]
+    bottom: { c: 0.000 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-reactor-return-gallery-edge-6-jamb-1
+    footprint: [{ x: 11.760, y: 29.910 }, { x: 11.940, y: 29.910 }, { x: 11.940, y: 30.090 }, { x: 11.760, y: 30.090 }]
+    bottom: { c: 0.000 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-reactor-return-gallery-edge-6-head
+    footprint:
+      - { x: 16.0000, y: 29.8900 }
+      - { x: 16.0000, y: 30.1100 }
+      - { x: 12.0000, y: 30.1100 }
+      - { x: 12.0000, y: 29.8900 }
+    bottom: { c: 2.920 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-reactor-step-0-edge-9-head
+    footprint:
+      - { x: 0.1100, y: 24.0000 }
+      - { x: -0.1100, y: 24.0000 }
+      - { x: -0.1100, y: 20.0000 }
+      - { x: 0.1100, y: 20.0000 }
+    bottom: { c: 4.620 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-east-link-zig-entry-edge-3-jamb-0
+    footprint: [{ x: 21.910, y: 19.760 }, { x: 22.090, y: 19.760 }, { x: 22.090, y: 19.940 }, { x: 21.910, y: 19.940 }]
+    bottom: { c: 0.200 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-east-link-zig-entry-edge-3-jamb-1
+    footprint: [{ x: 21.910, y: 24.060 }, { x: 22.090, y: 24.060 }, { x: 22.090, y: 24.240 }, { x: 21.910, y: 24.240 }]
+    bottom: { c: 0.200 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-east-link-zig-entry-edge-3-head
+    footprint:
+      - { x: 21.8900, y: 20.0000 }
+      - { x: 22.1100, y: 20.0000 }
+      - { x: 22.1100, y: 24.0000 }
+      - { x: 21.8900, y: 24.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-extraction-link-zig-walk-2-edge-0-jamb-0
+    footprint: [{ x: 25.760, y: 33.910 }, { x: 25.940, y: 33.910 }, { x: 25.940, y: 34.090 }, { x: 25.760, y: 34.090 }]
+    bottom: { c: 0.200 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-extraction-link-zig-walk-2-edge-0-head
+    footprint:
+      - { x: 26.0000, y: 34.1100 }
+      - { x: 26.0000, y: 33.8900 }
+      - { x: 30.0000, y: 33.8900 }
+      - { x: 30.0000, y: 34.1100 }
+    bottom: { c: 2.620 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-extraction-link-extraction-edge-2-jamb-1
+    footprint: [{ x: 25.760, y: 37.910 }, { x: 25.940, y: 37.910 }, { x: 25.940, y: 38.090 }, { x: 25.760, y: 38.090 }]
+    bottom: { c: 0.200 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-extraction-link-extraction-edge-2-head
+    footprint:
+      - { x: 30.0000, y: 37.8900 }
+      - { x: 30.0000, y: 38.1100 }
+      - { x: 26.0000, y: 38.1100 }
+      - { x: 26.0000, y: 37.8900 }
+    bottom: { c: 2.620 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-extraction-egress-return-edge-2-jamb-1
+    footprint: [{ x: 32.060, y: 37.910 }, { x: 32.240, y: 37.910 }, { x: 32.240, y: 38.090 }, { x: 32.060, y: 38.090 }]
+    bottom: { c: 0.200 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-extraction-egress-return-edge-2-head
+    footprint:
+      - { x: 30.0000, y: 38.1100 }
+      - { x: 30.0000, y: 37.8900 }
+      - { x: 32.0000, y: 37.8900 }
+      - { x: 32.0000, y: 38.1100 }
+    bottom: { c: 3.020 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-service-loading-edge-3-jamb-0
+    footprint: [{ x: 19.910, y: -0.240 }, { x: 20.090, y: -0.240 }, { x: 20.090, y: -0.060 }, { x: 19.910, y: -0.060 }]
+    bottom: { c: 0.400 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-service-loading-edge-3-jamb-1
+    footprint: [{ x: 19.910, y: 4.060 }, { x: 20.090, y: 4.060 }, { x: 20.090, y: 4.240 }, { x: 19.910, y: 4.240 }]
+    bottom: { c: 0.400 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-service-loading-edge-3-head
+    footprint:
+      - { x: 19.8900, y: 0.0000 }
+      - { x: 20.1100, y: 0.0000 }
+      - { x: 20.1100, y: 4.0000 }
+      - { x: 19.8900, y: 4.0000 }
+    bottom: { c: 2.520 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-control-step-5-edge-2-head
+    footprint:
+      - { x: -6.1100, y: 20.0000 }
+      - { x: -5.8900, y: 20.0000 }
+      - { x: -5.8900, y: 24.0000 }
+      - { x: -6.1100, y: 24.0000 }
+    bottom: { c: 4.620 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-window-bay-bay-access-edge-1-head
+    footprint:
+      - { x: -0.5600, y: -6.0000 }
+      - { x: -0.3400, y: -6.0000 }
+      - { x: -0.3400, y: -4.0000 }
+      - { x: -0.5600, y: -4.0000 }
+    bottom: { c: 2.520 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-window-bay-maintenance-niche-edge-10-jamb-0
+    footprint: [{ x: -12.090, y: 9.060 }, { x: -11.910, y: 9.060 }, { x: -11.910, y: 9.240 }, { x: -12.090, y: 9.240 }]
+    bottom: { c: 0.400 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-window-bay-maintenance-niche-edge-10-jamb-1
+    footprint: [{ x: -12.090, y: 5.760 }, { x: -11.910, y: 5.760 }, { x: -11.910, y: 5.940 }, { x: -12.090, y: 5.940 }]
+    bottom: { c: 0.400 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-window-bay-maintenance-niche-edge-10-head
+    footprint:
+      - { x: -11.8900, y: 9.0000 }
+      - { x: -12.1100, y: 9.0000 }
+      - { x: -12.1100, y: 6.0000 }
+      - { x: -11.8900, y: 6.0000 }
+    bottom: { c: 2.620 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-trench-entry-east-trench-stair-0-edge-1-head
+    footprint:
+      - { x: 39.8900, y: 20.0000 }
+      - { x: 40.1100, y: 20.0000 }
+      - { x: 40.1100, y: 24.0000 }
+      - { x: 39.8900, y: 24.0000 }
+    bottom: { c: 3.020 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-return-gallery-west-trench-stair-4-edge-2-head
+    footprint:
+      - { x: 21.8900, y: 30.0000 }
+      - { x: 22.1100, y: 30.0000 }
+      - { x: 22.1100, y: 31.0000 }
+      - { x: 21.8900, y: 31.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-return-gallery-west-trench-stair-5-edge-3-head
+    footprint:
+      - { x: 21.8900, y: 31.0000 }
+      - { x: 22.1100, y: 31.0000 }
+      - { x: 22.1100, y: 32.0000 }
+      - { x: 21.8900, y: 32.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-trench-egress-trench-stair-5-edge-4-head
+    footprint:
+      - { x: 46.1100, y: 24.0000 }
+      - { x: 45.8900, y: 24.0000 }
+      - { x: 45.8900, y: 20.0000 }
+      - { x: 46.1100, y: 20.0000 }
+    bottom: { c: 3.020 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-west-trench-stair-0-zig-west-0-edge-0-head
+    footprint:
+      - { x: 22.0000, y: 26.1100 }
+      - { x: 22.0000, y: 25.8900 }
+      - { x: 24.0000, y: 25.8900 }
+      - { x: 24.0000, y: 26.1100 }
+    bottom: { c: 2.920 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-west-trench-stair-0-zig-west-0-edge-1-head
+    footprint:
+      - { x: 23.8900, y: 26.0000 }
+      - { x: 24.1100, y: 26.0000 }
+      - { x: 24.1100, y: 27.0000 }
+      - { x: 23.8900, y: 27.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-west-trench-stair-5-zig-west-2-edge-2-head
+    footprint:
+      - { x: 24.0000, y: 31.8900 }
+      - { x: 24.0000, y: 32.1100 }
+      - { x: 22.0000, y: 32.1100 }
+      - { x: 22.0000, y: 31.8900 }
+    bottom: { c: 2.920 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: frame-zig-walk-2-zig-west-2-edge-3-jamb-0
+    footprint: [{ x: 25.910, y: 34.060 }, { x: 26.090, y: 34.060 }, { x: 26.090, y: 34.240 }, { x: 25.910, y: 34.240 }]
+    bottom: { c: 0.200 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: frame-zig-walk-2-zig-west-2-edge-3-head
+    footprint:
+      - { x: 26.1100, y: 34.0000 }
+      - { x: 25.8900, y: 34.0000 }
+      - { x: 25.8900, y: 32.0000 }
+      - { x: 26.1100, y: 32.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-cornice-0
+    footprint:
+      - { x: 0.0566, y: -5.9434 }
+      - { x: -0.0566, y: -6.0566 }
+      - { x: 1.9434, y: -8.0566 }
+      - { x: 2.0566, y: -7.9434 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-cornice-1
+    footprint:
+      - { x: 2.0000, y: -7.9200 }
+      - { x: 2.0000, y: -8.0800 }
+      - { x: 10.0000, y: -8.0800 }
+      - { x: 10.0000, y: -7.9200 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-cornice-2
+    footprint:
+      - { x: 9.9434, y: -7.9434 }
+      - { x: 10.0566, y: -8.0566 }
+      - { x: 12.0566, y: -6.0566 }
+      - { x: 11.9434, y: -5.9434 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-cornice-3
+    footprint:
+      - { x: 11.9200, y: -6.0000 }
+      - { x: 12.0800, y: -6.0000 }
+      - { x: 12.0800, y: 8.0000 }
+      - { x: 11.9200, y: 8.0000 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-cornice-4
+    footprint:
+      - { x: 11.9434, y: 7.9434 }
+      - { x: 12.0566, y: 8.0566 }
+      - { x: 10.0566, y: 10.0566 }
+      - { x: 9.9434, y: 9.9434 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-cornice-5
+    footprint:
+      - { x: 10.0000, y: 9.9200 }
+      - { x: 10.0000, y: 10.0800 }
+      - { x: 0.0000, y: 10.0800 }
+      - { x: 0.0000, y: 9.9200 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-cornice-6
+    footprint:
+      - { x: 0.0800, y: 10.0000 }
+      - { x: -0.0800, y: 10.0000 }
+      - { x: -0.0800, y: -6.0000 }
+      - { x: 0.0800, y: -6.0000 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: threshold-cornice-0
+    footprint:
+      - { x: 4.0000, y: 10.0800 }
+      - { x: 4.0000, y: 9.9200 }
+      - { x: 8.0000, y: 9.9200 }
+      - { x: 8.0000, y: 10.0800 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: threshold-cornice-1
+    footprint:
+      - { x: 7.9284, y: 10.0358 }
+      - { x: 8.0716, y: 9.9642 }
+      - { x: 9.0716, y: 11.9642 }
+      - { x: 8.9284, y: 12.0358 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: threshold-cornice-2
+    footprint:
+      - { x: 8.9284, y: 11.9642 }
+      - { x: 9.0716, y: 12.0358 }
+      - { x: 8.0716, y: 14.0358 }
+      - { x: 7.9284, y: 13.9642 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: threshold-cornice-3
+    footprint:
+      - { x: 8.0000, y: 13.9200 }
+      - { x: 8.0000, y: 14.0800 }
+      - { x: 4.0000, y: 14.0800 }
+      - { x: 4.0000, y: 13.9200 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: threshold-cornice-4
+    footprint:
+      - { x: 4.0716, y: 13.9642 }
+      - { x: 3.9284, y: 14.0358 }
+      - { x: 2.9284, y: 12.0358 }
+      - { x: 3.0716, y: 11.9642 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: threshold-cornice-5
+    footprint:
+      - { x: 3.0716, y: 12.0358 }
+      - { x: 2.9284, y: 11.9642 }
+      - { x: 3.9284, y: 9.9642 }
+      - { x: 4.0716, y: 10.0358 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: reactor-cornice-0
+    footprint:
+      - { x: 0.0000, y: 14.0800 }
+      - { x: 0.0000, y: 13.9200 }
+      - { x: 16.0000, y: 13.9200 }
+      - { x: 16.0000, y: 14.0800 }
+    bottom: { c: 6.920 }
+    top: { c: 7.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: reactor-cornice-1
+    footprint:
+      - { x: 15.9200, y: 14.0000 }
+      - { x: 16.0800, y: 14.0000 }
+      - { x: 16.0800, y: 30.0000 }
+      - { x: 15.9200, y: 30.0000 }
+    bottom: { c: 6.920 }
+    top: { c: 7.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: reactor-cornice-2
+    footprint:
+      - { x: 16.0000, y: 29.9200 }
+      - { x: 16.0000, y: 30.0800 }
+      - { x: 0.0000, y: 30.0800 }
+      - { x: 0.0000, y: 29.9200 }
+    bottom: { c: 6.920 }
+    top: { c: 7.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: reactor-cornice-3
+    footprint:
+      - { x: 0.0800, y: 30.0000 }
+      - { x: -0.0800, y: 30.0000 }
+      - { x: -0.0800, y: 14.0000 }
+      - { x: 0.0800, y: 14.0000 }
+    bottom: { c: 6.920 }
+    top: { c: 7.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: east-link-cornice-0
+    footprint:
+      - { x: 16.0000, y: 20.0800 }
+      - { x: 16.0000, y: 19.9200 }
+      - { x: 18.0000, y: 19.9200 }
+      - { x: 18.0000, y: 20.0800 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: east-link-cornice-1
+    footprint:
+      - { x: 18.0566, y: 20.0566 }
+      - { x: 17.9434, y: 19.9434 }
+      - { x: 19.9434, y: 17.9434 }
+      - { x: 20.0566, y: 18.0566 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: east-link-cornice-2
+    footprint:
+      - { x: 19.9434, y: 18.0566 }
+      - { x: 20.0566, y: 17.9434 }
+      - { x: 22.0566, y: 19.9434 }
+      - { x: 21.9434, y: 20.0566 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: east-link-cornice-3
+    footprint:
+      - { x: 21.9200, y: 20.0000 }
+      - { x: 22.0800, y: 20.0000 }
+      - { x: 22.0800, y: 24.0000 }
+      - { x: 21.9200, y: 24.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: east-link-cornice-4
+    footprint:
+      - { x: 22.0000, y: 23.9200 }
+      - { x: 22.0000, y: 24.0800 }
+      - { x: 20.0000, y: 24.0800 }
+      - { x: 20.0000, y: 23.9200 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: east-link-cornice-5
+    footprint:
+      - { x: 20.0566, y: 23.9434 }
+      - { x: 19.9434, y: 24.0566 }
+      - { x: 17.9434, y: 22.0566 }
+      - { x: 18.0566, y: 21.9434 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: east-link-cornice-6
+    footprint:
+      - { x: 17.9434, y: 21.9434 }
+      - { x: 18.0566, y: 22.0566 }
+      - { x: 16.0566, y: 24.0566 }
+      - { x: 15.9434, y: 23.9434 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: east-link-cornice-7
+    footprint:
+      - { x: 16.0800, y: 24.0000 }
+      - { x: 15.9200, y: 24.0000 }
+      - { x: 15.9200, y: 20.0000 }
+      - { x: 16.0800, y: 20.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: extraction-link-cornice-0
+    footprint:
+      - { x: 26.0000, y: 34.0800 }
+      - { x: 26.0000, y: 33.9200 }
+      - { x: 30.0000, y: 33.9200 }
+      - { x: 30.0000, y: 34.0800 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: extraction-link-cornice-1
+    footprint:
+      - { x: 29.9200, y: 34.0000 }
+      - { x: 30.0800, y: 34.0000 }
+      - { x: 30.0800, y: 38.0000 }
+      - { x: 29.9200, y: 38.0000 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: extraction-link-cornice-2
+    footprint:
+      - { x: 30.0000, y: 37.9200 }
+      - { x: 30.0000, y: 38.0800 }
+      - { x: 26.0000, y: 38.0800 }
+      - { x: 26.0000, y: 37.9200 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: extraction-link-cornice-3
+    footprint:
+      - { x: 26.0800, y: 38.0000 }
+      - { x: 25.9200, y: 38.0000 }
+      - { x: 25.9200, y: 34.0000 }
+      - { x: 26.0800, y: 34.0000 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: extraction-cornice-0
+    footprint:
+      - { x: 22.0000, y: 38.0800 }
+      - { x: 22.0000, y: 37.9200 }
+      - { x: 32.0000, y: 37.9200 }
+      - { x: 32.0000, y: 38.0800 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: extraction-cornice-1
+    footprint:
+      - { x: 31.9434, y: 38.0566 }
+      - { x: 32.0566, y: 37.9434 }
+      - { x: 36.0566, y: 41.9434 }
+      - { x: 35.9434, y: 42.0566 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: extraction-cornice-2
+    footprint:
+      - { x: 35.9200, y: 42.0000 }
+      - { x: 36.0800, y: 42.0000 }
+      - { x: 36.0800, y: 46.0000 }
+      - { x: 35.9200, y: 46.0000 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: extraction-cornice-3
+    footprint:
+      - { x: 36.0000, y: 45.9200 }
+      - { x: 36.0000, y: 46.0800 }
+      - { x: 25.0000, y: 46.0800 }
+      - { x: 25.0000, y: 45.9200 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: extraction-cornice-4
+    footprint:
+      - { x: 25.0566, y: 45.9434 }
+      - { x: 24.9434, y: 46.0566 }
+      - { x: 21.9434, y: 43.0566 }
+      - { x: 22.0566, y: 42.9434 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: extraction-cornice-5
+    footprint:
+      - { x: 22.0800, y: 43.0000 }
+      - { x: 21.9200, y: 43.0000 }
+      - { x: 21.9200, y: 38.0000 }
+      - { x: 22.0800, y: 38.0000 }
+    bottom: { c: 4.520 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: service-cornice-0
+    footprint:
+      - { x: 12.0000, y: 3.0800 }
+      - { x: 12.0000, y: 2.9200 }
+      - { x: 15.0000, y: 2.9200 }
+      - { x: 15.0000, y: 3.0800 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: service-cornice-1
+    footprint:
+      - { x: 15.0566, y: 3.0566 }
+      - { x: 14.9434, y: 2.9434 }
+      - { x: 17.9434, y: -0.0566 }
+      - { x: 18.0566, y: 0.0566 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: service-cornice-2
+    footprint:
+      - { x: 18.0000, y: 0.0800 }
+      - { x: 18.0000, y: -0.0800 }
+      - { x: 20.0000, y: -0.0800 }
+      - { x: 20.0000, y: 0.0800 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: service-cornice-3
+    footprint:
+      - { x: 19.9200, y: 0.0000 }
+      - { x: 20.0800, y: 0.0000 }
+      - { x: 20.0800, y: 4.0000 }
+      - { x: 19.9200, y: 4.0000 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: service-cornice-4
+    footprint:
+      - { x: 19.9434, y: 3.9434 }
+      - { x: 20.0566, y: 4.0566 }
+      - { x: 17.0566, y: 7.0566 }
+      - { x: 16.9434, y: 6.9434 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: service-cornice-5
+    footprint:
+      - { x: 17.0000, y: 6.9200 }
+      - { x: 17.0000, y: 7.0800 }
+      - { x: 12.0000, y: 7.0800 }
+      - { x: 12.0000, y: 6.9200 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: service-cornice-6
+    footprint:
+      - { x: 12.0800, y: 7.0000 }
+      - { x: 11.9200, y: 7.0000 }
+      - { x: 11.9200, y: 3.0000 }
+      - { x: 12.0800, y: 3.0000 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: loading-cornice-0
+    footprint:
+      - { x: 20.0566, y: -2.9434 }
+      - { x: 19.9434, y: -3.0566 }
+      - { x: 21.9434, y: -5.0566 }
+      - { x: 22.0566, y: -4.9434 }
+    bottom: { c: 5.920 }
+    top: { c: 6.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: loading-cornice-1
+    footprint:
+      - { x: 22.0000, y: -4.9200 }
+      - { x: 22.0000, y: -5.0800 }
+      - { x: 33.0000, y: -5.0800 }
+      - { x: 33.0000, y: -4.9200 }
+    bottom: { c: 5.920 }
+    top: { c: 6.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: loading-cornice-2
+    footprint:
+      - { x: 32.9434, y: -4.9434 }
+      - { x: 33.0566, y: -5.0566 }
+      - { x: 36.0566, y: -2.0566 }
+      - { x: 35.9434, y: -1.9434 }
+    bottom: { c: 5.920 }
+    top: { c: 6.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: loading-cornice-3
+    footprint:
+      - { x: 35.9200, y: -2.0000 }
+      - { x: 36.0800, y: -2.0000 }
+      - { x: 36.0800, y: 7.0000 }
+      - { x: 35.9200, y: 7.0000 }
+    bottom: { c: 5.920 }
+    top: { c: 6.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: loading-cornice-4
+    footprint:
+      - { x: 35.9434, y: 6.9434 }
+      - { x: 36.0566, y: 7.0566 }
+      - { x: 33.0566, y: 10.0566 }
+      - { x: 32.9434, y: 9.9434 }
+    bottom: { c: 5.920 }
+    top: { c: 6.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: loading-cornice-5
+    footprint:
+      - { x: 33.0000, y: 9.9200 }
+      - { x: 33.0000, y: 10.0800 }
+      - { x: 20.0000, y: 10.0800 }
+      - { x: 20.0000, y: 9.9200 }
+    bottom: { c: 5.920 }
+    top: { c: 6.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: loading-cornice-6
+    footprint:
+      - { x: 20.0800, y: 10.0000 }
+      - { x: 19.9200, y: 10.0000 }
+      - { x: 19.9200, y: -3.0000 }
+      - { x: 20.0800, y: -3.0000 }
+    bottom: { c: 5.920 }
+    top: { c: 6.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: control-cornice-0
+    footprint:
+      - { x: -14.0000, y: 16.0800 }
+      - { x: -14.0000, y: 15.9200 }
+      - { x: -6.0000, y: 15.9200 }
+      - { x: -6.0000, y: 16.0800 }
+    bottom: { c: 5.520 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: control-cornice-1
+    footprint:
+      - { x: -6.0800, y: 16.0000 }
+      - { x: -5.9200, y: 16.0000 }
+      - { x: -5.9200, y: 28.0000 }
+      - { x: -6.0800, y: 28.0000 }
+    bottom: { c: 5.520 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: control-cornice-2
+    footprint:
+      - { x: -6.0000, y: 27.9200 }
+      - { x: -6.0000, y: 28.0800 }
+      - { x: -14.0000, y: 28.0800 }
+      - { x: -14.0000, y: 27.9200 }
+    bottom: { c: 5.520 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: control-cornice-3
+    footprint:
+      - { x: -13.9200, y: 28.0000 }
+      - { x: -14.0800, y: 28.0000 }
+      - { x: -14.0800, y: 16.0000 }
+      - { x: -13.9200, y: 16.0000 }
+    bottom: { c: 5.520 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: bay-access-cornice-0
+    footprint:
+      - { x: -0.4500, y: -5.9200 }
+      - { x: -0.4500, y: -6.0800 }
+      - { x: 0.0000, y: -6.0800 }
+      - { x: 0.0000, y: -5.9200 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: bay-access-cornice-1
+    footprint:
+      - { x: -0.0800, y: -6.0000 }
+      - { x: 0.0800, y: -6.0000 }
+      - { x: 0.0800, y: -4.0000 }
+      - { x: -0.0800, y: -4.0000 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: bay-access-cornice-2
+    footprint:
+      - { x: 0.0000, y: -4.0800 }
+      - { x: 0.0000, y: -3.9200 }
+      - { x: -0.4500, y: -3.9200 }
+      - { x: -0.4500, y: -4.0800 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: bay-access-cornice-3
+    footprint:
+      - { x: -0.3700, y: -4.0000 }
+      - { x: -0.5300, y: -4.0000 }
+      - { x: -0.5300, y: -6.0000 }
+      - { x: -0.3700, y: -6.0000 }
+    bottom: { c: 2.420 }
+    top: { c: 2.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: return-gallery-cornice-0
+    footprint:
+      - { x: 12.0000, y: 30.0800 }
+      - { x: 12.0000, y: 29.9200 }
+      - { x: 22.0000, y: 29.9200 }
+      - { x: 22.0000, y: 30.0800 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: return-gallery-cornice-1
+    footprint:
+      - { x: 21.9200, y: 30.0000 }
+      - { x: 22.0800, y: 30.0000 }
+      - { x: 22.0800, y: 34.0000 }
+      - { x: 21.9200, y: 34.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: return-gallery-cornice-2
+    footprint:
+      - { x: 22.0000, y: 33.9200 }
+      - { x: 22.0000, y: 34.0800 }
+      - { x: 12.0000, y: 34.0800 }
+      - { x: 12.0000, y: 33.9200 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: return-gallery-cornice-3
+    footprint:
+      - { x: 12.0800, y: 34.0000 }
+      - { x: 11.9200, y: 34.0000 }
+      - { x: 11.9200, y: 30.0000 }
+      - { x: 12.0800, y: 30.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: inspection-alcove-cornice-0
+    footprint:
+      - { x: 12.0000, y: -2.9200 }
+      - { x: 12.0000, y: -3.0800 }
+      - { x: 16.0000, y: -3.0800 }
+      - { x: 16.0000, y: -2.9200 }
+    bottom: { c: 2.320 }
+    top: { c: 2.600 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: inspection-alcove-cornice-1
+    footprint:
+      - { x: 15.9200, y: -3.0000 }
+      - { x: 16.0800, y: -3.0000 }
+      - { x: 16.0800, y: 0.0000 }
+      - { x: 15.9200, y: 0.0000 }
+    bottom: { c: 2.320 }
+    top: { c: 2.600 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: inspection-alcove-cornice-2
+    footprint:
+      - { x: 16.0000, y: -0.0800 }
+      - { x: 16.0000, y: 0.0800 }
+      - { x: 12.0000, y: 0.0800 }
+      - { x: 12.0000, y: -0.0800 }
+    bottom: { c: 2.320 }
+    top: { c: 2.600 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: inspection-alcove-cornice-3
+    footprint:
+      - { x: 12.0800, y: 0.0000 }
+      - { x: 11.9200, y: 0.0000 }
+      - { x: 11.9200, y: -3.0000 }
+      - { x: 12.0800, y: -3.0000 }
+    bottom: { c: 2.320 }
+    top: { c: 2.600 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: maintenance-niche-cornice-0
+    footprint:
+      - { x: -16.0000, y: 6.0800 }
+      - { x: -16.0000, y: 5.9200 }
+      - { x: -12.0000, y: 5.9200 }
+      - { x: -12.0000, y: 6.0800 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: maintenance-niche-cornice-1
+    footprint:
+      - { x: -12.0800, y: 6.0000 }
+      - { x: -11.9200, y: 6.0000 }
+      - { x: -11.9200, y: 9.0000 }
+      - { x: -12.0800, y: 9.0000 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: maintenance-niche-cornice-2
+    footprint:
+      - { x: -12.0000, y: 8.9200 }
+      - { x: -12.0000, y: 9.0800 }
+      - { x: -16.0000, y: 9.0800 }
+      - { x: -16.0000, y: 8.9200 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: maintenance-niche-cornice-3
+    footprint:
+      - { x: -15.9200, y: 9.0000 }
+      - { x: -16.0800, y: 9.0000 }
+      - { x: -16.0800, y: 6.0000 }
+      - { x: -15.9200, y: 6.0000 }
+    bottom: { c: 2.520 }
+    top: { c: 2.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-egress-cornice-0
+    footprint:
+      - { x: 46.0000, y: 20.0800 }
+      - { x: 46.0000, y: 19.9200 }
+      - { x: 50.0000, y: 19.9200 }
+      - { x: 50.0000, y: 20.0800 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-egress-cornice-1
+    footprint:
+      - { x: 49.9200, y: 20.0000 }
+      - { x: 50.0800, y: 20.0000 }
+      - { x: 50.0800, y: 34.0000 }
+      - { x: 49.9200, y: 34.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-egress-cornice-2
+    footprint:
+      - { x: 50.0000, y: 33.9200 }
+      - { x: 50.0000, y: 34.0800 }
+      - { x: 46.0000, y: 34.0800 }
+      - { x: 46.0000, y: 33.9200 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-egress-cornice-3
+    footprint:
+      - { x: 46.0800, y: 34.0000 }
+      - { x: 45.9200, y: 34.0000 }
+      - { x: 45.9200, y: 20.0000 }
+      - { x: 46.0800, y: 20.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: egress-return-cornice-0
+    footprint:
+      - { x: 30.0000, y: 34.0800 }
+      - { x: 30.0000, y: 33.9200 }
+      - { x: 50.0000, y: 33.9200 }
+      - { x: 50.0000, y: 34.0800 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: egress-return-cornice-1
+    footprint:
+      - { x: 49.9200, y: 34.0000 }
+      - { x: 50.0800, y: 34.0000 }
+      - { x: 50.0800, y: 38.0000 }
+      - { x: 49.9200, y: 38.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: egress-return-cornice-2
+    footprint:
+      - { x: 50.0000, y: 37.9200 }
+      - { x: 50.0000, y: 38.0800 }
+      - { x: 30.0000, y: 38.0800 }
+      - { x: 30.0000, y: 37.9200 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: egress-return-cornice-3
+    footprint:
+      - { x: 30.0800, y: 38.0000 }
+      - { x: 29.9200, y: 38.0000 }
+      - { x: 29.9200, y: 34.0000 }
+      - { x: 30.0800, y: 34.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-0-cornice-0
+    footprint:
+      - { x: 40.0000, y: 20.0800 }
+      - { x: 40.0000, y: 19.9200 }
+      - { x: 41.0000, y: 19.9200 }
+      - { x: 41.0000, y: 20.0800 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-0-cornice-1
+    footprint:
+      - { x: 40.9200, y: 20.0000 }
+      - { x: 41.0800, y: 20.0000 }
+      - { x: 41.0800, y: 24.0000 }
+      - { x: 40.9200, y: 24.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-0-cornice-2
+    footprint:
+      - { x: 41.0000, y: 23.9200 }
+      - { x: 41.0000, y: 24.0800 }
+      - { x: 40.0000, y: 24.0800 }
+      - { x: 40.0000, y: 23.9200 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-0-cornice-3
+    footprint:
+      - { x: 40.0800, y: 24.0000 }
+      - { x: 39.9200, y: 24.0000 }
+      - { x: 39.9200, y: 20.0000 }
+      - { x: 40.0800, y: 20.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-0-cornice-0
+    footprint:
+      - { x: 22.0000, y: 26.0800 }
+      - { x: 22.0000, y: 25.9200 }
+      - { x: 24.0000, y: 25.9200 }
+      - { x: 24.0000, y: 26.0800 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-0-cornice-1
+    footprint:
+      - { x: 23.9200, y: 26.0000 }
+      - { x: 24.0800, y: 26.0000 }
+      - { x: 24.0800, y: 27.0000 }
+      - { x: 23.9200, y: 27.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-0-cornice-2
+    footprint:
+      - { x: 24.0000, y: 26.9200 }
+      - { x: 24.0000, y: 27.0800 }
+      - { x: 22.0000, y: 27.0800 }
+      - { x: 22.0000, y: 26.9200 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-0-cornice-3
+    footprint:
+      - { x: 22.0800, y: 27.0000 }
+      - { x: 21.9200, y: 27.0000 }
+      - { x: 21.9200, y: 26.0000 }
+      - { x: 22.0800, y: 26.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-1-cornice-0
+    footprint:
+      - { x: 41.0000, y: 20.0800 }
+      - { x: 41.0000, y: 19.9200 }
+      - { x: 42.0000, y: 19.9200 }
+      - { x: 42.0000, y: 20.0800 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-1-cornice-1
+    footprint:
+      - { x: 41.9200, y: 20.0000 }
+      - { x: 42.0800, y: 20.0000 }
+      - { x: 42.0800, y: 24.0000 }
+      - { x: 41.9200, y: 24.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-1-cornice-2
+    footprint:
+      - { x: 42.0000, y: 23.9200 }
+      - { x: 42.0000, y: 24.0800 }
+      - { x: 41.0000, y: 24.0800 }
+      - { x: 41.0000, y: 23.9200 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-1-cornice-3
+    footprint:
+      - { x: 41.0800, y: 24.0000 }
+      - { x: 40.9200, y: 24.0000 }
+      - { x: 40.9200, y: 20.0000 }
+      - { x: 41.0800, y: 20.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-1-cornice-0
+    footprint:
+      - { x: 22.0000, y: 27.0800 }
+      - { x: 22.0000, y: 26.9200 }
+      - { x: 24.0000, y: 26.9200 }
+      - { x: 24.0000, y: 27.0800 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-1-cornice-1
+    footprint:
+      - { x: 23.9200, y: 27.0000 }
+      - { x: 24.0800, y: 27.0000 }
+      - { x: 24.0800, y: 28.0000 }
+      - { x: 23.9200, y: 28.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-1-cornice-2
+    footprint:
+      - { x: 24.0000, y: 27.9200 }
+      - { x: 24.0000, y: 28.0800 }
+      - { x: 22.0000, y: 28.0800 }
+      - { x: 22.0000, y: 27.9200 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-1-cornice-3
+    footprint:
+      - { x: 22.0800, y: 28.0000 }
+      - { x: 21.9200, y: 28.0000 }
+      - { x: 21.9200, y: 27.0000 }
+      - { x: 22.0800, y: 27.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-2-cornice-0
+    footprint:
+      - { x: 42.0000, y: 20.0800 }
+      - { x: 42.0000, y: 19.9200 }
+      - { x: 43.0000, y: 19.9200 }
+      - { x: 43.0000, y: 20.0800 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-2-cornice-1
+    footprint:
+      - { x: 42.9200, y: 20.0000 }
+      - { x: 43.0800, y: 20.0000 }
+      - { x: 43.0800, y: 24.0000 }
+      - { x: 42.9200, y: 24.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-2-cornice-2
+    footprint:
+      - { x: 43.0000, y: 23.9200 }
+      - { x: 43.0000, y: 24.0800 }
+      - { x: 42.0000, y: 24.0800 }
+      - { x: 42.0000, y: 23.9200 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-2-cornice-3
+    footprint:
+      - { x: 42.0800, y: 24.0000 }
+      - { x: 41.9200, y: 24.0000 }
+      - { x: 41.9200, y: 20.0000 }
+      - { x: 42.0800, y: 20.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-2-cornice-0
+    footprint:
+      - { x: 22.0000, y: 28.0800 }
+      - { x: 22.0000, y: 27.9200 }
+      - { x: 24.0000, y: 27.9200 }
+      - { x: 24.0000, y: 28.0800 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-2-cornice-1
+    footprint:
+      - { x: 23.9200, y: 28.0000 }
+      - { x: 24.0800, y: 28.0000 }
+      - { x: 24.0800, y: 29.0000 }
+      - { x: 23.9200, y: 29.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-2-cornice-2
+    footprint:
+      - { x: 24.0000, y: 28.9200 }
+      - { x: 24.0000, y: 29.0800 }
+      - { x: 22.0000, y: 29.0800 }
+      - { x: 22.0000, y: 28.9200 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-2-cornice-3
+    footprint:
+      - { x: 22.0800, y: 29.0000 }
+      - { x: 21.9200, y: 29.0000 }
+      - { x: 21.9200, y: 28.0000 }
+      - { x: 22.0800, y: 28.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-3-cornice-0
+    footprint:
+      - { x: 43.0000, y: 20.0800 }
+      - { x: 43.0000, y: 19.9200 }
+      - { x: 44.0000, y: 19.9200 }
+      - { x: 44.0000, y: 20.0800 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-3-cornice-1
+    footprint:
+      - { x: 43.9200, y: 20.0000 }
+      - { x: 44.0800, y: 20.0000 }
+      - { x: 44.0800, y: 24.0000 }
+      - { x: 43.9200, y: 24.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-3-cornice-2
+    footprint:
+      - { x: 44.0000, y: 23.9200 }
+      - { x: 44.0000, y: 24.0800 }
+      - { x: 43.0000, y: 24.0800 }
+      - { x: 43.0000, y: 23.9200 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-3-cornice-3
+    footprint:
+      - { x: 43.0800, y: 24.0000 }
+      - { x: 42.9200, y: 24.0000 }
+      - { x: 42.9200, y: 20.0000 }
+      - { x: 43.0800, y: 20.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-3-cornice-0
+    footprint:
+      - { x: 22.0000, y: 29.0800 }
+      - { x: 22.0000, y: 28.9200 }
+      - { x: 24.0000, y: 28.9200 }
+      - { x: 24.0000, y: 29.0800 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-3-cornice-1
+    footprint:
+      - { x: 23.9200, y: 29.0000 }
+      - { x: 24.0800, y: 29.0000 }
+      - { x: 24.0800, y: 30.0000 }
+      - { x: 23.9200, y: 30.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-3-cornice-2
+    footprint:
+      - { x: 24.0000, y: 29.9200 }
+      - { x: 24.0000, y: 30.0800 }
+      - { x: 22.0000, y: 30.0800 }
+      - { x: 22.0000, y: 29.9200 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-3-cornice-3
+    footprint:
+      - { x: 22.0800, y: 30.0000 }
+      - { x: 21.9200, y: 30.0000 }
+      - { x: 21.9200, y: 29.0000 }
+      - { x: 22.0800, y: 29.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-4-cornice-0
+    footprint:
+      - { x: 44.0000, y: 20.0800 }
+      - { x: 44.0000, y: 19.9200 }
+      - { x: 45.0000, y: 19.9200 }
+      - { x: 45.0000, y: 20.0800 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-4-cornice-1
+    footprint:
+      - { x: 44.9200, y: 20.0000 }
+      - { x: 45.0800, y: 20.0000 }
+      - { x: 45.0800, y: 24.0000 }
+      - { x: 44.9200, y: 24.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-4-cornice-2
+    footprint:
+      - { x: 45.0000, y: 23.9200 }
+      - { x: 45.0000, y: 24.0800 }
+      - { x: 44.0000, y: 24.0800 }
+      - { x: 44.0000, y: 23.9200 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-4-cornice-3
+    footprint:
+      - { x: 44.0800, y: 24.0000 }
+      - { x: 43.9200, y: 24.0000 }
+      - { x: 43.9200, y: 20.0000 }
+      - { x: 44.0800, y: 20.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-4-cornice-0
+    footprint:
+      - { x: 22.0000, y: 30.0800 }
+      - { x: 22.0000, y: 29.9200 }
+      - { x: 24.0000, y: 29.9200 }
+      - { x: 24.0000, y: 30.0800 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-4-cornice-1
+    footprint:
+      - { x: 23.9200, y: 30.0000 }
+      - { x: 24.0800, y: 30.0000 }
+      - { x: 24.0800, y: 31.0000 }
+      - { x: 23.9200, y: 31.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-4-cornice-2
+    footprint:
+      - { x: 24.0000, y: 30.9200 }
+      - { x: 24.0000, y: 31.0800 }
+      - { x: 22.0000, y: 31.0800 }
+      - { x: 22.0000, y: 30.9200 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-4-cornice-3
+    footprint:
+      - { x: 22.0800, y: 31.0000 }
+      - { x: 21.9200, y: 31.0000 }
+      - { x: 21.9200, y: 30.0000 }
+      - { x: 22.0800, y: 30.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-5-cornice-0
+    footprint:
+      - { x: 45.0000, y: 20.0800 }
+      - { x: 45.0000, y: 19.9200 }
+      - { x: 46.0000, y: 19.9200 }
+      - { x: 46.0000, y: 20.0800 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-5-cornice-1
+    footprint:
+      - { x: 45.9200, y: 20.0000 }
+      - { x: 46.0800, y: 20.0000 }
+      - { x: 46.0800, y: 24.0000 }
+      - { x: 45.9200, y: 24.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-5-cornice-2
+    footprint:
+      - { x: 46.0000, y: 23.9200 }
+      - { x: 46.0000, y: 24.0800 }
+      - { x: 45.0000, y: 24.0800 }
+      - { x: 45.0000, y: 23.9200 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-stair-5-cornice-3
+    footprint:
+      - { x: 45.0800, y: 24.0000 }
+      - { x: 44.9200, y: 24.0000 }
+      - { x: 44.9200, y: 20.0000 }
+      - { x: 45.0800, y: 20.0000 }
+    bottom: { c: 2.920 }
+    top: { c: 3.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-5-cornice-0
+    footprint:
+      - { x: 22.0000, y: 31.0800 }
+      - { x: 22.0000, y: 30.9200 }
+      - { x: 24.0000, y: 30.9200 }
+      - { x: 24.0000, y: 31.0800 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-5-cornice-1
+    footprint:
+      - { x: 23.9200, y: 31.0000 }
+      - { x: 24.0800, y: 31.0000 }
+      - { x: 24.0800, y: 32.0000 }
+      - { x: 23.9200, y: 32.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-5-cornice-2
+    footprint:
+      - { x: 24.0000, y: 31.9200 }
+      - { x: 24.0000, y: 32.0800 }
+      - { x: 22.0000, y: 32.0800 }
+      - { x: 22.0000, y: 31.9200 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: west-trench-stair-5-cornice-3
+    footprint:
+      - { x: 22.0800, y: 32.0000 }
+      - { x: 21.9200, y: 32.0000 }
+      - { x: 21.9200, y: 31.0000 }
+      - { x: 22.0800, y: 31.0000 }
+    bottom: { c: 2.820 }
+    top: { c: 3.100 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-pier-0-0
+    footprint: [{ x: 11.420, y: -5.000 }, { x: 11.880, y: -5.000 }, { x: 11.880, y: -4.300 }, { x: 11.420, y: -4.300 }]
+    bottom: { c: 0.000 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: arrival-pier-0-1
+    footprint: [{ x: 11.420, y: 1.000 }, { x: 11.880, y: 1.000 }, { x: 11.880, y: 1.700 }, { x: 11.420, y: 1.700 }]
+    bottom: { c: 0.000 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: arrival-pier-0-2
+    footprint: [{ x: 11.420, y: 7.400 }, { x: 11.880, y: 7.400 }, { x: 11.880, y: 8.100 }, { x: 11.420, y: 8.100 }]
+    bottom: { c: 0.000 }
+    top: { c: 4.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: arrival-beam-0
+    footprint: [{ x: 0.000, y: -2.000 }, { x: 12.000, y: -2.000 }, { x: 12.000, y: -1.720 }, { x: 0.000, y: -1.720 }]
+    bottom: { c: 4.250 }
+    top: { c: 4.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-beam-1
+    footprint: [{ x: 0.000, y: 3.000 }, { x: 12.000, y: 3.000 }, { x: 12.000, y: 3.280 }, { x: 0.000, y: 3.280 }]
+    bottom: { c: 4.250 }
+    top: { c: 4.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-beam-2
+    footprint: [{ x: 0.000, y: 7.000 }, { x: 12.000, y: 7.000 }, { x: 12.000, y: 7.280 }, { x: 0.000, y: 7.280 }]
+    bottom: { c: 4.250 }
+    top: { c: 4.700 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: arrival-freight
+    footprint: [{ x: 9.000, y: -5.000 }, { x: 10.200, y: -5.000 }, { x: 10.200, y: -3.800 }, { x: 9.000, y: -3.800 }]
+    bottom: { c: 0.000 }
+    top: { c: 1.300 }
+    side_material: crate
+    top_material: crate
+    bottom_material: crate
+    collision: true
+  - id: window-sill-0
+    footprint: [{ x: -0.700, y: -4.000 }, { x: 0.040, y: -4.000 }, { x: 0.040, y: -1.000 }, { x: -0.700, y: -1.000 }]
+    bottom: { c: 0.820 }
+    top: { c: 1.020 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: window-lintel-0
+    footprint: [{ x: -0.700, y: -4.000 }, { x: 0.040, y: -4.000 }, { x: 0.040, y: -1.000 }, { x: -0.700, y: -1.000 }]
+    bottom: { c: 3.100 }
+    top: { c: 3.350 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: false
+  - id: window-sill-1
+    footprint: [{ x: -0.700, y: 1.000 }, { x: 0.040, y: 1.000 }, { x: 0.040, y: 4.000 }, { x: -0.700, y: 4.000 }]
+    bottom: { c: 0.820 }
+    top: { c: 1.020 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: window-lintel-1
+    footprint: [{ x: -0.700, y: 1.000 }, { x: 0.040, y: 1.000 }, { x: 0.040, y: 4.000 }, { x: -0.700, y: 4.000 }]
+    bottom: { c: 3.100 }
+    top: { c: 3.350 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: false
+  - id: window-sill-2
+    footprint: [{ x: -0.700, y: 6.000 }, { x: 0.040, y: 6.000 }, { x: 0.040, y: 9.000 }, { x: -0.700, y: 9.000 }]
+    bottom: { c: 0.820 }
+    top: { c: 1.020 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: window-lintel-2
+    footprint: [{ x: -0.700, y: 6.000 }, { x: 0.040, y: 6.000 }, { x: 0.040, y: 9.000 }, { x: -0.700, y: 9.000 }]
+    bottom: { c: 3.100 }
+    top: { c: 3.350 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: false
+  - id: window-pier-0
+    footprint: [{ x: -0.700, y: -1.000 }, { x: 0.180, y: -1.000 }, { x: 0.180, y: -0.400 }, { x: -0.700, y: -0.400 }]
+    bottom: { c: 0.000 }
+    top: { c: 4.800 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: window-pier-1
+    footprint: [{ x: -0.700, y: 4.000 }, { x: 0.180, y: 4.000 }, { x: 0.180, y: 4.600 }, { x: -0.700, y: 4.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 4.800 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: window-pier-2
+    footprint: [{ x: -0.700, y: 9.000 }, { x: 0.180, y: 9.000 }, { x: 0.180, y: 9.600 }, { x: -0.700, y: 9.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 4.800 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: bay-machine-0
+    footprint:
+      - { x: -6.5000, y: -2.0000 }
+      - { x: -6.7010, y: -1.2500 }
+      - { x: -7.2500, y: -0.7010 }
+      - { x: -8.0000, y: -0.5000 }
+      - { x: -8.7500, y: -0.7010 }
+      - { x: -9.2990, y: -1.2500 }
+      - { x: -9.5000, y: -2.0000 }
+      - { x: -9.2990, y: -2.7500 }
+      - { x: -8.7500, y: -3.2990 }
+      - { x: -8.0000, y: -3.5000 }
+      - { x: -7.2500, y: -3.2990 }
+      - { x: -6.7010, y: -2.7500 }
+    bottom: { c: 0.000 }
+    top: { c: 3.800 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: bay-header-0
+    footprint:
+      [{ x: -10.000, y: -2.150 }, { x: -2.000, y: -2.150 }, { x: -2.000, y: -1.850 }, { x: -10.000, y: -1.850 }]
+    bottom: { c: 4.600 }
+    top: { c: 5.000 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: bay-machine-1
+    footprint:
+      - { x: -6.5000, y: 5.0000 }
+      - { x: -6.7010, y: 5.7500 }
+      - { x: -7.2500, y: 6.2990 }
+      - { x: -8.0000, y: 6.5000 }
+      - { x: -8.7500, y: 6.2990 }
+      - { x: -9.2990, y: 5.7500 }
+      - { x: -9.5000, y: 5.0000 }
+      - { x: -9.2990, y: 4.2500 }
+      - { x: -8.7500, y: 3.7010 }
+      - { x: -8.0000, y: 3.5000 }
+      - { x: -7.2500, y: 3.7010 }
+      - { x: -6.7010, y: 4.2500 }
+    bottom: { c: 0.000 }
+    top: { c: 3.800 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: bay-header-1
+    footprint: [{ x: -10.000, y: 4.850 }, { x: -2.000, y: 4.850 }, { x: -2.000, y: 5.150 }, { x: -10.000, y: 5.150 }]
+    bottom: { c: 4.600 }
+    top: { c: 5.000 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: bay-freight
+    footprint: [{ x: -4.000, y: 6.000 }, { x: -2.000, y: 6.000 }, { x: -2.000, y: 8.000 }, { x: -4.000, y: 8.000 }]
+    bottom: { c: 0.000 }
+    top: { c: 1.600 }
+    side_material: crate
+    top_material: crate
+    bottom_material: crate
+    collision: true
+  - id: core-foundation
+    footprint:
+      - { x: 10.8000, y: 24.0000 }
+      - { x: 10.4249, y: 25.4000 }
+      - { x: 9.4000, y: 26.4249 }
+      - { x: 8.0000, y: 26.8000 }
+      - { x: 6.6000, y: 26.4249 }
+      - { x: 5.5751, y: 25.4000 }
+      - { x: 5.2000, y: 24.0000 }
+      - { x: 5.5751, y: 22.6000 }
+      - { x: 6.6000, y: 21.5751 }
+      - { x: 8.0000, y: 21.2000 }
+      - { x: 9.4000, y: 21.5751 }
+      - { x: 10.4249, y: 22.6000 }
+    bottom: { c: 0.000 }
+    top: { c: 0.250 }
+    side_material: hazard
+    top_material: steel
+    bottom_material: hazard
+    collision: true
+  - id: core-base
+    footprint:
+      - { x: 10.3500, y: 24.0000 }
+      - { x: 10.0352, y: 25.1750 }
+      - { x: 9.1750, y: 26.0352 }
+      - { x: 8.0000, y: 26.3500 }
+      - { x: 6.8250, y: 26.0352 }
+      - { x: 5.9648, y: 25.1750 }
+      - { x: 5.6500, y: 24.0000 }
+      - { x: 5.9648, y: 22.8250 }
+      - { x: 6.8250, y: 21.9648 }
+      - { x: 8.0000, y: 21.6500 }
+      - { x: 9.1750, y: 21.9648 }
+      - { x: 10.0352, y: 22.8250 }
+    bottom: { c: 0.250 }
+    top: { c: 0.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: core-lower-band
+    footprint:
+      - { x: 10.0500, y: 24.0000 }
+      - { x: 9.7754, y: 25.0250 }
+      - { x: 9.0250, y: 25.7754 }
+      - { x: 8.0000, y: 26.0500 }
+      - { x: 6.9750, y: 25.7754 }
+      - { x: 6.2246, y: 25.0250 }
+      - { x: 5.9500, y: 24.0000 }
+      - { x: 6.2246, y: 22.9750 }
+      - { x: 6.9750, y: 22.2246 }
+      - { x: 8.0000, y: 21.9500 }
+      - { x: 9.0250, y: 22.2246 }
+      - { x: 9.7754, y: 22.9750 }
+    bottom: { c: 0.800 }
+    top: { c: 1.100 }
+    side_material: lamp
+    top_material: steel
+    bottom_material: lamp
+    collision: true
+  - id: core-vessel
+    footprint:
+      - { x: 9.9500, y: 24.0000 }
+      - { x: 9.6887, y: 24.9750 }
+      - { x: 8.9750, y: 25.6887 }
+      - { x: 8.0000, y: 25.9500 }
+      - { x: 7.0250, y: 25.6887 }
+      - { x: 6.3113, y: 24.9750 }
+      - { x: 6.0500, y: 24.0000 }
+      - { x: 6.3113, y: 23.0250 }
+      - { x: 7.0250, y: 22.3113 }
+      - { x: 8.0000, y: 22.0500 }
+      - { x: 8.9750, y: 22.3113 }
+      - { x: 9.6887, y: 23.0250 }
+    bottom: { c: 1.100 }
+    top: { c: 5.200 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: core-upper-band
+    footprint:
+      - { x: 10.0500, y: 24.0000 }
+      - { x: 9.7754, y: 25.0250 }
+      - { x: 9.0250, y: 25.7754 }
+      - { x: 8.0000, y: 26.0500 }
+      - { x: 6.9750, y: 25.7754 }
+      - { x: 6.2246, y: 25.0250 }
+      - { x: 5.9500, y: 24.0000 }
+      - { x: 6.2246, y: 22.9750 }
+      - { x: 6.9750, y: 22.2246 }
+      - { x: 8.0000, y: 21.9500 }
+      - { x: 9.0250, y: 22.2246 }
+      - { x: 9.7754, y: 22.9750 }
+    bottom: { c: 5.200 }
+    top: { c: 5.500 }
+    side_material: lamp
+    top_material: steel
+    bottom_material: lamp
+    collision: true
+  - id: core-cap
+    footprint:
+      - { x: 10.4000, y: 24.0000 }
+      - { x: 10.0785, y: 25.2000 }
+      - { x: 9.2000, y: 26.0785 }
+      - { x: 8.0000, y: 26.4000 }
+      - { x: 6.8000, y: 26.0785 }
+      - { x: 5.9215, y: 25.2000 }
+      - { x: 5.6000, y: 24.0000 }
+      - { x: 5.9215, y: 22.8000 }
+      - { x: 6.8000, y: 21.9215 }
+      - { x: 8.0000, y: 21.6000 }
+      - { x: 9.2000, y: 21.9215 }
+      - { x: 10.0785, y: 22.8000 }
+    bottom: { c: 5.500 }
+    top: { c: 5.850 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: core-exhaust
+    footprint:
+      - { x: 8.7500, y: 24.0000 }
+      - { x: 8.6495, y: 24.3750 }
+      - { x: 8.3750, y: 24.6495 }
+      - { x: 8.0000, y: 24.7500 }
+      - { x: 7.6250, y: 24.6495 }
+      - { x: 7.3505, y: 24.3750 }
+      - { x: 7.2500, y: 24.0000 }
+      - { x: 7.3505, y: 23.6250 }
+      - { x: 7.6250, y: 23.3505 }
+      - { x: 8.0000, y: 23.2500 }
+      - { x: 8.3750, y: 23.3505 }
+      - { x: 8.6495, y: 23.6250 }
+    bottom: { c: 5.850 }
+    top: { c: 7.200 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: core-brace-0
+    footprint: [{ x: 9.970, y: 23.870 }, { x: 10.230, y: 23.870 }, { x: 10.230, y: 24.130 }, { x: 9.970, y: 24.130 }]
+    bottom: { c: 0.400 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: core-brace-1
+    footprint: [{ x: 9.355, y: 25.355 }, { x: 9.615, y: 25.355 }, { x: 9.615, y: 25.615 }, { x: 9.355, y: 25.615 }]
+    bottom: { c: 0.400 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: core-brace-2
+    footprint: [{ x: 7.870, y: 25.970 }, { x: 8.130, y: 25.970 }, { x: 8.130, y: 26.230 }, { x: 7.870, y: 26.230 }]
+    bottom: { c: 0.400 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: core-brace-3
+    footprint: [{ x: 6.385, y: 25.355 }, { x: 6.645, y: 25.355 }, { x: 6.645, y: 25.615 }, { x: 6.385, y: 25.615 }]
+    bottom: { c: 0.400 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: core-brace-4
+    footprint: [{ x: 5.770, y: 23.870 }, { x: 6.030, y: 23.870 }, { x: 6.030, y: 24.130 }, { x: 5.770, y: 24.130 }]
+    bottom: { c: 0.400 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: core-brace-5
+    footprint: [{ x: 6.385, y: 22.385 }, { x: 6.645, y: 22.385 }, { x: 6.645, y: 22.645 }, { x: 6.385, y: 22.645 }]
+    bottom: { c: 0.400 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: core-brace-6
+    footprint: [{ x: 7.870, y: 21.770 }, { x: 8.130, y: 21.770 }, { x: 8.130, y: 22.030 }, { x: 7.870, y: 22.030 }]
+    bottom: { c: 0.400 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: core-brace-7
+    footprint: [{ x: 9.355, y: 22.385 }, { x: 9.615, y: 22.385 }, { x: 9.615, y: 22.645 }, { x: 9.355, y: 22.645 }]
+    bottom: { c: 0.400 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: reactor-rafter-0
+    footprint: [{ x: 0.000, y: 16.000 }, { x: 16.000, y: 16.000 }, { x: 16.000, y: 16.350 }, { x: 0.000, y: 16.350 }]
+    bottom: { c: 6.500 }
+    top: { c: 7.000 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: reactor-pier-0-0
+    footprint: [{ x: 0.120, y: 15.700 }, { x: 0.720, y: 15.700 }, { x: 0.720, y: 16.600 }, { x: 0.120, y: 16.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 6.500 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: reactor-pier-0-1
+    footprint: [{ x: 15.280, y: 15.700 }, { x: 15.880, y: 15.700 }, { x: 15.880, y: 16.600 }, { x: 15.280, y: 16.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 6.500 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: reactor-rafter-1
+    footprint: [{ x: 0.000, y: 21.000 }, { x: 16.000, y: 21.000 }, { x: 16.000, y: 21.350 }, { x: 0.000, y: 21.350 }]
+    bottom: { c: 6.500 }
+    top: { c: 7.000 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: reactor-rafter-2
+    footprint: [{ x: 0.000, y: 28.000 }, { x: 16.000, y: 28.000 }, { x: 16.000, y: 28.350 }, { x: 0.000, y: 28.350 }]
+    bottom: { c: 6.500 }
+    top: { c: 7.000 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: reactor-pier-2-0
+    footprint: [{ x: 0.120, y: 27.700 }, { x: 0.720, y: 27.700 }, { x: 0.720, y: 28.600 }, { x: 0.120, y: 28.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 6.500 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: reactor-pier-2-1
+    footprint: [{ x: 15.280, y: 27.700 }, { x: 15.880, y: 27.700 }, { x: 15.880, y: 28.600 }, { x: 15.280, y: 28.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 6.500 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: console-0
+    footprint:
+      [{ x: -13.900, y: 18.000 }, { x: -12.700, y: 18.000 }, { x: -12.700, y: 19.800 }, { x: -13.900, y: 19.800 }]
+    bottom: { c: 1.200 }
+    top: { c: 2.400 }
+    side_material: steel
+    top_material: screen
+    bottom_material: steel
+    collision: true
+  - id: console-1
+    footprint:
+      [{ x: -13.900, y: 21.000 }, { x: -12.700, y: 21.000 }, { x: -12.700, y: 22.800 }, { x: -13.900, y: 22.800 }]
+    bottom: { c: 1.200 }
+    top: { c: 2.400 }
+    side_material: steel
+    top_material: screen
+    bottom_material: steel
+    collision: true
+  - id: console-2
+    footprint:
+      [{ x: -13.900, y: 24.000 }, { x: -12.700, y: 24.000 }, { x: -12.700, y: 25.800 }, { x: -13.900, y: 25.800 }]
+    bottom: { c: 1.200 }
+    top: { c: 2.400 }
+    side_material: steel
+    top_material: screen
+    bottom_material: steel
+    collision: true
+  - id: deck-rail-south
+    footprint: [{ x: -6.200, y: 16.000 }, { x: -6.000, y: 16.000 }, { x: -6.000, y: 19.900 }, { x: -6.200, y: 19.900 }]
+    bottom: { c: 1.200 }
+    top: { c: 2.150 }
+    side_material: steel
+    top_material: hazard
+    bottom_material: steel
+    collision: true
+  - id: deck-rail-north
+    footprint: [{ x: -6.200, y: 24.100 }, { x: -6.000, y: 24.100 }, { x: -6.000, y: 28.000 }, { x: -6.200, y: 28.000 }]
+    bottom: { c: 1.200 }
+    top: { c: 2.150 }
+    side_material: steel
+    top_material: hazard
+    bottom_material: steel
+    collision: true
+  - id: zig-curb-0-0
+    footprint:
+      - { x: 25.9556, y: 24.0666 }
+      - { x: 26.0444, y: 23.9334 }
+      - { x: 32.0444, y: 27.9334 }
+      - { x: 31.9556, y: 28.0666 }
+    bottom: { c: 0.200 }
+    top: { c: 0.360 }
+    side_material: hazard
+    top_material: hazard
+    bottom_material: hazard
+    collision: true
+  - id: zig-curb-0-1
+    footprint:
+      - { x: 29.9556, y: 24.0666 }
+      - { x: 30.0444, y: 23.9334 }
+      - { x: 36.0444, y: 27.9334 }
+      - { x: 35.9556, y: 28.0666 }
+    bottom: { c: 0.200 }
+    top: { c: 0.360 }
+    side_material: hazard
+    top_material: hazard
+    bottom_material: hazard
+    collision: true
+  - id: zig-curb-1-0
+    footprint:
+      - { x: 31.9556, y: 27.9334 }
+      - { x: 32.0444, y: 28.0666 }
+      - { x: 26.0444, y: 32.0666 }
+      - { x: 25.9556, y: 31.9334 }
+    bottom: { c: 0.200 }
+    top: { c: 0.360 }
+    side_material: hazard
+    top_material: hazard
+    bottom_material: hazard
+    collision: true
+  - id: zig-curb-1-1
+    footprint:
+      - { x: 35.9556, y: 27.9334 }
+      - { x: 36.0444, y: 28.0666 }
+      - { x: 30.0444, y: 32.0666 }
+      - { x: 29.9556, y: 31.9334 }
+    bottom: { c: 0.200 }
+    top: { c: 0.360 }
+    side_material: hazard
+    top_material: hazard
+    bottom_material: hazard
+    collision: true
+  - id: zig-curb-2-1
+    footprint:
+      - { x: 29.9200, y: 32.0000 }
+      - { x: 30.0800, y: 32.0000 }
+      - { x: 30.0800, y: 34.0000 }
+      - { x: 29.9200, y: 34.0000 }
+    bottom: { c: 0.200 }
+    top: { c: 0.360 }
+    side_material: hazard
+    top_material: hazard
+    bottom_material: hazard
+    collision: true
+  - id: entry-curb-south
+    footprint:
+      - { x: 22.1000, y: 20.1800 }
+      - { x: 22.1000, y: 20.0200 }
+      - { x: 29.9000, y: 20.0200 }
+      - { x: 29.9000, y: 20.1800 }
+    bottom: { c: 0.200 }
+    top: { c: 0.360 }
+    side_material: hazard
+    top_material: hazard
+    bottom_material: hazard
+    collision: true
+  - id: trench-beam-0
+    footprint: [{ x: 22.000, y: 19.000 }, { x: 40.000, y: 19.000 }, { x: 40.000, y: 19.300 }, { x: 22.000, y: 19.300 }]
+    bottom: { c: 4.700 }
+    top: { c: 5.300 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-column-0-0
+    footprint: [{ x: 22.200, y: 18.750 }, { x: 22.800, y: 18.750 }, { x: 22.800, y: 19.500 }, { x: 22.200, y: 19.500 }]
+    bottom: { c: -1.200 }
+    top: { c: 4.700 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: trench-column-0-1
+    footprint: [{ x: 39.200, y: 18.750 }, { x: 39.800, y: 18.750 }, { x: 39.800, y: 19.500 }, { x: 39.200, y: 19.500 }]
+    bottom: { c: -1.200 }
+    top: { c: 4.700 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: trench-beam-1
+    footprint: [{ x: 22.000, y: 25.000 }, { x: 40.000, y: 25.000 }, { x: 40.000, y: 25.300 }, { x: 22.000, y: 25.300 }]
+    bottom: { c: 4.700 }
+    top: { c: 5.300 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-column-1-0
+    footprint: [{ x: 22.200, y: 24.750 }, { x: 22.800, y: 24.750 }, { x: 22.800, y: 25.500 }, { x: 22.200, y: 25.500 }]
+    bottom: { c: -1.200 }
+    top: { c: 4.700 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: trench-column-1-1
+    footprint: [{ x: 39.200, y: 24.750 }, { x: 39.800, y: 24.750 }, { x: 39.800, y: 25.500 }, { x: 39.200, y: 25.500 }]
+    bottom: { c: -1.200 }
+    top: { c: 4.700 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: trench-beam-2
+    footprint: [{ x: 22.000, y: 31.000 }, { x: 40.000, y: 31.000 }, { x: 40.000, y: 31.300 }, { x: 22.000, y: 31.300 }]
+    bottom: { c: 4.700 }
+    top: { c: 5.300 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-column-2-1
+    footprint: [{ x: 39.200, y: 30.750 }, { x: 39.800, y: 30.750 }, { x: 39.800, y: 31.500 }, { x: 39.200, y: 31.500 }]
+    bottom: { c: -1.200 }
+    top: { c: 4.700 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: trench-duct-0
+    footprint: [{ x: 37.000, y: 18.500 }, { x: 39.000, y: 18.500 }, { x: 39.000, y: 19.900 }, { x: 37.000, y: 19.900 }]
+    bottom: { c: -1.200 }
+    top: { c: 0.200 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: trench-duct-1
+    footprint: [{ x: 37.000, y: 26.000 }, { x: 39.000, y: 26.000 }, { x: 39.000, y: 27.400 }, { x: 37.000, y: 27.400 }]
+    bottom: { c: -1.200 }
+    top: { c: 0.200 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: trench-duct-2
+    footprint: [{ x: 37.000, y: 31.000 }, { x: 39.000, y: 31.000 }, { x: 39.000, y: 32.400 }, { x: 37.000, y: 32.400 }]
+    bottom: { c: -1.200 }
+    top: { c: 0.200 }
+    side_material: ribbed
+    top_material: steel
+    bottom_material: ribbed
+    collision: true
+  - id: loading-machine-0
+    footprint:
+      - { x: 26.5000, y: -1.0000 }
+      - { x: 26.2990, y: -0.2500 }
+      - { x: 25.7500, y: 0.2990 }
+      - { x: 25.0000, y: 0.5000 }
+      - { x: 24.2500, y: 0.2990 }
+      - { x: 23.7010, y: -0.2500 }
+      - { x: 23.5000, y: -1.0000 }
+      - { x: 23.7010, y: -1.7500 }
+      - { x: 24.2500, y: -2.2990 }
+      - { x: 25.0000, y: -2.5000 }
+      - { x: 25.7500, y: -2.2990 }
+      - { x: 26.2990, y: -1.7500 }
+    bottom: { c: 0.000 }
+    top: { c: 3.900 }
+    side_material: brick
+    top_material: steel
+    bottom_material: brick
+    collision: true
+  - id: loading-cap-0
+    footprint:
+      - { x: 26.6000, y: -1.0000 }
+      - { x: 26.3856, y: -0.2000 }
+      - { x: 25.8000, y: 0.3856 }
+      - { x: 25.0000, y: 0.6000 }
+      - { x: 24.2000, y: 0.3856 }
+      - { x: 23.6144, y: -0.2000 }
+      - { x: 23.4000, y: -1.0000 }
+      - { x: 23.6144, y: -1.8000 }
+      - { x: 24.2000, y: -2.3856 }
+      - { x: 25.0000, y: -2.6000 }
+      - { x: 25.8000, y: -2.3856 }
+      - { x: 26.3856, y: -1.8000 }
+    bottom: { c: 3.900 }
+    top: { c: 4.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: loading-machine-1
+    footprint:
+      - { x: 32.5000, y: -1.0000 }
+      - { x: 32.2990, y: -0.2500 }
+      - { x: 31.7500, y: 0.2990 }
+      - { x: 31.0000, y: 0.5000 }
+      - { x: 30.2500, y: 0.2990 }
+      - { x: 29.7010, y: -0.2500 }
+      - { x: 29.5000, y: -1.0000 }
+      - { x: 29.7010, y: -1.7500 }
+      - { x: 30.2500, y: -2.2990 }
+      - { x: 31.0000, y: -2.5000 }
+      - { x: 31.7500, y: -2.2990 }
+      - { x: 32.2990, y: -1.7500 }
+    bottom: { c: 0.000 }
+    top: { c: 3.900 }
+    side_material: brick
+    top_material: steel
+    bottom_material: brick
+    collision: true
+  - id: loading-cap-1
+    footprint:
+      - { x: 32.6000, y: -1.0000 }
+      - { x: 32.3856, y: -0.2000 }
+      - { x: 31.8000, y: 0.3856 }
+      - { x: 31.0000, y: 0.6000 }
+      - { x: 30.2000, y: 0.3856 }
+      - { x: 29.6144, y: -0.2000 }
+      - { x: 29.4000, y: -1.0000 }
+      - { x: 29.6144, y: -1.8000 }
+      - { x: 30.2000, y: -2.3856 }
+      - { x: 31.0000, y: -2.6000 }
+      - { x: 31.8000, y: -2.3856 }
+      - { x: 32.3856, y: -1.8000 }
+    bottom: { c: 3.900 }
+    top: { c: 4.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: loading-girder-0
+    footprint: [{ x: 20.000, y: 0.000 }, { x: 35.000, y: 0.000 }, { x: 35.000, y: 0.400 }, { x: 20.000, y: 0.400 }]
+    bottom: { c: 5.200 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: loading-pier-0
+    footprint: [{ x: 34.000, y: -0.200 }, { x: 34.650, y: -0.200 }, { x: 34.650, y: 0.600 }, { x: 34.000, y: 0.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 5.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: loading-girder-1
+    footprint: [{ x: 20.000, y: 5.000 }, { x: 35.000, y: 5.000 }, { x: 35.000, y: 5.400 }, { x: 20.000, y: 5.400 }]
+    bottom: { c: 5.200 }
+    top: { c: 5.800 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: loading-pier-1
+    footprint: [{ x: 34.000, y: 4.800 }, { x: 34.650, y: 4.800 }, { x: 34.650, y: 5.600 }, { x: 34.000, y: 5.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 5.200 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: loading-freight-0
+    footprint: [{ x: 26.000, y: 7.000 }, { x: 27.600, y: 7.000 }, { x: 27.600, y: 8.600 }, { x: 26.000, y: 8.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 1.600 }
+    side_material: crate
+    top_material: crate
+    bottom_material: crate
+    collision: true
+  - id: loading-freight-1
+    footprint: [{ x: 28.100, y: 7.000 }, { x: 29.700, y: 7.000 }, { x: 29.700, y: 8.600 }, { x: 28.100, y: 8.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 1.600 }
+    side_material: crate
+    top_material: crate
+    bottom_material: crate
+    collision: true
+  - id: loading-freight-2
+    footprint: [{ x: 30.200, y: 7.000 }, { x: 31.800, y: 7.000 }, { x: 31.800, y: 8.600 }, { x: 30.200, y: 8.600 }]
+    bottom: { c: 0.000 }
+    top: { c: 1.600 }
+    side_material: crate
+    top_material: crate
+    bottom_material: crate
+    collision: true
+  - id: extraction-platform
+    footprint: [{ x: 27.000, y: 44.400 }, { x: 32.000, y: 44.400 }, { x: 32.000, y: 45.900 }, { x: 27.000, y: 45.900 }]
+    bottom: { c: 0.000 }
+    top: { c: 0.240 }
+    side_material: hazard
+    top_material: grate
+    bottom_material: hazard
+    collision: true
+contents:
+  - id: arrival-sign
+    kind: actor
+    position: { x: 2.200, y: 9.940, z: 2.500 }
+    actor:
+      yaw_degrees: 0.0
+      sprite:
+        { texture: arrival-sign, facing: fixed, alpha: cutout, width: 2.40, height: 1.50, origin_x: 0.5, origin_y: 0.5 }
+  - id: reactor-sign
+    kind: actor
+    position: { x: 4.000, y: 29.940, z: 2.700 }
+    actor:
+      yaw_degrees: 0.0
+      sprite:
+        { texture: reactor-sign, facing: fixed, alpha: cutout, width: 2.40, height: 1.50, origin_x: 0.5, origin_y: 0.5 }
+  - id: exit-sign
+    kind: actor
+    position: { x: 31.000, y: 45.940, z: 2.700 }
+    actor:
+      yaw_degrees: 0.0
+      sprite:
+        { texture: exit-sign, facing: fixed, alpha: cutout, width: 3.00, height: 1.50, origin_x: 0.5, origin_y: 0.5 }
+  - id: terminal-0
+    kind: actor
+    position: { x: -13.930, y: 19.000, z: 3.200 }
+    actor:
+      yaw_degrees: 90.0
+      sprite: { texture: screen, facing: fixed, alpha: cutout, width: 1.70, height: 1.30, origin_x: 0.5, origin_y: 0.5 }
+  - id: terminal-1
+    kind: actor
+    position: { x: -13.930, y: 22.000, z: 3.200 }
+    actor:
+      yaw_degrees: 90.0
+      sprite: { texture: screen, facing: fixed, alpha: cutout, width: 1.70, height: 1.30, origin_x: 0.5, origin_y: 0.5 }
+  - id: terminal-2
+    kind: actor
+    position: { x: -13.930, y: 25.000, z: 3.200 }
+    actor:
+      yaw_degrees: 90.0
+      sprite: { texture: screen, facing: fixed, alpha: cutout, width: 1.70, height: 1.30, origin_x: 0.5, origin_y: 0.5 }
+lighting:
+  version: 1
+  ambient: { x: 0.035, y: 0.040, z: 0.037 }
+  lights:
+    - { id: arrival-key, position: { x: 7.00, y: -1.00, z: 3.70 }, color: { x: 0.95, y: 0.78, z: 0.50 }, radius: 9.00 }
+    - { id: window-key, position: { x: -4.50, y: 2.50, z: 3.60 }, color: { x: 0.72, y: 0.85, z: 0.72 }, radius: 8.00 }
+    - {
+        id: reactor-overhead,
+        position: { x: 7.00, y: 18.50, z: 5.80 },
+        color: { x: 0.75, y: 0.82, z: 0.68 },
+        radius: 10.00,
+      }
+    - { id: core-west, position: { x: 5.40, y: 24.00, z: 3.50 }, color: { x: 0.17, y: 0.62, z: 0.43 }, radius: 5.50 }
+    - { id: core-east, position: { x: 10.60, y: 24.00, z: 3.50 }, color: { x: 0.17, y: 0.62, z: 0.43 }, radius: 5.50 }
+    - { id: core-front, position: { x: 8.00, y: 20.80, z: 3.00 }, color: { x: 0.22, y: 0.59, z: 0.41 }, radius: 5.00 }
+    - { id: reactor-red, position: { x: 14.00, y: 28.00, z: 3.00 }, color: { x: 0.50, y: 0.17, z: 0.06 }, radius: 3.50 }
+    - {
+        id: control-fill,
+        position: { x: -10.00, y: 22.50, z: 4.40 },
+        color: { x: 0.38, y: 0.63, z: 0.49 },
+        radius: 7.00,
+      }
+    - { id: zig-key, position: { x: 30.50, y: 25.80, z: 4.10 }, color: { x: 0.95, y: 0.67, z: 0.34 }, radius: 9.00 }
+    - { id: zig-far, position: { x: 28.00, y: 31.00, z: 4.40 }, color: { x: 0.38, y: 0.62, z: 0.70 }, radius: 7.00 }
+    - { id: loading-key, position: { x: 27.00, y: 2.00, z: 4.60 }, color: { x: 0.93, y: 0.72, z: 0.44 }, radius: 10.00 }
+    - {
+        id: extraction-key,
+        position: { x: 29.00, y: 42.00, z: 3.90 },
+        color: { x: 0.65, y: 0.82, z: 0.76 },
+        radius: 7.50,
+      }
+    - {
+        id: threshold-guide,
+        position: { x: 6.00, y: 12.00, z: 2.40 },
+        color: { x: 0.28, y: 0.22, z: 0.13 },
+        radius: 3.50,
+      }
+    - { id: east-guide, position: { x: 19.00, y: 21.00, z: 2.50 }, color: { x: 0.20, y: 0.28, z: 0.24 }, radius: 3.80 }
+    - {
+        id: service-guide,
+        position: { x: 15.00, y: 5.00, z: 2.30 },
+        color: { x: 0.26, y: 0.30, z: 0.22 },
+        radius: 4.00,
+      }
+    - {
+        id: return-guide,
+        position: { x: 17.00, y: 32.00, z: 2.50 },
+        color: { x: 0.22, y: 0.29, z: 0.32 },
+        radius: 4.50,
+      }
+    - {
+        id: west-stair-guide,
+        position: { x: 23.00, y: 29.00, z: 2.70 },
+        color: { x: 0.32, y: 0.38, z: 0.34 },
+        radius: 4.80,
+      }
+    - {
+        id: east-stair-guide,
+        position: { x: 44.50, y: 22.00, z: 2.70 },
+        color: { x: 0.34, y: 0.38, z: 0.31 },
+        radius: 5.80,
+      }
+    - {
+        id: egress-guide,
+        position: { x: 48.00, y: 30.00, z: 2.60 },
+        color: { x: 0.22, y: 0.28, z: 0.30 },
+        radius: 6.00,
+      }

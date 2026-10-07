@@ -71,10 +71,11 @@ type textureTransform struct {
 }
 
 type metadataTexture struct {
-	ID     uint32 `json:"id"`
-	Name   string `json:"name"`
-	Width  int    `json:"-"`
-	Height int    `json:"-"`
+	ID       uint32 `json:"id"`
+	Name     string `json:"name"`
+	Width    int    `json:"-"`
+	Height   int    `json:"-"`
+	Coverage string `json:"-"`
 }
 
 type metadataIdentity struct {
@@ -103,6 +104,7 @@ type Artifact struct {
 type assetBuild struct {
 	projectRoot string
 	manifest    sdk.Manifest
+	screenshot  bool
 	// Tests may supply fixture atlas bytes; public builds always use the managed
 	// Go asset processor, including the shared dev/cache path.
 	materials func(context.Context, string, sdk.Manifest, sdkworld.Document, map[uint32][]byte) (worldmaterial.Pair, assetpipeline.Artifact, error)
@@ -216,7 +218,8 @@ func build(
 		return Artifact{}, err
 	}
 
-	if err := validateWorldSchema(directory, definition); err != nil {
+	definition, err = prepareLevelWorld(ctx, directory, definition, assets)
+	if err != nil {
 		return Artifact{}, err
 	}
 
@@ -242,6 +245,7 @@ func build(
 		}
 
 		data, metadata = atlas.data, atlas.metadata
+		textures = atlas.sources
 		processedTextures = append(processedTextures, atlas.textures...)
 		features = append(features, atlas.features...)
 		slices.Sort(features)

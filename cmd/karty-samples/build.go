@@ -18,7 +18,7 @@ import (
 const noticeTimeout = 60 * time.Second
 
 func sampleNames() []string {
-	return []string{"pong", "ui-demo", "media-lab", "world-camera"}
+	return []string{"ui-demo", "media-lab", "world-camera"}
 }
 
 func buildSamples(root string) error {

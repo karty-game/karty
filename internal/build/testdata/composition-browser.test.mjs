@@ -118,9 +118,12 @@ try {
     assert.ok(box);
     const cdp = await context.newCDPSession(page);
     const click = async (y, xFraction = 1 / 3) => {
-      const frame = await page.locator("html").getAttribute("data-karty-frame");
+      const frame = await page.evaluate(
+        () => globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame,
+      );
       await page.waitForFunction(
-        (frame) => BigInt(document.documentElement.dataset.kartyFrame) > BigInt(frame) + 2n,
+        (frame) =>
+          BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) > BigInt(frame) + 2n,
         frame,
       );
       // One-third remains inside full-width controls and intrinsic child buttons

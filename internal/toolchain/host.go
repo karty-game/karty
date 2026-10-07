@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,9 +17,9 @@ import (
 
 const errHostMetadata staticError = "host artifact metadata is incomplete"
 const errHostChecksum staticError = "host artifact checksum mismatch"
-const errHostNotFile staticError = "managed Karty web host is not a regular file"
+const errHostNotFile staticError = "managed Karty host is not a regular file"
 
-// Host returns a cached SDK-pinned native or web host artifact.
+// Host locates a cached host. EnsureHost verifies its SDK-pinned checksum.
 func Host(version, target string) (string, error) {
 	cacheDir, err := kartyHome("")
 	if err != nil {
@@ -95,12 +96,10 @@ func installHost(ctx context.Context, cacheDir, version, target string, artifact
 	installDir := filepath.Join(cacheDir, "hosts", version, platform)
 
 	path := filepath.Join(installDir, name)
-	if target == "web" || target == "web-runtime" {
-		if info, statErr := os.Stat(path); statErr == nil && info.Mode().IsRegular() {
-			return path, nil
-		}
-	} else if managed, executableErr := executable("managed Karty host", path); executableErr == nil {
-		return managed, nil
+	if err := verifyCachedHost(path, artifact.SHA256); err == nil {
+		return installedHost(path, target)
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return "", err
 	}
 
 	if err := os.MkdirAll(filepath.Dir(installDir), 0o750); err != nil {
@@ -126,11 +125,46 @@ func installHost(ctx context.Context, cacheDir, version, target string, artifact
 		return "", fmt.Errorf("install host: %w", err)
 	}
 
+	return installedHost(path, target)
+}
+
+func installedHost(path, target string) (string, error) {
 	if target == "web" || target == "web-runtime" {
 		return path, nil
 	}
 
 	return executable("managed Karty host", path)
+}
+
+func verifyCachedHost(path, checksum string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("open cached Karty host: %w", err)
+	}
+	defer file.Close()
+
+	info, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("inspect cached Karty host: %w", err)
+	}
+
+	if !info.Mode().IsRegular() {
+		return errHostNotFile
+	}
+
+	digest := sha256.New()
+	if _, err := io.Copy(digest, file); err != nil {
+		return fmt.Errorf("hash cached Karty host: %w", err)
+	}
+
+	if hex.EncodeToString(digest.Sum(nil)) != checksum {
+		return fmt.Errorf(
+			"cached Karty host %q differs from the SDK checksum; remove %q and rebuild: %w",
+			path, filepath.Dir(path), errHostChecksum,
+		)
+	}
+
+	return nil
 }
 
 func downloadHost(ctx context.Context, artifact sdk.ToolArtifact) ([]byte, error) {
@@ -156,10 +190,6 @@ func downloadHost(ctx context.Context, artifact sdk.ToolArtifact) ([]byte, error
 // EnsureHost installs the host selected by the project SDK when that SDK
 // publishes a checksum-pinned release artifact.
 func EnsureHost(ctx context.Context, manifest sdk.Manifest, target string) (string, error) {
-	if cached, err := Host(manifest.Host.Version, target); err == nil {
-		return cached, nil
-	}
-
 	manifest, err := manifestWithPublishedHost(ctx, manifest, target)
 	if err != nil {
 		return "", err

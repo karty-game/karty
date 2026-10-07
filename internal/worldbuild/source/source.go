@@ -41,12 +41,14 @@ type Actor struct {
 }
 
 type Room struct {
-	ID, SourceRoom, Instance       string
-	Boundary                       []worldsource.Edge
-	Floor, Ceiling                 worldsource.Plane
-	FloorMaterial, CeilingMaterial string
-	Contents                       []Content
-	FloorUV, CeilingUV, WallUV     *worldsource.UVSettings
+	ID, SourceRoom, Instance                        string
+	Boundary                                        []worldsource.Edge
+	Floor, Ceiling                                  worldsource.Plane
+	FloorMaterial, CeilingMaterial                  string
+	Contents                                        []Content
+	FloorUV, CeilingUV, WallUV                      *worldsource.UVSettings
+	WallBands                                       *worldsource.BandSettings
+	FloorSecondary, CeilingSecondary, WallSecondary *worldsource.SecondarySettings
 }
 
 type Endpoint struct{ Room, Edge string }
@@ -219,6 +221,9 @@ func rejectAliases(contents []byte) error {
 	if err := visit(&document); err != nil {
 		return err
 	}
+	if err := validateMaterialPresence(&document); err != nil {
+		return err
+	}
 
 	return validateExtrasPresence(&document)
 }
@@ -359,11 +364,17 @@ func transformRoom(
 		FloorMaterial: material(authored.FloorMaterial), CeilingMaterial: material(authored.CeilingMaterial),
 		Contents: make([]Content, len(authored.Contents)),
 		FloorUV:  authored.FloorUV, CeilingUV: authored.CeilingUV, WallUV: authored.WallUV,
+		WallBands:        transformBands(authored.WallBands, material),
+		FloorSecondary:   transformSecondary(authored.FloorSecondary, material),
+		CeilingSecondary: transformSecondary(authored.CeilingSecondary, material),
+		WallSecondary:    transformSecondary(authored.WallSecondary, material),
 	}
 	for index, edge := range authored.Boundary {
 		room.Boundary[index] = worldsource.Edge{
 			ID: edge.ID, Start: transformPoint(edge.Start, transform), End: transformPoint(edge.End, transform),
 			Material: material(edge.Material), UV: edge.UV,
+			Bands:     transformBands(worldsource.MergeBandSettings(authored.WallBands, edge.Bands), material),
+			Secondary: transformSecondary(mergeSecondary(authored.WallSecondary, edge.Secondary), material),
 		}
 	}
 	for index, content := range authored.Contents {

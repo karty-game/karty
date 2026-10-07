@@ -5,6 +5,29 @@ kind = "world"
 [world]
 source = "world.yaml"
 
+# Separate masked bands, packed into the same material atlases as the wall.
+[[textures]]
+name = "wall-top"
+source = "wall-top.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 1.0
+height = 1.4
+ao = 0.8
+rim = 0.0
+
+[[textures]]
+name = "wall-bottom"
+source = "wall-bottom.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 1.0
+height = 1.4
+ao = 0.8
+rim = 0.0
+
 [[textures]]
 name = "floor"
 source = "floor.png"

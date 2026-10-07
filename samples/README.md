@@ -21,20 +21,21 @@ Textured 3D spaces, lighting and touch controls, right in your browser.
 
 **[Explore the court](https://karty-game.github.io/karty/main/world-camera/)** · [Take a look](world-camera/README.md)
 
+## The Hangar
+
+Walk from olive steel corridors into a green reactor chamber, climb to the
+control deck, look through service windows and cross the zigzag trench.
+An original Doom-inspired environment study with open passages, detailed
+materials and colored lighting.
+
+**[Take a look](hangar/README.md)** · [Build and run it](hangar/README.md#run-it)
+
 ## 🎧 Media lab
 
 Turn up the music, layer on sound effects and play a video.
 See how images, audio and video can share the same game scene.
 
 **[Try the media lab](https://karty-game.github.io/karty/main/media-lab/)** · [Take a look](media-lab/README.md)
-
-## 🎮 Sprite playground
-
-A little character, a few shapes and a scene full of motion.
-Move with the arrow keys or place your character with a click.
-A small starting point for your own 2D game.
-
-**[Try the playground](https://karty-game.github.io/karty/main/pong/)** · [Take a look](pong/README.md)
 
 ## Make it yours
 

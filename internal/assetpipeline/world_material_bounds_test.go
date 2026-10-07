@@ -206,7 +206,7 @@ func TestWorldMaterialNearestPackingInvalidatesSmoothCache(t *testing.T) {
 
 	for index := range revisions {
 		if revisions[index].Name == "packer" {
-			if revisions[index].Version != "4" {
+			if revisions[index].Version != "5" {
 				t.Fatal("nearest packer revision missing")
 			}
 

@@ -58,8 +58,6 @@ Manual graphics, keyboard navigation and touch review remain separate.
 
 ## Other sample sources
 
-- [Sprite playground client](../samples/pong/src/main.go): sprite/text/vector entities,
-  typed input hooks and independent level mount/release/remount.
 - [World camera notes](sample-world-camera.md): authored geometry, materials,
   lighting, component hooks, camera configuration and explicit graphics checks.
 - [Media lab notes](sample-media-lab.md): source formats, clip generation and
@@ -67,7 +65,7 @@ Manual graphics, keyboard navigation and touch review remain separate.
 
 ## Published demos and pull request previews
 
-`mise run build-samples` builds all four samples into `dist/samples-site/`, with
+`mise run build-samples` builds the three published demos into `dist/samples-site/`, with
 an index and redistribution notices. It installs each sample's exact published
 SDK and downloads the compatible host and Go browser runtime. No private engine
 access is required. SDK/host artifacts must be published before advancing this
@@ -81,7 +79,7 @@ uploads a `sample-site` artifact. It also supports manual dispatch.
 - `/pr/NUMBER/`: the pull request's merge-commit build.
 - `/`: latest samples and active preview links.
 
-Each sample has its own folder: `pong/`, `ui-demo/`, `media-lab/` or
+Each sample has its own folder: `ui-demo/`, `media-lab/` or
 `world-camera/`. Deployment summaries include the actual preview URL; PR build
 summaries link to the expected URL. Closing/merging a PR removes its preview;
 subsequent deployments also prune closed previews. Failed builds preserve the

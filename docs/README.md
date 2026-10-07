@@ -14,6 +14,7 @@ repository guides describe current CLI behavior.
 - [Lightmaps](lightmaps.md): receiver coordinates, runtime recipes, strict imports and offline `karty bake`.
 - [Bake storage v1](bake-storage-v1.md): project cache location and per-level lighting ownership.
 - [Distribution](distribution.md): native/browser targets and required packaged files.
+- [Native screenshots](screenshot.md): capture a level at an explicit camera pose and return the PNG path.
 - [Samples](../samples/README.md): examples and Pages previews.
 
 ## Contributor workflows

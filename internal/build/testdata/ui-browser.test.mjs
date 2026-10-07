@@ -105,9 +105,12 @@ try {
     assert.ok(box);
     const cdp = await context.newCDPSession(page);
     const click = async (y) => {
-      const frame = await page.locator("html").getAttribute("data-karty-frame");
+      const frame = await page.evaluate(
+        () => globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame,
+      );
       await page.waitForFunction(
-        (frame) => BigInt(document.documentElement.dataset.kartyFrame) > BigInt(frame) + 2n,
+        (frame) =>
+          BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) > BigInt(frame) + 2n,
         frame,
       );
       if (mobile) {
@@ -165,9 +168,12 @@ try {
       Object.values(uiObserved.nodes).some((values) => Object.values(values).some((text) => text.includes("1 left"))),
     );
     const before = await page.evaluate(() => uiObserved.commands);
-    const frame = await page.locator("html").getAttribute("data-karty-frame");
+    const frame = await page.evaluate(
+      () => globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame,
+    );
     await page.waitForFunction(
-      (frame) => BigInt(document.documentElement.dataset.kartyFrame) > BigInt(frame) + 10n,
+      (frame) =>
+        BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) > BigInt(frame) + 10n,
       frame,
     );
     assert.equal(await page.evaluate(() => uiObserved.commands), before, "idle UI emitted commands");

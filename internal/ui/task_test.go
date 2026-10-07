@@ -34,3 +34,21 @@ func TestTaskModelReturnsTaskError(t *testing.T) {
 		t.Fatalf("task error = %v, want %v", result.err, want)
 	}
 }
+
+func TestTaskProgressRetainsAnimationAndFailureActivity(t *testing.T) {
+	t.Parallel()
+
+	model, command := (taskModel{label: "Building game", frame: 3}).Update(taskProgressMsg("Compiling Go game"))
+
+	result, valid := model.(taskModel)
+	if !valid || command != nil || result.frame != 3 || !strings.Contains(result.View(), "Compiling Go game [") {
+		t.Fatalf("progress lost the activity or animation: %+v", model)
+	}
+
+	model, command = result.Update(taskFinishedMsg{err: staticError("compiler failed")})
+
+	result, valid = model.(taskModel)
+	if !valid || command == nil || result.View() != "Compiling Go game: failed" {
+		t.Fatalf("failure lost its build activity: %+v", model)
+	}
+}

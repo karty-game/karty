@@ -152,7 +152,10 @@ func loadBakeMaterials(directory string, definition manifest) ([]metadataTexture
 		}
 
 		id := uint32(index + 1)
-		metadata = append(metadata, metadataTexture{ID: id, Name: entry.Name, Width: config.Width, Height: config.Height})
+		metadata = append(
+			metadata,
+			metadataTexture{ID: id, Name: entry.Name, Width: config.Width, Height: config.Height, Coverage: bandCoverage(pixels)},
+		)
 		materials = append(materials, worldlightmapbake.Material{ID: id, Albedo: pixels})
 	}
 
@@ -172,7 +175,7 @@ func bakeLevel(ctx context.Context, projectDirectory, directory string, definiti
 		return BakeReport{}, err
 	}
 
-	document, _, err := compileMaterialWorld(directory, definition, metadata)
+	document, _, err := compileMaterialWorld(directory, definition, metadata, nil)
 	if err != nil {
 		return BakeReport{}, err
 	}

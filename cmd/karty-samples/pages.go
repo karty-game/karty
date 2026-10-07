@@ -50,7 +50,7 @@ func validateSamples(source fs.FS) error {
 		return err
 	}
 
-	for _, name := range []string{"index.html", "pong/index.html", "ui-demo/index.html", "media-lab/index.html"} {
+	for _, name := range []string{"index.html", "ui-demo/index.html", "media-lab/index.html"} {
 		if err = requireSampleFile(source, name); err != nil {
 			return err
 		}

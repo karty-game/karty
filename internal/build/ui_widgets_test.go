@@ -28,3 +28,19 @@ func TestWidgetSDKCompatibility(t *testing.T) {
 		t.Fatal("level UI schema did not advance")
 	}
 }
+
+func TestContinuousPointerSDKRetainsWidgetSchema(t *testing.T) {
+	t.Parallel()
+
+	manifest := sdk.Manifest{}
+	manifest.Version, manifest.API.Version = "0.0.10", "0.0.8"
+
+	views := []uicompiler.Component{{Source: "widgets.kui", Template: ui.Template{Version: currentUISchema}}}
+	if err := validateWidgetSDK(views, manifest); err != nil {
+		t.Fatal(err)
+	}
+
+	if sdkUISchema(manifest) != currentUISchema {
+		t.Fatal("pointer API downgraded widget schema")
+	}
+}

@@ -31,13 +31,13 @@ jobs:
         run: mise run check-integration
       - name: Package Windows ARM64 game on Linux
         if: matrix.runner == 'ubuntu-24.04'
-        working-directory: samples/pong
+        working-directory: samples/ui-demo
         run: ../../dist/karty build --target native --platform windows-arm64
       - uses: actions/upload-artifact@v7
         if: matrix.runner == 'ubuntu-24.04'
         with:
           name: windows-arm64-game
-          path: samples/pong/dist/native/windows-arm64/
+          path: samples/ui-demo/dist/native/windows-arm64/
           if-no-files-found: error
   validate-windows-arm64:
     needs: validate

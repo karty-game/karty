@@ -17,12 +17,26 @@ images or lighting. See [world YAML schemas](level-yaml-schema-v1.md).
 
 ## Artwork and lighting
 
+The corridor uses source v7 wall bands with SDK candidate 0.0.10. Ordinary
+`wall-top.png` and `wall-bottom.png` textures are declared in `level.toml`.
+The 128×32 strips cover 2×0.5 metres, matching the main wall's texel density and
+brick proportions. Alpha removes whole inner-edge bricks to reveal the main wall.
+
+Room `wall_bands.top` and `.bottom` select a texture, height and repeat width;
+edge `bands` overrides those defaults. The compiler resolves placement and UVs,
+generates normal/height/AO and coverage-aware mipmaps, and packages the same
+paired material atlases. Bands follow visible solid spans, including slopes and
+stair risers; internal decomposition edges receive no bands.
+
 Regenerate the checked-in textures from the CLI root:
 
 ```sh
 mise run generate-world-camera-materials
 # Replace only the court wall, preserving other custom artwork:
 mise run generate-world-camera-materials -- --only z-court-plaster
+# Regenerate each corridor band:
+mise run generate-world-camera-materials -- --only wall-top
+mise run generate-world-camera-materials -- --only wall-bottom
 ```
 
 The level enables an offline bake with four samples, one indirect bounce and

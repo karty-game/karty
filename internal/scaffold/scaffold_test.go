@@ -15,14 +15,14 @@ import (
 
 func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 	t.Parallel()
-	destination := filepath.Join(t.TempDir(), "pong")
+	destination := filepath.Join(t.TempDir(), "test-game")
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	createErr := scaffold.CreateGame(destination, "pong", manifest)
+	createErr := scaffold.CreateGame(destination, "test-game", manifest)
 	if createErr != nil {
 		t.Fatalf("CreateGame() error = %v", createErr)
 	}

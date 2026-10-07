@@ -13,7 +13,7 @@ func TestLoadReadsProjectConfig(t *testing.T) {
 	t.Parallel()
 	directory := t.TempDir()
 
-	contents := "[project]\nname = \"pong\"\n\n[sdk]\nversion = \"0.0.1\"\n"
+	contents := "[project]\nname = \"test-game\"\n\n[sdk]\nversion = \"0.0.1\"\n"
 	if err := os.WriteFile(filepath.Join(directory, "karty.toml"), []byte(contents), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -23,8 +23,8 @@ func TestLoadReadsProjectConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if config.Project.Name != "pong" || config.SDK.Version != "0.0.1" {
-		t.Fatalf("Load() = %+v, want pong/0.0.1", config)
+	if config.Project.Name != "test-game" || config.SDK.Version != "0.0.1" {
+		t.Fatalf("Load() = %+v, want test-game/0.0.1", config)
 	}
 
 	if config.Project.Compiler != "tinygo" {
@@ -36,7 +36,7 @@ func TestLoadReadsGoCompiler(t *testing.T) {
 	t.Parallel()
 	directory := t.TempDir()
 
-	contents := "[project]\nname = \"pong\"\ncompiler = \"go\"\n\n[sdk]\nversion = \"0.0.1\"\n"
+	contents := "[project]\nname = \"test-game\"\ncompiler = \"go\"\n\n[sdk]\nversion = \"0.0.1\"\n"
 	if err := os.WriteFile(filepath.Join(directory, "karty.toml"), []byte(contents), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +110,7 @@ func TestLoadRejectsIncompleteProjectConfig(t *testing.T) {
 	t.Parallel()
 	directory := t.TempDir()
 
-	if err := os.WriteFile(filepath.Join(directory, "karty.toml"), []byte("[project]\nname = \"pong\"\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(directory, "karty.toml"), []byte("[project]\nname = \"test-game\"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -129,7 +129,7 @@ func TestLoadRejectsDuplicateTextureNames(t *testing.T) {
 	}
 
 	contents := `[project]
-name = "pong"
+name = "test-game"
 
 [sdk]
 version = "0.0.1"
@@ -161,7 +161,7 @@ func TestLoadTextureProfiles(t *testing.T) {
 
 	manifest := func(profile string) string {
 		return `[project]
-name = "pong"
+name = "test-game"
 
 [sdk]
 version = "0.0.1"

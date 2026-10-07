@@ -60,7 +60,14 @@ type Options struct {
 	Target        string
 	Platform      string
 	AirProxy      bool
+	Progress      func(string)
 	rendererDebug bool
+}
+
+func (options Options) progress(label string) {
+	if options.Progress != nil {
+		options.Progress(label)
+	}
 }
 
 // Run validates a project and compiles its self-describing cartridges.
@@ -86,6 +93,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		}
 	}
 
+	options.progress("Reading project")
 	config, err := project.Load(directory)
 	if err != nil {
 		return err
@@ -93,10 +101,12 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 
 	options.rendererDebug = config.Project.Debug.Renderer
 
+	options.progress("Validating levels")
 	if _, err := levelbuild.GenerateSchemas(directory, true); err != nil {
 		return err
 	}
 
+	options.progress("Loading SDK")
 	manifest, err := sdk.Resolve(config.SDK.Version)
 	if err != nil {
 		return err
@@ -118,6 +128,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return errGoWebCompiler
 	}
 
+	options.progress("Preparing tools")
 	_, err = toolchain.Ensure(ctx, manifest, toolchain.EnsureOptions{
 		GoOverride:        options.Go,
 		TinyGoOverride:    options.TinyGo,
@@ -158,6 +169,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
+	options.progress("Generating game code")
 	generated, err := sdk.ClientFiles(manifest, compiler)
 	if err != nil {
 		return fmt.Errorf("generate client API: %w", err)
@@ -268,6 +280,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		}
 	}
 
+	options.progress("Processing images and audio")
 	assetReport, err := analyzeProjectAssets(
 		ctx, directory, modulePath, manifest,
 		config.Assets.Textures, config.Assets.Sounds, textureNames, theme,
@@ -310,6 +323,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	artifact := filepath.Join(rawDirectory, "game.kart")
 
 	uiSchema := sdkUISchema(manifest)
+	options.progress("Building levels")
 	levels, err := buildAndStageLevels(ctx, directory, rawDirectory, uiSchema, config.Assets.Theme.Source, manifest)
 	if err != nil {
 		return err
@@ -336,6 +350,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return fmt.Errorf("remove previous raw client artifact: %w", err)
 	}
 
+	options.progress("Compiling Go game")
 	arguments := compilerArguments(compiler, artifact)
 	arguments[len(arguments)-1] = clientSource
 	command := exec.CommandContext(ctx, compilerPath, arguments...)
@@ -346,6 +361,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return fmt.Errorf("compile client: %w\n%s", commandErr, output)
 	}
 
+	options.progress("Packaging game")
 	if err := embedProjectAssets(
 		directory, artifact, assetReport.Textures, assetReport.Sounds, config.Assets.Fonts, fontRoles,
 	); err != nil {
@@ -400,6 +416,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
+	options.progress("Preparing runtime")
 	if err := stageRequestedTarget(
 		ctx, manifest, config.Project.Name, distributionDirectory, rawDirectory, artifact, levels, options,
 	); err != nil {

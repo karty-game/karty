@@ -128,15 +128,15 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 	}
 	defer os.RemoveAll(temporary)
 
-	project := filepath.Join(temporary, "pong")
-	if err := scaffold.CreateGame(project, "pong", manifest); err != nil {
+	project := filepath.Join(temporary, "runtime-probe")
+	if err := scaffold.CreateGame(project, "runtime-probe", manifest); err != nil {
 		return err
 	}
 
 	fixtures := []struct {
 		source, destination string
 	}{
-		{source: "samples/pong/src/main.go", destination: "main.go"},
+		{source: "cmd/karty-check/testdata/runtime-probe.go", destination: "main.go"},
 		{source: "cmd/karty-check/testdata/alloccheck.go", destination: "alloccheck.go"},
 	}
 
@@ -152,7 +152,7 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 		}
 	}
 
-	// The integration fixture uses Pong's explicit texture alias and level set.
+	// The integration fixture uses an explicit texture alias and level set.
 	configPath := filepath.Join(project, "karty.toml")
 
 	config, err := os.ReadFile(configPath)
@@ -166,7 +166,8 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 		return err
 	}
 
-	if err := os.CopyFS(filepath.Join(project, "levels"), os.DirFS(filepath.Join(root, "samples/pong/levels"))); err != nil {
+	levels := os.DirFS(filepath.Join(root, "cmd/karty-check/testdata/runtime-levels"))
+	if err := os.CopyFS(filepath.Join(project, "levels"), levels); err != nil {
 		return err
 	}
 

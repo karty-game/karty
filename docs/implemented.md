@@ -19,6 +19,9 @@ work is listed in [proposals](proposals.md).
   use. There is no embedded SDK fallback; see [SDK bundles](sdk-bundles.md).
 - Build native/browser distributions with SDK-pinned tools and hosts. Dev mode
   serves browser builds and watches source, UI, levels, manifests and assets.
+- Capture one world level through a local native host using `karty screenshot`,
+  with explicit camera placement, bounded PNG dimensions and a capture timeout.
+  See [native screenshots](screenshot.md).
 - Resolve optional project camera defaults into typed constants; games apply
   those constants to camera settings. See [development](development.md).
 - Stage levels and media sidecars alongside the cartridge. Ship the complete

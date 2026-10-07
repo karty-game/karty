@@ -31,6 +31,8 @@ type taskModel struct {
 
 type taskTickMsg struct{}
 
+type taskProgressMsg string
+
 const (
 	taskFrameCount     = 4
 	taskFrameDash      = 2
@@ -41,6 +43,13 @@ const (
 
 // RunTask renders a Bubble Tea task screen while work runs asynchronously.
 func RunTask(ctx context.Context, label string, task func(context.Context) error) error {
+	return RunTaskWithProgress(ctx, label, func(taskContext context.Context, _ func(string)) error {
+		return task(taskContext)
+	})
+}
+
+// RunTaskWithProgress lets work report the current activity to the task screen.
+func RunTaskWithProgress(ctx context.Context, label string, task func(context.Context, func(string)) error) error {
 	model := taskModel{label: label}
 	program := tea.NewProgram(
 		model,
@@ -50,7 +59,8 @@ func RunTask(ctx context.Context, label string, task func(context.Context) error
 	)
 
 	go func() {
-		program.Send(taskFinishedMsg{err: task(ctx)})
+		progress := func(label string) { program.Send(taskProgressMsg(label)) }
+		program.Send(taskFinishedMsg{err: task(ctx, progress)})
 	}()
 
 	finalModel, err := program.Run()
@@ -73,6 +83,12 @@ func (model taskModel) Init() tea.Cmd {
 }
 
 func (model taskModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
+	if label, ok := message.(taskProgressMsg); ok {
+		model.label = string(label)
+
+		return model, nil
+	}
+
 	if message, ok := message.(taskFinishedMsg); ok {
 		model.err = message.err
 

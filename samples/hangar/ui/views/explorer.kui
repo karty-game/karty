@@ -1,0 +1,81 @@
+<template>
+  <panel class="screen" modal="false">
+    <panel class="heading">
+      <label class="eyebrow">KARTY / ENVIRONMENT STUDY</label>
+      <label class="title">THE HANGAR</label>
+      <label class="status">{ props.Status() }</label>
+    </panel>
+    <panel class="footer">
+      <label class="help">{ props.Controls() }</label>
+      <panel class="views">
+        <button onClick={ arrival }>Arrival</button>
+        <button onClick={ reactor }>Reactor</button>
+        <button onClick={ control }>Control</button>
+        <button onClick={ zigzag }>Zigzag</button>
+        <button onClick={ loading }>Loading</button>
+        <button onClick={ exit }>Extraction</button>
+        <button onClick={ windows }>Windows</button>
+        <button onClick={ props.Hide }>Hide</button>
+      </panel>
+    </panel>
+  </panel>
+</template>
+
+<script setup lang="go">
+type ExplorerProps struct {
+	Status func() string
+	Controls func() string
+	Visit func(int)
+	Hide func()
+}
+
+func setup(props ExplorerProps) {
+	arrival := func() { props.Visit(0) }
+	reactor := func() { props.Visit(1) }
+	control := func() { props.Visit(2) }
+	zigzag := func() { props.Visit(3) }
+	loading := func() { props.Visit(4) }
+	exit := func() { props.Visit(5) }
+	windows := func() { props.Visit(6) }
+}
+</script>
+
+<style>
+.screen
+  width: 100%
+  height: 100%
+  padding: 28
+  justify: space-between
+.heading
+  align: start
+  gap: 6
+.eyebrow
+  font-size: 11
+  color: #a5b4ab
+.title
+  font-size: 30
+  color: #e5e4d0
+.status
+  font-size: 13
+  color: #d9b771
+.footer
+  align: center
+  gap: 12
+.help
+  font-size: 12
+  color: #d5d5c6
+.views
+  direction: row
+  gap: 8
+  padding: 10
+  background: #141e22e8
+button
+  min-height: 36
+  min-width: 80
+  font-size: 12
+  background: #26332e
+  color: #d9dcc8
+button:hover
+  background: #445342
+  color: #ffedb5
+</style>

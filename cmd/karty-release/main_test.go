@@ -29,7 +29,7 @@ func TestReleaseCheckDetectsAndPreparationRepairsDrift(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 
-	path := filepath.Join(root, "samples/demo/karty.toml")
+	path := filepath.Join(root, "samples/ui-demo/karty.toml")
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		t.Fatal(err)
 	}
@@ -60,11 +60,11 @@ func TestReleaseCheckDetectsAndPreparationRepairsDrift(t *testing.T) {
 	}
 }
 
-func TestPreparationPinsAllSamplesToCurrentCandidate(t *testing.T) {
+func TestPreparationPinsPublishedDemosAndLeavesStandaloneProjectsAlone(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
-	for _, sample := range []string{"world-camera", "pong", "ui-demo", "media-lab"} {
+	for _, sample := range []string{"world-camera", "ui-demo", "media-lab"} {
 		path := filepath.Join(root, "samples", sample, "karty.toml")
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
@@ -75,6 +75,16 @@ func TestPreparationPinsAllSamplesToCurrentCandidate(t *testing.T) {
 		}
 	}
 
+	standalone := filepath.Join(root, "samples", "standalone", "karty.toml")
+	if err := os.MkdirAll(filepath.Dir(standalone), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	independentPin := []byte("[sdk]\nversion = '9.9.9'\n")
+	if err := os.WriteFile(standalone, independentPin, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
 	if err := run(root, false); err != nil {
 		t.Fatal(err)
 	}
@@ -83,13 +93,23 @@ func TestPreparationPinsAllSamplesToCurrentCandidate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, sample := range []string{"world-camera", "pong", "ui-demo", "media-lab"} {
+	data, err := os.ReadFile(standalone)
+	if err != nil || string(data) != string(independentPin) {
+		t.Fatalf("standalone demo pin changed: %s, %v", data, err)
+	}
+
+	for _, sample := range []string{"world-camera", "ui-demo", "media-lab"} {
 		data, err := os.ReadFile(filepath.Join(root, "samples", sample, "karty.toml"))
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if !strings.Contains(string(data), "0.0.9") {
+		expected := release.SampleSDK
+		if sample == "world-camera" {
+			expected = release.WorldCameraSDK
+		}
+
+		if !strings.Contains(string(data), expected) {
 			t.Fatalf("%s has the wrong SDK: %s", sample, data)
 		}
 	}

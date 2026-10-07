@@ -1,6 +1,6 @@
 [level]
-name = "levels.left"
-kind = "pong-arena"
+name = "levels.right"
+kind = "runtime-arena"
 
 [[data]]
 name = "arena"

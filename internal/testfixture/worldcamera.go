@@ -46,14 +46,7 @@ func WorldCameraGeometry(t *testing.T, sourceRoot string) string {
 		t.Fatal("sample textures are missing")
 	}
 
-	for _, declaration := range textures {
-		texture, ok := declaration.(map[string]any)
-		if !ok {
-			t.Fatal("sample texture declaration is invalid")
-		}
-
-		delete(texture, "material_strengths")
-	}
+	manifest["textures"] = geometryTextures(t, textures)
 
 	data, err = toml.Marshal(manifest)
 	if err != nil {
@@ -85,6 +78,31 @@ func WorldCameraGeometry(t *testing.T, sourceRoot string) string {
 		}
 	}
 
+	// Advanced material fixtures explicitly opt in separately; older geometry
+	// fixtures preserve their released capability baseline.
+	var removeLayers func(*yaml.Node)
+
+	removeLayers = func(node *yaml.Node) {
+		if node.Kind == yaml.MappingNode {
+			for index := 0; index+1 < len(node.Content); {
+				switch node.Content[index].Value {
+				case "wall_bands", "bands", "floor_secondary", "ceiling_secondary", "wall_secondary", "secondary":
+					node.Content = append(node.Content[:index], node.Content[index+2:]...)
+
+					continue
+				}
+
+				removeLayers(node.Content[index+1])
+				index += 2
+			}
+		} else {
+			for _, child := range node.Content {
+				removeLayers(child)
+			}
+		}
+	}
+	removeLayers(&document)
+
 	data, err = yaml.Marshal(&document)
 	if err != nil {
 		t.Fatal(err)
@@ -95,4 +113,25 @@ func WorldCameraGeometry(t *testing.T, sourceRoot string) string {
 	}
 
 	return root
+}
+
+func geometryTextures(t *testing.T, textures []any) []any {
+	t.Helper()
+
+	kept := make([]any, 0, len(textures))
+	for _, declaration := range textures {
+		texture, ok := declaration.(map[string]any)
+		if !ok {
+			t.Fatal("sample texture declaration is invalid")
+		}
+		// Preserve released fixture IDs and opaque inputs after disabling bands.
+		if texture["name"] == "wall-top" || texture["name"] == "wall-bottom" {
+			continue
+		}
+
+		delete(texture, "material_strengths")
+		kept = append(kept, texture)
+	}
+
+	return kept
 }
