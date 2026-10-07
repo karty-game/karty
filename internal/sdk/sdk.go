@@ -19,10 +19,11 @@ const errIncompleteSDK staticError = "SDK is incomplete"
 
 // Manifest is the subset of an SDK manifest required by the initial CLI.
 type Manifest struct {
-	resources fs.FS
-	Bundle    ToolArtifact `toml:"bundle"`
-	Version   string       `toml:"version"`
-	API       struct {
+	resources     fs.FS
+	Compatibility Compatibility `toml:"-"`
+	Bundle        ToolArtifact  `toml:"bundle"`
+	Version       string        `toml:"version"`
+	API           struct {
 		Version string `toml:"version"`
 	} `toml:"api"`
 	Host struct {
@@ -60,6 +61,21 @@ type Manifest struct {
 			WebBrotli    ToolArtifact            `toml:"web-brotli"`
 		} `toml:"host"`
 	} `toml:"artifacts"`
+}
+
+// Compatibility describes supported formats declared by the SDK's bundle.json.
+// These are format revisions, independent of SDK and API release numbers.
+//
+//nolint:tagliatelle // The SDK archive defines snake_case compatibility keys.
+type Compatibility struct {
+	Format         int    `json:"format"`
+	UISchema       uint32 `json:"ui_schema"`
+	ProjectCodegen int    `json:"project_codegen"`
+}
+
+// SupportsAuthoredActions reports whether the bundle supplies the action generator contract.
+func (manifest Manifest) SupportsAuthoredActions() bool {
+	return manifest.Compatibility.ProjectCodegen == authoredActionProjectCodegen
 }
 
 // AssetProfile pins the processor selected for an SDK asset profile.

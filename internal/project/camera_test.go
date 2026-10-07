@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/karty-game/karty/internal/project"
+	"github.com/karty-game/karty/internal/release"
 )
 
 func TestProjectCameraDefaultsAndBounds(t *testing.T) {
@@ -35,7 +36,7 @@ func TestProjectCameraDefaultsAndBounds(t *testing.T) {
 			t.Parallel()
 			directory := t.TempDir()
 
-			manifest := "[project]\nname='camera'\n[sdk]\nversion='0.0.8'\n" + test.fields
+			manifest := "[project]\nname='camera'\n[sdk]\nversion='" + release.SDKVersion() + "'\n" + test.fields
 			if err := os.WriteFile(filepath.Join(directory, "karty.toml"), []byte(manifest), 0o600); err != nil {
 				t.Fatal(err)
 			}

@@ -9,16 +9,19 @@ import (
 	"testing"
 
 	"github.com/karty-game/karty/internal/levelbuild"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
 func TestNamedWorldBuildSkipsUnrelatedAssets(t *testing.T) {
 	t.Parallel()
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	selected = geometrySDK(selected)
 
 	root := t.TempDir()
 

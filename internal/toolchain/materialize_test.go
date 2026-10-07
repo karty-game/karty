@@ -13,12 +13,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
 // Engine-free release fixture; tests replace transport bytes, never the URL policy.
 func materializeReleaseManifest() sdk.Manifest {
-	manifest := sdk.Manifest{Version: "0.0.8"}
+	manifest := sdk.Manifest{Version: release.SDKVersion()}
 	manifest.Tools.Materialize = "2.0.0"
 	manifest.Tools.MaterializeRevision = "3ad39f1308e3b2b62da81f557adc6d32697b616a"
 	manifest.Artifacts.Materialize = map[string]sdk.MaterialToolArtifact{}
@@ -120,7 +121,7 @@ func TestEnsureMaterializeRejectsPinsBeforeWrites(t *testing.T) {
 
 		switch kind {
 		case "absent":
-			manifest = sdk.Manifest{Version: "0.0.7"}
+			manifest = sdk.Manifest{Version: release.SDKVersion()}
 		case "partial":
 			manifest.Tools.MaterializeRevision = ""
 		case "platform":

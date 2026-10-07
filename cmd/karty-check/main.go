@@ -28,7 +28,7 @@ func main() {
 	allocations := flag.Bool("allocations", false, "check actual TinyGo guest allocation counters")
 	checkUI := flag.Bool("ui", false, "scaffold and execute the UI template in native WASM and Chromium")
 	worldCamera := flag.Bool("world-camera", false, "build the packaged world sample twice and verify native/browser camera switching")
-	clientHooks := flag.Bool("client-hooks", false, "execute a crafted SDK 0.0.9 hook/action fixture through native WASM and Chromium")
+	clientHooks := flag.Bool("client-hooks", false, "execute a crafted current SDK hook/action fixture through native WASM and Chromium")
 	nativeOnly := flag.Bool("native-only", false, "with --client-hooks, run deterministic native builds and the WASM lifecycle check")
 
 	flag.Parse()
@@ -99,7 +99,7 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 		return runWorldCamera(ctx, root)
 	}
 
-	manifest, err := sdk.Resolve(testSDKVersion())
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		return err
 	}
@@ -218,12 +218,4 @@ func command(ctx context.Context, directory string, environment []string, execut
 	}
 
 	return nil
-}
-
-func testSDKVersion() string {
-	if version := os.Getenv("KARTY_TEST_SDK"); version != "" {
-		return version
-	}
-
-	return release.SDKVersion()
 }

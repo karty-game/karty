@@ -54,13 +54,13 @@ func TestSyncDocsWritesPinnedReferenceAndProtectsOwnership(t *testing.T) {
 		}
 	}
 
-	for _, name := range []string{"kartui.md", "theme.md", "karty-toml.md", "assets.md"} {
-		contents, readErr := os.ReadFile(filepath.Join(root, name))
-		if readErr != nil {
-			t.Fatal(readErr)
-		}
-		if !strings.Contains(string(contents), "not supported") && name == "kartui.md" {
-			t.Fatalf("%s must state unsupported syntax behavior", name)
+	kartui, err := os.ReadFile(filepath.Join(root, "kartui.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, guidance := range []string{".kui", "<script setup lang=\"go\">", "invalidate()", "Component.Diagnostics()"} {
+		if !strings.Contains(string(kartui), guidance) {
+			t.Fatalf("current KartUI reference omits %s guidance", guidance)
 		}
 	}
 

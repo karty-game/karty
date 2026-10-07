@@ -2,10 +2,8 @@ package levelbuild
 
 import (
 	"path/filepath"
-	"slices"
 	"testing"
 
-	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/testfixture"
@@ -19,10 +17,7 @@ func TestRomanStaticSolidSamplePackagedWASM(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Exercise the released geometry payload without invoking the atlas generator.
-	// Integration builds use the complete published manifest.
-	selected.Assets.Capabilities.Runtime = slices.DeleteFunc(slices.Clone(selected.Assets.Capabilities.Runtime),
-		func(capability asset.Capability) bool { return capability == asset.CapabilityWorldMaterialAtlasV1 })
+	selected = geometrySDK(selected)
 	root := testfixture.WorldCameraGeometry(t, filepath.Join("..", "..", "samples", "world-camera"))
 
 	artifacts, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)

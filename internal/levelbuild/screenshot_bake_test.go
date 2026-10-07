@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/worldlightmap"
 )
 
@@ -22,7 +21,6 @@ func TestScreenshotQuickBakeRepairAndReuse(t *testing.T) {
 		"enabled = true\nlights = [\"red\",\"blue\"]\npage_size = 512\ndensity = 1\nshadow_size = 32\nbake_samples = 16\nbake_bounces = 2\n",
 	)
 	selected := directLightmapSDK(t)
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsPrebakedV1)
 	manifestPath := filepath.Join(root, "levels", "lighting", "level.toml")
 
 	original, err := os.ReadFile(manifestPath)

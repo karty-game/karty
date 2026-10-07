@@ -95,12 +95,7 @@ func readBundle(version string, data []byte) (Manifest, error) {
 		return Manifest{}, err
 	}
 
-	//nolint:tagliatelle // Archive format uses explicit snake_case keys.
-	var compatibility struct {
-		Format         int `json:"format"`
-		UISchema       int `json:"ui_schema"`
-		ProjectCodegen int `json:"project_codegen"`
-	}
+	var compatibility Compatibility
 	if err = json.Unmarshal(metadata, &compatibility); err != nil {
 		return Manifest{}, err
 	}
@@ -131,6 +126,8 @@ func readBundle(version string, data []byte) (Manifest, error) {
 	}
 
 	manifest.resources = archive
+
+	manifest.Compatibility = compatibility
 	for _, compiler := range []string{"go", "tinygo"} {
 		if _, err = ClientFiles(manifest, compiler); err != nil {
 			return Manifest{}, err
@@ -247,6 +244,7 @@ func InstallPublished(ctx context.Context, version string) error {
 	}
 
 	bundled.resources = nil
+	bundled.Compatibility = Compatibility{}
 	expected := manifest
 
 	expected.Bundle = ToolArtifact{}

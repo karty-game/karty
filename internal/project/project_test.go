@@ -7,13 +7,14 @@ import (
 	"testing"
 
 	"github.com/karty-game/karty/internal/project"
+	"github.com/karty-game/karty/internal/release"
 )
 
 func TestLoadReadsProjectConfig(t *testing.T) {
 	t.Parallel()
 	directory := t.TempDir()
 
-	contents := "[project]\nname = \"test-game\"\n\n[sdk]\nversion = \"0.0.1\"\n"
+	contents := "[project]\nname = \"test-game\"\n\n[sdk]\nversion = \"" + release.SDKVersion() + "\"\n"
 	if err := os.WriteFile(filepath.Join(directory, "karty.toml"), []byte(contents), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -23,8 +24,8 @@ func TestLoadReadsProjectConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if config.Project.Name != "test-game" || config.SDK.Version != "0.0.1" {
-		t.Fatalf("Load() = %+v, want test-game/0.0.1", config)
+	if config.Project.Name != "test-game" || config.SDK.Version != release.SDKVersion() {
+		t.Fatalf("Load() = %+v, want test-game/%s", config, release.SDKVersion())
 	}
 
 	if config.Project.Compiler != "tinygo" {
@@ -36,7 +37,7 @@ func TestLoadReadsGoCompiler(t *testing.T) {
 	t.Parallel()
 	directory := t.TempDir()
 
-	contents := "[project]\nname = \"test-game\"\ncompiler = \"go\"\n\n[sdk]\nversion = \"0.0.1\"\n"
+	contents := "[project]\nname = \"test-game\"\ncompiler = \"go\"\n\n[sdk]\nversion = \"" + release.SDKVersion() + "\"\n"
 	if err := os.WriteFile(filepath.Join(directory, "karty.toml"), []byte(contents), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +63,7 @@ func TestLoadProjectFontRoles(t *testing.T) {
 	contents := `[project]
 name = "demo"
 [sdk]
-version = "0.0.1"
+version = "` + release.SDKVersion() + `"
 [[assets.font]]
 role = "display"
 source = "display.ttf"
@@ -92,7 +93,7 @@ func TestLoadRejectsInvalidProjectFontRole(t *testing.T) {
 	contents := `[project]
 name = "demo"
 [sdk]
-version = "0.0.1"
+version = "` + release.SDKVersion() + `"
 [[assets.font]]
 role = "heading"
 source = "display.ttf"
@@ -132,7 +133,7 @@ func TestLoadRejectsDuplicateTextureNames(t *testing.T) {
 name = "test-game"
 
 [sdk]
-version = "0.0.1"
+version = "` + release.SDKVersion() + `"
 
 [[assets.texture]]
 name = "sprites.player"
@@ -164,7 +165,7 @@ func TestLoadTextureProfiles(t *testing.T) {
 name = "test-game"
 
 [sdk]
-version = "0.0.1"
+version = "` + release.SDKVersion() + `"
 
 [[assets.texture]]
 name = "sprites.player"
@@ -208,7 +209,7 @@ func TestLoadDiscoversImageAndSoundSourcesWithTransformOverrides(t *testing.T) {
 	manifest := `[project]
 name = "demo"
 [sdk]
-version = "0.0.7"
+version = "` + release.SDKVersion() + `"
 [[assets.texture]]
 source = "assets/textures/photo.jpg"
 profile = "environment"
@@ -288,7 +289,7 @@ func TestLoadDoesNotRediscoverDeclaredAudioStreamAsSound(t *testing.T) {
 	manifest := `[project]
 name = "demo"
 [sdk]
-version = "0.0.7"
+version = "` + release.SDKVersion() + `"
 [[assets.music]]
 name = "loop"
 source = "assets/sounds/music/loop.wav"
@@ -310,7 +311,7 @@ source = "assets/sounds/music/loop.wav"
 func TestLoadRejectsInvalidAssetTransforms(t *testing.T) {
 	t.Parallel()
 
-	base := "[project]\nname='demo'\n[sdk]\nversion='0.0.7'\n"
+	base := "[project]\nname='demo'\n[sdk]\nversion='" + release.SDKVersion() + "'\n"
 
 	for name, declaration := range map[string]string{
 		"texture": "[[assets.texture]]\nname='bad'\nsource='texture.png'\n[assets.texture.transform]\nfilter='magic'\n",
@@ -354,7 +355,7 @@ func TestLoadRejectsAssetSymlinkOutsideProject(t *testing.T) {
 	manifest := `[project]
 name = "demo"
 [sdk]
-version = "0.0.7"
+version = "` + release.SDKVersion() + `"
 [[assets.texture]]
 name = "outside"
 source = "texture.png"
@@ -387,7 +388,7 @@ func TestLoadLayoutSources(t *testing.T) {
 	manifest := `[project]
 name = "demo"
 [sdk]
-version = "0.0.1"
+version = "` + release.SDKVersion() + `"
 [[assets.layout]]
 source = "ui/layouts/window.kui"
 `
@@ -444,7 +445,7 @@ func checkConventionalAssetDiscovery(t *testing.T, extension string) {
 	manifest := `[project]
 name = "demo"
 [sdk]
-version = "0.0.1"
+version = "` + release.SDKVersion() + `"
 [[assets.texture]]
 source = "assets/textures/sprites/player.png"
 profile = "interface"

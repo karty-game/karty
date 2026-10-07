@@ -14,11 +14,7 @@ import (
 func TestUITemplate(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv("KARTY_TEST_SDK") != release.SampleSDK {
-		t.Skip("requires candidate SFC templates; set KARTY_TEST_SDK=0.0.9")
-	}
-
-	manifest, err := sdk.Resolve(release.SampleSDK)
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,11 +38,7 @@ func TestUITemplate(t *testing.T) {
 func TestCompositionUITemplate(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv("KARTY_TEST_SDK") != release.SampleSDK {
-		t.Skip("requires candidate SFC templates; set KARTY_TEST_SDK=0.0.9")
-	}
-
-	manifest, err := sdk.Resolve(release.SampleSDK)
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,11 +62,7 @@ func TestCompositionUITemplate(t *testing.T) {
 func TestStyledUITemplate(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv("KARTY_TEST_SDK") != release.SampleSDK {
-		t.Skip("requires candidate SFC templates; set KARTY_TEST_SDK=0.0.9")
-	}
-
-	manifest, err := sdk.Resolve(release.SampleSDK)
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,14 +84,12 @@ func TestStyledUITemplate(t *testing.T) {
 	}
 }
 
-func TestImageThemeSDKUsesCompatibleStyledStarter(t *testing.T) {
+func TestLatestSDKUsesCompatibleStarterAndReference(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv("KARTY_TEST_SDK") != release.SampleSDK {
-		t.Skip("requires candidate SFC templates; set KARTY_TEST_SDK=0.0.9")
-	}
+	version := release.SDKVersion()
 
-	manifest, err := sdk.Resolve(release.SampleSDK)
+	manifest, err := sdk.Resolve(version)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,78 +100,18 @@ func TestImageThemeSDKUsesCompatibleStyledStarter(t *testing.T) {
 	}
 
 	config, err := os.ReadFile(filepath.Join(directory, "karty.toml"))
-	if err != nil || !strings.Contains(string(config), `version = "`+release.SampleSDK+`"`) {
-		t.Fatalf("SDK 0.6 starter config = %s, error = %v", config, err)
+	if err != nil || !strings.Contains(string(config), `version = "`+version+`"`) {
+		t.Fatalf("SDK %s starter config = %s, error = %v", version, config, err)
 	}
 
 	if _, err := os.Stat(filepath.Join(directory, ".karty/ui/karty_ui_Menu.go")); err != nil {
 		t.Fatal(err)
 	}
-}
 
-func TestLayoutSDKUsesCompatibleStarter(t *testing.T) {
-	t.Parallel()
+	docsPath := filepath.Join(directory, ".karty", "docs", "README.md")
 
-	if os.Getenv("KARTY_TEST_SDK") != release.SampleSDK {
-		t.Skip("requires candidate SFC templates; set KARTY_TEST_SDK=0.0.9")
-	}
-
-	manifest, err := sdk.Resolve(release.SampleSDK)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	directory := filepath.Join(t.TempDir(), "demo")
-	if err := scaffold.CreateTemplate(directory, "demo", manifest, "ui"); err != nil {
-		t.Fatal(err)
-	}
-
-	config, err := os.ReadFile(filepath.Join(directory, "karty.toml"))
-	if err != nil || !strings.Contains(string(config), `version = "`+release.SampleSDK+`"`) {
-		t.Fatalf("SDK 0.7 starter config = %s, error = %v", config, err)
-	}
-
-	if _, err := os.Stat(filepath.Join(directory, ".karty/ui/karty_ui_Menu.go")); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRecentPresentationSDKsUseCompatibleStarter(t *testing.T) {
-	t.Parallel()
-
-	if os.Getenv("KARTY_TEST_SDK") != release.SampleSDK {
-		t.Skip("requires candidate SFC templates; set KARTY_TEST_SDK=0.0.9")
-	}
-
-	for _, version := range []string{release.SampleSDK} {
-		manifest, err := sdk.Resolve(version)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		directory := filepath.Join(t.TempDir(), "demo")
-		if err := scaffold.CreateTemplate(directory, "demo", manifest, "ui"); err != nil {
-			t.Fatal(err)
-		}
-
-		config, err := os.ReadFile(filepath.Join(directory, "karty.toml"))
-		if err != nil || !strings.Contains(string(config), `version = "`+version+`"`) {
-			t.Fatalf("SDK %s starter config = %s, error = %v", version, config, err)
-		}
-
-		if _, err := os.Stat(filepath.Join(directory, ".karty/ui/karty_ui_Menu.go")); err != nil {
-			t.Fatal(err)
-		}
-
-		docsPath := filepath.Join(directory, ".karty", "docs", "README.md")
-
-		_, docsErr := os.Stat(docsPath)
-		if version == release.SampleSDK && docsErr != nil {
-			t.Fatalf("SDK %s reference missing: %v", version, docsErr)
-		}
-
-		if version != release.SampleSDK && !os.IsNotExist(docsErr) {
-			t.Fatalf("SDK %s unexpectedly wrote latest reference: %v", version, docsErr)
-		}
+	_, docsErr := os.Stat(docsPath)
+	if docsErr != nil {
+		t.Fatalf("SDK %s reference missing: %v", version, docsErr)
 	}
 }

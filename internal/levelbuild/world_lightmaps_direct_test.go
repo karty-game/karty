@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldlightmap"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -23,14 +23,12 @@ const directLightmapYAML = `lighting:
 func directLightmapSDK(t *testing.T) sdk.Manifest {
 	t.Helper()
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	selected.Version = "0.0.8"
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime,
-		asset.CapabilityWorldLightingV1, asset.CapabilityWorldLightmapsV1)
+	selected = geometrySDK(selected)
 
 	return selected
 }

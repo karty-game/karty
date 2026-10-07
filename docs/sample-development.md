@@ -2,16 +2,16 @@
 
 The [sample READMEs](../samples/README.md) introduce the playable demos.
 This guide covers contributor checks, source structure and Pages maintenance.
-All four samples pin the published SDK 0.0.9 / API 0.0.7. `SampleSDK` in
-[internal/release/version.go](../internal/release/version.go) selects their baseline;
-the CLI's default SDK is selected separately.
+Samples and tests share `CurrentSDK` in
+[internal/release/version.go](../internal/release/version.go). Run
+`mise run prepare-release` after changing that selection.
 
 ## Focused validation
 
 From the CLI root, install the published bundle and run the source/CPU checks:
 
 ```sh
-./dist/karty sdk install 0.0.9
+./dist/karty sdk install "$(./dist/karty sdk current)"
 mise run check-sample-clients
 mise run check-world-camera-hooks
 ```
@@ -29,7 +29,7 @@ evidence. Each test process has a nine-second timeout; compilation/setup is sepa
 
 The ordinary `mise run test` checks sample pins, compiles UI sources and runs
 compatible world-camera component fixtures. The explicit tasks also check the
-SDK 0.0.9 client bindings. Full sample builds and browser/manual review are
+selected SDK client bindings. Full sample builds and browser/manual review are
 separate diagnostics, not prerequisites for these behavior tests.
 
 ## Orbital flight deck

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/karty-game/karty/internal/assetusage"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
 )
@@ -43,11 +44,7 @@ func main(){`+test.body+`}`)
 func TestLocalUIScreenReachability(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv("KARTY_TEST_SDK") != "0.0.9" {
-		t.Skip("requires candidate SFC templates; set KARTY_TEST_SDK=0.0.9")
-	}
-
-	testLocalUIScreenReachability(t, "0.0.9", ".kui")
+	testLocalUIScreenReachability(t, release.SDKVersion(), ".kui")
 }
 
 func testLocalUIScreenReachability(t *testing.T, version, extension string) {

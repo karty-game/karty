@@ -5,6 +5,3 @@ compiler = "tinygo"
 [project.resolution]
 width = 160
 height = 120
-
-[sdk]
-version = "0.0.10"

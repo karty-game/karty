@@ -1,7 +1,7 @@
 # Client hooks fixture
 
 One square room, one authored actor, one generated solid texel and one hidden
-160×120 camera exercise the SDK 0.0.9 hooks/actions contract. No sample assets,
+160×120 camera exercise the current SDK hooks/actions contract. No sample assets,
 UI, materials toolchain, offline bake or runtime lightmap bake are loaded.
 
 The authored condition resolves the mounted actor, waits two frames and invokes

@@ -17,6 +17,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
 	"github.com/karty-game/karty/internal/assetpipeline"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/pelletier/go-toml/v2"
 )
@@ -152,10 +153,12 @@ func TestMaterialMipAndStrengthPackagedWASMAndReports(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	selected = geometrySDK(selected)
 
 	calls := 0
 
@@ -175,7 +178,6 @@ func TestMaterialMipAndStrengthPackagedWASMAndReports(t *testing.T) {
 		t.Fatal("unsupported controls reached generated-image processing")
 	}
 
-	assets.manifest.Version = "0.0.8"
 	assets.manifest.Assets.Capabilities.Runtime = append(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1)
 
 	first, err := buildAll(t.Context(), root, 4, "", assets)

@@ -55,7 +55,6 @@ run = "go run ./cmd/karty-check --web"
 [tasks.check-browser]
 run = "go run ./cmd/karty-check --browser"
 [tasks.check-ui]
-env = { KARTY_TEST_SDK = "0.0.9" }
 run = "go run ./cmd/karty-check --ui"
 [tasks.check-dev]
 run = "go run ./cmd/karty-check --watcher"
@@ -134,13 +133,11 @@ description = "Test camera movement, accepted-pose followers and HUD with small 
 run = "go test -timeout=9s ./cmd/karty-check -run '^TestWorldCameraComponents$' -count=1 -v"
 
 [tasks.check-world-camera-hooks]
-description = "Test the main sample's SDK 0.0.9 hooks and remount behavior without loading world assets or a browser"
-env = { KARTY_TEST_SDK = "0.0.9" }
+description = "Test the current SDK hooks and remount behavior without loading world assets or a browser"
 run = "go test -timeout=9s ./cmd/karty-check -run '^TestWorldCameraComponents$' -count=1 -v"
 
 [tasks.check-sample-clients]
 description = "Compile current sample sources and exercise UI controls with small CPU fixtures; no sample resources or browser"
-env = { KARTY_TEST_SDK = "0.0.9" }
 run = "go test -timeout=9s ./cmd/karty-check -run '^Test(SampleUISources|SampleClients)$' -count=1 -v"
 
 [tasks.install-hooks]

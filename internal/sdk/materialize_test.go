@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"io/fs"
+	"maps"
 	"reflect"
 	"slices"
 	"strings"
@@ -14,24 +15,15 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-func materializeManifest() Manifest {
-	manifest := Manifest{Version: "0.0.8"}
-	manifest.Tools.Materialize = "2.0.0"
-	manifest.Tools.MaterializeRevision = "3ad39f1308e3b2b62da81f557adc6d32697b616a"
-	manifest.Artifacts.Materialize = map[string]MaterialToolArtifact{}
+func materializeManifest(t *testing.T) Manifest {
+	t.Helper()
 
-	for _, platform := range []string{"darwin-arm64", "linux-amd64", "linux-arm64", "windows-amd64"} {
-		executable := "bin/materialize-cli"
-		if platform == "windows-amd64" {
-			executable += ".exe"
-		}
-
-		manifest.Artifacts.Materialize[platform] = MaterialToolArtifact{
-			URL: "https://github.com/karty-game/karty-tools/releases/download/materialize-v2.0.0/" +
-				"materialize-2.0.0-" + platform + ".zip",
-			SHA256: strings.Repeat("a", 64), Format: "zip", Executable: executable,
-		}
+	manifest, err := Resolve(release.SDKVersion())
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	manifest.Artifacts.Materialize = maps.Clone(manifest.Artifacts.Materialize)
 
 	return manifest
 }
@@ -39,7 +31,7 @@ func materializeManifest() Manifest {
 func TestMaterializeSchemaRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	want := materializeManifest()
+	want := materializeManifest(t)
 
 	data, err := toml.Marshal(want)
 	if err != nil {
@@ -66,8 +58,13 @@ func TestMaterializeSchemaRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := ValidateMaterialize(Manifest{}); err != nil {
-		t.Fatalf("older SDK rejected: %v", err)
+	optional := want
+	optional.Tools.Materialize = ""
+	optional.Tools.MaterializeRevision = ""
+	optional.Artifacts.Materialize = nil
+
+	if err := ValidateMaterialize(optional); err != nil {
+		t.Fatalf("absent optional Materialize metadata rejected: %v", err)
 	}
 }
 
@@ -108,7 +105,7 @@ func TestMaterializeRejectsPartialAndMalformedPins(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			manifest := materializeManifest()
+			manifest := materializeManifest(t)
 			test.edit(&manifest)
 
 			if err := ValidateMaterialize(manifest); err == nil {
@@ -127,23 +124,14 @@ func editMaterialArtifact(manifest *Manifest, edit func(*MaterialToolArtifact)) 
 func TestWorldMaterialCapabilityRequiresPinnedTools(t *testing.T) {
 	t.Parallel()
 
-	released, err := Resolve("0.0.7")
-	if err != nil {
-		t.Fatal(err)
-	}
+	current := materializeManifest(t)
 
 	for _, pinned := range []bool{false, true} {
-		manifest := released
-		manifest.Version = "0.0.8"
-
-		manifest.Assets.Capabilities.Runtime = append(slices.Clone(released.Assets.Capabilities.Runtime),
-			asset.CapabilityWorldMaterialAtlasV1)
-
-		if pinned {
-			pin := materializeManifest()
-			manifest.Tools.Materialize = pin.Tools.Materialize
-			manifest.Tools.MaterializeRevision = pin.Tools.MaterializeRevision
-			manifest.Artifacts.Materialize = pin.Artifacts.Materialize
+		manifest := current
+		if !pinned {
+			manifest.Tools.Materialize = ""
+			manifest.Tools.MaterializeRevision = ""
+			manifest.Artifacts.Materialize = nil
 		}
 
 		err := validateManifest(manifest.Version, manifest)
@@ -156,8 +144,19 @@ func TestWorldMaterialCapabilityRequiresPinnedTools(t *testing.T) {
 		}
 	}
 
-	if err := validateManifest(released.Version, released); err != nil {
-		t.Fatalf("released SDK without atlas capability changed: %v", err)
+	optional := current
+	optional.Assets.Capabilities.Runtime = slices.DeleteFunc(
+		slices.Clone(current.Assets.Capabilities.Runtime),
+		func(capability asset.Capability) bool {
+			return capability == asset.CapabilityWorldMaterialAtlasV1
+		},
+	)
+	optional.Tools.Materialize = ""
+	optional.Tools.MaterializeRevision = ""
+	optional.Artifacts.Materialize = nil
+
+	if err := validateManifest(optional.Version, optional); err != nil {
+		t.Fatalf("SDK without atlas capability rejected: %v", err)
 	}
 }
 
@@ -174,21 +173,24 @@ func TestBundleDecodesOptionalMaterializeAndRejectsPartialPin(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	want := materializeManifest(t)
+
 	for _, partial := range []bool{false, true} {
 		data := materializeCandidateBundle(t, archive, partial)
 
-		manifest, err := readBundle("0.0.8", data)
+		manifest, err := readBundle(release.SDKVersion(), data)
 		if partial {
 			if err == nil || !strings.Contains(err.Error(), "Materialize") {
 				t.Fatalf("partial bundle pin accepted: %v", err)
 			}
-		} else if err != nil || !reflect.DeepEqual(manifest.Artifacts.Materialize, materializeManifest().Artifacts.Materialize) {
+		} else if err != nil || !reflect.DeepEqual(manifest.Artifacts.Materialize, want.Artifacts.Materialize) {
 			t.Fatalf("candidate metadata lost: %v", err)
 		}
 	}
 
 	manifest, err := readBundle(release.SDKVersion(), original)
-	if err != nil || manifest.Tools.Materialize != "2.0.0" || len(manifest.Artifacts.Materialize) != 4 {
+	if err != nil || manifest.Tools.Materialize != want.Tools.Materialize ||
+		!reflect.DeepEqual(manifest.Artifacts.Materialize, want.Artifacts.Materialize) {
 		t.Fatalf("released default must retain its Materialize pin: %v", err)
 	}
 }
@@ -212,7 +214,7 @@ func materializeCandidateBundle(t *testing.T, archive *zip.Reader, partial bool)
 				t.Fatal(err)
 			}
 
-			pin := materializeManifest()
+			pin := materializeManifest(t)
 			manifest.Version = pin.Version
 			manifest.Tools.Materialize = pin.Tools.Materialize
 			manifest.Tools.MaterializeRevision = pin.Tools.MaterializeRevision

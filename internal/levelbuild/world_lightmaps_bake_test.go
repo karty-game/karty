@@ -13,7 +13,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldlightmap"
 )
@@ -27,7 +26,6 @@ func TestOfflineBakeAutomaticPackageAndStaleFallback(t *testing.T) {
 		"enabled = true\noffline = true\nlights = [\"red\",\"blue\"]\npage_size = 512\ndensity = 1\nshadow_size = 32\n",
 	)
 	selected := directLightmapSDK(t)
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsPrebakedV1)
 
 	build := func(wantBake bool) {
 		t.Helper()
@@ -256,7 +254,6 @@ func TestOfflineBakesAndPackagedLightsAreLevelLocal(t *testing.T) {
 	// The obsolete project-global sidecar must never override either level.
 	writePrebakeFixture(t, filepath.Join(root, "lighting.yaml"), []byte("invalid legacy global lighting"))
 	selected := directLightmapSDK(t)
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsPrebakedV1)
 
 	build := func(wantFirst, wantSecond bool) {
 		t.Helper()

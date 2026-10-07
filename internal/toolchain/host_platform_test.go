@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -34,12 +35,12 @@ func TestInstallDistributionHostUsesDestinationPlatform(t *testing.T) {
 
 	cache := t.TempDir()
 	for _, target := range []string{"windows-arm64", "linux-arm64"} {
-		path, err := installHost(context.Background(), cache, "0.0.4", target, asset)
+		path, err := installHost(context.Background(), cache, release.SDKVersion(), target, asset)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		want := filepath.Join(cache, "hosts", "0.0.4", target, "karty-host")
+		want := filepath.Join(cache, "hosts", release.SDKVersion(), target, "karty-host")
 		if path != want {
 			t.Fatalf("got %s, want %s", path, want)
 		}
@@ -49,7 +50,7 @@ func TestInstallDistributionHostUsesDestinationPlatform(t *testing.T) {
 			t.Fatalf("wrong staged host: %s, %v", contents, err)
 		}
 
-		if _, err := installHost(context.Background(), cache, "0.0.4", target, asset); err != nil {
+		if _, err := installHost(context.Background(), cache, release.SDKVersion(), target, asset); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -59,11 +60,11 @@ func TestInstallDistributionHostUsesDestinationPlatform(t *testing.T) {
 	}
 
 	asset.SHA256 = fmt.Sprintf("%064x", 0)
-	if _, err := installHost(t.Context(), cache, "0.0.4", "windows-arm64", asset); !errors.Is(err, errHostChecksum) {
+	if _, err := installHost(t.Context(), cache, release.SDKVersion(), "windows-arm64", asset); !errors.Is(err, errHostChecksum) {
 		t.Fatalf("cached host with a different pinned checksum was accepted: %v", err)
 	}
 
-	if _, err := installHost(context.Background(), t.TempDir(), "0.0.4", "windows-arm64", asset); err == nil {
+	if _, err := installHost(context.Background(), t.TempDir(), release.SDKVersion(), "windows-arm64", asset); err == nil {
 		t.Fatal("incorrect checksum accepted")
 	}
 }
@@ -87,8 +88,8 @@ func TestEnsureHostVerifiesCachedArtifacts(t *testing.T) {
 
 	var manifest sdk.Manifest
 
-	manifest.Version = "0.0.10"
-	manifest.Host.Version = "0.0.10"
+	manifest.Version = release.SDKVersion()
+	manifest.Host.Version = release.SDKVersion()
 	manifest.Artifacts.Host.Native = map[string]sdk.ToolArtifact{"darwin-arm64": asset}
 	manifest.Artifacts.Host.Web = asset
 	manifest.Artifacts.Host.WebRuntime = asset

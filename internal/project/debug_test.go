@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/karty-game/karty/internal/project"
+	"github.com/karty-game/karty/internal/release"
 )
 
 func TestProjectRendererDebugDefaultsAndOptIn(t *testing.T) {
@@ -14,7 +15,7 @@ func TestProjectRendererDebugDefaultsAndOptIn(t *testing.T) {
 	for _, enabled := range []bool{false, true} {
 		directory := t.TempDir()
 
-		manifest := "[project]\nname='debug'\n[sdk]\nversion='0.0.8'\n"
+		manifest := "[project]\nname='debug'\n[sdk]\nversion='" + release.SDKVersion() + "'\n"
 		if enabled {
 			manifest += "[project.debug]\nrenderer=true\n"
 		}

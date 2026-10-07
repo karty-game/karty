@@ -8,15 +8,8 @@ import (
 	"github.com/karty-game/karty/internal/sdk"
 )
 
-// currentUISchema mirrors the exported bundle contract independently of compiler symbols.
-const currentUISchema uint32 = 11
-
 func sdkUISchema(manifest sdk.Manifest) uint32 {
-	if manifest.API.Version == "0.0.7" || manifest.API.Version == "0.0.8" {
-		return currentUISchema
-	}
-
-	return ui.SchemaInteractionPolish
+	return manifest.Compatibility.UISchema
 }
 
 func validateWidgetSDK(views []uicompiler.Component, manifest sdk.Manifest) error {

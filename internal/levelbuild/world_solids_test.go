@@ -10,6 +10,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty/internal/assetpipeline"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -27,19 +28,17 @@ const levelSolidYAML = `solids:
 func TestStaticSolidsCapabilityPackagingAndWASM(t *testing.T) {
 	t.Parallel()
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if slices.Contains(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldStaticSolidsV1) {
-		t.Fatal("released SDK gained solids")
-	}
+	selected = geometrySDK(selected)
+
+	selected = withoutRuntimeCapabilities(selected, asset.CapabilityWorldStaticSolidsV1)
 
 	root := lightingLevelFixture(t, "version: 6\n"+lightingRoomYAML+levelSolidYAML)
-	selected.Version = "0.0.8"
 
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialMappingV1)
 	if _, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); !errors.Is(err, ErrManifest) {
 		t.Fatalf("undeclared solids accepted: %v", err)
 	}
@@ -48,7 +47,7 @@ func TestStaticSolidsCapabilityPackagingAndWASM(t *testing.T) {
 
 	first, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
 	if err != nil || len(first) != 1 {
-		t.Fatalf("candidate build: %v", err)
+		t.Fatalf("solids build: %v", err)
 	}
 
 	second, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)

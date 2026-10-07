@@ -10,6 +10,7 @@ import (
 	"github.com/karty-game/karty-ui/compiler"
 	"github.com/karty-game/karty-ui/schema"
 	"github.com/karty-game/karty/internal/project"
+	"github.com/karty-game/karty/internal/release"
 )
 
 func TestUIClientStagingOwnership(t *testing.T) {
@@ -176,7 +177,7 @@ func TestSingleFileComponentDiscoveryStagingAndEmbedding(t *testing.T) {
 	root := t.TempDir()
 	for name, source := range map[string]string{
 		"go.mod":      "module example.com/demo\n",
-		"karty.toml":  "[project]\nname='demo'\n[sdk]\nversion='0.0.5'\n",
+		"karty.toml":  "[project]\nname='demo'\n[sdk]\nversion='" + release.SDKVersion() + "'\n",
 		"src/main.go": "package main\nfunc main(){}\n",
 		"ui/views/menu.kui": `<template><panel><label>{ title }</label></panel></template>
 

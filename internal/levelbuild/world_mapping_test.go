@@ -10,33 +10,33 @@ import (
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
 func TestMaterialMappingCapabilityGateAndPackagedWASM(t *testing.T) {
 	t.Parallel()
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if selected.Version != "0.0.7" || slices.Contains(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialMappingV1) {
-		t.Fatal("released SDK gained optional material mapping")
-	}
+	selected = geometrySDK(selected)
+
+	selected = withoutRuntimeCapabilities(selected, asset.CapabilityWorldMaterialMappingV1)
 
 	root := lightingLevelFixture(t, "version: 5\n"+lightingRoomYAML)
 
 	if _, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); !errors.Is(err, ErrManifest) {
-		t.Fatalf("released SDK accepted source v5 mapping: %v", err)
+		t.Fatalf("SDK without mapping capability accepted source v5 mapping: %v", err)
 	}
 	// Projection controls work independently of atlas generation and lighting.
-	selected.Version = "0.0.8"
 	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialMappingV1)
 
 	first, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
 	if err != nil || len(first) != 1 {
-		t.Fatalf("candidate mapping-only build: %v", err)
+		t.Fatalf("mapping-only build: %v", err)
 	}
 
 	second, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
@@ -66,10 +66,12 @@ func TestMaterialMappingCapabilityGateAndPackagedWASM(t *testing.T) {
 func TestMaterialMappingGateAbsentRemainsLegacy(t *testing.T) {
 	t.Parallel()
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	selected = geometrySDK(selected)
 
 	for version := 1; version <= 4; version++ {
 		root := lightingLevelFixture(t, "version: "+strconv.Itoa(version)+"\n"+lightingRoomYAML)

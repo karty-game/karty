@@ -20,6 +20,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
 	"github.com/karty-game/karty/internal/assetpipeline"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/testfixture"
 )
@@ -165,19 +166,19 @@ func TestAuthoredDataCannotClaimGeneratedWorldMaterials(t *testing.T) {
 	}
 }
 
-func TestWorldMaterialCandidateSolidsBuildAndReleasedSDKRejects(t *testing.T) {
+func TestWorldMaterialSolidsBuildAndCapabilityGate(t *testing.T) {
 	t.Parallel()
 
 	root := testfixture.WorldCameraGeometry(t, filepath.Join("..", "..", "samples", "world-camera"))
 
-	manifest, err := sdk.Resolve("0.0.7")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if manifest.Version != "0.0.7" || slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1) {
-		t.Fatal("released default gained atlas capability")
-	}
+	manifest = geometrySDK(manifest)
+
+	manifest = withoutRuntimeCapabilities(manifest, asset.CapabilityWorldMaterialMappingV1, asset.CapabilityWorldStaticSolidsV1)
 
 	calls := 0
 
@@ -202,24 +203,23 @@ func TestWorldMaterialCandidateSolidsBuildAndReleasedSDKRejects(t *testing.T) {
 
 	rejected, err := buildAll(context.Background(), root, 4, "", assets)
 	if !errors.Is(err, ErrManifest) || len(rejected) != 0 || calls != 0 {
-		t.Fatalf("released SDK accepted migrated candidate sample: %v", err)
+		t.Fatalf("SDK without geometry capabilities accepted sample: %v", err)
 	}
 
-	assets.manifest.Version = "0.0.8"
 	assets.manifest.Assets.Capabilities.Runtime = append(assets.manifest.Assets.Capabilities.Runtime,
 		asset.CapabilityWorldMaterialMappingV1, asset.CapabilityWorldStaticSolidsV1)
-	// The same migrated level remains buildable without atlas generation when the
-	// candidate supports its mapping/solids capabilities.
+	// The same level remains buildable without atlas generation when the
+	// SDK supports its mapping/solids capabilities.
 	legacy, err := buildAll(context.Background(), root, 4, "", assets)
 	if err != nil || len(legacy) != 1 || calls != 0 || slices.Contains(legacy[0].Features, worldmaterial.Feature) {
-		t.Fatalf("candidate geometry-only build: %v", err)
+		t.Fatalf("geometry-only build: %v", err)
 	}
 
 	assets.manifest.Assets.Capabilities.Runtime = append(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1)
 
 	candidate, err := buildAll(context.Background(), root, 4, "", assets)
 	if err != nil || len(candidate) != 1 || calls != 1 {
-		t.Fatalf("candidate build: calls=%d err=%v", calls, err)
+		t.Fatalf("atlas build: calls=%d err=%v", calls, err)
 	}
 
 	if !slices.Contains(candidate[0].Features, worldmaterial.Feature) || !slices.Contains(candidate[0].Features, world.Feature) {

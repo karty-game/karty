@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/karty-game/karty/internal/build"
+	"github.com/karty-game/karty/internal/release"
 )
 
 // This fixture deliberately has no dependency on samples, offline baking,
@@ -102,6 +103,20 @@ func prepareHooksFixture(repository, temporary string) error {
 	if err := os.CopyFS(temporary, os.DirFS(filepath.Join(repository, "cmd/karty-check/testdata/client-hooks"))); err != nil {
 		return err
 	}
+
+	configPath := filepath.Join(temporary, "karty.toml")
+
+	config, err := os.ReadFile(configPath)
+	if err != nil {
+		return err
+	}
+
+	config = fmt.Appendf(config, "\n[sdk]\nversion = %q\n", release.SDKVersion())
+	//nolint:gosec // Fixed filename in a newly allocated private fixture directory.
+	if err := os.WriteFile(configPath, config, 0600); err != nil {
+		return err
+	}
+
 	// A single solid texel supplies every surface. No asset pipeline tool or
 	// demo texture is needed to exercise the real camera and mounted actor.
 	texture := image.NewNRGBA(image.Rect(0, 0, 1, 1))

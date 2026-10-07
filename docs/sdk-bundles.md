@@ -26,6 +26,10 @@ verifier before following the bundle URL, then checks SHA-256 and metadata.
 The ZIP manifest matches signed metadata except for `[bundle]`, which carries
 the URL/checksum. Native/web artifacts have their own checksums.
 
+The verified bundle's `ui_schema` and `project_codegen` describe supported UI
+and authored-action formats. Build gates use these declarations, so a release
+that keeps the same formats needs no new SDK/API version branch in the CLI.
+
 Installation is atomic beneath `~/.karty/sdks/VERSION`; `KARTY_HOME` changes the
 SDK cache root. Existing versions cannot be replaced with different bytes.
 Cached contents are rehashed on use; corruption is an error, not a fallback.
@@ -42,15 +46,14 @@ The supplied checksum is their trust input, not a release-signature claim.
 
 ## Optional Materialize pin
 
-SDK 0.0.8 selects the released Materialize 2.0.0 toolchain with
+The current SDK selects a released Materialize toolchain with
 `tools.materialize`, a full lowercase `tools.materialize-revision`, and
 `artifacts.materialize` records for darwin-arm64, linux-amd64, linux-arm64 and
 windows-amd64. Each record requires the version-matched public karty-tools ZIP
 URL, lowercase SHA-256, `format = 'zip'` and `executable = 'bin/materialize-cli'`
 (`.exe` on Windows). The group is optional but partial/malformed pins are rejected.
 
-The CLI defaults to released SDK 0.0.8; SDK 0.0.7 remains supported without a
-Materialize pin. `karty toolchain install` installs the selected SDK's Materialize
+`karty toolchain install` installs the selected SDK's Materialize
 binary and logs its executable path. World builds with `world/material-atlas@1`
 invoke it to generate material maps; projects without world atlases do not.
 Installation itself does not invoke a GPU, search PATH or build tool sources.

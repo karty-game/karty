@@ -17,6 +17,7 @@ import (
 	"github.com/karty-game/karty-ui/codegen"
 	"github.com/karty-game/karty-ui/compiler"
 	"github.com/karty-game/karty/internal/actionbuild"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -25,7 +26,7 @@ import (
 func TestWorldCameraComponents(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve(testSDKVersion())
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,11 +58,7 @@ func TestWorldCameraComponents(t *testing.T) {
 
 	copyComponentFixture(t, "testdata/world-camera-components_test.go.tmpl", directory, "src/components_test.go")
 
-	if manifest.API.Version == "0.0.7" {
-		prepareCameraHooksFixture(t, directory, sample, manifest)
-	} else {
-		writeComponentFixture(t, directory, "src/main.go", []byte("package main\nfunc main(){}\n"))
-	}
+	prepareCameraHooksFixture(t, directory, sample, manifest)
 
 	command := exec.CommandContext(t.Context(), "go", "test", "-timeout=9s", "-count=1", "-v", "./src")
 	command.Dir = directory

@@ -23,6 +23,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
 	"github.com/karty-game/karty-sdk/format/worldsource"
 	"github.com/karty-game/karty/internal/assetpipeline"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -42,23 +43,22 @@ const lightingRoomYAML = `rooms:
 func TestWorldLightingCapabilityGateAndPackagedWASM(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.7")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if manifest.Version != "0.0.7" || slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldLightingV1) {
-		t.Fatal("released SDK gained candidate lighting capability")
-	}
+	manifest = geometrySDK(manifest)
+
+	manifest = withoutRuntimeCapabilities(manifest, asset.CapabilityWorldLightingV1)
 
 	root := lightingLevelFixture(t, "version: 4\n"+lightingRoomYAML+levelLightingYAML(50))
 
 	if artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
-		t.Fatalf("released SDK accepted candidate lighting: %+v, %v", artifacts, err)
+		t.Fatalf("SDK without lighting capability accepted lighting: %+v, %v", artifacts, err)
 	}
 	// The optional lighting capability is sufficient on its own. Materialize
 	// generation and atlas capability are independent of static lighting.
-	manifest.Version = "0.0.8"
 	manifest.Assets.Capabilities.Runtime = append(slices.Clone(manifest.Assets.Capabilities.Runtime), asset.CapabilityWorldLightingV1)
 
 	first, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
@@ -96,12 +96,12 @@ func TestWorldLightingCapabilityGateAndPackagedWASM(t *testing.T) {
 func TestWorldLightingEmptyAndRejectedBatches(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.7")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	manifest.Assets.Capabilities.Runtime = append(slices.Clone(manifest.Assets.Capabilities.Runtime), asset.CapabilityWorldLightingV1)
+	manifest = geometrySDK(manifest)
 
 	for name, test := range map[string]struct {
 		lighting string
@@ -140,14 +140,14 @@ func TestWorldLightingEmptyAndRejectedBatches(t *testing.T) {
 func TestWorldLightingAndMaterialAtlasPackageTogether(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.7")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	manifest.Version = "0.0.8"
-	manifest.Assets.Capabilities.Runtime = append(slices.Clone(manifest.Assets.Capabilities.Runtime),
-		asset.CapabilityWorldLightingV1, asset.CapabilityWorldMaterialAtlasV1)
+	manifest = geometrySDK(manifest)
+
+	manifest.Assets.Capabilities.Runtime = append(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1)
 	root := lightingLevelFixture(t, "version: 4\n"+lightingRoomYAML+levelLightingYAML(2))
 	calls := 0
 
@@ -182,13 +182,17 @@ func TestWorldLightingAndMaterialAtlasPackageTogether(t *testing.T) {
 	checkWorldMaterialModule(t, artifacts[0].Bytes, generated)
 }
 
-func TestAbsentLightingKeepsReleasedSDKPackagingAcrossSourceVersions(t *testing.T) {
+func TestAbsentLightingPackagingAcrossSourceVersions(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve("0.0.7")
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	manifest = geometrySDK(manifest)
+
+	manifest = withoutRuntimeCapabilities(manifest, asset.CapabilityWorldLightingV1)
 
 	var original Artifact
 
@@ -197,7 +201,7 @@ func TestAbsentLightingKeepsReleasedSDKPackagingAcrossSourceVersions(t *testing.
 
 		legacy, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
 		if err != nil || len(legacy) != 1 {
-			t.Fatalf("released build v%d failed: %+v, %v", version, legacy, err)
+			t.Fatalf("unlit build v%d failed: %+v, %v", version, legacy, err)
 		}
 
 		if version == 1 {
@@ -210,7 +214,7 @@ func TestAbsentLightingKeepsReleasedSDKPackagingAcrossSourceVersions(t *testing.
 		unlit, err := BuildAllWithAssets(context.Background(), root, 4, "", candidate)
 		if err != nil || len(unlit) != 1 || !bytes.Equal(unlit[0].Bytes, original.Bytes) ||
 			!reflect.DeepEqual(unlit[0].Features, original.Features) || slices.Contains(legacy[0].Features, world.FeatureLighting) {
-			t.Fatalf("absent lighting changed released packaging v%d: %+v, %v", version, unlit, err)
+			t.Fatalf("absent lighting changed packaging v%d: %+v, %v", version, unlit, err)
 		}
 	}
 }

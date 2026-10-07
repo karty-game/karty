@@ -44,7 +44,7 @@ Want to change a sample? From the repository root:
 ```sh
 mise install
 mise run build
-./dist/karty sdk install 0.0.9
+./dist/karty sdk install "$(./dist/karty sdk current)"
 cd samples/ui-demo
 ../../dist/karty dev
 ```

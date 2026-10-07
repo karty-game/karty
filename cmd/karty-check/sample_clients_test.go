@@ -36,13 +36,7 @@ func checkSampleUISources(t *testing.T, name string) {
 	t.Helper()
 
 	directory, config, views := sampleUISources(t, name)
-	expected := release.SampleSDK
-
-	if name == "world-camera" {
-		expected = release.WorldCameraSDK
-	}
-
-	if config.SDK.Version != expected {
+	if config.SDK.Version != release.SDKVersion() {
 		t.Fatal("sample is not pinned to current SDK")
 	}
 
@@ -77,16 +71,12 @@ func checkSampleUISources(t *testing.T, name string) {
 	}
 }
 
-// Explicit candidate check: type-check every actual client and exercise the UI
+// Type-check every actual client against the current SDK and exercise the UI
 // demo through generated callbacks with crafted input events, without resources.
 func TestSampleClients(t *testing.T) {
 	t.Parallel()
 
-	if testSDKVersion() != release.SampleSDK {
-		t.Skip("use mise run check-sample-clients with the candidate SDK installed")
-	}
-
-	manifest, err := sdk.Resolve(release.SampleSDK)
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -13,8 +13,9 @@ mise run build
 ```
 
 `mise run test` checks sample pin drift and prepares the SDK selected by
-`CurrentSDK` and SDKs 0.0.7/0.0.5 for compatibility coverage before unit tests: missing
-cache entries download; corrupt ones fail.
+`CurrentSDK` before unit tests: missing cache entries download; corrupt ones fail.
+All tests use this SDK. Missing-capability coverage uses fixtures derived from
+the current bundle instead of installing legacy releases.
 Direct `go test` requires an installed SDK. The shared checks in `hk.pkl` use
 golangci-lint for Go (including `govet`), yamllint for YAML, Taplo for TOML,
 and Prettier for YAML layout, JSON, Markdown and web files. Taplo validates
@@ -34,8 +35,7 @@ after editing the public SDK action schema, refresh its snapshot with
 `mise run generate-action-contract`.
 
 See [Releases](releases.md) for pin changes and [SDK bundles](sdk-bundles.md) for
-published/local installs. `KARTY_HOME` changes only the SDK cache root; toolchain
-and host caches remain under `~/.karty`. Generated `.karty/docs` matches the SDK.
+published/local installs. `KARTY_HOME` changes the SDK, toolchain and host cache root. Generated `.karty/docs` matches the SDK.
 
 The root mise environment enables `GOEXPERIMENT=simd` for Go 1.27 portable
 SIMD in the public SDK offline baker. Use `mise exec -- go ...` for ad hoc
@@ -73,7 +73,7 @@ explicit checker/tool artifacts; it is not a public unit-test prerequisite.
 
 ### Materialize installation smoke
 
-The default SDK 0.0.8 pins released Materialize 2.0.0. Install its tools with
+The current SDK pins its released Materialize toolchain. Install its tools with
 `karty toolchain install`; see [SDK bundles](sdk-bundles.md). SDKs advertising
 `world/material-atlas@1` generate material maps during world asset builds.
 SDK 0.0.7 remains supported without atlas generation.

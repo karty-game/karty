@@ -9,6 +9,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty-ui/schema"
 	"github.com/karty-game/karty/internal/build"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
 )
@@ -25,7 +26,7 @@ func runUI(ctx context.Context) error {
 	}
 	defer os.RemoveAll(temporary)
 
-	manifest, err := sdk.Resolve(testSDKVersion())
+	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		return err
 	}

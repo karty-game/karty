@@ -20,7 +20,6 @@ func prebakeLevelFixture(t *testing.T) (string, sdk.Manifest) {
 	t.Helper()
 	root := lightingLevelFixture(t, "version: 4\n"+lightingRoomYAML+directLightmapYAML)
 	selected := directLightmapSDK(t)
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsPrebakedV1)
 
 	enableFixtureLightmap(t, root, "enabled = true\nlights = [\"blue\",\"red\"]\npage_size = 512\nshadow_size = 128\n")
 

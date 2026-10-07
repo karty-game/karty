@@ -603,8 +603,8 @@ func appendAuthoredActions(directory string, data []level.SourceEntry, assets *a
 			return nil, nil, fmt.Errorf("actions.json must be a regular authored file: %w", ErrManifest)
 		}
 
-		if assets == nil || assets.manifest.API.Version != "0.0.7" {
-			return nil, nil, fmt.Errorf("authored actions require SDK 0.0.9: %w", ErrManifest)
+		if assets == nil || !assets.manifest.SupportsAuthoredActions() {
+			return nil, nil, fmt.Errorf("selected SDK does not support authored actions: %w", ErrManifest)
 		}
 
 		contents, readErr := readConfinedFile(directory, "actions.json", 64*1024)

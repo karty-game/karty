@@ -1,4 +1,4 @@
-// karty-test-sdk prepares released SDKs used by default and compatibility tests.
+// karty-test-sdk prepares the current SDK used by all contributor tests.
 package main
 
 import (
@@ -20,13 +20,7 @@ func main() {
 }
 
 func prepare() error {
-	for _, version := range []string{release.SDKVersion(), "0.0.7", "0.0.5"} {
-		if err := prepareVersion(version); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return prepareVersion(release.SDKVersion())
 }
 
 func prepareVersion(version string) error {

@@ -7,18 +7,15 @@ SDK tags do not trigger CLI publication; SDK, CLI and module versions may differ
 
 ## SDK pins
 
-`CurrentSDK` in [internal/release/version.go](../internal/release/version.go) selects
-the released CLI default, smoke fixtures and release integration. It remains
-SDK 0.0.8 until compatible immutable public SDK/host assets are available.
-`SampleSDK` selects the current sample baseline: all four examples now use SDK
-0.0.9 with typed hooks, and their interfaces use the current `.kui` format.
-The UI demo also requires SDK 0.0.9's widgets and explicit sizing contract.
-Public format/compiler module dependencies are selected separately in [go.mod](../go.mod).
+`CurrentSDK` in [internal/release/version.go](../internal/release/version.go) is the
+single SDK selection for CLI defaults, samples and tests. Update it once, then
+run `mise run prepare-release` to synchronize the managed sample manifests.
+Tests install only this SDK. Capability checks read its bundle metadata rather
+than matching SDK or API release numbers.
 
-Samples use the published SDK 0.0.9 bundle and its matching host; see
-[setup](../samples/README.md#make-it-yours) and
-[validation](sample-development.md#focused-validation). Advancing the examples
-does not publish the SDK or advance the released CLI default.
+Public format/compiler module dependencies are selected separately in [go.mod](../go.mod).
+The SDK and matching hosts must already be available as immutable public assets;
+changing this selection does not publish them.
 
 From the repository root, prepare and validate the release:
 
@@ -31,8 +28,8 @@ mise run install-browser
 mise run check-integration
 ```
 
-Preparation updates all samples to `SampleSDK`; tests reject drift and prepare the
-released compatibility SDK cache. `karty sdk current` prints the selection for scripts. Preparation
+Preparation updates managed samples to `CurrentSDK`; tests reject drift and prepare
+the selected SDK cache. `karty sdk current` prints the selection for scripts. Preparation
 does not commit, tag or publish. See [Development](development.md) for overrides.
 
 ## Publication gate

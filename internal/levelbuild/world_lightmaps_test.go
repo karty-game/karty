@@ -18,6 +18,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/worldlightmap"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
 	"github.com/karty-game/karty/internal/assetpipeline"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/testfixture"
 )
@@ -68,10 +69,12 @@ func executeLightmapEnvelope(t *testing.T, module []byte) level.Envelope {
 func TestWorldLightmapCapabilityGateAndPackagedWASM(t *testing.T) {
 	t.Parallel()
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	selected = geometrySDK(selected)
 
 	root := lightingLevelFixture(
 		t,
@@ -79,12 +82,11 @@ func TestWorldLightmapCapabilityGateAndPackagedWASM(t *testing.T) {
 	)
 	enableFixtureLightmap(t, root, "enabled = true\nlight = \"light-1\"\nshadow_size = 256\n")
 
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldLightingV1)
+	selected = withoutRuntimeCapabilities(selected, asset.CapabilityWorldLightmapsV1)
 	if artifacts, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); !errors.Is(err, ErrManifest) || artifacts != nil {
 		t.Fatalf("SDK without capability accepted lightmaps: %v", err)
 	}
 
-	selected.Version = "0.0.8"
 	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsV1)
 
 	first, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
@@ -142,12 +144,12 @@ func TestWorldLightmapCapabilityGateAndPackagedWASM(t *testing.T) {
 func TestWorldLightmapLayoutOnlyAndInvalidControls(t *testing.T) {
 	t.Parallel()
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsV1)
+	selected = geometrySDK(selected)
 
 	for name, settings := range map[string]string{"layout only": "enabled = true\n", "zero density": "enabled = true\ndensity = 0\n", "large page": "enabled = true\npage_size = 2048\n", "two pages": "enabled = true\nmax_pages = 2\n", "small budget": "enabled = true\nmax_texels = 10\n", "unknown light": "enabled = true\nlight = \"missing\"\n", "large shadow": "enabled = true\nshadow_size = 513\n"} {
 		t.Run(name, func(t *testing.T) {
@@ -190,18 +192,12 @@ func TestWorldLightmapLayoutOnlyAndInvalidControls(t *testing.T) {
 func TestRomanBuildLightmapSemanticLayout(t *testing.T) {
 	t.Parallel()
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	selected.Version = "0.0.8"
-	selected.Assets.Capabilities.Runtime = append(
-		selected.Assets.Capabilities.Runtime,
-		asset.CapabilityWorldMaterialMappingV1,
-		asset.CapabilityWorldStaticSolidsV1,
-		asset.CapabilityWorldLightmapsV1,
-	)
+	selected = geometrySDK(selected)
 
 	root := testfixture.WorldCameraGeometry(t, filepath.Join("..", "..", "samples", "world-camera"))
 
@@ -260,13 +256,14 @@ func TestRomanBuildLightmapSemanticLayout(t *testing.T) {
 func TestWorldLightmapAndMaterialAtlasMarkersCoexist(t *testing.T) {
 	t.Parallel()
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime,
-		asset.CapabilityWorldLightmapsV1, asset.CapabilityWorldMaterialAtlasV1)
+	selected = geometrySDK(selected)
+
+	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1)
 	root := lightingLevelFixture(t, "version: 1\n"+lightingRoomYAML)
 	enableFixtureLightmap(t, root, "enabled = true\n")
 	assets := &assetBuild{projectRoot: root, manifest: selected,

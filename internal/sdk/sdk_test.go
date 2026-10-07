@@ -1,6 +1,8 @@
 package sdk_test
 
 import (
+	"io/fs"
+	"path"
 	"slices"
 	"testing"
 
@@ -21,8 +23,18 @@ func TestResolve(t *testing.T) {
 		t.Fatalf("current SDK resolved unexpected versions: %+v", manifest)
 	}
 
-	if manifest.Templates.Game != "0.0.1" {
-		t.Errorf("game template = %q, want %q", manifest.Templates.Game, "0.0.1")
+	resources, err := sdk.Resources(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	template, err := fs.Stat(resources, path.Join("templates", "game", manifest.Templates.Game))
+	if err != nil {
+		t.Fatalf("current SDK game template is missing: %v", err)
+	}
+
+	if !template.IsDir() {
+		t.Fatal("current SDK game template is not a directory")
 	}
 
 	for _, capability := range []asset.Capability{

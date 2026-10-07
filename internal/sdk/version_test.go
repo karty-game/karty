@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 	"testing"
+
+	"github.com/karty-game/karty/internal/release"
 )
 
 func TestUnsupportedSDKRejectedBeforeIO(t *testing.T) {
@@ -23,7 +25,7 @@ func TestUnsupportedSDKRejectedBeforeIO(t *testing.T) {
 		}
 	}
 
-	for _, version := range []string{"0.0.5", "0.0.6", "0.0.7", "0.0.10", "0.1.0", "1.0.0", "0.0.6-rc1"} {
+	for _, version := range []string{MinimumVersion, release.SDKVersion(), "0.1.0", "1.0.0", "1.0.0-rc1"} {
 		if err := validateVersion(version); err != nil {
 			t.Fatalf("supported %s: %v", version, err)
 		}

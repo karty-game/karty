@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	ui "github.com/karty-game/karty-ui/schema"
 	"github.com/karty-game/karty/internal/levelbuild"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
@@ -81,10 +80,7 @@ func run(ctx context.Context, command *cli.Command) error {
 		return err
 	}
 
-	version := ui.SchemaInteractionPolish
-	if manifest.API.Version == "0.0.7" {
-		version = 11
-	}
+	version := manifest.Compatibility.UISchema
 
 	fmt.Fprintln(command.Root().ErrWriter, "Building level", command.Args().First())
 

@@ -21,6 +21,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/level"
 	sdkworld "github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty/internal/levelbuild"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/testfixture"
 )
@@ -28,13 +29,12 @@ import (
 func TestWorldCameraSampleProcessedTextures(t *testing.T) {
 	t.Parallel()
 
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
-	selected.Version = "0.0.8"
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime,
-		asset.CapabilityWorldMaterialMappingV1, asset.CapabilityWorldStaticSolidsV1)
+
+	selected = geometrySDK(selected)
 	root := testfixture.WorldCameraGeometry(t, filepath.Join("..", "..", "samples", "world-camera"))
 	first, err := levelbuild.BuildAllWithAssets(context.Background(), root, 4, "", selected)
 	if err != nil {
@@ -183,13 +183,12 @@ func TestWorldCameraSampleLevelCompiles(t *testing.T) {
 	t.Parallel()
 
 	root := testfixture.WorldCameraGeometry(t, filepath.Join("..", "..", "samples", "world-camera"))
-	selected, err := sdk.Resolve("0.0.7")
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
-	selected.Version = "0.0.8"
-	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime,
-		asset.CapabilityWorldMaterialMappingV1, asset.CapabilityWorldStaticSolidsV1)
+
+	selected = geometrySDK(selected)
 	first, err := levelbuild.BuildAllWithAssets(t.Context(), root, 4, "", selected)
 	if err != nil {
 		t.Fatal(err)
