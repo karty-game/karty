@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -45,7 +46,7 @@ func TestAssembleIsolatesPreviewsAndRemovesClosedPRs(t *testing.T) {
 	}
 
 	writeFixture(t, filepath.Join(source, "ui-demo", "index.html"), "updated")
-	writeFixture(t, filepath.Join(source, "world-camera", "index.html"), "camera")
+	writeFixture(t, filepath.Join(source, "new-demo", "index.html"), "new sample")
 
 	if err := assemble(state, source, "pr/1", false, nil); err != nil {
 		t.Fatal(err)
@@ -58,7 +59,7 @@ func TestAssembleIsolatesPreviewsAndRemovesClosedPRs(t *testing.T) {
 		}
 	}
 
-	if err := requireFile(filepath.Join(state, "pr", "1", "world-camera", "index.html")); err != nil {
+	if err := requireFile(filepath.Join(state, "pr", "1", "new-demo", "index.html")); err != nil {
 		t.Fatal(err)
 	}
 
@@ -80,7 +81,7 @@ func TestAssembleIsolatesPreviewsAndRemovesClosedPRs(t *testing.T) {
 func TestAssembleRejectsArtifactsBeforeReplacingPreview(t *testing.T) {
 	t.Parallel()
 
-	for _, invalid := range []string{"symlink", "metadata", "unexpected", "missing", "camera", "oversize"} {
+	for _, invalid := range []string{"symlink", "metadata", "unexpected", "missing", "incomplete", "oversize"} {
 		t.Run(invalid, func(t *testing.T) {
 			t.Parallel()
 
@@ -102,8 +103,8 @@ func TestAssembleRejectsArtifactsBeforeReplacingPreview(t *testing.T) {
 				if err := os.Remove(filepath.Join(source, "ui-demo", "index.html")); err != nil {
 					t.Fatal(err)
 				}
-			case "camera":
-				writeFixture(t, filepath.Join(source, "world-camera", "fixture.wasm"), "incomplete")
+			case "incomplete":
+				writeFixture(t, filepath.Join(source, "new-demo", "fixture.wasm"), "incomplete")
 			case "oversize":
 				path := filepath.Join(source, "ui-demo", "fixture.wasm")
 				writeFixture(t, path, "")
@@ -119,6 +120,60 @@ func TestAssembleRejectsArtifactsBeforeReplacingPreview(t *testing.T) {
 
 			if err := requireFile(filepath.Join(state, "pr", "1", "ui-demo", "index.html")); err != nil {
 				t.Fatal("working preview replaced before validation", err)
+			}
+		})
+	}
+}
+
+func TestSampleDiscoveryIncludesNewProjects(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	for _, name := range []string{"first-demo", "new-demo"} {
+		writeFixture(t, filepath.Join(root, "samples", name, "karty.toml"), "[sdk]\nversion = '1.0.0'\n")
+	}
+
+	writeFixture(t, filepath.Join(root, "samples", "README.md"), "Sample documentation")
+	writeFixture(t, filepath.Join(root, "samples", "artwork", "texture.png"), "Artwork without a project")
+
+	names, err := sampleNames(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Equal(names, []string{"first-demo", "new-demo"}) {
+		t.Fatalf("unexpected sample projects: %v", names)
+	}
+}
+
+func TestSampleDiscoveryRejectsInvalidProjects(t *testing.T) {
+	t.Parallel()
+
+	for _, invalid := range []string{"empty", "name", "symlink"} {
+		t.Run(invalid, func(t *testing.T) {
+			t.Parallel()
+
+			root := t.TempDir()
+			writeFixture(t, filepath.Join(root, "samples", "README.md"), "Sample documentation")
+
+			switch invalid {
+			case "name":
+				writeFixture(t, filepath.Join(root, "samples", "bad name", "karty.toml"), "[sdk]\nversion = '1.0.0'\n")
+			case "symlink":
+				config := filepath.Join(root, "samples", "new-demo", "karty.toml")
+				writeFixture(t, config, "[sdk]\nversion = '1.0.0'\n")
+
+				if err := os.Rename(config, filepath.Join(root, "external.toml")); err != nil {
+					t.Fatal(err)
+				}
+
+				if err := os.Symlink(filepath.Join(root, "external.toml"), config); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			if _, err := sampleNames(root); err == nil {
+				t.Fatal("invalid project discovery accepted")
 			}
 		})
 	}

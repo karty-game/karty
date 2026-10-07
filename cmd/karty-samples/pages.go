@@ -15,6 +15,8 @@ import (
 const maxSampleEntries = 10000
 const maxSampleBytes = 200 * 1024 * 1024
 
+var samplePathPart = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]*$`)
+
 func validateSamples(source fs.FS) error {
 	var count int
 
@@ -50,16 +52,29 @@ func validateSamples(source fs.FS) error {
 		return err
 	}
 
-	for _, name := range []string{"index.html", "ui-demo/index.html", "media-lab/index.html"} {
-		if err = requireSampleFile(source, name); err != nil {
-			return err
+	if err = requireSampleFile(source, "index.html"); err != nil {
+		return err
+	}
+
+	entries, err := fs.ReadDir(source, ".")
+	if err != nil {
+		return err
+	}
+
+	var samples int
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			if err = requireSampleFile(source, entry.Name()+"/index.html"); err != nil {
+				return err
+			}
+
+			samples++
 		}
 	}
 
-	if _, err = fs.Stat(source, "world-camera"); err == nil {
-		return requireSampleFile(source, "world-camera/index.html")
-	} else if !os.IsNotExist(err) {
-		return err
+	if samples == 0 {
+		return fmt.Errorf("no sample output found: %w", os.ErrInvalid)
 	}
 
 	return nil
@@ -72,12 +87,12 @@ func validateEntry(path string, entry fs.DirEntry) (int64, error) {
 
 	parts := strings.Split(path, "/")
 	for _, part := range parts {
-		if !regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]*$`).MatchString(part) {
+		if !samplePathPart.MatchString(part) {
 			return 0, fmt.Errorf("invalid sample path: %s: %w", path, os.ErrInvalid)
 		}
 	}
 
-	if !slices.Contains(append(sampleNames(), "index.html"), parts[0]) {
+	if len(parts) == 1 && !entry.IsDir() && path != "index.html" {
 		return 0, fmt.Errorf("unexpected sample entry: %s: %w", path, os.ErrInvalid)
 	}
 

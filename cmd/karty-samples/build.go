@@ -17,12 +17,51 @@ import (
 
 const noticeTimeout = 60 * time.Second
 
-func sampleNames() []string {
-	return []string{"ui-demo", "media-lab", "world-camera"}
+func sampleNames(root string) ([]string, error) {
+	directory := filepath.Join(root, "samples")
+
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return nil, err
+	}
+
+	var names []string
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		config, err := os.Lstat(filepath.Join(directory, entry.Name(), "karty.toml"))
+		if os.IsNotExist(err) {
+			continue
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		if !config.Mode().IsRegular() || !samplePathPart.MatchString(entry.Name()) {
+			return nil, fmt.Errorf("invalid sample project: %s: %w", entry.Name(), os.ErrInvalid)
+		}
+
+		names = append(names, entry.Name())
+	}
+
+	if len(names) == 0 {
+		return nil, fmt.Errorf("no sample projects found: %w", os.ErrInvalid)
+	}
+
+	return names, nil
 }
 
 func buildSamples(root string) error {
 	root, err := filepath.Abs(root)
+	if err != nil {
+		return err
+	}
+
+	names, err := sampleNames(root)
 	if err != nil {
 		return err
 	}
@@ -39,7 +78,7 @@ func buildSamples(root string) error {
 	cli := filepath.Join(root, "dist", "karty")
 	installed := map[string]bool{}
 
-	for _, name := range sampleNames() {
+	for _, name := range names {
 		sample := filepath.Join(root, "samples", name)
 
 		version, err := sampleVersion(sample)
@@ -73,7 +112,7 @@ func buildSamples(root string) error {
 
 	var links strings.Builder
 
-	for _, name := range sampleNames() {
+	for _, name := range names {
 		fmt.Fprintf(&links, "<li><a href=\"%s/\">%s</a></li>", name, name)
 	}
 

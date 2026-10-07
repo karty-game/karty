@@ -43,12 +43,6 @@ func run(root string, check bool) error {
 	updates := map[string][]byte{}
 
 	for _, path := range paths {
-		switch filepath.Base(filepath.Dir(path)) {
-		case "ui-demo", "media-lab", "world-camera":
-		default:
-			continue
-		}
-
 		original, err := os.ReadFile(path)
 		if err != nil {
 			return err

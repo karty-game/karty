@@ -28,7 +28,7 @@ control deck, look through service windows and cross the zigzag trench.
 An original Doom-inspired environment study with open passages, detailed
 materials and colored lighting.
 
-**[Take a look](hangar/README.md)** · [Build and run it](hangar/README.md#run-it)
+**[Explore the Hangar](https://karty-game.github.io/karty/main/hangar/)** · [Take a look](hangar/README.md)
 
 ## 🎧 Media lab
 

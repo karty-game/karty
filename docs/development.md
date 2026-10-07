@@ -139,6 +139,9 @@ Use `GOWORK=off` when validating the released public dependencies in [go.mod](..
 ## Repository tooling
 
 `mise run build-samples` runs the Go sample-site builder in `cmd/karty-samples`.
+It discovers every project with a `samples/*/karty.toml`, builds its web output
+and includes it in the site index. Release preparation updates these projects
+to the current SDK; new samples need no registration in CLI code.
 The Pages workflow uses its `assemble` subcommand through `mise run assemble-samples`
 to validate static artifacts, preserve other previews and prune closed PRs.
 Validation rejects links, unexpected paths, incomplete samples and outputs above

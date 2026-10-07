@@ -60,11 +60,13 @@ func TestReleaseCheckDetectsAndPreparationRepairsDrift(t *testing.T) {
 	}
 }
 
-func TestPreparationPinsPublishedDemosAndLeavesStandaloneProjectsAlone(t *testing.T) {
+func TestPreparationDiscoversSamplesAndLeavesStandaloneProjectsAlone(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
-	for _, sample := range []string{"world-camera", "ui-demo", "media-lab"} {
+	samples := []string{"first-demo", "new-demo"}
+
+	for _, sample := range samples {
 		path := filepath.Join(root, "samples", sample, "karty.toml")
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
@@ -75,7 +77,7 @@ func TestPreparationPinsPublishedDemosAndLeavesStandaloneProjectsAlone(t *testin
 		}
 	}
 
-	standalone := filepath.Join(root, "samples", "standalone", "karty.toml")
+	standalone := filepath.Join(root, "projects", "standalone", "karty.toml")
 	if err := os.MkdirAll(filepath.Dir(standalone), 0o750); err != nil {
 		t.Fatal(err)
 	}
@@ -83,6 +85,10 @@ func TestPreparationPinsPublishedDemosAndLeavesStandaloneProjectsAlone(t *testin
 	independentPin := []byte("[sdk]\nversion = '9.9.9'\n")
 	if err := os.WriteFile(standalone, independentPin, 0o600); err != nil {
 		t.Fatal(err)
+	}
+
+	if err := run(root, true); err == nil {
+		t.Fatal("unregistered sample drift accepted")
 	}
 
 	if err := run(root, false); err != nil {
@@ -98,7 +104,7 @@ func TestPreparationPinsPublishedDemosAndLeavesStandaloneProjectsAlone(t *testin
 		t.Fatalf("standalone demo pin changed: %s, %v", data, err)
 	}
 
-	for _, sample := range []string{"world-camera", "ui-demo", "media-lab"} {
+	for _, sample := range samples {
 		data, err := os.ReadFile(filepath.Join(root, "samples", sample, "karty.toml"))
 		if err != nil {
 			t.Fatal(err)
