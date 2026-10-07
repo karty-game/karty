@@ -55,7 +55,7 @@ func TestReleaseCheckDetectsAndPreparationRepairsDrift(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(updated), release.SampleSDK) {
+	if !strings.Contains(string(updated), release.SDKVersion()) {
 		t.Fatal("current SDK not selected")
 	}
 }
@@ -104,10 +104,7 @@ func TestPreparationPinsPublishedDemosAndLeavesStandaloneProjectsAlone(t *testin
 			t.Fatal(err)
 		}
 
-		expected := release.SampleSDK
-		if sample == "world-camera" {
-			expected = release.WorldCameraSDK
-		}
+		expected := release.SDKVersion()
 
 		if !strings.Contains(string(data), expected) {
 			t.Fatalf("%s has the wrong SDK: %s", sample, data)

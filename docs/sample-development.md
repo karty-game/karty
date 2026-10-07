@@ -106,7 +106,7 @@ downloaded JavaScript. Previews are public and share an origin; keep credentials
 and authenticated application data out of the site.
 
 Pages uses the regular WASM host, since this deployment does not configure
-Brotli `Content-Encoding`. Update `SampleSDK` through
+Brotli `Content-Encoding`. Update `CurrentSDK` through
 [release preparation](releases.md#sdk-pins); preparation updates all sample pins,
 and tests reject drift. The Go module version does not select the sample SDK.
 

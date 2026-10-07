@@ -26,9 +26,9 @@ func main() {
 }
 
 func run(root string, check bool) error {
-	version := release.SampleSDK
+	version := release.SDKVersion()
 	if !regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`).MatchString(version) {
-		return fmt.Errorf("invalid SampleSDK %q: %w", release.SampleSDK, os.ErrInvalid)
+		return fmt.Errorf("invalid CurrentSDK %q: %w", version, os.ErrInvalid)
 	}
 
 	paths, err := filepath.Glob(filepath.Join(root, "samples", "*", "karty.toml"))
@@ -47,11 +47,6 @@ func run(root string, check bool) error {
 		case "ui-demo", "media-lab", "world-camera":
 		default:
 			continue
-		}
-
-		version := release.SampleSDK
-		if filepath.Base(filepath.Dir(path)) == "world-camera" {
-			version = release.WorldCameraSDK
 		}
 
 		original, err := os.ReadFile(path)
