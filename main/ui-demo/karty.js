@@ -248,7 +248,7 @@
       state("loading-cartridge");
       status("Loading game cartridge…");
       go = new Go();
-      return loadClientWasm("game.kart?v=0c462749c6bcc597", imports);
+      return loadClientWasm("game.kart?v=58d51f863a81b15f", imports);
     })
     .then((result) => {
       client = result.instance;
