@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -120,9 +121,9 @@ func fixtureMaterialMaps(directory string, bounds image.Rectangle) error {
 	return nil
 }
 
-func executePackedMaterialFixture(directory string, args []string, layout worldmaterial.Layout) error {
+func executePackedMaterialFixture(directory string, args []string, _ worldmaterial.Layout) error {
 	wantArgs := []string{filepath.Join(directory, "atlas.png"), "--output", directory, "--only", "height,normal,ao",
-		"--normal-format", "opengl", "--format", "png", "--no-seamless"}
+		"--normal-format", "opengl", "--format", "png", "--preset", "default"}
 	if !reflect.DeepEqual(args, wantArgs) {
 		return ErrCacheOutput
 	}
@@ -132,51 +133,36 @@ func executePackedMaterialFixture(directory string, args []string, layout worldm
 		return err
 	}
 
-	atlas, err := png.Decode(bytes.NewReader(encoded))
+	input, err := png.Decode(bytes.NewReader(encoded))
 	if err != nil {
 		return err
 	}
 
-	if atlas.Bounds() != image.Rect(0, 0, layout.Width, layout.Height) {
+	if input.Bounds() != image.Rect(0, 0, 256, 256) {
 		return ErrCacheOutput
 	}
 
 	want := []color.NRGBA{{R: 200, A: 255}, {G: 150, A: 255}, {R: 192, G: 192, B: 192, A: 255}, {B: 100, A: 255}}
 
-	for index, rect := range layout.Materials {
-		points := []image.Point{
-			{X: rect.X, Y: rect.Y},
-			{X: rect.X - rect.Gutter, Y: rect.Y - rect.Gutter},
-			{X: rect.X + rect.Width + rect.Gutter - 1, Y: rect.Y + rect.Height + rect.Gutter - 1},
+	pixel, ok := color.NRGBAModel.Convert(input.At(0, 0)).(color.NRGBA)
+	if !ok {
+		return ErrCacheOutput
+	}
+
+	if !slices.Contains(want, pixel) {
+		return ErrCacheOutput
+	}
+
+	for _, point := range []image.Point{{0, 0}, {255, 255}, {128, 128}} {
+		if color.NRGBAModel.Convert(input.At(point.X, point.Y)) != pixel {
+			return ErrCacheOutput
 		}
-		for _, point := range points {
-			if got := color.NRGBAModel.Convert(atlas.At(point.X, point.Y)); got != want[index] {
-				return ErrCacheOutput
-			}
-		}
 	}
 
-	if err := fixtureMaterialMaps(directory, atlas.Bounds()); err != nil {
-		return err
-	}
-
-	// Simulate atlas-wide filter bleed. Packaging must restore the inner edge.
-	normal, err := readMaterialMap(directory, "normal", atlas.Bounds())
-	if err != nil {
-		return err
-	}
-
-	pixels := image.NewNRGBA(normal.Bounds())
-	draw.Draw(pixels, pixels.Bounds(), normal, image.Point{}, draw.Src)
-
-	for _, rect := range layout.Materials {
-		pixels.SetNRGBA(rect.X-rect.Gutter, rect.Y-rect.Gutter, color.NRGBA{R: 19, G: 23, A: 255})
-	}
-
-	return writeMaterialPNG(filepath.Join(directory, "atlas_normal.png"), pixels)
+	return fixtureMaterialMaps(directory, input.Bounds())
 }
 
-func TestWorldMaterialFullAtlasOnceAndWarmCache(t *testing.T) {
+func TestWorldMaterialPerAssetAndWarmAtlasCache(t *testing.T) {
 	t.Parallel()
 
 	document, textures, manifest := fixtureMaterialWorld(), fixtureTextures(t), fixtureMaterialManifest()
@@ -213,7 +199,7 @@ func TestWorldMaterialFullAtlasOnceAndWarmCache(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if calls != 1 || cold.CacheHit || !warm.CacheHit || !reflect.DeepEqual(first, second) {
+	if calls != 4 || cold.CacheHit || !warm.CacheHit || !reflect.DeepEqual(first, second) {
 		t.Fatalf("calls=%d cold=%v warm=%v", calls, cold.CacheHit, warm.CacheHit)
 	}
 
@@ -243,15 +229,91 @@ func TestWorldMaterialFullAtlasOnceAndWarmCache(t *testing.T) {
 	}
 
 	_, rebuilt, err := processWorldMaterials(context.Background(), root, manifest, document, textures, execute)
-	if err != nil || rebuilt.CacheHit || calls != 2 {
+	if err != nil || rebuilt.CacheHit || calls != 4 {
 		t.Fatalf("corrupt cache: calls=%d hit=%v err=%v", calls, rebuilt.CacheHit, err)
 	}
 	// Identical packed pixels do not hide a changed source QOI from the cache.
 	textures[9] = fixtureQOI(t, 3, 3, color.NRGBA{R: 200, A: 255})
 
 	_, changed, err := processWorldMaterials(context.Background(), root, manifest, document, textures, execute)
-	if err != nil || changed.CacheHit || changed.CacheKey == rebuilt.CacheKey || calls != 3 {
+	if err != nil || changed.CacheHit || changed.CacheKey == rebuilt.CacheKey || calls != 5 {
 		t.Fatalf("source invalidation: calls=%d err=%v", calls, err)
+	}
+}
+
+func TestWorldMaterialPerAssetOptionsAndLayoutIndependence(t *testing.T) {
+	t.Parallel()
+	manifest, textures, document := fixtureMaterialManifest(), fixtureTextures(t), fixtureMaterialWorld()
+	root := t.TempDir()
+	calls := 0
+	execute := func(_ context.Context, _ sdk.Manifest, directory string, args []string) error {
+		calls++
+
+		if slices.Contains(args, "--seamless") || slices.Contains(args, "--no-seamless") {
+			t.Fatal("seamless detection was overridden")
+		}
+
+		encoded, err := os.ReadFile(args[0])
+		if err != nil {
+			return err
+		}
+
+		input, err := png.Decode(bytes.NewReader(encoded))
+		if err != nil {
+			return err
+		}
+
+		if input.Bounds() != image.Rect(0, 0, 256, 256) {
+			return ErrCacheOutput
+		}
+
+		pixel, ok := color.NRGBAModel.Convert(input.At(0, 0)).(color.NRGBA)
+		if !ok {
+			return ErrCacheOutput
+		}
+
+		if pixel.R == 200 {
+			want := []string{
+				"--preset",
+				"metal",
+				"--normal-strength",
+				"0",
+				"--height-contrast",
+				"1.5",
+				"--metallic-scale",
+				"1",
+				"--ao-depth-scale",
+				"2",
+			}
+			if !reflect.DeepEqual(args[len(args)-len(want):], want) {
+				t.Fatalf("asset options: %v", args)
+			}
+		}
+
+		return fixtureMaterialMaps(directory, input.Bounds())
+	}
+	zero, height, metal, ao := 0.0, 1.5, 1.0, 2.0
+	options := map[uint32]MaterializeOptions{
+		9: {Preset: "metal", NormalStrength: &zero, HeightContrast: &height, MetallicScale: &metal, AODepthScale: &ao},
+	}
+
+	first, _, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute, options)
+	if err != nil || calls != 4 {
+		t.Fatalf("cold perasset build: calls=%d err=%v", calls, err)
+	}
+	// Changing one preset regenerates just that asset.
+	options[3] = MaterializeOptions{Preset: "brick"}
+
+	_, changed, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute, options)
+	if err != nil || calls != 5 || changed.CacheHit {
+		t.Fatalf("preset change: calls=%d err=%v", calls, err)
+	}
+	// Moving materials within the atlas must only rebuild assembly.
+	document.Sectors[0].FloorMaterial, document.Sectors[0].CeilingMaterial = 3, 9
+
+	reordered, moved, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute, options)
+	if err != nil || calls != 5 || moved.CacheHit || reflect.DeepEqual(first.Layout, reordered.Layout) {
+		t.Fatalf("layout change regenerated source maps: calls=%d err=%v", calls, err)
 	}
 }
 
@@ -281,7 +343,7 @@ func TestWorldMaterialRecipeInvalidation(t *testing.T) {
 	changedVersion.Tools.Materialize = "2.0.1"
 
 	changedArgs := append([]string(nil), args...)
-	changedArgs[len(changedArgs)-1] = "--seamless"
+	changedArgs[len(changedArgs)-1] = "brick"
 
 	for _, test := range []struct {
 		name               string
@@ -485,7 +547,7 @@ func TestWorldMaterialConcurrentColdBuilds(t *testing.T) {
 
 	group.Wait()
 
-	if calls.Load() != 1 {
+	if calls.Load() != 4 {
 		t.Fatalf("native invocations = %d", calls.Load())
 	}
 }

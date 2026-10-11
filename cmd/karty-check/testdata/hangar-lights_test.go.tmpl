@@ -1,0 +1,239 @@
+package main
+
+import (
+	"encoding/binary"
+	"math"
+	"testing"
+
+	"example.com/hangar/.karty/config"
+	"example.com/hangar/.karty/engine"
+)
+
+func lightGame() *Game {
+	game := &Game{level: 9, torchEnabled: true}
+	game.fps = NewFPSController(&game.Game)
+	game.visit(0)
+	return game
+}
+
+// Reconstruct the host's camera-basis composition to observe the world beam.
+func beamAngles(camera engine.CameraSettings, light engine.LightSettings) (float64, float64) {
+	sy, cy := math.Sincos(float64(camera.Yaw))
+	sp, cp := math.Sincos(float64(camera.Pitch))
+	basis := [3][3]float64{{cy, -sy, 0}, {sy * cp, cy * cp, sp}, {-sy * sp, -cy * sp, cp}}
+	lsy, lcy := math.Sincos(float64(light.Yaw))
+	lsp, lcp := math.Sincos(float64(light.Pitch))
+	local := [3]float64{lsy * lcp, lcy * lcp, lsp}
+	var world [3]float64
+	for axis := range world {
+		for index := range local {
+			world[axis] += basis[index][axis] * local[index]
+		}
+	}
+	return math.Atan2(world[0], world[1]), math.Atan2(world[2], math.Hypot(world[0], world[1]))
+}
+
+func TestTorchQuarterSecondAimAndIdle(t *testing.T) {
+	engine.FixtureBegin()
+	game := lightGame()
+	if !game.torch.Settings.Shadows || game.torch.Settings.Color != engine.NewVec3D(3, 2.7, 2.16) || game.torch.Settings.InnerAngle != .25 || game.torch.Settings.OuterAngle != .50 {
+		t.Fatal("torch tuning changed", game.torch.Settings)
+	}
+	game.camera.Settings.Yaw, game.camera.Settings.Pitch = 0, 0
+	game.torchAim = lightAim{}
+	offset, parent := game.torch.Settings.Position, game.torch.Settings.Parent
+	game.camera.Settings.Yaw, game.camera.Settings.Pitch = 1, .6
+	for frame := uint64(1); frame <= 15; frame++ {
+		game.updateTorch(frame)
+	}
+	yaw, pitch := beamAngles(game.camera.Settings, game.torch.Settings)
+	if math.Abs(yaw-(1-math.Exp(-1))) > 1e-6 || math.Abs(pitch-(float64(game.camera.Settings.Pitch)*(1-math.Exp(-1)))) > 1e-6 {
+		t.Fatal("beam did not ease in world direction over quarter-second", yaw, pitch)
+	}
+	if game.torch.Settings.Position != offset || game.torch.Settings.Parent != parent {
+		t.Fatal("direction smoothing detached or moved the local light")
+	}
+	before := game.torch.Settings
+	game.updateTorch(15)
+	if game.torch.Settings != before {
+		t.Fatal("duplicate update advanced smoothing")
+	}
+	for frame := uint64(16); frame <= 300; frame++ {
+		engine.FixtureBegin()
+		game.updateTorch(frame)
+	}
+	engine.FixtureBegin()
+	game.updateTorch(301)
+	if game.torch.Settings.Yaw != 0 || game.torch.Settings.Pitch != 0 || binary.LittleEndian.Uint32(engine.FixtureCommands()[16:20]) != 0 {
+		t.Fatal("settled beam did not stop emitting commands", game.torch.Settings)
+	}
+	game.visit(2)
+	if game.torch.Settings.Yaw != 0 || game.torch.Settings.Pitch != 0 || game.torchAim.updated {
+		t.Fatal("view replacement retained previous aim lag")
+	}
+	game.stop()
+}
+
+func TestTorchYawWrapFrameGapAndAcceptedRotation(t *testing.T) {
+	engine.FixtureBegin()
+	game := lightGame()
+	start := math.Pi - .04
+	game.torchAim = lightAim{yaw: start, pitch: .4}
+	game.camera.Settings.Yaw, game.camera.Settings.Pitch = float32(-math.Pi+.04), .4
+	game.updateTorch(1)
+	game.updateTorch(16)
+	yaw, pitch := beamAngles(game.camera.Settings, game.torch.Settings)
+	target := float64(game.camera.Settings.Yaw)
+	expected := start + math.Remainder(target-start, 2*math.Pi)*(1-math.Exp(-16.0/15))
+	if math.Abs(math.Remainder(yaw-expected, 2*math.Pi)) > 1e-6 || math.Abs(pitch-.4) > 1e-6 {
+		t.Fatal("yaw wrap or elapsed frame gap changed catch-up", yaw, pitch)
+	}
+	// Accepted camera rotation (for example a portal) carries the existing
+	// local beam through the new pose, then smoothing resumes from that aim.
+	local := game.torch.Settings
+	pose := engine.NewTransform3D(engine.NewVec3D(8, 9, 2))
+	pose.Yaw, pose.Pitch = .8, -.5
+	game.camera.ApplyAuthoritativeTransform(engine.InputEvent{Type: engine.EventAuthoritativeTransform, EntityID: game.camera.ID, Transform3D: pose})
+	game.acceptTorchPose(pose)
+	beforeYaw, beforePitch := beamAngles(game.camera.Settings, local)
+	game.updateTorch(17)
+	afterYaw, afterPitch := beamAngles(game.camera.Settings, game.torch.Settings)
+	blend := 1 - math.Exp(-1.0/15)
+	expectedYaw := beforeYaw + math.Remainder(float64(pose.Yaw)-beforeYaw, 2*math.Pi)*blend
+	expectedPitch := beforePitch + (float64(pose.Pitch)-beforePitch)*blend
+	if math.Abs(math.Remainder(afterYaw-expectedYaw, 2*math.Pi)) > 1e-6 || math.Abs(afterPitch-expectedPitch) > 1e-6 || game.torch.Settings.Parent != game.camera.ID {
+		t.Fatal("accepted rotation lost attached lag", afterYaw, afterPitch)
+	}
+	if game.camera.Settings.Position != pose.Position || game.torch.Settings.Position != local.Position {
+		t.Fatal("accepted movement changed the torch's camera-local offset")
+	}
+	game.stop()
+}
+
+func TestTorchToggleAndCameraReplacement(t *testing.T) {
+	engine.FixtureBegin()
+	game := lightGame()
+	handheldOffset := engine.NewVec3D(.35, .20, -.30) // right, forward, up
+	if game.torch.Settings.Position != handheldOffset || game.torch.Settings.Parent != game.camera.ID || !game.torch.Settings.Enabled || !game.torch.Settings.Shadows || game.torch.World != game.level {
+		t.Fatal("torch is not attached to its level camera", game.torch)
+	}
+	game.key(engine.KeyF, true)
+	game.key(engine.KeyF, true)
+	if game.torchEnabled || game.torch.Settings.Enabled {
+		t.Fatal("held F toggled more than once")
+	}
+	oldCamera, oldTorch := game.camera, game.torch
+	game.launchLight()
+	oldBolt := game.bolt.light
+	oldIDs := [...]uint32{oldBolt.ID, oldTorch.ID, oldCamera.ID}
+	engine.FixtureBegin()
+	game.visit(1)
+	if oldCamera.ID != 0 || oldTorch.ID != 0 || oldBolt.ID != 0 || game.bolt.light != nil {
+		t.Fatal("old view retained dynamic entities")
+	}
+	if game.torch.Settings.Position != handheldOffset || game.torch.Settings.Enabled || !game.torch.Settings.Shadows || game.torch.Settings.Parent != game.camera.ID {
+		t.Fatal("replacement camera lost torch state")
+	}
+	game.key(engine.KeyF, true)
+	if game.torch.Settings.Enabled {
+		t.Fatal("view replacement forgot held F")
+	}
+	game.key(engine.KeyF, false)
+	// Destruction must precede creation, and the attached torch must be
+	// destroyed before its old camera, so a complete batch has valid parents.
+	commands := engine.FixtureCommands()
+	if binary.LittleEndian.Uint32(commands[16:20]) < 3 {
+		t.Fatal("view replacement did not submit its cleanup batch", commands)
+	}
+	for offset, index := 24, 0; offset < len(commands) && index < 3; index++ {
+		if commands[offset] != 2 || binary.LittleEndian.Uint32(commands[offset+3:offset+7]) != oldIDs[index] {
+			t.Fatal("view replacement did not remove lights before camera creation", commands)
+		}
+		offset += 3 + int(binary.LittleEndian.Uint16(commands[offset+1:offset+3]))
+	}
+	game.toggleTorch() // The touch callback shares the keyboard action.
+	if !game.torch.Settings.Enabled {
+		t.Fatal("touch toggle failed")
+	}
+	game.stop()
+	if game.torch != nil || game.camera.ID != 0 {
+		t.Fatal("shutdown retained torch/camera")
+	}
+}
+
+func TestPointBoltAcceptedPoseMovementReplacementAndFade(t *testing.T) {
+	engine.FixtureBegin()
+	game := lightGame()
+	game.camera.Settings.Position = engine.NewVec3D(7, 8, 2)
+	game.camera.Settings.Yaw = math.Pi / 2
+	game.camera.Settings.Pitch = 0
+	game.torchAim = lightAim{yaw: float64(game.camera.Settings.Yaw)}
+	game.launchLight()
+	if game.bolt.light.Settings.Kind != engine.LightPoint || game.bolt.light.Settings.Parent != 0 ||
+		math.Abs(float64(game.bolt.position.X)-7.5) > 1e-5 || math.Abs(float64(game.bolt.position.Y)-8) > 1e-5 {
+		t.Fatal("bolt did not launch from accepted camera pose", game.bolt)
+	}
+	old := game.bolt.light
+	game.key(engine.KeyG, true)
+	game.key(engine.KeyG, true)
+	game.update(engine.Frame{Number: 1})
+	if old != game.bolt.light || game.bolt.remaining != 90 {
+		t.Fatal("paused point-light demo still responds to G or game updates")
+	}
+	game.launchLight() // Retained reusable demo remains directly testable.
+	current := game.bolt.light
+	if old.ID != 0 || current == old {
+		t.Fatal("direct bolt replacement failed")
+	}
+	position := game.bolt.position
+	game.bolt.update()
+	if game.bolt.position.X <= position.X || game.bolt.light.Settings.Position != game.bolt.position {
+		t.Fatal("point light did not move")
+	}
+	for frame := uint64(2); frame <= 71; frame++ {
+		game.bolt.update()
+	}
+	if game.bolt.light.Settings.Color.X >= 4 {
+		t.Fatal("bolt did not fade")
+	}
+	for frame := uint64(72); frame <= 90; frame++ {
+		game.bolt.update()
+	}
+	if game.bolt.light != nil || current.ID != 0 {
+		t.Fatal("expired bolt leaked")
+	}
+	engine.FixtureBegin()
+	game.update(engine.Frame{Number: 91})
+	commands := engine.FixtureCommands()
+	if binary.LittleEndian.Uint32(commands[16:20]) != 0 {
+		t.Fatal("idle lights emitted commands", commands)
+	}
+	game.stop()
+}
+
+func TestTouchTorchButtonThroughGeneratedUI(t *testing.T) {
+	game := &Game{}
+	engine.Run(game.Hooks())
+	engine.FixtureStart()
+	defer engine.FixtureStop()
+	engine.FixtureFrame(engine.Frame{Number: 1, Events: []engine.InputEvent{{
+		Type: engine.EventLevelReady, RequestID: uint32(game.request), Handle: 9,
+	}}})
+	click := func(frame uint64, element uint32) {
+		engine.FixtureFrame(engine.Frame{Number: frame, Events: []engine.InputEvent{{
+			Type: engine.EventUIAction, Instance: engine.FixtureUIID(), Element: element,
+		}}})
+	}
+	click(2, config.TorchButton)
+	if game.torchEnabled || game.torch.Settings.Enabled {
+		t.Fatal("generated touch button did not disable torch")
+	}
+	click(3, config.TorchButton)
+	if !game.torchEnabled || !game.torch.Settings.Enabled {
+		t.Fatal("generated touch button did not reenable torch")
+	}
+	engine.FixtureFrame(engine.Frame{Number: 4, Events: []engine.InputEvent{{Type: engine.EventKeyDown, Key: engine.KeyG}}})
+	if game.bolt.light != nil {
+		t.Fatal("G launched the paused point-light demo")
+	}
+}

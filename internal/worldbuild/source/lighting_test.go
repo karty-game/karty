@@ -72,7 +72,7 @@ func TestDecodePreservesGlobalLightingAcrossPrefabTransforms(t *testing.T) {
 func TestDecodeLightingBoundsAndCompleteValidation(t *testing.T) {
 	t.Parallel()
 
-	for _, count := range []int{0, 1, 50, 51} {
+	for _, count := range []int{0, 1, 50, 1000, worldsource.MaxLights, worldsource.MaxLights + 1} {
 		t.Run(strconv.Itoa(count), func(t *testing.T) {
 			t.Parallel()
 
@@ -84,9 +84,9 @@ func TestDecodeLightingBoundsAndCompleteValidation(t *testing.T) {
 			}
 
 			expanded, err := source.Decode([]byte("version: 4\n" + lightingPrefabYAML + lighting.String()))
-			if count > 50 {
+			if count > worldsource.MaxLights {
 				if !errors.Is(err, worldsource.ErrBounds) {
-					t.Fatalf("51 lights accepted: %v", err)
+					t.Fatalf("%d authored lights accepted beyond the source bound: %v", count, err)
 				}
 
 				return

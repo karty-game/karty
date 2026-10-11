@@ -5,18 +5,37 @@
       <label class="title">THE HANGAR</label>
       <label class="status">{ props.Status() }</label>
     </panel>
-    <panel class="footer">
-      <label class="help">{ props.Controls() }</label>
-      <panel class="views">
-        <button onClick={ arrival }>Arrival</button>
-        <button onClick={ reactor }>Reactor</button>
-        <button onClick={ control }>Control</button>
-        <button onClick={ zigzag }>Zigzag</button>
-        <button onClick={ loading }>Loading</button>
-        <button onClick={ exit }>Extraction</button>
-        <button onClick={ windows }>Windows</button>
-        <button onClick={ props.Hide }>Hide</button>
+    <panel class="camera-panel">
+      <panel class="row">
+        <button onClick={ props.ToggleTorch }>{ torchLabel() }</button>
+        <!-- Point-light demo paused: <button onClick={ props.LaunchLight }>Light bolt</button> -->
+        <button class="camera-toggle" onClick={ props.ToggleCamera }>{ cameraLabel() }</button>
       </panel>
+      if props.CameraOpen() {
+        <panel class="views">
+          <panel class="row">
+            <button onClick={ arrival }>Arrival</button>
+            <button onClick={ reactor }>Reactor</button>
+          </panel>
+          <panel class="row">
+            <button onClick={ control }>Control</button>
+            <button onClick={ zigzag }>Zigzag</button>
+          </panel>
+          <panel class="row">
+            <button onClick={ loading }>Loading</button>
+            <button onClick={ exit }>Extraction</button>
+          </panel>
+          <panel class="row">
+            <button onClick={ windows }>Windows</button>
+            <button onClick={ acidControl }>Acid control</button>
+          </panel>
+          <panel class="row">
+            <button onClick={ barrel }>Burning barrel</button>
+            <button onClick={ props.Hide }>Hide</button>
+          </panel>
+          <label class="help">{ props.Controls() }</label>
+        </panel>
+      }
     </panel>
   </panel>
 </template>
@@ -27,9 +46,26 @@ type ExplorerProps struct {
 	Controls func() string
 	Visit func(int)
 	Hide func()
+	CameraOpen func() bool
+	ToggleCamera func()
+	TorchEnabled func() bool
+	ToggleTorch func()
+	// LaunchLight func() // Point-light demo paused.
 }
 
 func setup(props ExplorerProps) {
+	torchLabel := func() string {
+		if props.TorchEnabled() {
+			return "Torch on"
+		}
+		return "Torch off"
+	}
+	cameraLabel := func() string {
+		if props.CameraOpen() {
+			return "Camera -"
+		}
+		return "Camera +"
+	}
 	arrival := func() { props.Visit(0) }
 	reactor := func() { props.Visit(1) }
 	control := func() { props.Visit(2) }
@@ -37,6 +73,8 @@ func setup(props ExplorerProps) {
 	loading := func() { props.Visit(4) }
 	exit := func() { props.Visit(5) }
 	windows := func() { props.Visit(6) }
+	acidControl := func() { props.Visit(7) }
+	barrel := func() { props.Visit(8) }
 }
 </script>
 
@@ -45,7 +83,6 @@ func setup(props ExplorerProps) {
   width: 100%
   height: 100%
   padding: 28
-  justify: space-between
 .heading
   align: start
   gap: 6
@@ -58,20 +95,30 @@ func setup(props ExplorerProps) {
 .status
   font-size: 13
   color: #d9b771
-.footer
-  align: center
-  gap: 12
+.camera-panel
+  position: absolute
+  top: 0
+  right: 0
+  align: end
+  gap: 6
+.camera-toggle
+  min-width: 112
 .help
-  font-size: 12
+  font-size: 11
   color: #d5d5c6
 .views
-  direction: row
-  gap: 8
+  width: 260
+  align: stretch
+  gap: 6
   padding: 10
   background: #141e22e8
+.row
+  direction: row
+  gap: 6
 button
-  min-height: 36
+  min-height: 44
   min-width: 80
+  flex-grow: 1
   font-size: 12
   background: #26332e
   color: #d9dcc8

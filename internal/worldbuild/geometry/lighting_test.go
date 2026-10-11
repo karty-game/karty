@@ -66,8 +66,8 @@ func TestCompileValidatesEntireExpandedLightingBeforeGeometry(t *testing.T) {
 		mutate func(*sdkworld.Lighting)
 		want   error
 	}{
-		"51":      {func(l *sdkworld.Lighting) { l.Lights = append(l.Lights, sdkworld.PointLight{ID: "extra", Radius: 1}) }, sdkworld.ErrBounds},
-		"version": {func(l *sdkworld.Lighting) { l.Version = 0 }, sdkworld.ErrVersion},
+		"source bound": {func(l *sdkworld.Lighting) { l.Lights = lightingExpanded(sdkworld.MaxLights + 1).Lighting.Lights }, sdkworld.ErrBounds},
+		"version":      {func(l *sdkworld.Lighting) { l.Version = 0 }, sdkworld.ErrVersion},
 		"cube last": {func(l *sdkworld.Lighting) {
 			l.AmbientCube = &sdkworld.AmbientCube{NegativeZ: sdkworld.Vec3{Z: math.NaN()}}
 		}, sdkworld.ErrLighting},

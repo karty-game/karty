@@ -48,6 +48,9 @@ OpenGL fallback described in [development](development.md).
 
 ## Worlds and lighting
 
+- Package source-v9 environment presets and room/boundary sky masks behind the
+  pinned `world/environment@1` SDK capability; see [environments](environments.md).
+
 - Compile rooms, slopes, prefabs, actor sprites/tags and directed portals into
   validated world data. Bake planar/triplanar material mappings after expansion.
 - Compile static extrusions and room-free detail prefabs without adding synthetic
@@ -56,13 +59,24 @@ OpenGL fallback described in [development](development.md).
   point-light motion. Rendering/collision execution belongs to the host.
 - Generate independent lightmap receiver charts with explicit visibility or
   directional static-light recipes, and strictly validate completed imports.
+- Automatically select every eligible steady source for offline lighting when
+  selectors are omitted. Up to 4,096 sources can collapse into the same three
+  coefficient tiles; the separate live table remains bounded to 50 lights.
 - Run headless `karty bake` for deterministic direct lighting plus sampled
   diffuse bounces under project `.karty/bakes/<level-directory>/`. Each level's
   world source owns its lights, embedded in that level's KLD. Package matching
-  automatic output or fall back to runtime
-  direct baking with a diagnostic when the automatic pair is missing/stale/corrupt.
+  automatic output or fall back to live lighting with a diagnostic when the
+  automatic pair is missing/stale/corrupt and the sources fit the live bound.
   Explicit manual imports remain strict. See [lightmaps](lightmaps.md).
 
 [Samples](../samples/README.md) cover game/UI/media and authored worlds. The
 [world-camera sample](../samples/world-camera/README.md) exercises both cameras,
 keyboard/touch HUDs, tags, static solids, moving lights, offline bakes and reloads.
+
+- Per-world-surface `[textures.materialize]` presets and optional generation
+  overrides, with finite bounds, capability checks and unknown-key rejection.
+  Materialize runs on independently normalized/cached 256×256 assets before
+  atlas assembly. Automatic seamless processing has no author-facing switch.
+  Existing normal/height/AO packaging and runtime strengths remain supported;
+  candidate SDK 0.0.11 adds optional metallic/smoothness companions for direct
+  specular rendering in the matching host.

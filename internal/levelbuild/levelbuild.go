@@ -6,9 +6,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -20,8 +20,10 @@ import (
 	"github.com/karty-game/karty-sdk/format/level"
 	sdkworld "github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
+	"github.com/karty-game/karty-sdk/format/worldparticles"
 	uicompiler "github.com/karty-game/karty-ui/compiler"
 	ui "github.com/karty-game/karty-ui/schema"
+	"github.com/karty-game/karty/internal/actionbuild"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
@@ -43,8 +45,9 @@ type manifest struct {
 		Metadata string `toml:"metadata"`
 	} `toml:"level"`
 	Data     []dataEntry            `toml:"data"`
-	World    dataEntry              `toml:"world"`
+	World    worldSettings          `toml:"world"`
 	Lightmap *lightmapBuildSettings `toml:"lightmap"`
+	Chunks   *chunkBuildSettings    `toml:"chunks"`
 	Textures []textureEntry         `toml:"textures"`
 	UI       []dataEntry            `toml:"ui"`
 	Theme    dataEntry              `toml:"theme"`
@@ -55,12 +58,21 @@ type dataEntry struct {
 	Source string `toml:"source"`
 }
 
+type worldSettings struct {
+	Name                   string   `toml:"name"`
+	Source                 string   `toml:"source"`
+	MaxSpriteTexelsPerUnit *float64 `toml:"max_sprite_texels_per_unit"`
+}
+
 type textureEntry struct {
-	Name              string             `toml:"name"`
-	Source            string             `toml:"source"`
-	Profile           string             `toml:"profile"`
-	Transform         textureTransform   `toml:"transform"`
-	MaterialStrengths *materialStrengths `toml:"material_strengths"`
+	Name                   string               `toml:"name"`
+	Source                 string               `toml:"source"`
+	Profile                string               `toml:"profile"`
+	Transform              textureTransform     `toml:"transform"`
+	Materialize            *materializeSettings `toml:"materialize"`
+	MaterialStrengths      *materialStrengths   `toml:"material_strengths"`
+	Emission               *materialEmission    `toml:"emission"`
+	MaxSpriteTexelsPerUnit *float64             `toml:"max_sprite_texels_per_unit"`
 }
 
 type textureTransform struct {
@@ -78,12 +90,6 @@ type metadataTexture struct {
 	Coverage string `json:"-"`
 }
 
-type metadataIdentity struct {
-	Name            string `json:"name"`
-	Kind            string `json:"kind"`
-	EnvelopeVersion uint16 `json:"envelopeVersion"`
-}
-
 // Artifact is a complete generated level-data cartridge.
 type Artifact struct {
 	// AuthoredActors lists all compiled content identities instantiated as actors.
@@ -99,15 +105,28 @@ type Artifact struct {
 	// Features is the sorted runtime capability set required by this level.
 	// The game manifest must include the union for every packaged level.
 	Features []string
+	// Chunks are render resources belonging to this logical level, never mounted
+	// as additional game levels or authored actor instances.
+	Chunks []ChunkArtifact
+}
+
+// ChunkArtifact is a content-addressed passive child cartridge. Its identity
+// and exact byte length are bound by the parent level's chunk catalog.
+type ChunkArtifact struct {
+	ID              int
+	Bytes           []byte
+	ContentSHA256   string
+	EnvelopeVersion uint16
 }
 
 type assetBuild struct {
 	projectRoot string
 	manifest    sdk.Manifest
 	screenshot  bool
+	development bool
 	// Tests may supply fixture atlas bytes; public builds always use the managed
 	// Go asset processor, including the shared dev/cache path.
-	materials func(context.Context, string, sdk.Manifest, sdkworld.Document, map[uint32][]byte) (worldmaterial.Pair, assetpipeline.Artifact, error)
+	materials func(context.Context, string, sdk.Manifest, sdkworld.Document, map[uint32][]byte, ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error)
 }
 
 // BuildAllWithAssets processes level textures with the selected SDK before
@@ -119,8 +138,26 @@ func BuildAllWithAssets(
 	themeSource string,
 	manifest sdk.Manifest,
 ) ([]Artifact, error) {
+	return BuildAllWithOptions(ctx, projectDirectory, uiSchema, themeSource, manifest, Options{})
+}
+
+// Options controls whether a build may produce new chunk lighting.
+type Options struct {
+	Development bool
+}
+
+// BuildAllWithOptions processes assets while honoring the development policy.
+// Development consumes a complete matching bake or builds mesh-only chunks.
+func BuildAllWithOptions(
+	ctx context.Context,
+	projectDirectory string,
+	uiSchema uint32,
+	themeSource string,
+	manifest sdk.Manifest,
+	options Options,
+) ([]Artifact, error) {
 	return buildAll(ctx, projectDirectory, uiSchema, themeSource, &assetBuild{
-		projectRoot: projectDirectory, manifest: manifest,
+		projectRoot: projectDirectory, manifest: manifest, development: options.Development,
 	})
 }
 
@@ -164,6 +201,7 @@ func buildAll(
 		}
 
 		directory := filepath.Join(levelsDirectory, entry.Name())
+		// #nosec G703 -- directory is an immediate non-symlink child of the explicit project levels directory.
 		if _, err := os.Stat(filepath.Join(directory, "level.toml")); os.IsNotExist(err) {
 			continue
 		}
@@ -193,32 +231,17 @@ func build(
 	inheritedTheme uicompiler.Theme,
 	assets *assetBuild,
 ) (Artifact, error) {
-	manifestPath := filepath.Join(directory, "level.toml")
-
-	contents, err := os.ReadFile(manifestPath)
+	definition, err := readLevelManifest(directory, assets)
 	if err != nil {
-		return Artifact{}, fmt.Errorf("read %s: %w", manifestPath, err)
-	}
-
-	var definition manifest
-	if err := toml.Unmarshal(contents, &definition); err != nil {
-		return Artifact{}, fmt.Errorf("parse %s: %w", manifestPath, err)
-	}
-
-	if definition.Level.Name == "" || len(definition.Level.Name) > maxLevelNameLength ||
-		!utf8.ValidString(definition.Level.Name) || definition.Level.Kind == "" {
-		return Artifact{}, fmt.Errorf("%s: %w", manifestPath, ErrManifest)
-	}
-
-	if err := validateMaterialStrengths(definition, assets); err != nil {
-		return Artifact{}, err
-	}
-
-	if err := validateLightmapSettings(definition, assets); err != nil {
 		return Artifact{}, err
 	}
 
 	definition, err = prepareLevelWorld(ctx, directory, definition, assets)
+	if err != nil {
+		return Artifact{}, err
+	}
+
+	definition, err = prepareSpriteDensity(directory, definition, assets)
 	if err != nil {
 		return Artifact{}, err
 	}
@@ -238,6 +261,8 @@ func build(
 		return Artifact{}, err
 	}
 
+	var chunks []ChunkArtifact
+
 	if definition.World.Source != "" {
 		atlas, materialErr := compileWorldAssets(ctx, directory, definition, textureMetadata, textures, data, metadata, assets)
 		if materialErr != nil {
@@ -248,6 +273,8 @@ func build(
 		textures = atlas.sources
 		processedTextures = append(processedTextures, atlas.textures...)
 		features = append(features, atlas.features...)
+		chunks = atlas.chunks
+
 		slices.Sort(features)
 		features = slices.Compact(features)
 	}
@@ -291,14 +318,9 @@ func build(
 		return Artifact{}, err
 	}
 
-	envelope, err := level.Encode(metadata, data)
+	module, err := encodeLevelModule(definition.Level.Name, metadata, data)
 	if err != nil {
-		return Artifact{}, fmt.Errorf("encode level %q: %w", definition.Level.Name, err)
-	}
-
-	module, err := level.WrapModule(envelope)
-	if err != nil {
-		return Artifact{}, fmt.Errorf("wrap level %q: %w", definition.Level.Name, err)
+		return Artifact{}, err
 	}
 
 	digest := sha256.Sum256(module)
@@ -313,7 +335,22 @@ func build(
 		EnvelopeVersion: level.EnvelopeVersion,
 		Textures:        processedTextures,
 		Features:        features,
+		Chunks:          chunks,
 	}, nil
+}
+
+func encodeLevelModule(name string, metadata []byte, data []level.SourceEntry) ([]byte, error) {
+	envelope, err := level.Encode(metadata, data)
+	if err != nil {
+		return nil, fmt.Errorf("encode level %q: %w", name, err)
+	}
+
+	module, err := level.WrapModule(envelope)
+	if err != nil {
+		return nil, fmt.Errorf("wrap level %q: %w", name, err)
+	}
+
+	return module, nil
 }
 
 func resolveTheme(
@@ -356,50 +393,41 @@ func resolveTheme(
 }
 
 func loadMetadata(directory string, definition manifest, textures []metadataTexture) ([]byte, error) {
-	identity := metadataIdentity{
-		Name: definition.Level.Name, Kind: definition.Level.Kind, EnvelopeVersion: level.EnvelopeVersion,
+	metadata := level.Metadata{
+		"schema": level.StringValue("karty.level@2"),
+		"name":   level.StringValue(definition.Level.Name),
+		"kind":   level.StringValue(definition.Level.Kind),
 	}
-
 	if definition.Level.Metadata != "" {
 		contents, err := readConfinedFile(directory, definition.Level.Metadata, level.MaxMetadataSize)
 		if err != nil {
 			return nil, err
 		}
 
-		var metadata map[string]any
-		if err := json.Unmarshal(contents, &metadata); err != nil {
+		metadata, err = parseAuthoredMetadata(contents, definition.Level.Metadata)
+		if err != nil {
 			return nil, fmt.Errorf("parse level metadata: %w", err)
 		}
+	}
+	// Only the selected SDK build pipeline may declare a material atlas.
+	delete(metadata, worldmaterial.MetadataKey)
+	metadata["kartyLevel"] = level.ObjectValue(level.Metadata{
+		"name":            level.StringValue(definition.Level.Name),
+		"kind":            level.StringValue(definition.Level.Kind),
+		"envelopeVersion": level.UintValue(uint64(level.EnvelopeVersion)),
+	})
 
-		if metadata == nil {
-			return nil, ErrManifest
-		}
-		// Only the selected SDK's build pipeline may declare an atlas contract.
-		delete(metadata, worldmaterial.MetadataKey)
-
-		metadata["kartyTextures"] = textures
-		metadata["kartyLevel"] = identity
-
-		return json.Marshal(metadata)
+	values := make([]level.Value, 0, len(textures))
+	for _, texture := range textures {
+		values = append(
+			values,
+			level.ObjectValue(level.Metadata{"id": level.UintValue(uint64(texture.ID)), "name": level.StringValue(texture.Name)}),
+		)
 	}
 
-	metadata := struct {
-		Schema   string            `json:"schema"`
-		Name     string            `json:"name"`
-		Kind     string            `json:"kind"`
-		Level    metadataIdentity  `json:"kartyLevel"`
-		Textures []metadataTexture `json:"kartyTextures"`
-	}{
-		Schema: "karty.level@1", Name: definition.Level.Name, Kind: definition.Level.Kind,
-		Level: identity, Textures: textures,
-	}
+	metadata["kartyTextures"] = level.ArrayValue(values)
 
-	contents, err := json.Marshal(metadata)
-	if err != nil {
-		return nil, fmt.Errorf("encode level metadata: %w", err)
-	}
-
-	return contents, nil
+	return level.EncodeMetadata(metadata)
 }
 
 func loadTextures(
@@ -528,8 +556,12 @@ func loadData(directory string, entries []dataEntry) ([]level.SourceEntry, error
 			return nil, ErrSource
 		}
 
+		if entry.Name == worldparticles.EntryName {
+			return nil, fmt.Errorf("data %q is owned by world particle compilation: %w", entry.Name, ErrSource)
+		}
+
 		if entry.Name == worldmaterial.LayoutEntry || entry.Name == worldmaterial.AlbedoEntry || entry.Name == worldmaterial.DataEntry ||
-			entry.Name == worldmaterial.MipTailEntry {
+			entry.Name == worldmaterial.MipTailEntry || entry.Name == worldmaterial.ReflectanceEntry || entry.Name == worldmaterial.ReflectanceMipTailEntry {
 			return nil, fmt.Errorf("data %q is owned by the world material processor: %w", entry.Name, ErrSource)
 		}
 
@@ -550,7 +582,7 @@ func loadData(directory string, entries []dataEntry) ([]level.SourceEntry, error
 }
 
 func readConfinedFile(directory, relative string, maximum int) ([]byte, error) {
-	if filepath.IsAbs(relative) {
+	if filepath.IsAbs(relative) || maximum < 1 {
 		return nil, ErrSource
 	}
 
@@ -569,13 +601,25 @@ func readConfinedFile(directory, relative string, maximum int) ([]byte, error) {
 		return nil, ErrSource
 	}
 
-	info, err := os.Stat(path)
+	confinedRoot, err := os.OpenRoot(root)
+	if err != nil {
+		return nil, ErrSource
+	}
+	defer confinedRoot.Close()
+
+	file, err := confinedRoot.Open(confined)
+	if err != nil {
+		return nil, ErrSource
+	}
+	defer file.Close()
+
+	info, err := file.Stat()
 	if err != nil || !info.Mode().IsRegular() || info.Size() < 1 || info.Size() > int64(maximum) {
 		return nil, ErrSource
 	}
 
-	contents, err := os.ReadFile(path)
-	if err != nil {
+	contents, err := io.ReadAll(io.LimitReader(file, int64(maximum)+1))
+	if err != nil || len(contents) == 0 || len(contents) > maximum {
 		return nil, ErrSource
 	}
 
@@ -583,6 +627,12 @@ func readConfinedFile(directory, relative string, maximum int) ([]byte, error) {
 }
 
 func appendAuthoredActions(directory string, data []level.SourceEntry, assets *assetBuild) ([]level.SourceEntry, []string, error) {
+	root, err := os.OpenRoot(directory)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer root.Close()
+
 	var authoredActors []string
 
 	for _, entry := range data {
@@ -598,24 +648,84 @@ func appendAuthoredActions(directory string, data []level.SourceEntry, assets *a
 		}
 	}
 
-	if info, statErr := os.Lstat(filepath.Join(directory, "actions.json")); statErr == nil {
+	if _, err := root.Lstat("actions.json"); err == nil {
+		return nil, nil, fmt.Errorf("actions.json is unsupported; migrate to actions.yaml: %w", ErrManifest)
+	} else if !os.IsNotExist(err) {
+		return nil, nil, err
+	}
+
+	if info, statErr := root.Lstat("actions.yaml"); statErr == nil {
 		if !info.Mode().IsRegular() {
-			return nil, nil, fmt.Errorf("actions.json must be a regular authored file: %w", ErrManifest)
+			return nil, nil, fmt.Errorf("actions.yaml must be a regular authored file: %w", ErrManifest)
 		}
 
-		if assets == nil || !assets.manifest.SupportsAuthoredActions() {
-			return nil, nil, fmt.Errorf("selected SDK does not support authored actions: %w", ErrManifest)
+		compiled, err := authoredActionsEntry(directory, assets)
+		if err != nil {
+			return nil, nil, err
 		}
 
-		contents, readErr := readConfinedFile(directory, "actions.json", 64*1024)
-		if readErr != nil {
-			return nil, nil, readErr
-		}
-
-		data = append(data, level.SourceEntry{Name: "karty/actions@1", Kind: level.EntryData, Data: contents})
+		data = append(data, level.SourceEntry{Name: "karty/actions@1", Kind: level.EntryData, Data: compiled})
 	} else if !os.IsNotExist(statErr) {
 		return nil, nil, statErr
 	}
 
 	return data, authoredActors, nil
+}
+
+func authoredActionsEntry(directory string, assets *assetBuild) ([]byte, error) {
+	if assets == nil || !assets.manifest.SupportsAuthoredActions() {
+		return nil, fmt.Errorf("selected SDK does not support authored actions: %w", ErrManifest)
+	}
+
+	contents, err := readConfinedFile(directory, "actions.yaml", 64*1024)
+	if err != nil {
+		return nil, err
+	}
+
+	return actionbuild.CompileDocument(contents)
+}
+
+func readLevelManifest(directory string, assets *assetBuild) (manifest, error) {
+	manifestPath := filepath.Join(directory, "level.toml")
+
+	contents, err := readConfinedFile(directory, "level.toml", level.MaxMetadataSize)
+	if err != nil {
+		return manifest{}, fmt.Errorf("read %s: %w", manifestPath, err)
+	}
+
+	var definition manifest
+	if err := toml.Unmarshal(contents, &definition); err != nil {
+		return manifest{}, fmt.Errorf("parse %s: %w", manifestPath, err)
+	}
+
+	if definition.Level.Name == "" || len(definition.Level.Name) > maxLevelNameLength ||
+		!utf8.ValidString(definition.Level.Name) || definition.Level.Kind == "" {
+		return manifest{}, fmt.Errorf("%s: %w", manifestPath, ErrManifest)
+	}
+
+	if err := validateMaterializeKeys(contents); err != nil {
+		return manifest{}, err
+	}
+
+	if err := validateMaterializeSettings(definition, assets); err != nil {
+		return manifest{}, err
+	}
+
+	if err := validateMaterialEmission(definition, assets); err != nil {
+		return manifest{}, err
+	}
+
+	if err := validateMaterialStrengths(definition, assets); err != nil {
+		return manifest{}, err
+	}
+
+	if err := validateLightmapSettings(definition, assets); err != nil {
+		return manifest{}, err
+	}
+
+	if err := validateChunkSettings(definition, assets); err != nil {
+		return manifest{}, err
+	}
+
+	return definition, nil
 }

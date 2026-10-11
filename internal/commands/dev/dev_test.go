@@ -24,6 +24,10 @@ func TestManagedDevBuildResolvesSDKInsteadOfPassingHostOverride(t *testing.T) {
 	if !strings.Contains(command, "--target web") {
 		t.Fatal(command)
 	}
+
+	if !strings.Contains(command, "--development") {
+		t.Fatal("dev rebuild can produce fresh chunks:", command)
+	}
 }
 
 func TestDevBuildPreservesLocalHostAndRejectsMissingOverride(t *testing.T) {

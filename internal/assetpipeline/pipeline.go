@@ -3,7 +3,6 @@ package assetpipeline
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
+	"github.com/pelletier/go-toml/v2"
 )
 
 const (
@@ -33,148 +33,148 @@ var (
 )
 
 // GeneratedNotice makes build-report ownership explicit without relying on
-// comments, which JSON cannot contain.
+// the file name alone.
 type GeneratedNotice struct {
-	Warning       string `json:"warning"`
-	DoNotEdit     string `json:"doNotEdit"`
-	SourceOfTruth string `json:"sourceOfTruth"`
-	Regenerate    string `json:"regenerate"`
+	Warning       string `toml:"warning"`
+	DoNotEdit     string `toml:"doNotEdit"`
+	SourceOfTruth string `toml:"sourceOfTruth"`
+	Regenerate    string `toml:"regenerate"`
 }
 
 // Texture describes a validated texture and its deterministic output identity.
 type Texture struct {
-	Kind                  string             `json:"kind,omitempty"`
-	Name                  string             `json:"name"`
-	Profile               string             `json:"profile"`
-	Source                string             `json:"source"`
-	Output                string             `json:"cacheOutput"`
-	ContentSHA256         string             `json:"contentSha256"`
-	SourceSHA256          string             `json:"sourceSha256,omitempty"`
-	OutputSHA256          string             `json:"outputSha256,omitempty"`
-	CacheKey              string             `json:"cacheKey"`
-	Processor             string             `json:"processor"`
-	Encoding              string             `json:"encoding,omitempty"`
-	Transform             *asset.ImageRecipe `json:"transform,omitempty"`
-	Metadata              *ImageMetadata     `json:"metadata,omitempty"`
-	Width                 int                `json:"width"`
-	Height                int                `json:"height"`
-	SourceBytes           int64              `json:"sourceBytes"`
-	OutputBytes           int64              `json:"outputBytes"`
-	EstimatedDecodedBytes int64              `json:"estimatedDecodedBytes"`
-	CacheHit              bool               `json:"cacheHit"`
-	SourcePath            string             `json:"-"`
+	Kind                  string             `toml:"kind,omitempty"`
+	Name                  string             `toml:"name"`
+	Profile               string             `toml:"profile"`
+	Source                string             `toml:"source"`
+	Output                string             `toml:"cacheOutput"`
+	ContentSHA256         string             `toml:"contentSha256"`
+	SourceSHA256          string             `toml:"sourceSha256,omitempty"`
+	OutputSHA256          string             `toml:"outputSha256,omitempty"`
+	CacheKey              string             `toml:"cacheKey"`
+	Processor             string             `toml:"processor"`
+	Encoding              string             `toml:"encoding,omitempty"`
+	Transform             *asset.ImageRecipe `toml:"transform,omitempty"`
+	Metadata              *ImageMetadata     `toml:"metadata,omitempty"`
+	Width                 int                `toml:"width"`
+	Height                int                `toml:"height"`
+	SourceBytes           int64              `toml:"sourceBytes"`
+	OutputBytes           int64              `toml:"outputBytes"`
+	EstimatedDecodedBytes int64              `toml:"estimatedDecodedBytes"`
+	CacheHit              bool               `toml:"cacheHit"`
+	SourcePath            string             `toml:"-"`
 }
 
 // Sound describes a processed game sound and its stable, name-sorted catalog ID.
 type Sound struct {
-	ID                    uint32            `json:"id"`
-	Name                  string            `json:"name"`
-	Kind                  string            `json:"kind"`
-	Profile               string            `json:"profile"`
-	Source                string            `json:"source"`
-	Output                string            `json:"cacheOutput"`
-	SourceSHA256          string            `json:"sourceSha256"`
-	OutputSHA256          string            `json:"outputSha256"`
-	CacheKey              string            `json:"cacheKey"`
-	Processor             string            `json:"processor"`
-	Encoding              string            `json:"encoding"`
-	Transform             asset.AudioRecipe `json:"transform"`
-	Metadata              AudioMetadata     `json:"metadata"`
-	SourceBytes           int64             `json:"sourceBytes"`
-	OutputBytes           int64             `json:"outputBytes"`
-	EstimatedDecodedBytes int64             `json:"estimatedDecodedBytes"`
-	CacheHit              bool              `json:"cacheHit"`
-	SourcePath            string            `json:"-"`
+	ID                    uint32            `toml:"id"`
+	Name                  string            `toml:"name"`
+	Kind                  string            `toml:"kind"`
+	Profile               string            `toml:"profile"`
+	Source                string            `toml:"source"`
+	Output                string            `toml:"cacheOutput"`
+	SourceSHA256          string            `toml:"sourceSha256"`
+	OutputSHA256          string            `toml:"outputSha256"`
+	CacheKey              string            `toml:"cacheKey"`
+	Processor             string            `toml:"processor"`
+	Encoding              string            `toml:"encoding"`
+	Transform             asset.AudioRecipe `toml:"transform"`
+	Metadata              AudioMetadata     `toml:"metadata"`
+	SourceBytes           int64             `toml:"sourceBytes"`
+	OutputBytes           int64             `toml:"outputBytes"`
+	EstimatedDecodedBytes int64             `toml:"estimatedDecodedBytes"`
+	CacheHit              bool              `toml:"cacheHit"`
+	SourcePath            string            `toml:"-"`
 }
 
 // AudioStream describes a processed long-form QOA sidecar.
 type AudioStream struct {
-	ID           uint32            `json:"id"`
-	Name         string            `json:"name"`
-	Kind         string            `json:"kind"`
-	Profile      string            `json:"profile"`
-	Source       string            `json:"source"`
-	Output       string            `json:"cacheOutput"`
-	SourceSHA256 string            `json:"sourceSha256"`
-	OutputSHA256 string            `json:"outputSha256"`
-	CacheKey     string            `json:"cacheKey"`
-	Processor    string            `json:"processor"`
-	Encoding     string            `json:"encoding"`
-	Transform    asset.AudioRecipe `json:"transform"`
-	Metadata     AudioMetadata     `json:"metadata"`
-	SourceBytes  int64             `json:"sourceBytes"`
-	OutputBytes  int64             `json:"outputBytes"`
-	CacheHit     bool              `json:"cacheHit"`
-	SourcePath   string            `json:"-"`
+	ID           uint32            `toml:"id"`
+	Name         string            `toml:"name"`
+	Kind         string            `toml:"kind"`
+	Profile      string            `toml:"profile"`
+	Source       string            `toml:"source"`
+	Output       string            `toml:"cacheOutput"`
+	SourceSHA256 string            `toml:"sourceSha256"`
+	OutputSHA256 string            `toml:"outputSha256"`
+	CacheKey     string            `toml:"cacheKey"`
+	Processor    string            `toml:"processor"`
+	Encoding     string            `toml:"encoding"`
+	Transform    asset.AudioRecipe `toml:"transform"`
+	Metadata     AudioMetadata     `toml:"metadata"`
+	SourceBytes  int64             `toml:"sourceBytes"`
+	OutputBytes  int64             `toml:"outputBytes"`
+	CacheHit     bool              `toml:"cacheHit"`
+	SourcePath   string            `toml:"-"`
 }
 
 // LevelTexture identifies a processed texture packaged into one level.
 type LevelTexture struct {
-	Level   string  `json:"level"`
-	Texture Texture `json:"texture"`
+	Level   string  `toml:"level"`
+	Texture Texture `toml:"texture"`
 }
 
 // Summary records encoded and estimated decoded texture costs separately.
 type Summary struct {
-	TextureCount               int   `json:"textureCount"`
-	DeclaredTextureCount       int   `json:"declaredTextureCount"`
-	UsedTextureCount           int   `json:"usedTextureCount"`
-	KeptTextureCount           int   `json:"keptTextureCount"`
-	StrippedTextureCount       int   `json:"strippedTextureCount"`
-	SourceBytes                int64 `json:"sourceBytes"`
-	OutputBytes                int64 `json:"outputBytes"`
-	StrippedSourceBytes        int64 `json:"strippedSourceBytes"`
-	EstimatedDecodedBytes      int64 `json:"estimatedDecodedBytes"`
-	SoundCount                 int   `json:"soundCount"`
-	SoundSourceBytes           int64 `json:"soundSourceBytes"`
-	SoundOutputBytes           int64 `json:"soundOutputBytes"`
-	AudioStreamCount           int   `json:"audioStreamCount"`
-	AudioStreamSourceBytes     int64 `json:"audioStreamSourceBytes"`
-	AudioStreamOutputBytes     int64 `json:"audioStreamOutputBytes"`
-	EstimatedDecodedSoundBytes int64 `json:"estimatedDecodedSoundBytes"`
-	LevelTextureCount          int   `json:"levelTextureCount"`
-	LevelSourceBytes           int64 `json:"levelSourceBytes"`
-	LevelOutputBytes           int64 `json:"levelOutputBytes"`
-	EstimatedDecodedLevelBytes int64 `json:"estimatedDecodedLevelBytes"`
-	AssetSourceBytes           int64 `json:"assetSourceBytes"`
-	AssetOutputBytes           int64 `json:"assetOutputBytes"`
-	DeclaredFontCount          int   `json:"declaredFontCount"`
-	UsedFontCount              int   `json:"usedFontCount"`
-	StrippedFontCount          int   `json:"strippedFontCount"`
-	FontSourceBytes            int64 `json:"fontSourceBytes"`
-	StrippedFontBytes          int64 `json:"strippedFontBytes"`
+	TextureCount               int   `toml:"textureCount"`
+	DeclaredTextureCount       int   `toml:"declaredTextureCount"`
+	UsedTextureCount           int   `toml:"usedTextureCount"`
+	KeptTextureCount           int   `toml:"keptTextureCount"`
+	StrippedTextureCount       int   `toml:"strippedTextureCount"`
+	SourceBytes                int64 `toml:"sourceBytes"`
+	OutputBytes                int64 `toml:"outputBytes"`
+	StrippedSourceBytes        int64 `toml:"strippedSourceBytes"`
+	EstimatedDecodedBytes      int64 `toml:"estimatedDecodedBytes"`
+	SoundCount                 int   `toml:"soundCount"`
+	SoundSourceBytes           int64 `toml:"soundSourceBytes"`
+	SoundOutputBytes           int64 `toml:"soundOutputBytes"`
+	AudioStreamCount           int   `toml:"audioStreamCount"`
+	AudioStreamSourceBytes     int64 `toml:"audioStreamSourceBytes"`
+	AudioStreamOutputBytes     int64 `toml:"audioStreamOutputBytes"`
+	EstimatedDecodedSoundBytes int64 `toml:"estimatedDecodedSoundBytes"`
+	LevelTextureCount          int   `toml:"levelTextureCount"`
+	LevelSourceBytes           int64 `toml:"levelSourceBytes"`
+	LevelOutputBytes           int64 `toml:"levelOutputBytes"`
+	EstimatedDecodedLevelBytes int64 `toml:"estimatedDecodedLevelBytes"`
+	AssetSourceBytes           int64 `toml:"assetSourceBytes"`
+	AssetOutputBytes           int64 `toml:"assetOutputBytes"`
+	DeclaredFontCount          int   `toml:"declaredFontCount"`
+	UsedFontCount              int   `toml:"usedFontCount"`
+	StrippedFontCount          int   `toml:"strippedFontCount"`
+	FontSourceBytes            int64 `toml:"fontSourceBytes"`
+	StrippedFontBytes          int64 `toml:"strippedFontBytes"`
 }
 
 // Usage explains why each declared texture was retained or stripped.
 type Usage struct {
-	Name        string `json:"name"`
-	Status      string `json:"status"`
-	Reason      string `json:"reason"`
-	SourceBytes int64  `json:"sourceBytes"`
+	Name        string `toml:"name"`
+	Status      string `toml:"status"`
+	Reason      string `toml:"reason"`
+	SourceBytes int64  `toml:"sourceBytes"`
 }
 
 // FontUsage explains whether a declared semantic font role was embedded.
 type FontUsage struct {
-	Role        string `json:"role"`
-	Source      string `json:"source"`
-	Status      string `json:"status"`
-	Reason      string `json:"reason"`
-	SourceBytes int64  `json:"sourceBytes"`
+	Role        string `toml:"role"`
+	Source      string `toml:"source"`
+	Status      string `toml:"status"`
+	Reason      string `toml:"reason"`
+	SourceBytes int64  `toml:"sourceBytes"`
 }
 
 // Report is the deterministic asset inspection output for a build.
 type Report struct {
-	Generated    GeneratedNotice `json:"generated"`
-	Schema       int             `json:"schema"`
-	SDK          string          `json:"sdk"`
-	Features     []string        `json:"features,omitempty"`
-	Summary      Summary         `json:"summary"`
-	Usage        []Usage         `json:"usage"`
-	Fonts        []FontUsage     `json:"fonts"`
-	Textures     []Texture       `json:"textures"`
-	Sounds       []Sound         `json:"sounds,omitempty"`
-	AudioStreams []AudioStream   `json:"audioStreams,omitempty"`
-	Levels       []LevelTexture  `json:"levelTextures,omitempty"`
+	Generated    GeneratedNotice `toml:"generated"`
+	Schema       int             `toml:"schema"`
+	SDK          string          `toml:"sdk"`
+	Features     []string        `toml:"features,omitempty"`
+	Summary      Summary         `toml:"summary"`
+	Usage        []Usage         `toml:"usage"`
+	Fonts        []FontUsage     `toml:"fonts"`
+	Textures     []Texture       `toml:"textures"`
+	Sounds       []Sound         `toml:"sounds,omitempty"`
+	AudioStreams []AudioStream   `toml:"audioStreams,omitempty"`
+	Levels       []LevelTexture  `toml:"levelTextures,omitempty"`
 }
 
 // ProcessAudioStreams produces name-sorted, independently numbered music and
@@ -392,7 +392,7 @@ func processQOITexture(
 	}
 
 	var metadata ImageMetadata
-	if err := json.Unmarshal(artifact.Metadata, &metadata); err != nil {
+	if err := toml.Unmarshal(artifact.Metadata, &metadata); err != nil {
 		return Texture{}, fmt.Errorf("decode texture %q cache metadata: %w", declaration.Name, err)
 	}
 
@@ -463,7 +463,7 @@ func processQOASound(
 	}
 
 	var metadata AudioMetadata
-	if err := json.Unmarshal(artifact.Metadata, &metadata); err != nil {
+	if err := toml.Unmarshal(artifact.Metadata, &metadata); err != nil {
 		return Sound{}, fmt.Errorf("decode sound %q cache metadata: %w", declaration.Name, err)
 	}
 
@@ -524,7 +524,7 @@ func processQOAAudioStream(
 		return AudioStream{}, fmt.Errorf("process %s %q: %w", kind, declaration.Name, err)
 	}
 	var metadata AudioMetadata
-	if err := json.Unmarshal(artifact.Metadata, &metadata); err != nil {
+	if err := toml.Unmarshal(artifact.Metadata, &metadata); err != nil {
 		return AudioStream{}, fmt.Errorf("decode %s %q cache metadata: %w", kind, declaration.Name, err)
 	}
 	return AudioStream{

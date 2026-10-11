@@ -3,7 +3,6 @@ package levelbuild
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"image"
 	"image/color"
@@ -64,7 +63,7 @@ func TestPackageWorldMaterialLayoutAndPair(t *testing.T) {
 		Sectors: []world.Sector{{FloorMaterial: 4, CeilingMaterial: 1, Walls: []world.Wall{{Material: 8}, {Material: 0}}}},
 	}
 	pair := fixtureWorldMaterialPair(t, []uint32{4, 1, 8, 0})
-	metadata := []byte(`{"custom":9007199254740993,"name":"fixture"}`)
+	metadata := binaryMetadata(t, level.Metadata{"custom": level.UintValue(9007199254740993), "name": level.StringValue("fixture")})
 
 	entries, metadata, err := packageWorldMaterials(nil, metadata, document, pair)
 	if err != nil {
@@ -81,13 +80,15 @@ func TestPackageWorldMaterialLayoutAndPair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var identity map[string]json.RawMessage
-
-	if err := json.Unmarshal(envelope.Metadata, &identity); err != nil {
+	identity, err := level.DecodeMetadata(envelope.Metadata)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	if string(identity["custom"]) != "9007199254740993" || string(identity[worldmaterial.MetadataKey]) != `"`+worldmaterial.Schema+`"` {
+	custom, _ := identity.Uint("custom")
+
+	marker, _ := identity.String(worldmaterial.MetadataKey)
+	if custom != 9007199254740993 || marker != worldmaterial.Schema {
 		t.Fatalf("metadata: %s", envelope.Metadata)
 	}
 
@@ -184,7 +185,7 @@ func TestWorldMaterialSolidsBuildAndCapabilityGate(t *testing.T) {
 
 	var generated worldmaterial.Pair
 
-	process := func(_ context.Context, _ string, _ sdk.Manifest, document world.Document, textures map[uint32][]byte) (worldmaterial.Pair, assetpipeline.Artifact, error) {
+	process := func(_ context.Context, _ string, _ sdk.Manifest, document world.Document, textures map[uint32][]byte, _ ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error) {
 		calls++
 
 		for _, id := range assetpipeline.WorldMaterialIDs(document) {
@@ -240,7 +241,7 @@ func TestWorldMaterialSolidsBuildAndCapabilityGate(t *testing.T) {
 	checkWorldMaterialModule(t, candidate[0].Bytes, generated)
 
 	sentinel := os.ErrPermission
-	assets.materials = func(context.Context, string, sdk.Manifest, world.Document, map[uint32][]byte) (worldmaterial.Pair, assetpipeline.Artifact, error) {
+	assets.materials = func(context.Context, string, sdk.Manifest, world.Document, map[uint32][]byte, ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error) {
 		return worldmaterial.Pair{}, assetpipeline.Artifact{}, sentinel
 	}
 
@@ -267,7 +268,7 @@ func checkWorldMaterialModule(t *testing.T, module []byte, generated worldmateri
 	const script = `import fs from 'node:fs';
 const {instance} = await WebAssembly.instantiate(fs.readFileSync(process.argv[1]));
 const e = instance.exports;
-if (e.karty_level_abi_version() !== 1) throw new Error('level ABI');
+if (e.karty_level_abi_version() !== 2) throw new Error('level ABI');
 process.stdout.write(Buffer.from(e.memory.buffer, e.karty_level_data_pointer(), e.karty_level_data_length()));`
 
 	encoded, err := exec.CommandContext(t.Context(), node, "--input-type=module", "-e", script, modulePath).Output()

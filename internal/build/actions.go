@@ -23,9 +23,9 @@ func compileAuthoredActions(directory, module string, manifest sdk.Manifest, art
 	hasActions := len(declarations) != 0
 
 	for _, artifact := range artifacts {
-		if info, err := os.Lstat(filepath.Join(artifact.SourceDirectory, "actions.json")); err == nil {
+		if info, err := os.Lstat(filepath.Join(artifact.SourceDirectory, "actions.yaml")); err == nil {
 			if !info.Mode().IsRegular() {
-				return nil, actionOutputError("actions.json must be a regular file")
+				return nil, actionOutputError("actions.yaml must be a regular file")
 			}
 
 			hasActions = true
@@ -110,10 +110,22 @@ func writeActionOutputs(directory string, result actionbuild.Result) error {
 		}
 	}
 
+	if info, err := root.Lstat("actions/catalog.json"); err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return actionOutputError("symlinked legacy action catalog")
+		}
+
+		if err := root.Remove("actions/catalog.json"); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
 	for _, entry := range []struct {
 		name string
 		data []byte
-	}{{"catalog.json", result.Catalog}, {"schema.json", result.Schema}} {
+	}{{"catalog.toml", result.Catalog}, {"schema.json", result.Schema}} {
 		path := "actions/" + entry.name
 		if info, err := root.Lstat(path); err == nil && info.Mode()&os.ModeSymlink != 0 {
 			return actionOutputError("symlinked action output %s", path)

@@ -3,7 +3,6 @@ package levelbuild
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"image"
 	_ "image/jpeg"
@@ -26,7 +25,7 @@ import (
 const bakeTextureChannels = 4
 
 const automaticBakeDirectory = ".karty/bakes"
-const automaticBakeManifest = "lightmap-prebake.json"
+const automaticBakeManifest = "lightmap-prebake.bin"
 
 // BakeOptions controls an explicit offline invocation, without compiling game
 // code or installing a host, SDK bundle, material generator or GPU toolchain.
@@ -80,20 +79,13 @@ func BakeAll(ctx context.Context, projectDirectory string, options BakeOptions, 
 			return reports, fmt.Errorf("parse %s: %w", directory, err)
 		}
 
-		if options.Level != "" && options.Level != entry.Name() && options.Level != definition.Level.Name {
-			continue
+		selected, err := selectBakeLevel(entry.Name(), definition, options.Level)
+		if err != nil {
+			return reports, err
 		}
 
-		if definition.Lightmap == nil || !definition.Lightmap.Enabled {
-			if options.Level != "" {
-				return reports, fmt.Errorf("level %q has no enabled lightmap recipe: %w", definition.Level.Name, ErrManifest)
-			}
-
+		if !selected {
 			continue
-		}
-
-		if definition.World.Source == "" || len(definition.Lightmap.Lights) == 0 {
-			return reports, fmt.Errorf("level %q needs a world source and lightmap lights list: %w", definition.Level.Name, ErrManifest)
 		}
 
 		if err := ctx.Err(); err != nil {
@@ -213,7 +205,8 @@ func bakeLevel(ctx context.Context, projectDirectory, directory string, definiti
 	}
 
 	log.Info("Baking directional lightmap", "level_name", definition.Level.Name, "samples", samples, "bounces", bounces, "denoise", denoise)
-	bakeOptions := worldlightmapbake.Options{Samples: samples, Bounces: bounces, Workers: options.Workers, Seed: 1, Denoise: denoise}
+	bakeOptions := worldlightmapbake.Options{Samples: samples, Bounces: bounces, Workers: options.Workers, Seed: 1, Denoise: denoise,
+		MaxRayDistance: definition.Lightmap.maxRayDistance()}
 
 	result, err := worldlightmapbake.Bake(ctx, document, layout, materials, bakeOptions)
 	if err != nil {
@@ -233,6 +226,7 @@ func bakeLevel(ctx context.Context, projectDirectory, directory string, definiti
 		Seed:              1,
 		RGBMRange:         result.RGBMRange,
 		Denoise:           denoise,
+		MaxRayDistance:    bakeOptions.MaxRayDistance,
 	})
 	if err != nil {
 		return BakeReport{}, err
@@ -337,6 +331,7 @@ func atomicBakeWrite(directory, name string, data []byte) error {
 		return err
 	}
 
+	// #nosec G703 -- both paths are in a confined bake directory; name is generated internally.
 	return os.Rename(path, filepath.Join(directory, name))
 }
 
@@ -348,7 +343,7 @@ func readAutomaticPrebake(
 ) (entries []level.SourceEntry) {
 	defer func() {
 		if len(entries) == 0 {
-			log.Info("Offline lightmap unavailable or stale; using runtime bake", "level_name", definition.Level.Name)
+			log.Info("Offline lightmap unavailable or stale; packaging without a prebake", "level_name", definition.Level.Name)
 		}
 	}()
 
@@ -362,8 +357,8 @@ func readAutomaticPrebake(
 		return nil
 	}
 
-	var header worldlightmap.PrebakeManifest
-	if json.Unmarshal(encoded, &header) != nil || len(header.ImageSHA256) != 64 {
+	header, err := worldlightmap.DecodePrebakeManifest(encoded)
+	if err != nil || len(header.ImageSHA256) != 64 {
 		return nil
 	}
 	// The digest is used in a path only after strict lowercase hex validation.
@@ -386,11 +381,12 @@ func readAutomaticPrebake(
 	}
 
 	if pair.Manifest.Algorithm != worldlightmap.OfflinePrebakeAlgorithm || pair.Manifest.Seed != 1 ||
-		validateOfflineReflectance(directory, definition, document, pair.Manifest.ReflectanceSHA256) != nil {
+		pair.Manifest.MaxRayDistance != definition.Lightmap.maxRayDistance() ||
+		validateOfflineReflectance(directory, definition, document, layout, pair.Manifest) != nil {
 		return nil
 	}
 
-	expectedProducer, err := worldlightmap.OfflineDenoiseProducer(definition.Lightmap.denoise())
+	expectedProducer, err := worldlightmap.OfflineProducer(definition.Lightmap.denoise(), definition.Lightmap.maxRayDistance())
 	if err != nil || pair.Manifest.Producer != expectedProducer {
 		log.Info(
 			"Offline lightmap denoiser differs from level settings; run karty bake",
@@ -419,20 +415,54 @@ func readAutomaticPrebake(
 	}
 }
 
-func validateOfflineReflectance(directory string, definition manifest, document world.Document, expected string) error {
+func validateOfflineReflectance(directory string, definition manifest, document world.Document,
+	layout worldlightmap.Layout, prebake worldlightmap.PrebakeManifest) error {
 	_, materials, err := loadBakeMaterials(directory, definition)
 	if err != nil {
 		return err
 	}
 
-	actual, err := worldlightmapbake.ReflectanceDigest(document, materials)
+	actual, err := worldlightmapbake.ReflectanceDigestForLayout(document, layout, materials, worldlightmapbake.Options{
+		Samples: prebake.Samples, Bounces: prebake.Bounces, Seed: prebake.Seed, MaxRayDistance: prebake.MaxRayDistance,
+	})
 	if err != nil {
 		return err
 	}
 
-	if actual != expected {
+	if actual != prebake.ReflectanceSHA256 {
 		return fmt.Errorf("original albedo or surface inputs changed: %w", worldlightmap.ErrLayout)
 	}
 
 	return nil
+}
+
+func selectBakeLevel(directoryName string, definition manifest, selector string) (bool, error) {
+	if selector != "" && selector != directoryName && selector != definition.Level.Name {
+		return false, nil
+	}
+
+	if definition.Chunks != nil && definition.Chunks.Enabled {
+		return false, fmt.Errorf(
+			"level %q uses chunk lightmaps; run karty build to bake and package each chunk: %w",
+			definition.Level.Name, ErrManifest,
+		)
+	}
+
+	if definition.Lightmap == nil || !definition.Lightmap.Enabled {
+		if selector != "" {
+			return false, fmt.Errorf("level %q has no enabled lightmap recipe: %w", definition.Level.Name, ErrManifest)
+		}
+
+		return false, nil
+	}
+
+	if definition.World.Source == "" || (!definition.Lightmap.Offline && len(definition.Lightmap.Lights) == 0) {
+		return false, fmt.Errorf(
+			"level %q needs a world source and an offline or explicit directional lightmap recipe: %w",
+			definition.Level.Name,
+			ErrManifest,
+		)
+	}
+
+	return true, nil
 }

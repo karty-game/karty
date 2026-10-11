@@ -40,17 +40,15 @@ mise run generate-world-camera-materials -- --only wall-bottom
 ```
 
 The level enables an offline bake with four samples, one indirect bounce and
-medium denoising. From the sample directory, run:
+medium denoising. Its six authored chunk areas retain the complete courtyard.
+From the sample directory, run:
 
 ```sh
-../../dist/karty bake --level showcase
 ../../dist/karty dev
 ```
 
-Output is cached under the project's `.karty/bakes/showcase/`. Geometry, static
-lights, materials and bake quality changes invalidate it. Bake again before
-starting or restarting the dev session; the watcher skips hidden cache files.
-Without a matching cache, builds report a fallback to runtime lighting baking.
+Every build packages a complete baked lightmap with each child mesh. Chunk builds
+do not consume the whole-world `.karty/bakes/showcase/` cache or bake at runtime.
 The moving corridor light is evaluated live and stays out of `[lightmap].lights`.
 See [lightmaps](lightmaps.md) for quality settings and supported lighting behavior.
 
@@ -62,8 +60,9 @@ density. Camera render sizes are bounded to 1280×720; perspective uses vertical
 FOV and isometric uses `ortho_height` in world units.
 
 The sample opts into browser renderer controls with `[project.debug] renderer = true`.
-**Lightmap** shows a snapshot of the completed atlas; **AA: On/Off** toggles SMAA
-for Full output. **Inspect** shows accepted host poses, useful for reproducing
+**Lightmap** shows a snapshot of the completed atlas. Current hosts omit display
+AA and surface AO; older hosts with SMAA retain a compatible AA control.
+**Inspect** shows accepted host poses, useful for reproducing
 camera or portal artifacts. Include it in diagnostic screenshots.
 
 ## Focused behavior checks

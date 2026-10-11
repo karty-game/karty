@@ -90,7 +90,7 @@ func TestDirectLightmapInvalidAuthoring(t *testing.T) {
 		"duplicate":              `lights = ["red", "blue", "red"]`,
 		"last unknown":           `lights = ["red", "missing"]`,
 		"last empty":             `lights = ["red", ""]`,
-		"nine lights":            `lights = ["red", "blue", "a", "b", "c", "d", "e", "f", "g"]`,
+		"unknown extra IDs":      `lights = ["red", "blue", "a", "b", "c", "d", "e", "f", "g"]`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

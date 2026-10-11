@@ -22,7 +22,7 @@ var (
 	ErrOptions = errors.New("invalid bake options")
 )
 
-// Command creates a CPU-only baker that does not compile game code.
+// Command creates offline level bakers that do not compile game code.
 func Command() *cli.Command {
 	return &cli.Command{
 		Name:  "bake",

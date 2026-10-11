@@ -13,16 +13,17 @@ arguments use bool, string, int32, uint32, float32 or engine.WorldActorRef.
 Identifiers survive function renames. Methods, generics, platform/build
 constraints and unsupported signatures fail the build.
 
-Author `levels/<directory>/actions.json` using version 1, named sequences and
+Author `levels/<directory>/actions.yaml` using version 1, named sequences and
 steps with action/condition identifiers, typed args, then/else/onFailure branches
 and positive waitFrames. Actor literals name exact compiled contents within
 that level, including prefab provenance; stale runtime IDs are never authored.
 Build validation uses the compiled actor inventory, catches argument/target
-errors and packages the source as level data `karty/actions@1`.
+errors and compiles typed binary level data `karty/actions@1`. The candidate
+SDK 0.0.11 format rejects JSON runtime documents and `actions.json` source files.
 
-The CLI emits `.karty/actions/catalog.json`, `.karty/actions/schema.json` and
-`.karty/actions/levels/<directory>.schema.json`. Set the authored JSON's `$schema`
-to `../../.karty/actions/levels/<directory>.schema.json` for standard JSON editor
+The CLI emits `.karty/actions/catalog.toml`, `.karty/actions/schema.json` and
+`.karty/actions/levels/<directory>.schema.json`. Set the authored YAML's `$schema`
+to `../../.karty/actions/levels/<directory>.schema.json` for YAML editor
 completion of action names, argument types and that level's actors. The schema
 comes from the selected public SDK bundle. Generated invocation code is staged
 outside src; its diagnostics refer to authored sequence paths.

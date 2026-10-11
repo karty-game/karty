@@ -86,14 +86,14 @@ func TestBundleRejectsUnsafeEntriesAndIncompatibleMetadata(t *testing.T) {
 				}
 
 				data, _ := fs.ReadFile(archive, file.Name)
-				if file.Name == "bundle.json" {
+				if file.Name == "bundle.toml" {
 					switch kind {
 					case "format":
-						data = []byte(`{"format":2,"ui_schema":9,"project_codegen":1}`)
+						data = []byte("format = 1\nui_schema = 9\nproject_codegen = 1\n")
 					case "schema":
-						data = []byte(`{"format":1,"ui_schema":99,"project_codegen":1}`)
+						data = []byte("format = 2\nui_schema = 99\nproject_codegen = 1\n")
 					case "generator":
-						data = []byte(`{"format":1,"ui_schema":9,"project_codegen":99}`)
+						data = []byte("format = 2\nui_schema = 9\nproject_codegen = 99\n")
 					}
 				}
 

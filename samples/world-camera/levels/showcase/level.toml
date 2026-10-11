@@ -172,3 +172,27 @@ offline = true
 bake_samples = 4
 bake_bounces = 1
 bake_denoise = "medium"
+
+[chunks]
+enabled = true
+areas = [
+  { name = "courtyard", instances = [
+    "roman-court",
+  ] },
+  { name = "hall", rooms = [
+    "hall",
+  ] },
+  { name = "gallery-a", instances = [
+    "gallery-a",
+  ] },
+  { name = "gallery-b", instances = [
+    "gallery-b",
+  ] },
+  { name = "gallery-c", instances = [
+    "gallery-c",
+  ] },
+  { name = "north-turn", instances = [
+    "east-corner",
+    "north-ascent",
+  ] },
+]

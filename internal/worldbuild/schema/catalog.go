@@ -36,15 +36,56 @@ func Level(value any, textures []string) *jsonschema.Schema {
 		collect(prefab)
 	}
 
+	presets := make([]string, 0)
+
+	if animations, ok := root["animations"].(map[string]any); ok {
+		for _, p := range records(animations["presets"]) {
+			if name, ok := p["name"].(string); ok {
+				presets = append(presets, name)
+			}
+		}
+	}
+
+	presetChoices := sortedChoices(presets)
 	materials := sortedChoices(textures)
 	prefabMaterials := sortedChoices(append(slices.Clone(textures), aliases...))
 
-	fields := scopeCatalog(materials, sortedChoices(prefabNames))
+	fields := scopeCatalog(materials, sortedChoices(prefabNames), presetChoices)
 	fields["prefabs"] = &jsonschema.Schema{
 		Items: &jsonschema.Schema{
-			Properties: scopeCatalog(prefabMaterials, sortedChoices(prefabNames)),
+			Properties: scopeCatalog(prefabMaterials, sortedChoices(prefabNames), presetChoices),
 		},
 	}
+
+	fields["animations"] = &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
+		"presets":   {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"frames": {Items: materials}}}},
+		"materials": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"material": materials, "preset": presetChoices}}},
+	}}
+	particlePresets := make([]string, 0)
+
+	if particles, ok := root["particles"].(map[string]any); ok {
+		for _, p := range records(particles["presets"]) {
+			if name, ok := p["name"].(string); ok {
+				particlePresets = append(particlePresets, name)
+			}
+		}
+	}
+
+	particleChoices := sortedChoices(particlePresets)
+	emitter := &jsonschema.Schema{Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"preset": particleChoices}}}
+	fields["particles"] = &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
+		"presets": {
+			Items: &jsonschema.Schema{
+				Properties: map[string]*jsonschema.Schema{
+					"sprite": {Properties: map[string]*jsonschema.Schema{"frames": {Items: materials}}},
+				},
+			},
+		},
+		"emitters": emitter,
+	}}
+	fields["rooms"].Items.Properties["particle_emitters"] = emitter
+	fields["prefabs"].Items.Properties["particle_emitters"] = emitter
+	fields["prefabs"].Items.Properties["rooms"].Items.Properties["particle_emitters"] = emitter
 
 	return &jsonschema.Schema{
 		Schema:     draft,
@@ -63,13 +104,18 @@ func sortedChoices(names []string) *jsonschema.Schema {
 	return choice(names...)
 }
 
-func scopeCatalog(materials, prefabs *jsonschema.Schema) map[string]*jsonschema.Schema {
+func scopeCatalog(materials, prefabs, presets *jsonschema.Schema) map[string]*jsonschema.Schema {
 	bands := &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
 		"top":    {Properties: map[string]*jsonschema.Schema{"texture": materials}},
 		"bottom": {Properties: map[string]*jsonschema.Schema{"texture": materials}},
 	}}
 	content := &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
-		"actor": {Properties: map[string]*jsonschema.Schema{"sprite": {Properties: map[string]*jsonschema.Schema{"texture": materials}}}},
+		"actor": {
+			Properties: map[string]*jsonschema.Schema{
+				"sprite":    {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+				"animation": {Properties: map[string]*jsonschema.Schema{"preset": presets}},
+			},
+		},
 	}}
 
 	return map[string]*jsonschema.Schema{

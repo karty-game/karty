@@ -60,6 +60,7 @@ Try the [browser demos](https://karty-game.github.io/karty/main/), then make the
 - [Orbital flight deck](samples/ui-demo) — choose a ship, tune its thrusters and manage your inventory.
 - [Roman court & galleries](samples/world-camera) — walk through a lit 3D world or explore it from above.
 - [The Hangar](samples/hangar) — explore an industrial environment with service windows, a reactor, control deck and zigzag trench.
+- [Open Air](samples/environment) — compare daylight, cartoon, fantasy and space skies from a windowed room and its playable courtyard.
 - [Media lab](samples/media-lab) — mix effects over music and play a video in the same scene.
 
 See [how to build and run the samples](samples/README.md).

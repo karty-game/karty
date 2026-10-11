@@ -8,7 +8,7 @@ and validate the same schemas before preparing the SDK or processing assets.
 The CLI generates these ignored files:
 
 - `.karty/schemas/worldsource.base.schema.json`: the common world grammar for
-  source versions 1–6, derived from the public SDK field vocabulary.
+  source versions 1–10, derived from the public SDK field vocabulary.
 - `.karty/schemas/levels/<directory>.schema.json`: a level schema referencing
   that base, with material and sprite texture names from its `level.toml` and
   prefab names from its world declarations.
@@ -38,6 +38,11 @@ are allowed when declared as a material override's `from`. Override targets at
 the root must be level textures; nested targets can be declared placeholders.
 The compiler still checks final material resolution after nested expansion.
 
+Candidate SDK 0.0.11 permits up to 4,096 authored `lighting.lights` entries.
+The live renderer retains a separate 50-light bound. Levels above that live
+bound need a matching completed offline bake; moving and pulsing sources remain
+live. See [lightmap selection and packaging](lightmaps.md).
+
 Schema checks reject unknown fields, wrong scalar types (including quoted
 numbers), unsupported versions, invalid enum values, declared per-list bounds,
 and unknown texture/material or prefab references. Defaults and nullable legacy
@@ -52,8 +57,25 @@ aggregate and expanded bounds, and SDK capabilities. Build validation uses the
 CLI's generated schema in memory, so editing a generated JSON file cannot bypass
 these checks. Schema generation does not modify authored YAML.
 
+Source v9 adds `environment` preset/palette/sun and time/cloud controls, room `sky` ceilings
+and boundary-edge `sky` horizons. Older source versions reject these fields even
+when their value is `false` or `null`. A sun override supplies both `azimuth` in
+`[0, 360)` and `elevation` in `[0, 90]`. `time_of_day` is in `[0, 24)` and
+`cloud_amount` is in `[0, 1]`; `time_of_day` and `sun` are mutually exclusive.
+Omit optional environment fields to select
+defaults; explicit null is rejected. Semantic checks additionally require an
+environment for sky rooms and permit sky edges only on unconnected boundaries
+inside sky rooms. See [environments](environments.md).
+
 Without a `levels` directory, `karty schema` emits just the base file. This is
 useful for standalone authoring fixtures whose headers reference the base.
+
+Source v10 adds named particle presets and root, room or prefab emitters. Older
+versions reject particle fields, including null. Particle catalog completion
+includes level textures and named presets; bounded RGBA arrays, curves, sprite
+facing/blend and emission/playback fields are checked. Builds also enforce GPU
+capacity, square matching frames and complete convex-sector confinement. See
+[GPU sprite particles](particles.md).
 
 ## Validation evidence
 

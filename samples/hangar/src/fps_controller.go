@@ -118,8 +118,10 @@ func (controller *FPSController) Update(engine.Frame) {
 	if motion.X == 0 && motion.Y == 0 && motion.Yaw == settings.Yaw && motion.Pitch == settings.Pitch {
 		return
 	}
-	settings.Position.X += motion.X
-	settings.Position.Y += motion.Y
+	settings.Position.X, settings.Position.Y, settings.Position.Z = fps.WalkAcidControl(
+		settings.Position.X, settings.Position.Y, settings.Position.Z,
+		settings.Position.X+motion.X, settings.Position.Y+motion.Y,
+	)
 	settings.Yaw, settings.Pitch = motion.Yaw, motion.Pitch
 	controller.camera.SetSettings(settings)
 }
@@ -149,9 +151,9 @@ func (controller *FPSController) Close() {
 
 func (controller *FPSController) Help() string {
 	if controller.touchMode {
-		return "Left stick walk · Right stick look · Tap a view to explore"
+		return "Left stick walk · Right stick look · Torch toggles beam"
 	}
-	return "WASD walk · Click scene for mouse look · Esc release · Shift run · V next view · H hide"
+	return "WASD walk · Mouse look · Esc release · Shift run · F torch · V view · H hide"
 }
 
 func (controller *FPSController) showSticks() {

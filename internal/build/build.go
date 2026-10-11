@@ -5,13 +5,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/token"
 	"html"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,6 +21,7 @@ import (
 
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/cartridge"
+	sdkperformance "github.com/karty-game/karty-sdk/format/performance"
 	"github.com/karty-game/karty-ui/codegen"
 	"github.com/karty-game/karty-ui/compiler"
 	"github.com/karty-game/karty-ui/schema"
@@ -30,6 +31,7 @@ import (
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/toolchain"
+	"github.com/pelletier/go-toml/v2"
 	"golang.org/x/image/font/sfnt"
 )
 
@@ -40,6 +42,7 @@ func (err staticError) Error() string {
 }
 
 const (
+	performanceSectionName                = "karty.performance.v1"
 	errUnsupportedTarget      staticError = "unsupported build target"
 	errHostNotFile            staticError = "host artifact is not a file"
 	errWebHostRequired        staticError = "web target requires the SDK-pinned public host; install the selected SDK or pass --host /path/to/karty-host.wasm"
@@ -60,6 +63,7 @@ type Options struct {
 	Target        string
 	Platform      string
 	AirProxy      bool
+	Development   bool
 	Progress      func(string)
 	rendererDebug bool
 }
@@ -324,7 +328,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 
 	uiSchema := sdkUISchema(manifest)
 	options.progress("Building levels")
-	levels, err := buildAndStageLevels(ctx, directory, rawDirectory, uiSchema, config.Assets.Theme.Source, manifest)
+	levels, err := buildAndStageLevels(ctx, directory, rawDirectory, uiSchema, config.Assets.Theme.Source, manifest, options.Development)
 	if err != nil {
 		return err
 	}
@@ -543,7 +547,7 @@ func findWebHostArtifact() (string, error) {
 }
 
 func removeLegacyRootOutput(distributionDirectory string) error {
-	for _, name := range []string{"game.kart", "client.wasm", "catalog.json", "asset-report.json", "assets", "content"} {
+	for _, name := range []string{"game.kart", "client.wasm", "catalog.json", "asset-report.json", "asset-report.toml", "assets", "content"} {
 		path := filepath.Join(distributionDirectory, name)
 		if err := os.RemoveAll(path); err != nil {
 			return fmt.Errorf("remove legacy root output %s: %w", name, err)
@@ -559,8 +563,16 @@ func buildAndStageLevels(
 	uiSchema uint32,
 	themeSource string,
 	manifest sdk.Manifest,
+	development bool,
 ) ([]levelbuild.Artifact, error) {
-	levels, err := levelbuild.BuildAllWithAssets(ctx, directory, uiSchema, themeSource, manifest)
+	levels, err := levelbuild.BuildAllWithOptions(
+		ctx,
+		directory,
+		uiSchema,
+		themeSource,
+		manifest,
+		levelbuild.Options{Development: development},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("build levels: %w", err)
 	}
@@ -1339,6 +1351,16 @@ func embedProjectManifest(
 	if err != nil {
 		return fmt.Errorf("embed game manifest: %w", err)
 	}
+
+	performance, err := sdkperformance.Encode(runtimePerformance(config.Project.Performance))
+	if err != nil {
+		return fmt.Errorf("encode game performance profiles: %w", err)
+	}
+
+	embedded, err = cartridge.EmbedSection(embedded, performanceSectionName, performance)
+	if err != nil {
+		return fmt.Errorf("embed game performance profiles: %w", err)
+	}
 	//nolint:gosec // artifact is the fixed dist/raw/game.kart path owned by this build.
 	if err := os.WriteFile(artifact, embedded, 0o600); err != nil {
 		return fmt.Errorf("write game cartridge manifest: %w", err)
@@ -1365,15 +1387,14 @@ func stageLevels(root string, artifacts []levelbuild.Artifact, sourceRoot string
 	defer os.RemoveAll(staging)
 
 	for _, artifact := range artifacts {
-		name := artifact.ContentSHA256 + ".kld"
-
-		path := filepath.Join(staging, name)
-		if sourceRoot == "" {
-			if err := os.WriteFile(path, artifact.Bytes, 0o600); err != nil {
-				return fmt.Errorf("stage level %q: %w", artifact.Name, err)
-			}
-		} else if err := copyFile(filepath.Join(sourceRoot, "content", name), path, 0o600); err != nil {
+		if err := stageLevelContent(staging, sourceRoot, artifact.ContentSHA256, artifact.Bytes); err != nil {
 			return fmt.Errorf("stage level %q: %w", artifact.Name, err)
+		}
+
+		for _, chunk := range artifact.Chunks {
+			if err := stageLevelContent(staging, sourceRoot, chunk.ContentSHA256, chunk.Bytes); err != nil {
+				return fmt.Errorf("stage level %q chunk %d: %w", artifact.Name, chunk.ID, err)
+			}
 		}
 	}
 
@@ -1413,13 +1434,62 @@ func stageLevels(root string, artifacts []levelbuild.Artifact, sourceRoot string
 	return nil
 }
 
+func stageLevelContent(staging, sourceRoot, digest string, expected []byte) error {
+	decoded, err := hex.DecodeString(digest)
+	if err != nil || len(decoded) != sha256.Size || digest != strings.ToLower(digest) {
+		return fmt.Errorf("invalid content digest: %w", errCachedAssetChanged)
+	}
+
+	name := digest + ".kld"
+
+	contents := expected
+	if len(expected) == 0 || len(expected) > 32<<20 {
+		return errCachedAssetChanged
+	}
+
+	if sourceRoot != "" {
+		root, err := os.OpenRoot(filepath.Join(sourceRoot, "content"))
+		if err != nil {
+			return err
+		}
+		defer root.Close()
+
+		file, err := root.Open(name)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		info, err := file.Stat()
+		if err != nil || !info.Mode().IsRegular() || info.Size() != int64(len(expected)) {
+			return errCachedAssetChanged
+		}
+
+		contents, err = io.ReadAll(io.LimitReader(file, int64(len(expected))+1))
+		if err != nil {
+			return err
+		}
+	}
+
+	actual := sha256.Sum256(contents)
+	if len(contents) != len(expected) || hex.EncodeToString(actual[:]) != digest {
+		return errCachedAssetChanged
+	}
+
+	return os.WriteFile(filepath.Join(staging, name), contents, 0o600)
+}
+
 func writeAssetReport(buildDirectory string, report assetpipeline.Report) error {
-	contents, err := json.MarshalIndent(report, "", "  ")
+	if err := os.Remove(filepath.Join(buildDirectory, "asset-report.json")); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	contents, err := toml.Marshal(report)
 	if err != nil {
 		return fmt.Errorf("encode asset report: %w", err)
 	}
 
-	if err := os.WriteFile(filepath.Join(buildDirectory, "asset-report.json"), append(contents, '\n'), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(buildDirectory, "asset-report.toml"), append(contents, '\n'), 0o600); err != nil {
 		return fmt.Errorf("write asset report: %w", err)
 	}
 

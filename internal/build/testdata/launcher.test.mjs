@@ -175,7 +175,13 @@ const context = {
     Module: {
       customSections: (module, name) => {
         if (!mock) return WebAssembly.Module.customSections(module, name);
-        if (name === "karty.ui.v1" || name === "karty.videos.v1" || name === "karty.audio-streams.v1") return [];
+        if (
+          name === "karty.ui.v1" ||
+          name === "karty.videos.v1" ||
+          name === "karty.audio-streams.v1" ||
+          name === "karty.performance.v1"
+        )
+          return [];
         if (name === "karty.sounds.v1") {
           if (soundSections === "absent") return [];
           if (soundSections === "duplicate") return [mockSoundBundle, mockSoundBundle.slice(0)];

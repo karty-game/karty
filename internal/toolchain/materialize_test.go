@@ -103,6 +103,7 @@ func isolatedMaterializeHome(t *testing.T) string {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
+	t.Setenv("KARTY_HOME", filepath.Join(home, ".karty"))
 
 	return home
 }

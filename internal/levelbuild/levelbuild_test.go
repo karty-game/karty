@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/binary"
-	"encoding/json"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -106,21 +105,23 @@ func TestBuildAllEmbedsDeterministicLevelTextures(t *testing.T) {
 		t.Fatalf("processed texture: %v", err)
 	}
 
-	var metadata struct {
-		Level struct {
-			Name            string `json:"name"`
-			Kind            string `json:"kind"`
-			EnvelopeVersion uint16 `json:"envelopeVersion"`
-		} `json:"kartyLevel"`
-		Textures []struct {
-			ID   uint32 `json:"id"`
-			Name string `json:"name"`
-		} `json:"kartyTextures"`
+	metadata, err := level.DecodeMetadata(decoded.Metadata)
+	identity, _ := metadata.Object("kartyLevel")
+	name, _ := identity.String("name")
+	kind, _ := identity.String("kind")
+	version, _ := identity.Uint("envelopeVersion")
+
+	textures, _ := metadata["kartyTextures"].AsArray()
+	if err != nil || name != "levels.textured" || kind != "level" || version != uint64(level.EnvelopeVersion) || len(textures) != 1 {
+		t.Fatalf("metadata identity: %v", err)
 	}
-	if err := json.Unmarshal(decoded.Metadata, &metadata); err != nil || metadata.Level.Name != "levels.textured" ||
-		metadata.Level.Kind != "level" || metadata.Level.EnvelopeVersion != level.EnvelopeVersion || len(metadata.Textures) != 1 ||
-		metadata.Textures[0].ID != 1 || metadata.Textures[0].Name != "pixel" {
-		t.Fatalf("metadata = %s, error = %v", decoded.Metadata, err)
+
+	textureIdentity, _ := textures[0].AsObject()
+	id, _ := textureIdentity.Uint("id")
+
+	textureName, _ := textureIdentity.String("name")
+	if id != 1 || textureName != "pixel" {
+		t.Fatal("texture metadata identity lost")
 	}
 }
 
@@ -197,7 +198,7 @@ bit_depth = 8
 		t.Fatalf("QOI metadata = %+v, error = %v", qoiMetadata, err)
 	}
 
-	payloads, err := filepath.Glob(filepath.Join(root, ".karty", "cache", "assets", "v2", "*", "payload"))
+	payloads, err := filepath.Glob(filepath.Join(root, ".karty", "cache", "assets", "v3", "*", "payload"))
 	if err != nil || len(payloads) != 1 {
 		t.Fatalf("cache payloads = %v, error = %v", payloads, err)
 	}

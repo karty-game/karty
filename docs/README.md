@@ -11,8 +11,11 @@ repository guides describe current CLI behavior.
 - [UI sources](ui-source-discovery-v1.md): `.kui` discovery, staging and packaging.
 - [Assets](assets.md): images/audio/video, generated world materials, mapping and authored lights.
 - [Static solids](static-solids.md): source-v6 geometry and room-free detail prefabs.
+- [Environments](environments.md): source-v9 procedural sky presets, directional sunlight and sky boundaries.
 - [Lightmaps](lightmaps.md): receiver coordinates, runtime recipes, strict imports and offline `karty bake`.
+- [Chunked levels](chunk-levels.md): build budgets, prebuilt child meshes and lightmaps, content staging and portal visibility.
 - [Bake storage v1](bake-storage-v1.md): project cache location and per-level lighting ownership.
+- [Bounded incremental bake v1](decisions/bounded-incremental-bake-v1.md): optional transport distance and content-addressed chunk pixel reuse.
 - [Distribution](distribution.md): native/browser targets and required packaged files.
 - [Native screenshots](screenshot.md): capture a level at an explicit camera pose and return the PNG path.
 - [Samples](../samples/README.md): examples and Pages previews.
@@ -25,3 +28,5 @@ repository guides describe current CLI behavior.
 - [SDK bundles](sdk-bundles.md): installation, trust and compatibility.
 - [Releases](releases.md): SDK selection and publication gates.
 - [Proposals](proposals.md): unfinished work and contract decisions.
+
+- [GPU sprite particles](particles.md) — YAML emission, lifecycle, movement and the Hangar effects.

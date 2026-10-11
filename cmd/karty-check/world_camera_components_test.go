@@ -189,7 +189,7 @@ func prepareCameraHooksFixture(t *testing.T, directory, sample string, manifest 
 		writeComponentFixture(t, directory, filepath.Join(".karty/ui", filepath.Base(name)+".go"), data)
 	}
 
-	copyComponentFixture(t, filepath.Join(sample, "levels/showcase/actions.json"), directory, "levels/showcase/actions.json")
+	copyComponentFixture(t, filepath.Join(sample, "levels/showcase/actions.yaml"), directory, "levels/showcase/actions.yaml")
 
 	declarations, err := actionbuild.Discover(directory, "example.com/world-camera")
 	if err != nil {

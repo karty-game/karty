@@ -78,16 +78,8 @@ func main() {
 }
 
 func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bool) error {
-	selected := 0
-
-	for _, enabled := range []bool{web, browser, watcher, allocations, worldCamera} {
-		if enabled {
-			selected++
-		}
-	}
-
-	if selected != 1 {
-		return errCheckMode
+	if err := validateCheckMode(web, browser, watcher, allocations, worldCamera); err != nil {
+		return err
 	}
 
 	root, err := os.Getwd()
@@ -181,17 +173,21 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 		return err
 	}
 
+	tinygo, err := toolchain.TinyGo(toolchain.TinyGoOptions{Version: manifest.Tools.TinyGo})
+	if err != nil {
+		return err
+	}
+
+	if err := build.CheckClientDependencies(ctx, project, "tinygo", tinygo, "./src"); err != nil {
+		return err
+	}
+
 	if web {
 		return command(ctx, root, nil, "node", "internal/build/testdata/launcher.test.mjs", filepath.Join(project, "dist/web"))
 	}
 
 	if browser {
 		return command(ctx, root, nil, "node", "internal/build/testdata/browser.test.mjs", filepath.Join(project, "dist/web"))
-	}
-
-	tinygo, err := toolchain.TinyGo(toolchain.TinyGoOptions{Version: manifest.Tools.TinyGo})
-	if err != nil {
-		return err
 	}
 
 	artifact := filepath.Join(temporary, "alloccheck.kart")
@@ -215,6 +211,22 @@ func command(ctx context.Context, directory string, environment []string, execut
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("%s %v: %w", executable, args, err)
+	}
+
+	return nil
+}
+
+func validateCheckMode(modes ...bool) error {
+	selected := 0
+
+	for _, enabled := range modes {
+		if enabled {
+			selected++
+		}
+	}
+
+	if selected != 1 {
+		return errCheckMode
 	}
 
 	return nil

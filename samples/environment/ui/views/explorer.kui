@@ -1,0 +1,174 @@
+<template>
+  <panel class="screen" modal="false">
+    <panel class="heading">
+      <label class="eyebrow">KARTY / ENVIRONMENT LAB</label>
+      <label class="title">OPEN AIR</label>
+      <label class="status">{ props.Status() }</label>
+      <panel class="row">
+        <button onClick={ windows }>Windows</button>
+        <button onClick={ courtyard }>Courtyard</button>
+        <button onClick={ lookBack }>Look back</button>
+        <button onClick={ ground }>Test ground</button>
+      </panel>
+    </panel>
+    <panel class="styles">
+      <label class="current">{ styleLabel() }</label>
+      <panel class="row">
+        <button onClick={ daylight }>Daylight</button>
+        <button onClick={ cartoon }>Cartoon</button>
+        <button onClick={ fantasy }>Fantasy</button>
+        <button onClick={ space }>Space</button>
+      </panel>
+      <label class="help">{ props.Controls() }</label>
+      <button class="hide" onClick={ props.Hide }>Hide controls · H to restore</button>
+    </panel>
+    <panel class="weather">
+      <label class="current">{ props.Environment() }</label>
+      <panel class="times">
+        <button class="time" onClick={ morning }>Morning</button>
+        <button class="time" onClick={ noon }>Noon</button>
+        <button class="time" onClick={ evening }>Evening</button>
+        <button class="time" onClick={ night }>Night</button>
+      </panel>
+      <panel class="clouds">
+        <button class="time" onClick={ clearClouds }>Clear</button>
+        <button class="time" onClick={ fewerClouds }>Fewer</button>
+        <button class="time" onClick={ moreClouds }>More</button>
+        <button class="time" onClick={ maximumClouds }>Max</button>
+      </panel>
+      <button class="hide" onClick={ props.ResetEnvironment }>Reset environment</button>
+      <label class="help">T time · C clouds · R reset</label>
+    </panel>
+  </panel>
+</template>
+
+<script setup lang="go">
+type ExplorerProps struct {
+  Status func() string
+  Controls func() string
+  Style func() string
+  SelectStyle func(int)
+  Visit func(int)
+  Hide func()
+  Environment func() string
+  SetTime func(float32)
+  CloudAmount func() int32
+  SetCloudAmount func(int32)
+  ResetEnvironment func()
+}
+
+func setup(props ExplorerProps) {
+  styleLabel := func() string { return "ENVIRONMENT / " + props.Style() }
+  daylight := func() { props.SelectStyle(0) }
+  cartoon := func() { props.SelectStyle(1) }
+  fantasy := func() { props.SelectStyle(2) }
+  space := func() { props.SelectStyle(3) }
+  windows := func() { props.Visit(0) }
+  courtyard := func() { props.Visit(1) }
+  lookBack := func() { props.Visit(2) }
+  ground := func() { props.Visit(3) }
+  morning := func() { props.SetTime(9) }
+  noon := func() { props.SetTime(12) }
+  evening := func() { props.SetTime(17) }
+  night := func() { props.SetTime(0) }
+  clearClouds := func() { props.SetCloudAmount(0) }
+  fewerClouds := func() {
+    amount := props.CloudAmount() - 10
+    if amount < 0 { amount = 0 }
+    props.SetCloudAmount(amount)
+  }
+  moreClouds := func() {
+    amount := props.CloudAmount() + 10
+    if amount > 100 { amount = 100 }
+    props.SetCloudAmount(amount)
+  }
+  maximumClouds := func() { props.SetCloudAmount(100) }
+}
+</script>
+
+<style>
+.screen
+  width: 100%
+  height: 100%
+  padding: 24
+.heading
+  align: start
+  gap: 5
+.eyebrow
+  font-size: 11
+  color: #b6d9cf
+.title
+  font-size: 30
+  color: #f0f0db
+.status
+  font-size: 12
+  color: #dfc892
+.styles
+  position: absolute
+  top: 0
+  right: 0
+  align: end
+  gap: 8
+.current
+  font-size: 12
+  color: #b6d9cf
+.weather
+  position: absolute
+  bottom: 64
+  right: 0
+  width: 346
+  padding: 10
+  align: stretch
+  gap: 6
+  background: #163334e8
+.times
+  width: 100%
+  direction: row
+  gap: 6
+.time
+  min-width: 72
+.clouds
+  width: 100%
+  direction: row
+  gap: 6
+  align: center
+.help
+  font-size: 11
+  color: #dbe2d9
+.row
+  direction: row
+  gap: 6
+button
+  min-height: 44
+  min-width: 82
+  flex-grow: 1
+  font-size: 12
+  background: #163334e8
+  color: #ecedda
+button:hover
+  background: #34625b
+  color: #ffedb5
+.hide
+  min-height: 30
+  font-size: 10
+@media (max-width: 600)
+  .screen
+    padding: 12
+  .heading
+    gap: 4
+  .title
+    font-size: 20
+  .status
+    font-size: 10
+  .styles
+    top: 130
+    width: 100%
+    align: start
+    gap: 5
+  .row
+    width: 100%
+  .help
+    font-size: 10
+  .weather
+    width: 100%
+</style>

@@ -1,12 +1,12 @@
 package levelbuild_test
 
 import (
-	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
+	sdkActions "github.com/karty-game/karty-sdk/format/actions"
 	"github.com/karty-game/karty-sdk/format/level"
 	"github.com/karty-game/karty/internal/levelbuild"
 	"github.com/karty-game/karty/internal/release"
@@ -28,8 +28,8 @@ func TestAuthoredActionsSDKCompatibility(t *testing.T) {
 			root := t.TempDir()
 			writeLevel(t, root, "scripted", "levels.scripted", "map")
 
-			actions := []byte(`{"version":1,"sequences":[{"name":"welcome","steps":[{"waitFrames":1}]}]}`)
-			if err := os.WriteFile(filepath.Join(root, "levels", "scripted", "actions.json"), actions, 0o600); err != nil {
+			actions := []byte("version: 1\nsequences:\n  - name: welcome\n    steps:\n      - waitFrames: 1\n")
+			if err := os.WriteFile(filepath.Join(root, "levels", "scripted", "actions.yaml"), actions, 0o600); err != nil {
 				t.Fatal(err)
 			}
 
@@ -57,12 +57,12 @@ func TestAuthoredActionsSDKCompatibility(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			assertPackagedActions(t, artifacts, actions)
+			assertPackagedActions(t, artifacts)
 		})
 	}
 }
 
-func assertPackagedActions(t *testing.T, artifacts []levelbuild.Artifact, actions []byte) {
+func assertPackagedActions(t *testing.T, artifacts []levelbuild.Artifact) {
 	t.Helper()
 
 	if len(artifacts) != 1 {
@@ -75,7 +75,10 @@ func assertPackagedActions(t *testing.T, artifacts []levelbuild.Artifact, action
 	}
 
 	packaged, _, found := decoded.Read("karty/actions@1", 0, level.MaxEntrySize)
-	if !found || !bytes.Equal(packaged, actions) {
-		t.Fatal("authored actions were not preserved in the level cartridge")
+
+	document, decodeErr := sdkActions.Decode(packaged)
+	if !found || decodeErr != nil || len(document.Sequences) != 1 || document.Sequences[0].Name != "welcome" ||
+		document.Sequences[0].Steps[0].WaitFrames != 1 {
+		t.Fatal("authored actions did not become bounded binary runtime data")
 	}
 }

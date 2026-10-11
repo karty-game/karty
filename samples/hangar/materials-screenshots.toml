@@ -1,0 +1,29 @@
+[[views]]
+position = [7.5, 5.3, 1.7]
+yaw = 30
+pitch = 2
+output = 'dist/screenshots/materials-arrival.png'
+
+[[views]]
+position = [21.2, 6, 2.1]
+yaw = 95
+pitch = 3.4
+output = 'dist/screenshots/materials-loading.png'
+
+[[views]]
+position = [4.1, 16.5, 1.7]
+yaw = 24
+pitch = 3.4
+output = 'dist/screenshots/materials-reactor.png'
+
+[[views]]
+position = [33, 26, 2]
+yaw = 80
+pitch = -4
+output = 'dist/screenshots/materials-acid-east.png'
+
+[[views]]
+position = [31, 23, 3]
+yaw = 180
+pitch = -30
+output = 'dist/screenshots/materials-acid-south.png'

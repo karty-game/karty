@@ -1,0 +1,23 @@
+[[views]]
+position = [28.5, 23, 3]
+yaw = 12
+pitch = -28
+output = 'dist/screenshots/reflection-acid-overview.png'
+
+[[views]]
+position = [33, 26, 2]
+yaw = 80
+pitch = -20
+output = 'dist/screenshots/reflection-acid-east.png'
+
+[[views]]
+position = [31, 14.6, 5.1]
+yaw = 0
+pitch = -14
+output = 'dist/screenshots/reflection-acid-overlook.png'
+
+[[views]]
+position = [7.5, 5.3, 1.7]
+yaw = 30
+pitch = -15
+output = 'dist/screenshots/reflection-metal-control.png'

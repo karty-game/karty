@@ -22,6 +22,7 @@ func Command() *cli.Command {
 			&cli.StringFlag{Name: "host", Usage: "path to a pre-built Karty host artifact"},
 			&cli.StringFlag{Name: "platform", Usage: "native distribution platform, e.g. windows-arm64 (default: current machine)"},
 			&cli.StringFlag{Name: "target", Value: "native", Usage: "target to stage: native or web"},
+			&cli.BoolFlag{Name: "development", Usage: "reuse matching prebuilt lighting; otherwise build mesh-only preview chunks"},
 		},
 		Action: run,
 	}
@@ -30,14 +31,15 @@ func Command() *cli.Command {
 func run(ctx context.Context, command *cli.Command) error {
 	return ui.RunTaskWithProgress(ctx, "Building game", func(taskContext context.Context, progress func(string)) error {
 		return buildservice.RunWithOptions(taskContext, ".", buildservice.Options{
-			Go:        command.String("go"),
-			TinyGo:    command.String("tinygo"),
-			WasmTools: command.String("wasm-tools"),
-			Host:      command.String("host"),
-			Target:    command.String("target"),
-			Platform:  command.String("platform"),
-			AirProxy:  os.Getenv("KARTY_AIR_PROXY") == "1",
-			Progress:  progress,
+			Go:          command.String("go"),
+			TinyGo:      command.String("tinygo"),
+			WasmTools:   command.String("wasm-tools"),
+			Host:        command.String("host"),
+			Target:      command.String("target"),
+			Platform:    command.String("platform"),
+			AirProxy:    os.Getenv("KARTY_AIR_PROXY") == "1",
+			Development: command.Bool("development"),
+			Progress:    progress,
 		})
 	})
 }

@@ -16,7 +16,7 @@ import (
 )
 
 func currentSamples() []string {
-	return []string{"ui-demo", "media-lab", "world-camera"}
+	return []string{"ui-demo", "media-lab", "world-camera", "hangar", "environment"}
 }
 
 // Read source and metadata only; never build a sample's assets or run its baker.
@@ -90,7 +90,14 @@ func TestSampleClients(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			directory := prepareSampleClient(t, name, manifest, bindings)
-			command := exec.CommandContext(t.Context(), "go", "test", "-timeout=9s", "-count=1", "-v", "./src")
+
+			packages := []string{"./src"}
+			if name == "hangar" || name == "environment" {
+				packages = append(packages, "./internal/fps")
+			}
+
+			// #nosec G204 -- executable and package list are fixed fixture commands, independent of project input.
+			command := exec.CommandContext(t.Context(), "go", append([]string{"test", "-timeout=9s", "-count=1", "-v"}, packages...)...)
 			command.Dir = directory
 
 			command.Env = append(os.Environ(), "GOWORK=off")
@@ -171,6 +178,15 @@ func prepareSampleClient(t *testing.T, name string, manifest sdk.Manifest, bindi
 	writeComponentFixture(t, directory, ".karty/assets/textures.go", textureSource)
 
 	switch name {
+	case "environment":
+		files, err := filepath.Glob(filepath.Join(source, "internal/fps/*.go"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, file := range files {
+			copyComponentFixture(t, file, directory, filepath.Join("internal/fps", filepath.Base(file)))
+		}
 	case "ui-demo":
 		prepareFlightTests(t, directory, views)
 	case "world-camera":
@@ -181,6 +197,19 @@ func prepareSampleClient(t *testing.T, name string, manifest sdk.Manifest, bindi
 import "example.com/media-lab/.karty/engine"
 const (SoundEffectsClick engine.SoundID=1; SoundEffectsMachineGun engine.SoundID=2; MusicLabLoop engine.MusicID=1;VideoDemoPattern engine.VideoID=1)
 `))
+	case "hangar":
+		files, err := filepath.Glob(filepath.Join(source, "internal/fps/*.go"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, file := range files {
+			copyComponentFixture(t, file, directory, filepath.Join("internal/fps", filepath.Base(file)))
+		}
+
+		copyComponentFixture(t, "testdata/hangar-lights_test.go.tmpl", directory, "src/lights_test.go")
+
+		prepareHangarLightControls(t, directory, views)
 	}
 
 	return directory
@@ -234,4 +263,41 @@ func prepareFlightTests(t *testing.T, directory string, views []uicompiler.Compo
 	identifiers.WriteString(")\n")
 	writeComponentFixture(t, directory, ".karty/config/flight.go", []byte(identifiers.String()))
 	copyComponentFixture(t, "testdata/flight-console_test.go.tmpl", directory, "src/flight_test.go")
+}
+
+func prepareHangarLightControls(t *testing.T, directory string, views []uicompiler.Component) {
+	t.Helper()
+
+	var identifiers strings.Builder
+	identifiers.WriteString("package config\nconst (\n")
+
+	found := 0
+
+	for _, view := range views {
+		for _, binding := range view.Bindings {
+			if binding.Click == "props.LaunchLight" {
+				t.Fatal("hangar point-light demo must remain disabled")
+			}
+
+			name := map[string]string{"props.ToggleTorch": "TorchButton"}[binding.Click]
+			if name != "" {
+				fmt.Fprintf(&identifiers, "%s = %d\n", name, binding.ID)
+
+				found++
+			}
+		}
+
+		for _, element := range view.Template.Elements {
+			if element.Text == "Light bolt" {
+				t.Fatal("hangar must not show the paused point-light demo")
+			}
+		}
+	}
+
+	if found != 1 {
+		t.Fatal("hangar must expose the torch control")
+	}
+
+	identifiers.WriteString(")\n")
+	writeComponentFixture(t, directory, ".karty/config/lights.go", []byte(identifiers.String()))
 }

@@ -65,15 +65,15 @@ type PCM16 struct {
 // AudioMetadata records source and processed audio properties for reports and
 // validated cache metadata.
 type AudioMetadata struct {
-	SourceSampleRate uint32 `json:"sourceSampleRate"`
-	SourceChannels   uint16 `json:"sourceChannels"`
-	SourceFrames     uint32 `json:"sourceFrames"`
-	SourceBitDepth   uint16 `json:"sourceBitDepth"`
-	SourceFloat      bool   `json:"sourceFloat"`
-	SampleRate       uint32 `json:"sampleRate"`
-	Channels         uint8  `json:"channels"`
-	Frames           uint32 `json:"frames"`
-	DecodedBytes     uint64 `json:"decodedBytes"`
+	SourceSampleRate uint32 `toml:"sourceSampleRate"`
+	SourceChannels   uint16 `toml:"sourceChannels"`
+	SourceFrames     uint32 `toml:"sourceFrames"`
+	SourceBitDepth   uint16 `toml:"sourceBitDepth"`
+	SourceFloat      bool   `toml:"sourceFloat"`
+	SampleRate       uint32 `toml:"sampleRate"`
+	Channels         uint8  `toml:"channels"`
+	Frames           uint32 `toml:"frames"`
+	DecodedBytes     uint64 `toml:"decodedBytes"`
 }
 
 // ProcessedAudio is an owned deterministic qoa@1 processor result.

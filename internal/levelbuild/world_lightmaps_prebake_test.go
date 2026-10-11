@@ -11,6 +11,7 @@ import (
 
 	"github.com/karty-game/karty-sdk/codec/qoi"
 	"github.com/karty-game/karty-sdk/format/asset"
+	"github.com/karty-game/karty-sdk/format/level"
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldlightmap"
 	"github.com/karty-game/karty/internal/sdk"
@@ -64,7 +65,7 @@ func prebakeLevelFixture(t *testing.T) (string, sdk.Manifest) {
 	}
 
 	directory := filepath.Join(root, "levels", "lighting")
-	writePrebakeFixture(t, filepath.Join(directory, "prebake.json"), manifest)
+	writePrebakeFixture(t, filepath.Join(directory, "prebake.bin"), manifest)
 	writePrebakeFixture(t, filepath.Join(directory, "prebake.qoi"), encoded)
 
 	return root, selected
@@ -94,7 +95,7 @@ func addPrebakeControls(t *testing.T, root, controls string) {
 func TestPrebakePackagedWASMAndDeterminism(t *testing.T) {
 	t.Parallel()
 	root, selected := prebakeLevelFixture(t)
-	addPrebakeControls(t, root, "prebake = \"prebake.json\"\nprebake_image = \"prebake.qoi\"\n")
+	addPrebakeControls(t, root, "prebake = \"prebake.bin\"\nprebake_image = \"prebake.qoi\"\n")
 
 	first, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
 	if err != nil {
@@ -140,7 +141,10 @@ func TestPrebakePackagedWASMAndDeterminism(t *testing.T) {
 		t.Fatalf("packaged prebake: %v", err)
 	}
 
-	if !bytes.Contains(envelope.Metadata, []byte(`"kartyWorldLightmapPrebake":"karty.world-lightmap-prebake@1"`)) {
+	metadata, err := level.DecodeMetadata(envelope.Metadata)
+
+	marker, _ := metadata.String(worldlightmap.PrebakeMetadataKey)
+	if err != nil || marker != worldlightmap.PrebakeSchema {
 		t.Fatal("missing prebake marker")
 	}
 }
@@ -153,11 +157,11 @@ func TestPrebakeRejectsMalformedAndUnconfinedSources(t *testing.T) {
 			t.Parallel()
 			root, selected := prebakeLevelFixture(t)
 			directory := filepath.Join(root, "levels", "lighting")
-			controls := "prebake = \"prebake.json\"\nprebake_image = \"prebake.qoi\"\n"
+			controls := "prebake = \"prebake.bin\"\nprebake_image = \"prebake.qoi\"\n"
 
 			switch name {
 			case "manifest only":
-				controls = "prebake = \"prebake.json\"\n"
+				controls = "prebake = \"prebake.bin\"\n"
 			case "image only":
 				controls = "prebake_image = \"prebake.qoi\"\n"
 			case "empty path":
@@ -168,12 +172,12 @@ func TestPrebakeRejectsMalformedAndUnconfinedSources(t *testing.T) {
 					func(c asset.Capability) bool { return c == asset.CapabilityWorldLightmapsPrebakedV1 },
 				)
 			case "noncanonical":
-				data, err := os.ReadFile(filepath.Join(directory, "prebake.json"))
+				data, err := os.ReadFile(filepath.Join(directory, "prebake.bin"))
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				writePrebakeFixture(t, filepath.Join(directory, "prebake.json"), append(data, ' '))
+				writePrebakeFixture(t, filepath.Join(directory, "prebake.bin"), append(data, ' '))
 			case "stale lighting":
 				data, err := os.ReadFile(filepath.Join(directory, "world.yaml"))
 				if err != nil {
@@ -199,7 +203,7 @@ func TestPrebakeRejectsMalformedAndUnconfinedSources(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				controls = "prebake = \"prebake.json\"\nprebake_image = \"escape.qoi\"\n"
+				controls = "prebake = \"prebake.bin\"\nprebake_image = \"escape.qoi\"\n"
 			}
 
 			addPrebakeControls(t, root, controls)

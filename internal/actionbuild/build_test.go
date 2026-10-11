@@ -2,12 +2,13 @@ package actionbuild
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 const declarationsSource = `package main
@@ -53,7 +54,7 @@ func TestCatalogSchemaAndTypedInvocation(t *testing.T) {
 	root, declarations, levels, schema := fixture(t)
 
 	script := `{"version":1,"sequences":[{"name":"enter","onRepeat":"restart","steps":[{"condition":"door.unlocked","args":{"key":true},"then":[{"action":"door.open","args":{"target":{"actor":"tower/door"},"speed":2.5},"onFailure":[{"waitFrames":1}]}],"else":[{"waitFrames":3}]}]}]}`
-	if err := os.WriteFile(filepath.Join(levels[0].Directory, "actions.json"), []byte(script), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(levels[0].Directory, "actions.yaml"), []byte(script), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -94,9 +95,9 @@ func TestCatalogSchemaAndTypedInvocation(t *testing.T) {
 	}
 
 	var catalog struct {
-		Actions []Declaration `json:"actions"`
+		Actions []Declaration `toml:"actions"`
 	}
-	if err = json.Unmarshal(result.Catalog, &catalog); err != nil || len(catalog.Actions) != 2 {
+	if err = toml.Unmarshal(result.Catalog, &catalog); err != nil || len(catalog.Actions) != 2 {
 		t.Fatal(catalog, err)
 	}
 }
@@ -118,7 +119,7 @@ func TestInvalidAuthoredArgumentsFailBeforeCompilation(t *testing.T) {
 			t.Parallel()
 
 			root, declarations, levels, schema := fixture(t)
-			if err := os.WriteFile(filepath.Join(levels[0].Directory, "actions.json"), []byte(script), 0600); err != nil {
+			if err := os.WriteFile(filepath.Join(levels[0].Directory, "actions.yaml"), []byte(script), 0600); err != nil {
 				t.Fatal(err)
 			}
 
@@ -208,7 +209,7 @@ func Configure(ctx game.ActionContext, text string, signed int32, unsigned uint3
 		{`"hello"`, "0.5", "0", false},
 	} {
 		script := `{"version":1,"sequences":[{"name":"enter","steps":[{"action":"actor.configure","args":{"text":` + test.text + `,"signed":` + test.signed + `,"unsigned":` + test.unsigned + `}}]}]}`
-		if err := os.WriteFile(filepath.Join(levels[0].Directory, "actions.json"), []byte(script), 0600); err != nil {
+		if err := os.WriteFile(filepath.Join(levels[0].Directory, "actions.yaml"), []byte(script), 0600); err != nil {
 			t.Fatal(err)
 		}
 

@@ -14,14 +14,25 @@ from `karty.toml`.
 `karty bake` writes only to the project-root
 `.karty/bakes/<directory>/`. The directory component comes from the source
 directory under `levels/`, never the logical level name. It writes a
-content-addressed QOI image, then atomically publishes `lightmap-prebake.json`.
+content-addressed QOI image, then atomically publishes the typed binary
+`lightmap-prebake.bin`.
 It leaves authored source files and manifests untouched. Cache directory
 components must be ordinary directories; symlinks are rejected when writing.
 
 Builds read each level's cache with project-root path confinement and validate
 the complete manifest/image pair against that level's freshly compiled world,
 layout, original albedo and configured quality. Missing, stale, corrupt or
-escaping cache data falls back to that level's runtime recipe.
+escaping cache data falls back to live lighting, provided the remaining authored
+sources fit the separate 50-light runtime bound. Larger unbaked source sets
+report a required offline bake instead of dropping lights.
+
+Offline chunk builds keep the complete parent/child set in that same directory,
+plus optional content-addressed QOI pixel envelopes under `pixels/`. Each pixel
+entry uses the SDK's current-input digest; hits keep their timestamps and freshly
+bind a manifest to the current complete world. An explicit positive
+`bake_max_ray_distance` allows local dependency regions; absence keeps broad
+unbounded dependencies. Historical caches require no Git diff or earlier
+checkout. See [bounded incremental bake v1](decisions/bounded-incremental-bake-v1.md).
 
 ## Compatibility
 
@@ -37,6 +48,7 @@ generated project cache automatically.
 
 KLD continues to embed authored lighting in `@world/main`, layouts and prebake
 pairs in their existing fixed entries, with no filesystem paths or external
-lighting dependencies. SDK versions, wire schemas and released manifests are
-unchanged. Regression coverage executes KLD WASM and checks independent levels,
+lighting dependencies. Released SDK versions and manifests are unchanged.
+Candidate bounded output uses an explicitly identified version-3 offline
+producer. Regression coverage executes KLD WASM and checks independent levels,
 cache placement, deterministic output, stale/corrupt fallback and confinement.

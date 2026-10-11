@@ -1,11 +1,12 @@
 package levelbuild
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"slices"
 
+	"github.com/charmbracelet/log"
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/level"
 	"github.com/karty-game/karty-sdk/format/world"
@@ -13,25 +14,26 @@ import (
 )
 
 type lightmapBuildSettings struct {
-	Enabled      bool     `toml:"enabled"`
-	Density      *float64 `toml:"density"`
-	PageSize     *int     `toml:"page_size"`
-	Padding      *int     `toml:"padding"`
-	MaxPages     *int     `toml:"max_pages"`
-	MaxTexels    *int     `toml:"max_texels"`
-	Light        *string  `toml:"light"`
-	Lights       []string `toml:"lights"`
-	ShadowSize   *int     `toml:"shadow_size"`
-	Prebake      *string  `toml:"prebake"`
-	PrebakeImage *string  `toml:"prebake_image"`
-	Offline      bool     `toml:"offline"`
-	BakeSamples  *int     `toml:"bake_samples"`
-	BakeBounces  *int     `toml:"bake_bounces"`
-	BakeDenoise  *string  `toml:"bake_denoise"`
+	Enabled            bool     `toml:"enabled"`
+	Density            *float64 `toml:"density"`
+	PageSize           *int     `toml:"page_size"`
+	Padding            *int     `toml:"padding"`
+	MaxPages           *int     `toml:"max_pages"`
+	MaxTexels          *int     `toml:"max_texels"`
+	Light              *string  `toml:"light"`
+	Lights             []string `toml:"lights"`
+	ShadowSize         *int     `toml:"shadow_size"`
+	Prebake            *string  `toml:"prebake"`
+	PrebakeImage       *string  `toml:"prebake_image"`
+	Offline            bool     `toml:"offline"`
+	BakeSamples        *int     `toml:"bake_samples"`
+	BakeBounces        *int     `toml:"bake_bounces"`
+	BakeDenoise        *string  `toml:"bake_denoise"`
+	BakeMaxRayDistance *float64 `toml:"bake_max_ray_distance"`
 }
 
 func (s lightmapBuildSettings) options() (worldlightmap.Options, error) {
-	options := worldlightmap.Options{Lights: slices.Clone(s.Lights)}
+	options := worldlightmap.Options{Lights: slices.Clone(s.Lights), AllStatic: s.Offline && s.Light == nil && s.Lights == nil}
 	if err := s.validatePrebake(); err != nil {
 		return options, err
 	}
@@ -91,12 +93,25 @@ func (s lightmapBuildSettings) denoise() string {
 	return "medium"
 }
 
+func (s lightmapBuildSettings) maxRayDistance() float64 {
+	if s.BakeMaxRayDistance != nil {
+		return *s.BakeMaxRayDistance
+	}
+
+	return 0
+}
+
 func (s lightmapBuildSettings) validatePrebake() error {
+	if s.BakeMaxRayDistance != nil && (math.IsNaN(*s.BakeMaxRayDistance) || math.IsInf(*s.BakeMaxRayDistance, 0) ||
+		*s.BakeMaxRayDistance <= 0 || *s.BakeMaxRayDistance > world.MaxCoordinate) {
+		return fmt.Errorf("bake_max_ray_distance must be finite and positive, at most %g: %w", float64(world.MaxCoordinate), ErrManifest)
+	}
+
 	if s.BakeDenoise != nil && *s.BakeDenoise == "" {
 		return ErrManifest
 	}
 
-	if _, err := worldlightmap.OfflineDenoiseProducer(s.denoise()); err != nil {
+	if _, err := worldlightmap.OfflineProducer(s.denoise(), s.maxRayDistance()); err != nil {
 		return fmt.Errorf("bake_denoise: %w", ErrManifest)
 	}
 
@@ -105,7 +120,7 @@ func (s lightmapBuildSettings) validatePrebake() error {
 		return ErrManifest
 	}
 
-	if s.Offline && (s.Prebake != nil || s.PrebakeImage != nil || len(s.Lights) == 0) {
+	if s.Offline && (s.Prebake != nil || s.PrebakeImage != nil || s.Light != nil) {
 		return ErrManifest
 	}
 
@@ -146,24 +161,10 @@ func buildWorldLightmaps(
 	document world.Document,
 	data []level.SourceEntry,
 	metadata []byte,
+	development ...bool,
 ) ([]level.SourceEntry, []byte, []string, error) {
 	if definition.Lightmap == nil || !definition.Lightmap.Enabled {
 		return data, metadata, nil, nil
-	}
-
-	options, err := definition.Lightmap.options()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	layout, err := worldlightmap.Compile(document, options)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	encoded, err := worldlightmap.Encode(layout, &document)
-	if err != nil {
-		return nil, nil, nil, err
 	}
 
 	for _, entry := range data {
@@ -173,15 +174,35 @@ func buildWorldLightmaps(
 		}
 	}
 
-	var identity map[string]json.RawMessage
-	if err := json.Unmarshal(metadata, &identity); err != nil || identity == nil {
-		return nil, nil, nil, ErrManifest
-	}
-
-	identity[worldlightmap.MetadataKey], err = json.Marshal(worldlightmap.Schema)
+	options, err := definition.Lightmap.options()
 	if err != nil {
 		return nil, nil, nil, err
 	}
+
+	layout, err := worldlightmap.Compile(document, options)
+
+	dev := len(development) != 0 && development[0]
+	if dev && errors.Is(err, worldlightmap.ErrPageCapacity) {
+		log.Info("Whole-level lightmap exceeds one page; previewing with live lighting", "level_name", definition.Level.Name)
+
+		return data, metadata, nil, nil
+	}
+
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	encoded, err := worldlightmap.Encode(layout, &document)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	identity, err := level.DecodeMetadata(metadata)
+	if err != nil {
+		return nil, nil, nil, ErrManifest
+	}
+
+	identity[worldlightmap.MetadataKey] = level.StringValue(worldlightmap.Schema)
 
 	features := []string{worldlightmap.Feature}
 
@@ -195,8 +216,12 @@ func buildWorldLightmaps(
 			&document,
 			definition,
 		)
-		if err != nil {
+		if err != nil && !dev {
 			return nil, nil, nil, err
+		}
+
+		if err != nil {
+			log.Info("Imported lightmap unavailable or stale; previewing without a prebake", "level_name", definition.Level.Name)
 		}
 	} else if definition.Lightmap.Offline {
 		prebaked = readAutomaticPrebake(projectDirectory, directory, definition, layout, document)
@@ -205,15 +230,12 @@ func buildWorldLightmaps(
 	if len(prebaked) != 0 {
 		data = append(data, prebaked...)
 
-		identity[worldlightmap.PrebakeMetadataKey], err = json.Marshal(worldlightmap.PrebakeSchema)
-		if err != nil {
-			return nil, nil, nil, err
-		}
+		identity[worldlightmap.PrebakeMetadataKey] = level.StringValue(worldlightmap.PrebakeSchema)
 
 		features = append(features, worldlightmap.PrebakeFeature)
 	}
 
-	metadata, err = json.Marshal(identity)
+	metadata, err = level.EncodeMetadata(identity)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -240,8 +262,12 @@ func readWorldPrebake(directory, manifestPath, imagePath string, layout worldlig
 		return nil, fmt.Errorf("prebake: %w", err)
 	}
 
+	if pair.Manifest.MaxRayDistance != definition.Lightmap.maxRayDistance() {
+		return nil, fmt.Errorf("prebake ray distance differs from level settings: %w", worldlightmap.ErrLayout)
+	}
+
 	if pair.Manifest.Algorithm == worldlightmap.OfflinePrebakeAlgorithm {
-		if err := validateOfflineReflectance(directory, definition, *document, pair.Manifest.ReflectanceSHA256); err != nil {
+		if err := validateOfflineReflectance(directory, definition, *document, layout, pair.Manifest); err != nil {
 			return nil, fmt.Errorf("offline prebake reflectance: %w", err)
 		}
 	}

@@ -47,7 +47,8 @@ Prebuilt CLI/host users do not need a runtime flag.
 `karty dev` reports the active build stage, including asset processing, level
 building and Go compilation. It watches `.kui` edits along with Go, level and
 asset sources. TinyGo still runs whole-program optimization on rebuilds;
-the ordinary build settings also apply in dev. A warm compiler cache avoids
+Dev reuses matching prebuilt lighting and otherwise builds mesh-only render
+chunks without baking. See [chunk development](chunk-levels.md). A warm compiler cache avoids
 some setup work but does not eliminate optimization and linking.
 
 SDK 0.0.9's generated hooks decode level metadata with `encoding/json`, bringing
@@ -55,8 +56,10 @@ its reflection code into even small clients. Source-only profiling with the same
 TinyGo 0.42 toolchain measured a warm empty client at about 0.9 seconds on SDK
 0.0.8 and 9.2 seconds on SDK 0.0.9; adding the metadata decoder alone to the
 0.0.8 fixture reproduced the overhead. This excludes assets, lighting and browsers.
-The engine's SDK 0.0.10 candidate removes that dependency with a bounded metadata
-identity reader; projects get the fix when they upgrade after publication.
+The SDK 0.0.11 candidate replaces shipped metadata and resource documents with
+bounded binary codecs. Generated identity readers and runtime resources do not
+parse JSON or use reflection; projects obtain the new formats with its matching
+bundle and host.
 Published 0.0.9 bindings remain immutable.
 
 Install the selected SDK with `karty sdk install VERSION`; `KARTY_TEST_SDK=VERSION`
@@ -124,6 +127,60 @@ Game code must apply those constants to camera settings; the world-camera
 sample does so for both projection modes, viewpoint changes and reloads.
 Rebuild after changing `karty.toml`; `karty dev` watches it automatically.
 
+## Adaptive render profiles
+
+`[project.performance]` configures the host's automatic quality ladder. The
+default ladder is High (1.5×), Medium (1×), Low (0.75×) and Potato (0.5×) of
+`[project.resolution]`. High is available only from 1401 window pixels wide;
+Potato is available only through 799 pixels wide. Low and Potato disable liquid
+floor reflections by default. With a 1280×720 baseline, High renders at
+1920×1080 and Medium at 1280×720. The debug panel's profile selector can pin any
+currently available profile; choosing Auto resumes FPS-based switching.
+
+The CLI defaults projects to 1280×720. For a 720p baseline with the default
+performance target:
+
+```toml
+[project.resolution]
+width = 1280
+height = 720
+
+[project.performance]
+target_fps = 60
+default_profile = "medium"
+
+[[project.performance.profiles]]
+name = "high"
+render_scale = 1.5
+min_window_width = 1401
+
+[[project.performance.profiles]]
+name = "medium"
+render_scale = 1.0
+
+[[project.performance.profiles]]
+name = "low"
+render_scale = 0.75
+floor_reflections = false
+
+[[project.performance.profiles]]
+name = "potato"
+render_scale = 0.5
+max_window_width = 799
+floor_reflections = false
+```
+
+`default_profile` chooses the starting tier when Auto begins. If that tier is
+unavailable at the current window width, the nearest eligible tier is used.
+`floor_reflections = false` disables planar liquid reflections in Low and
+Potato.
+The host ignores FPS samples for the first two seconds after the game loop
+starts. Profile names are fixed and entries override the built-in values. Width bounds
+are inclusive integer window pixels, so `1401` means strictly wider than 1400
+and `799` means strictly narrower than 800. Render scales multiply the camera's
+internal world render size, which is then presented through the existing camera
+output path; they do not change the window or guest-visible project resolution.
+
 ## Optional sibling modules
 
 Use an ignored local workspace; if one already exists, skip initialization:
@@ -171,3 +228,10 @@ The current frame is available as the BigInt `globalThis.kartyFrame`. Routine
 updates do not write a DOM attribute. Diagnostic tools that need the previous
 `data-karty-frame` mirror can set `globalThis.kartyFrameDOMDiagnostics = true`;
 browser checks support both counters to remain compatible with older launchers.
+
+World material processing normalizes each surface to a 256×256 interior, then
+runs the pinned Materialize executable per uncached asset before packing the atlas.
+Per-texture `[textures.materialize]` presets and overrides participate in that
+asset's cache identity; runtime material strengths do not. Fixture tests verify
+option forwarding and cache behavior without establishing native GPU execution.
+See [asset authoring](assets.md#per-texture-materialize-generation).

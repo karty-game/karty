@@ -79,8 +79,8 @@ uploads a `sample-site` artifact. It also supports manual dispatch.
 - `/pr/NUMBER/`: the pull request's merge-commit build.
 - `/`: latest samples and active preview links.
 
-Each sample has its own folder: `ui-demo/`, `media-lab/` or
-`world-camera/`. Deployment summaries include the actual preview URL; PR build
+Each sample has its own folder: `ui-demo/`, `media-lab/`, `world-camera/`,
+`hangar/`, or `environment/`. Deployment summaries include the actual preview URL; PR build
 summaries link to the expected URL. Closing/merging a PR removes its preview;
 subsequent deployments also prune closed previews. Failed builds preserve the
 last successful preview, and superseded builds are skipped.

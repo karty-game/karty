@@ -1,12 +1,12 @@
 [tools]
 hk = "2.5.0"
 taplo = "0.10.0"
-uv = "0.12.23"
+uv = "0.13.0"
 yamllint = { version = "1.38.0", uvx = true }
-prettier = "3.9.9"
+prettier = "3.9.10"
 golangci-lint = "2.14.0"
-go = "1.27.1"
-node = "26.10.0"
+go = "1.27.2"
+node = "26.11.1"
 
 # Required by the public SDK offline baker on Go 1.27.
 [env]
@@ -23,6 +23,21 @@ test = "mise run test"
 
 [tasks.test]
 run = ["go run ./cmd/karty-release --check", "go run ./cmd/karty-test-sdk", "go test -timeout=9s ./..."]
+
+[tasks.test-unit]
+description = "Run unit tests without the published SDK download check"
+run = "go test -timeout=9s ./..."
+
+[tasks.check-materialize-pipeline]
+description = "Check per-asset material generation, cache reuse and level authoring"
+run = [
+  "go test -timeout=9s ./internal/assetpipeline -run 'WorldMaterial|MaskedAtlas|OpaqueFrame|CoveredMaterial|MaterialMip' -count=1",
+  "go test -timeout=9s ./internal/levelbuild -run '^TestMaterializeAuthoring$' -count=1",
+]
+
+[tasks.check-sprite-density]
+description = "Validate world sprite density limits, deterministic processing and source preservation"
+run = "go test -timeout=9s ./internal/levelbuild -run SpriteDensity -count=1 -v"
 
 [tasks.build]
 run = "go build -o dist/karty ./cmd/karty"
@@ -147,3 +162,133 @@ run = "hk install --mise"
 [tasks.generate-action-contract]
 description = "Refresh the public SDK action schema snapshot with its owning exporter"
 run = "go run github.com/karty-game/karty-sdk/cmd/karty-actions-schema --out internal/actionbuild/testdata/actions-v1.generated.json"
+
+[tasks.check-hangar-schema]
+depends = ["build"]
+dir = "samples/hangar"
+run = "../../dist/karty schema --check"
+
+[tasks.build-hangar-native]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.build-hangar-web]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
+
+[tasks.capture-hangar-particles]
+description = "Capture barrel and acid particle viewpoints in one passive native session"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --timeout 20s --width 960 --height 540 --batch particle-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-hangar-machinery]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 7.5,5.3,1.7 --yaw 30 --pitch 2 --output dist/screenshots/animation-machinery.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-hangar-materials]
+description = "Review Hangar's wall layers and fixed decals at five detail viewpoints"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --batch materials-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-hangar-acid]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 27,23,1.8 --yaw -18 --pitch -36 --output dist/screenshots/animation-acid.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-hangar-pistons]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 4,15.8,1.7 --yaw -56 --pitch -8 --output dist/screenshots/animation-pistons.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-hangar-acid-overview]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 28.5,23,3 --yaw 12 --pitch -28 --output dist/screenshots/animation-acid-overview.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-hangar-acid-south]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 31,23,3 --yaw 180 --pitch -30 --output dist/screenshots/animation-acid-south.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-hangar-acid-east]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 33,26,2 --yaw 80 --pitch -4 --output dist/screenshots/animation-acid-east.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.bake-hangar]
+description = "Refresh Hangar's authored offline lighting after material or light changes"
+depends = ["build"]
+dir = "samples/hangar"
+run = "../../dist/karty bake --level levels.hangar"
+
+[tasks.capture-hangar-planar-reflections]
+description = "Review Hangar's planar acid reflection from three views and a dry metal control"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --timeout 10s --width 640 --height 360 --batch reflection-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-hangar-control]
+description = "Capture the acid control room, overlook and both stair approaches"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --batch acid-control-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-hangar-reactor]
+description = "Capture the reactor bands with the selected native host"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 4.1,16.5,1.7 --yaw 24 --pitch 3.4 --output dist/screenshots/emission-reactor.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-hangar-emission-acid]
+description = "Capture the emissive acid with the selected native host"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 27,23,1.8 --yaw -18 --pitch -36 --output dist/screenshots/emission-acid.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.generate-environment]
+description = "Regenerate the shared environment test layout and procedural materials"
+run = "go run scripts/environment-assets.go"
+
+[tasks.check-environment-schema]
+depends = ["build"]
+dir = "samples/environment"
+run = "../../dist/karty schema --check"
+
+[tasks.build-environment-web]
+depends = ["build"]
+dir = "samples/environment"
+run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
+
+[tasks.build-environment-native]
+depends = ["build"]
+dir = "samples/environment"
+run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.serve-environment]
+dir = "samples/environment"
+run = "../../dist/karty serve"
+
+[tasks.capture-environment-daylight]
+depends = ["build"]
+dir = "samples/environment"
+run = '../../dist/karty screenshot levels.daylight --timeout 10s --width 960 --height 540 --batch daylight-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-environment-cartoon]
+depends = ["build"]
+dir = "samples/environment"
+run = '../../dist/karty screenshot levels.cartoon --timeout 10s --width 960 --height 540 --batch cartoon-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-environment-fantasy]
+depends = ["build"]
+dir = "samples/environment"
+run = '../../dist/karty screenshot levels.fantasy --timeout 10s --width 960 --height 540 --batch fantasy-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[tasks.capture-environment-space]
+depends = ["build"]
+dir = "samples/environment"
+run = '../../dist/karty screenshot levels.space --timeout 10s --width 960 --height 540 --batch space-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'

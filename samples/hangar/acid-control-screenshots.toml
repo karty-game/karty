@@ -1,0 +1,53 @@
+[[views]]
+position = [31, 14.6, 5.1]
+yaw = 0
+pitch = -14
+output = 'dist/screenshots/acid-control-overlook.png'
+
+[[views]]
+position = [31, 26, 1.9]
+yaw = 180
+pitch = 12
+output = 'dist/screenshots/acid-control-windows.png'
+
+[[views]]
+position = [18.8, 18.2, 1.9]
+yaw = 175
+pitch = 0
+output = 'dist/screenshots/acid-control-west-access.png'
+
+[[views]]
+position = [48, 19, 1.9]
+yaw = 180
+pitch = 0
+output = 'dist/screenshots/acid-control-east-access.png'
+
+[[views]]
+position = [20.3, 13.8, 2.1]
+yaw = 90
+pitch = 12
+output = 'dist/screenshots/acid-control-west-stairs.png'
+
+[[views]]
+position = [45.7, 13.8, 2.1]
+yaw = -90
+pitch = 12
+output = 'dist/screenshots/acid-control-east-stairs.png'
+
+[[views]]
+position = [34, 14, 5.1]
+yaw = 180
+pitch = 0
+output = 'dist/screenshots/acid-control-interior.png'
+
+[[views]]
+position = [2, 20.6, 1.7]
+yaw = -108
+pitch = 0
+output = 'dist/screenshots/reactor-rust-wall.png'
+
+[[views]]
+position = [23.5, 20.5, 1.9]
+yaw = 135
+pitch = 25
+output = 'dist/screenshots/acid-control-pillars.png'

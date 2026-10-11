@@ -41,6 +41,52 @@ func TestProjectCacheColdWarmAndEquivalentRecipeReuse(t *testing.T) {
 	}
 }
 
+func TestProjectCachePreservesBinaryMetadataInTOMLRecord(t *testing.T) {
+	t.Parallel()
+	cache := assetpipeline.NewProjectCache(t.TempDir())
+	metadata := []byte{'K', 'M', 'A', '1', 0, 255, 1}
+
+	var calls atomic.Int64
+
+	processor := func(context.Context, assetpipeline.SourceSnapshot, assetpipeline.Recipe) (assetpipeline.Processed, error) {
+		calls.Add(1)
+
+		return assetpipeline.Processed{Encoding: "test@1", Payload: []byte("payload"), Metadata: metadata}, nil
+	}
+	source := snapshot(t, []byte("source"))
+	selected := recipe(t, map[string]any{"mode": "binary"})
+
+	first, err := cache.Resolve(t.Context(), source, selected, processor)
+	if err != nil || !bytes.Equal(first.Metadata, metadata) {
+		t.Fatal("binary metadata changed", err)
+	}
+
+	path := filepath.Join(first.EntryPath, "metadata.toml")
+
+	stored, err := os.ReadFile(path)
+	if err != nil || bytes.HasPrefix(stored, []byte("{")) {
+		t.Fatal("cache record is not TOML", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(first.EntryPath, "metadata.json")); !os.IsNotExist(err) {
+		t.Fatal("JSON cache record exists")
+	}
+
+	warm, err := cache.Resolve(t.Context(), source, selected, processor)
+	if err != nil || !warm.CacheHit || calls.Load() != 1 || !bytes.Equal(warm.Metadata, metadata) {
+		t.Fatal("binary metadata warm reuse failed", err)
+	}
+
+	if err := os.WriteFile(path, []byte(`{"schema":3,"metadata":"legacy"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	rebuilt, err := cache.Resolve(t.Context(), source, selected, processor)
+	if err != nil || rebuilt.CacheHit || calls.Load() != 2 {
+		t.Fatal("legacy JSON cache record was reused", err)
+	}
+}
+
 func TestProjectCacheInvalidatesOnlyChangedInputs(t *testing.T) {
 	t.Parallel()
 
@@ -81,7 +127,7 @@ func TestProjectCacheRepairsCorruptPayloadAndMetadata(t *testing.T) {
 		"metadata": func(t *testing.T, artifact assetpipeline.Artifact) {
 			t.Helper()
 
-			if err := os.WriteFile(filepath.Join(artifact.EntryPath, "metadata.json"), []byte("{"), 0o600); err != nil {
+			if err := os.WriteFile(filepath.Join(artifact.EntryPath, "metadata.toml"), []byte("{"), 0o600); err != nil {
 				t.Fatal(err)
 			}
 		},
@@ -189,7 +235,7 @@ func TestProjectCacheIgnoresInterruptedTemporaryEntry(t *testing.T) {
 
 	root := t.TempDir()
 
-	interrupted := filepath.Join(root, ".karty", "cache", "assets", "v2", ".tmp-interrupted")
+	interrupted := filepath.Join(root, ".karty", "cache", "assets", "v3", ".tmp-interrupted")
 	if err := os.MkdirAll(interrupted, 0o750); err != nil {
 		t.Fatal(err)
 	}

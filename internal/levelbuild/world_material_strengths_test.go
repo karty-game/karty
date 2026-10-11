@@ -167,7 +167,7 @@ func TestMaterialMipAndStrengthPackagedWASMAndReports(t *testing.T) {
 	assets := &assetBuild{
 		projectRoot: root,
 		manifest:    selected,
-		materials: func(_ context.Context, _ string, _ sdk.Manifest, document world.Document, _ map[uint32][]byte) (worldmaterial.Pair, assetpipeline.Artifact, error) {
+		materials: func(_ context.Context, _ string, _ sdk.Manifest, document world.Document, _ map[uint32][]byte, _ ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error) {
 			calls++
 			cachedPair = fixtureWorldMaterialMipPair(t, assetpipeline.WorldMaterialIDs(document))
 
@@ -232,7 +232,7 @@ func TestMaterialMipAndStrengthPackagedWASMAndReports(t *testing.T) {
 	}
 }
 
-func TestMaterialStrengthEncodedLayoutBudgetBeforeImageGeneration(t *testing.T) {
+func TestMaterialStrengthBinaryLayoutPreservesMaximumPrecision(t *testing.T) {
 	t.Parallel()
 
 	precision := 1.123456789012345
@@ -251,7 +251,14 @@ func TestMaterialStrengthEncodedLayoutBudgetBeforeImageGeneration(t *testing.T) 
 		document.Sectors[0].Walls = append(document.Sectors[0].Walls, world.Wall{Material: materialID})
 	}
 
-	if _, err := resolveMaterialStrengths(entries, metadata, document); !errors.Is(err, ErrManifest) {
-		t.Fatal("oversize complete control/layout metadata accepted before generation")
+	resolved, err := resolveMaterialStrengths(entries, metadata, document)
+	if err != nil || len(resolved) != len(entries) {
+		t.Fatalf("compact binary layout lost valid complete controls: %v", err)
+	}
+
+	for _, controls := range resolved {
+		if controls.Normal != precision || controls.Height != precision || controls.AO != precision || controls.Rim != precision {
+			t.Fatal("binary material strengths lost precision")
+		}
 	}
 }

@@ -61,7 +61,7 @@ func TestMaskedAtlasCacheRestoresCoverageAndSecondaryRoles(t *testing.T) {
 	}
 
 	_, warm, err := processWorldMaterials(context.Background(), root, manifest, document, textures, execute)
-	if err != nil || calls != 1 || cold.CacheHit || !warm.CacheHit {
+	if err != nil || calls != 5 || cold.CacheHit || !warm.CacheHit {
 		t.Fatalf("cache calls=%d err=%v", calls, err)
 	}
 
@@ -109,12 +109,7 @@ func TestOpaqueFrameClaimBindsOpaqueAtlasSlot(t *testing.T) {
 	execute := func(_ context.Context, _ sdk.Manifest, directory string, _ []string) error {
 		calls++
 
-		layout, err := worldmaterial.NewLayoutV2(world.MaterialIDs(&document))
-		if err != nil {
-			return err
-		}
-
-		return fixtureMaterialMaps(directory, image.Rect(0, 0, layout.Width, layout.Height))
+		return fixtureMaterialMaps(directory, image.Rect(0, 0, 256, 256))
 	}
 	root := t.TempDir()
 
@@ -138,13 +133,13 @@ func TestOpaqueFrameClaimBindsOpaqueAtlasSlot(t *testing.T) {
 	}
 
 	_, warm, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute)
-	if err != nil || !warm.CacheHit || calls != 1 {
+	if err != nil || !warm.CacheHit || calls != 6 {
 		t.Fatalf("opaque/masked atlas cache calls=%d err=%v", calls, err)
 	}
 
 	// A forged opaque claim must fail before native generation or cache reuse.
 	textures[11] = textures[12]
-	if _, _, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute); err == nil || calls != 1 {
+	if _, _, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute); err == nil || calls != 6 {
 		t.Fatalf("transparent pixels accepted as an opaque frame: calls=%d err=%v", calls, err)
 	}
 }

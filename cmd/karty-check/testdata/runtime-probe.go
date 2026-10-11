@@ -58,7 +58,7 @@ func (game *Game) Hooks() engine.Hooks {
 		OnKeyUp:           func(key engine.Key) { game.onKey(key, false) },
 		OnPointerReleased: game.placePlayer,
 		OnLevelReady:      game.levelReady,
-		OnLevelData:       func(data engine.LevelData) { game.label.SetText("Level data: " + string(data.Bytes)) },
+		OnLevelData:       func(data engine.LevelData) { game.label.SetText("Level data received") },
 		OnLevelReleased:   game.levelReleased,
 		OnLevelFailed:     func(failure engine.LevelFailed) { game.label.SetText("Level failed: " + failure.Diagnostic) },
 	}

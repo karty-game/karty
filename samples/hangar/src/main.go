@@ -8,14 +8,19 @@ import (
 
 type Game struct {
 	engine.Game
-	camera  *engine.EntityCamera3D
-	level   engine.LevelHandle
-	request engine.LevelRequestID
-	panel   *engine.UI
-	fps     *FPSController
-	keys    [256]bool
-	view    int
-	status  string
+	camera         *engine.EntityCamera3D
+	torch          *engine.EntityLight3D
+	torchAim       lightAim
+	torchEnabled   bool
+	bolt           lightBolt
+	level          engine.LevelHandle
+	request        engine.LevelRequestID
+	panel          *engine.UI
+	fps            *FPSController
+	keys           [256]bool
+	view           int
+	status         string
+	cameraMenuOpen bool
 }
 
 //go:wasmexport karty_register
@@ -46,9 +51,16 @@ func (game *Game) Hooks() engine.Hooks {
 
 func (game *Game) start() {
 	game.status = "Preparing the hangar..."
+	game.torchEnabled = true
 	game.fps = NewFPSController(&game.Game)
 	game.fps.SceneContains = func(x, y float32) bool {
-		return game.panel == nil || (y > 145 && y < float32(config.ResolutionHeight)-125)
+		if game.panel == nil {
+			return true
+		}
+		if y <= 145 {
+			return false
+		}
+		return !game.cameraMenuOpen || x < float32(config.ResolutionWidth)-288 || y > 420
 	}
 	game.fps.OnTouchMode = func() {
 		if game.panel != nil {
@@ -60,9 +72,18 @@ func (game *Game) start() {
 }
 
 func (game *Game) showPanel() {
+	game.cameraMenuOpen = false
 	game.panel = ui.Explorer(ui.ExplorerProps{
 		Status: func() string { return game.status }, Controls: game.fps.Help,
 		Visit: game.visit, Hide: func() { game.panel.Close(); game.panel = nil },
+		CameraOpen:   func() bool { return game.cameraMenuOpen },
+		TorchEnabled: func() bool { return game.torchEnabled },
+		ToggleTorch:  game.toggleTorch,
+		// LaunchLight: game.launchLight, // Point-light demo paused.
+		ToggleCamera: func() {
+			game.cameraMenuOpen = !game.cameraMenuOpen
+			game.panel.Invalidate()
+		},
 	})
 }
 
@@ -79,15 +100,20 @@ var viewpoints = [...]viewpoint{
 	{"05 / LOADING HALL", 21.2, 6, 2.1, 1.658, .06},
 	{"06 / EXTRACTION", 25, 40, 1.7, .873, 0},
 	{"07 / SERVICE WINDOWS", 8, 6, 1.7, -1.9897, 0},
+	{"08 / ACID CONTROL ROOM", 31, 14.6, 5.1, 0, -.24},
+	{"09 / BURNING BARREL", 12.6, -1.55, 1.9, 1.5708, -.2443},
 }
 
 func (game *Game) visit(index int) {
 	if game.level == 0 || index < 0 || index >= len(viewpoints) {
 		return
 	}
-	nextHeld := game.keys[engine.KeyV]
+	held := game.keys
 	game.keys = [256]bool{}
-	game.keys[engine.KeyV] = nextHeld
+	for _, key := range [...]engine.Key{engine.KeyV, engine.KeyF} {
+		game.keys[key] = held[key]
+	}
+	game.clearLights()
 	if game.camera != nil {
 		game.camera.Destroy()
 	}
@@ -100,15 +126,22 @@ func (game *Game) visit(index int) {
 		ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
 	})
 	game.camera.SetLayer(-10)
+	game.torch = game.NewSpotLight(game.level, engine.NewVec3D(p.x, p.y, p.z), engine.NewVec3D(3, 2.7, 2.16), 18, .25, .50)
+	// Camera-local axes are right, forward and up: hold the torch low on the right.
+	game.torch.AttachToCamera(game.camera, engine.NewVec3D(.35, .20, -.30))
+	game.torch.SetEnabled(game.torchEnabled)
+	game.torch.SetShadows(true)
+	game.torchAim = lightAim{yaw: float64(p.yaw), pitch: float64(p.pitch), cameraYaw: float64(p.yaw), cameraPitch: float64(p.pitch)}
 	game.fps.SetCamera(game.camera)
 	// The generated hook applies the host's accepted pose to camera.Settings.
 	// Every walking proposal starts from that pose, including on the stairs.
-	if _, err := game.WatchTransform(game.camera, func(engine.Transform3D) {}); err != nil {
+	if _, err := game.WatchTransform(game.camera, game.acceptTorchPose); err != nil {
 		game.status = err.Error()
 	} else {
 		game.status = p.name
 	}
 	game.view = index
+	game.cameraMenuOpen = false
 	if game.panel != nil {
 		game.panel.Invalidate()
 	}
@@ -116,7 +149,7 @@ func (game *Game) visit(index int) {
 
 func (game *Game) key(key engine.Key, down bool) {
 	game.fps.Key(key, down)
-	if key != engine.KeyV && key != engine.KeyH {
+	if key != engine.KeyV && key != engine.KeyH && key != engine.KeyF {
 		return
 	}
 	held := game.keys[key]
@@ -127,6 +160,13 @@ func (game *Game) key(key engine.Key, down bool) {
 	if key == engine.KeyV {
 		game.visit((game.view + 1) % len(viewpoints))
 	}
+	if key == engine.KeyF {
+		game.toggleTorch()
+	}
+	// Point-light demo paused:
+	// if key == engine.KeyG {
+	// 	game.launchLight()
+	// }
 	if key == engine.KeyH {
 		if game.panel != nil {
 			game.panel.Close()
@@ -137,10 +177,15 @@ func (game *Game) key(key engine.Key, down bool) {
 	}
 }
 
-func (game *Game) update(frame engine.Frame) { game.fps.Update(frame) }
+func (game *Game) update(frame engine.Frame) {
+	game.fps.Update(frame)
+	game.updateTorch(frame.Number)
+	// game.bolt.update() // Point-light demo paused.
+}
 
 func (game *Game) stop() {
 	game.fps.Close()
+	game.clearLights()
 	if game.camera != nil {
 		game.camera.Destroy()
 	}

@@ -205,7 +205,7 @@ func devHost(override string) (string, error) {
 }
 
 func devBuildCommand(executable, host string) []string {
-	command := []string{shellQuote(executable), "build", "--target", "web"}
+	command := []string{shellQuote(executable), "build", "--target", "web", "--development"}
 	if host != "" {
 		command = append(command, "--host", shellQuote(host))
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 // WorldCameraGeometry retains the current sample's geometry, mapping and source
-// textures while disabling its independent actions/material/lighting/bake opt-ins. Tests
+// textures while disabling its independent actions/material/lighting/bake/chunk opt-ins. Tests
 // can select each candidate capability without invoking external GPU tooling.
 func WorldCameraGeometry(t *testing.T, sourceRoot string) string {
 	t.Helper()
@@ -23,7 +23,7 @@ func WorldCameraGeometry(t *testing.T, sourceRoot string) string {
 
 	// Authored client sequences are covered by the small hooks fixture. Geometry
 	// regressions must remain usable with SDKs predating the actions contract.
-	if err := os.Remove(filepath.Join(root, "levels", "showcase", "actions.json")); err != nil && !os.IsNotExist(err) {
+	if err := os.Remove(filepath.Join(root, "levels", "showcase", "actions.yaml")); err != nil && !os.IsNotExist(err) {
 		t.Fatal(err)
 	}
 
@@ -40,6 +40,7 @@ func WorldCameraGeometry(t *testing.T, sourceRoot string) string {
 	}
 
 	delete(manifest, "lightmap")
+	delete(manifest, "chunks")
 
 	textures, ok := manifest["textures"].([]any)
 	if !ok {

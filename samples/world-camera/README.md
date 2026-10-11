@@ -23,15 +23,21 @@ Tap the scene or press **C** to bring hidden controls back.
 ## Run it
 
 [Set up once](../README.md#make-it-yours), then from this sample's folder,
-prepare the lighting and open the preview:
+build its chunk lightmaps and open the preview:
 
 ```sh
-../../dist/karty bake --level showcase
 ../../dist/karty dev
 ```
 
-The lighting is saved for your next launch. Prepare it again after changing
-the world, its materials or its static lights.
+The build creates six authored areas: the complete courtyard, hall, three
+galleries, and north turn. Each contains its own prebuilt mesh and baked lightmap;
+the shared textures and complete portal graph remain in the root level. Rebuild
+after changing the world, its materials or its static lights. Area hints can
+split when their mesh or lightmap exceeds the configured budget; see
+[chunk settings](../../docs/chunk-levels.md).
+
+The courtyard uses a 1024 square lightmap and the five smaller areas use 512
+square lightmaps, all at the same authored density of 16 texels per unit.
 
 ## Edit the corridor trim
 

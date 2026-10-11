@@ -108,7 +108,8 @@ func TestWorldLightingEmptyAndRejectedBatches(t *testing.T) {
 		want     error
 	}{
 		"ambient only": {levelLightingYAML(0), nil},
-		"51":           {levelLightingYAML(51), worldsource.ErrBounds},
+		"51 live":      {levelLightingYAML(51), ErrManifest},
+		"source bound": {levelLightingYAML(worldsource.MaxLights + 1), worldsource.ErrBounds},
 		"last invalid": {strings.Replace(levelLightingYAML(50), "id: light-1,", "id: light-1, unexpected: true,", 1), nil},
 		"last radius":  {strings.Replace(levelLightingYAML(50), "x: -49, y: 99, z: 8}, color: {x: 0.5, y: 0.25, z: 1}, radius: 6", "x: -49, y: 99, z: 8}, color: {x: 0.5, y: 0.25, z: 1}, radius: 0", 1), worldsource.ErrLighting},
 	} {
@@ -155,7 +156,7 @@ func TestWorldLightingAndMaterialAtlasPackageTogether(t *testing.T) {
 
 	assets := &assetBuild{projectRoot: root, manifest: manifest,
 		materials: func(_ context.Context, _ string, _ sdk.Manifest, document world.Document,
-			_ map[uint32][]byte) (worldmaterial.Pair, assetpipeline.Artifact, error) {
+			_ map[uint32][]byte, _ ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error) {
 			calls++
 
 			if document.Lighting == nil || len(document.Lighting.Lights) != 2 {
@@ -287,7 +288,7 @@ func executePackagedLightingWorld(t *testing.T, module []byte) world.Document {
 	const script = `import fs from 'node:fs';
 const {instance} = await WebAssembly.instantiate(fs.readFileSync(process.argv[1]));
 const e = instance.exports;
-if (e.karty_level_abi_version() !== 1) throw new Error('level ABI');
+if (e.karty_level_abi_version() !== 2) throw new Error('level ABI');
 process.stdout.write(Buffer.from(e.memory.buffer, e.karty_level_data_pointer(), e.karty_level_data_length()));`
 
 	encoded, err := exec.CommandContext(t.Context(), node, "--input-type=module", "-e", script, path).Output()

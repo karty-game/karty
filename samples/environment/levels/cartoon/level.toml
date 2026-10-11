@@ -1,0 +1,111 @@
+[level]
+name = "levels.cartoon"
+kind = "world"
+
+[world]
+source = "world.yaml"
+
+[[textures]]
+name = "stone"
+source = "stone.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "stone"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.35
+height = 0.05
+ao = 0.5
+rim = 0.0
+
+[[textures]]
+name = "tile"
+source = "tile.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "concrete"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.35
+height = 0.05
+ao = 0.5
+rim = 0.0
+
+[[textures]]
+name = "wall"
+source = "wall.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "brick"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.35
+height = 0.05
+ao = 0.5
+rim = 0.0
+
+[[textures]]
+name = "ceiling"
+source = "ceiling.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "concrete"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.35
+height = 0.05
+ao = 0.5
+rim = 0.0
+
+[[textures]]
+name = "ground"
+source = "ground.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "foliage"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.35
+height = 0.05
+ao = 0.5
+rim = 0.0
+
+[[textures]]
+name = "wood"
+source = "wood.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "wood"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.35
+height = 0.05
+ao = 0.5
+rim = 0.0
+
+[[textures]]
+name = "metal"
+source = "metal.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "metal"
+metallic_scale = 0.35
+
+[textures.material_strengths]
+normal = 0.35
+height = 0.05
+ao = 0.5
+rim = 0.0

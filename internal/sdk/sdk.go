@@ -63,14 +63,14 @@ type Manifest struct {
 	} `toml:"artifacts"`
 }
 
-// Compatibility describes supported formats declared by the SDK's bundle.json.
+// Compatibility describes supported formats declared by the SDK's bundle.toml (or immutable released format1 metadata).
 // These are format revisions, independent of SDK and API release numbers.
 //
 //nolint:tagliatelle // The SDK archive defines snake_case compatibility keys.
 type Compatibility struct {
-	Format         int    `json:"format"`
-	UISchema       uint32 `json:"ui_schema"`
-	ProjectCodegen int    `json:"project_codegen"`
+	Format         int    `json:"format"          toml:"format"`
+	UISchema       uint32 `json:"ui_schema"       toml:"ui_schema"`
+	ProjectCodegen int    `json:"project_codegen" toml:"project_codegen"`
 }
 
 // SupportsAuthoredActions reports whether the bundle supplies the action generator contract.

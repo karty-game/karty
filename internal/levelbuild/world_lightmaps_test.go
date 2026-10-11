@@ -3,7 +3,6 @@ package levelbuild
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"os"
 	"os/exec"
@@ -38,29 +37,30 @@ func enableFixtureLightmap(t *testing.T, root, settings string) {
 	}
 }
 
-func executeLightmapEnvelope(t *testing.T, module []byte) level.Envelope {
-	t.Helper()
+func executeLightmapEnvelope(tb testing.TB, module []byte) level.Envelope {
+	tb.Helper()
 
 	node, err := exec.LookPath("node")
 	if err != nil {
-		t.Skip("actual WASM execution needs pinned Node")
+		tb.Skip("actual WASM execution needs pinned Node")
 	}
 
-	path := filepath.Join(t.TempDir(), "lightmap.kld")
+	path := filepath.Join(tb.TempDir(), "lightmap.kld")
+	// #nosec G703 -- path is a fixed filename beneath tb.TempDir.
 	if err := os.WriteFile(path, module, 0o600); err != nil {
-		t.Fatal(err)
+		tb.Fatal(err)
 	}
 
-	const script = `import fs from 'node:fs'; const {instance}=await WebAssembly.instantiate(fs.readFileSync(process.argv[1])); const e=instance.exports; if(e.karty_level_abi_version()!==1)throw new Error('ABI');process.stdout.write(Buffer.from(e.memory.buffer,e.karty_level_data_pointer(),e.karty_level_data_length()));`
+	const script = `import fs from 'node:fs'; const {instance}=await WebAssembly.instantiate(fs.readFileSync(process.argv[1])); const e=instance.exports; if(e.karty_level_abi_version()!==2)throw new Error('ABI');process.stdout.write(Buffer.from(e.memory.buffer,e.karty_level_data_pointer(),e.karty_level_data_length()));`
 
-	raw, err := exec.CommandContext(t.Context(), node, "--input-type=module", "-e", script, path).Output()
+	raw, err := exec.CommandContext(tb.Context(), node, "--input-type=module", "-e", script, path).Output()
 	if err != nil {
-		t.Fatal(err)
+		tb.Fatal(err)
 	}
 
 	envelope, err := level.Decode(raw)
 	if err != nil {
-		t.Fatal(err)
+		tb.Fatal(err)
 	}
 
 	return envelope
@@ -131,12 +131,10 @@ func TestWorldLightmapCapabilityGateAndPackagedWASM(t *testing.T) {
 		t.Fatalf("packaged recipe: %+v", layout.RuntimeBake)
 	}
 
-	var metadata map[string]json.RawMessage
-	if err := json.Unmarshal(
-		envelope.Metadata,
-		&metadata,
-	); err != nil ||
-		string(metadata[worldlightmap.MetadataKey]) != `"karty.world-lightmaps@1"` {
+	metadata, err := level.DecodeMetadata(envelope.Metadata)
+
+	marker, _ := metadata.String(worldlightmap.MetadataKey)
+	if err != nil || marker != worldlightmap.Schema {
 		t.Fatal("missing metadata marker")
 	}
 }
@@ -268,7 +266,7 @@ func TestWorldLightmapAndMaterialAtlasMarkersCoexist(t *testing.T) {
 	enableFixtureLightmap(t, root, "enabled = true\n")
 	assets := &assetBuild{projectRoot: root, manifest: selected,
 		materials: func(_ context.Context, _ string, _ sdk.Manifest, document world.Document,
-			_ map[uint32][]byte) (worldmaterial.Pair, assetpipeline.Artifact, error) {
+			_ map[uint32][]byte, _ ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error) {
 			return fixtureWorldMaterialPair(t, assetpipeline.WorldMaterialIDs(document)), assetpipeline.Artifact{}, nil
 		},
 	}
@@ -280,8 +278,8 @@ func TestWorldLightmapAndMaterialAtlasMarkersCoexist(t *testing.T) {
 
 	envelope := executeLightmapEnvelope(t, artifacts[0].Bytes)
 
-	var metadata map[string]json.RawMessage
-	if err := json.Unmarshal(envelope.Metadata, &metadata); err != nil {
+	metadata, err := level.DecodeMetadata(envelope.Metadata)
+	if err != nil {
 		t.Fatal(err)
 	}
 

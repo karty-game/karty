@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	sdkworld "github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty-sdk/format/worldparticles"
 	"github.com/karty-game/karty-sdk/format/worldsource"
 	"go.yaml.in/yaml/v3"
 )
@@ -38,10 +39,12 @@ type Actor struct {
 	Scale            worldsource.Vec3
 	Sprite           *worldsource.Sprite
 	Tags             []string
+	Animation        *worldsource.AnimationBinding
 }
 
 type Room struct {
 	ID, SourceRoom, Instance                        string
+	Sky                                             bool
 	Boundary                                        []worldsource.Edge
 	Floor, Ceiling                                  worldsource.Plane
 	FloorMaterial, CeilingMaterial                  string
@@ -63,13 +66,18 @@ type Connection struct {
 type Expanded struct {
 	Rooms       []Room
 	Connections []Connection
+	Environment *sdkworld.Environment
 	// Lighting retains authored global coordinates and order independently of
 	// prefab expansion. Its payload and light slice belong to this result.
 	Lighting *sdkworld.Lighting
 	// UV is nil for released source versions; v5 owns complete effective settings.
-	UV       *worldsource.UVSettings
-	Solids   []worldsource.Solid
-	Contents []Content
+	UV                   *worldsource.UVSettings
+	Solids               []worldsource.Solid
+	Contents             []Content
+	Animations           *worldsource.Animations
+	Particles            *worldsource.Particles
+	ParticleEmitters     []worldsource.ParticleEmitter
+	ParticleEmitterRooms map[string]string
 }
 
 type affine struct {
@@ -77,11 +85,13 @@ type affine struct {
 }
 
 type scopeResult struct {
-	rooms       []Room
-	connections []Connection
-	ports       map[string]Endpoint
-	solids      []worldsource.Solid
-	contents    []Content
+	rooms                []Room
+	connections          []Connection
+	ports                map[string]Endpoint
+	solids               []worldsource.Solid
+	contents             []Content
+	particleEmitters     []worldsource.ParticleEmitter
+	particleEmitterRooms map[string]string
 }
 
 type expander struct {
@@ -139,8 +149,16 @@ func Decode(contents []byte) (Expanded, error) {
 	}
 
 	result, err := (&expander{prefabs: prefabs}).expandScope(
-		"", document.Rooms, document.Instances, document.Connections, nil, document.Solids, document.Contents,
-		affine{scale: 1}, func(value string) string { return value },
+		"",
+		document.Rooms,
+		document.Instances,
+		document.Connections,
+		nil,
+		document.Solids,
+		document.Contents,
+		rootParticleEmitters(document.Particles),
+		affine{scale: 1},
+		func(value string) string { return value },
 		nil,
 	)
 	if err != nil {
@@ -153,7 +171,32 @@ func Decode(contents []byte) (Expanded, error) {
 		return Expanded{}, fmt.Errorf("expanded rooms or connections exceed runtime bounds: %w", ErrExpansion)
 	}
 
-	expanded := Expanded{Rooms: result.rooms, Connections: result.connections, Solids: result.solids, Contents: result.contents}
+	expanded := Expanded{
+		Rooms:                result.rooms,
+		Connections:          result.connections,
+		Solids:               result.solids,
+		Contents:             result.contents,
+		Animations:           document.Animations,
+		Particles:            document.Particles,
+		ParticleEmitters:     result.particleEmitters,
+		ParticleEmitterRooms: result.particleEmitterRooms,
+	}
+	if document.Environment != nil {
+		expanded.Environment = &sdkworld.Environment{
+			Version: sdkworld.EnvironmentVersion, Preset: document.Environment.Preset,
+			Palette: document.Environment.Palette,
+		}
+		if document.Environment.Sun != nil {
+			sun := *document.Environment.Sun
+			expanded.Environment.Sun = &sun
+		}
+		if document.Environment.TimeOfDay != nil {
+			expanded.Environment.TimeOfDay = new(*document.Environment.TimeOfDay)
+		}
+		if document.Environment.CloudAmount != nil {
+			expanded.Environment.CloudAmount = new(*document.Environment.CloudAmount)
+		}
+	}
 	if document.Lighting != nil {
 		expanded.Lighting = &sdkworld.Lighting{
 			Version: document.Lighting.Version, Ambient: sdkworld.Vec3(document.Lighting.Ambient),
@@ -187,6 +230,9 @@ func Decode(contents []byte) (Expanded, error) {
 	contentCount := len(expanded.Contents)
 	for _, room := range expanded.Rooms {
 		contentCount += len(room.Contents)
+	}
+	if len(expanded.ParticleEmitters) > worldparticles.MaxEmitters {
+		return Expanded{}, ErrExpansion
 	}
 	if contentCount > sdkworld.MaxContents {
 		return Expanded{}, ErrExpansion
@@ -222,6 +268,16 @@ func rejectAliases(contents []byte) error {
 		return err
 	}
 	if err := validateMaterialPresence(&document); err != nil {
+		return err
+	}
+
+	if err := validateAnimationPresence(&document); err != nil {
+		return err
+	}
+	if err := validateEnvironmentPresence(&document); err != nil {
+		return err
+	}
+	if err := validateParticlePresence(&document); err != nil {
 		return err
 	}
 
@@ -262,11 +318,15 @@ func (builder *expander) expandScope(
 	ports []worldsource.Port,
 	solids []worldsource.Solid,
 	contents []worldsource.Content,
+	particleEmitters []worldsource.ParticleEmitter,
 	transform affine,
 	material func(string) string,
 	tagOverride []string,
 ) (scopeResult, error) {
 	result := scopeResult{ports: make(map[string]Endpoint, len(ports))}
+	if err := appendScopedParticleEmitters(&result, particleEmitters, prefix, transform, ""); err != nil {
+		return scopeResult{}, err
+	}
 	direct := make(map[string]map[string]Endpoint, len(rooms))
 	nested := make(map[string]map[string]Endpoint, len(instances))
 
@@ -278,6 +338,9 @@ func (builder *expander) expandScope(
 	}
 	for _, authored := range rooms {
 		room := transformRoom(authored, prefix, transform, material, tagOverride)
+		if err := appendScopedParticleEmitters(&result, authored.ParticleEmitters, room.ID, transform, room.ID); err != nil {
+			return scopeResult{}, err
+		}
 		if len(room.ID) > sdkworld.MaxIdentifierBytes {
 			return scopeResult{}, fmt.Errorf("expanded room identity %q is too long: %w", room.ID, ErrExpansion)
 		}
@@ -302,18 +365,33 @@ func (builder *expander) expandScope(
 			instanceTags = instance.Tags
 		}
 		expanded, err := builder.expandScope(
-			instancePrefix, prefab.Rooms, prefab.Instances, prefab.Connections, prefab.Ports, prefab.Solids, prefab.Contents,
-			instanceTransform, instanceMaterial, instanceTags,
+			instancePrefix,
+			prefab.Rooms,
+			prefab.Instances,
+			prefab.Connections,
+			prefab.Ports,
+			prefab.Solids,
+			prefab.Contents,
+			prefab.ParticleEmitters,
+			instanceTransform,
+			instanceMaterial,
+			instanceTags,
 		)
 		if err != nil {
 			return scopeResult{}, err
 		}
 		if len(result.solids)+len(expanded.solids) > sdkworld.MaxStaticSolids ||
-			len(result.contents)+len(expanded.contents) > sdkworld.MaxContents {
+			len(
+				result.contents,
+			)+len(
+				expanded.contents,
+			) > sdkworld.MaxContents || len(result.particleEmitters)+len(expanded.particleEmitters) > worldparticles.MaxEmitters {
 			return scopeResult{}, ErrExpansion
 		}
 		result.solids = append(result.solids, expanded.solids...)
 		result.contents = append(result.contents, expanded.contents...)
+		result.particleEmitters = append(result.particleEmitters, expanded.particleEmitters...)
+		mergeParticleEmitterRooms(&result, expanded.particleEmitterRooms)
 		result.rooms = append(result.rooms, expanded.rooms...)
 		result.connections = append(result.connections, expanded.connections...)
 		nested[instance.ID] = expanded.ports
@@ -359,6 +437,7 @@ func transformRoom(
 	roomID := joinIdentity(prefix, authored.ID)
 	room := Room{
 		ID: roomID, SourceRoom: authored.ID, Instance: prefix,
+		Sky:      authored.Sky,
 		Boundary: make([]worldsource.Edge, len(authored.Boundary)),
 		Floor:    transformPlane(authored.Floor, transform), Ceiling: transformPlane(authored.Ceiling, transform),
 		FloorMaterial: material(authored.FloorMaterial), CeilingMaterial: material(authored.CeilingMaterial),
@@ -372,6 +451,7 @@ func transformRoom(
 	for index, edge := range authored.Boundary {
 		room.Boundary[index] = worldsource.Edge{
 			ID: edge.ID, Start: transformPoint(edge.Start, transform), End: transformPoint(edge.End, transform),
+			Sky:      edge.Sky,
 			Material: material(edge.Material), UV: edge.UV,
 			Bands:     transformBands(worldsource.MergeBandSettings(authored.WallBands, edge.Bands), material),
 			Secondary: transformSecondary(mergeSecondary(authored.WallSecondary, edge.Secondary), material),
@@ -425,7 +505,7 @@ func transformActor(authored *worldsource.Actor, transform affine, tagOverride [
 		Scale: worldsource.Vec3{
 			X: scale.X * transform.scale, Y: scale.Y * transform.scale, Z: scale.Z * transform.scale,
 		},
-		Sprite: sprite, Tags: tags,
+		Sprite: sprite, Tags: tags, Animation: authored.Animation,
 	}
 }
 

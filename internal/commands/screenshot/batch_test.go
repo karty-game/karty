@@ -18,12 +18,12 @@ import (
 func TestBatchOptions(t *testing.T) {
 	t.Parallel()
 
-	path := filepath.Join(t.TempDir(), "views.json")
+	path := filepath.Join(t.TempDir(), "views.toml")
 	for _, input := range []string{
-		`[]`, `null`, `[{"position":[1,2]}]`, `[{"position":[1,2,3,4]}]`,
-		`[{"pitch":90}]`, `[{"unknown":1}]`, `[] []`,
-		`[{"output":"same.png"},{"output":"./same.png"}]`,
-		"[" + strings.Repeat("{},", maxViews) + "{}]",
+		`[{"position":[1,2,3]}]`, "", "views = []", "[[views]]\nposition = [1,2]", "[[views]]\nposition = [1,2,3,4]",
+		"[[views]]\npitch = 90", "[[views]]\nunknown = 1", "[[views]]\nnot TOML",
+		"[[views]]\noutput = 'same.png'\n[[views]]\noutput = './same.png'",
+		strings.Repeat("[[views]]\n", maxViews+1),
 		strings.Repeat(" ", maxBatchBytes+1),
 	} {
 		if err := os.WriteFile(path, []byte(input), 0600); err != nil {
@@ -42,7 +42,11 @@ func TestBatchOptions(t *testing.T) {
 		}
 	}
 
-	if err := os.WriteFile(path, []byte(`[{"position":[-11,18,2.9],"yaw":49},{"pitch":3,"output":"reactor.png"}]`), 0600); err != nil {
+	if err := os.WriteFile(
+		path,
+		[]byte("[[views]]\nposition = [-11.0,18.0,2.9]\nyaw = 49.0\n[[views]]\npitch = 3.0\noutput = 'reactor.png'\n"),
+		0600,
+	); err != nil {
 		t.Fatal(err)
 	}
 
@@ -92,7 +96,7 @@ func TestBatchLaunchesOneHostAndValidatesAllOutputs(t *testing.T) {
 	host := filepath.Join(root, "host")
 	calls := filepath.Join(root, "calls")
 
-	script := "#!/bin/sh\nprintf x >> '" + calls + "'\nwhile [ $# -gt 0 ]; do\nif [ \"$1\" = --screenshot-batch ]; then\nsed -n 's/.*\"output\": \"\\([^\"]*\\)\".*/\\1/p' \"$2\" | while IFS= read -r output; do cp '" + fixture + "' \"$output\"; done\nfi\nshift\ndone\n"
+	script := "#!/bin/sh\nprintf x >> '" + calls + "'\nwhile [ $# -gt 0 ]; do\nif [ \"$1\" = --screenshot-batch ]; then\nsed -n \"s/^output = [\\\"']\\\\([^\\\"']*\\\\)[\\\"']$/\\\\1/p\" \"$2\" | while IFS= read -r output; do cp '" + fixture + "' \"$output\"; done\nfi\nshift\ndone\n"
 	if err := os.WriteFile(host, []byte(script), 0700); err != nil {
 		t.Fatal(err)
 	}

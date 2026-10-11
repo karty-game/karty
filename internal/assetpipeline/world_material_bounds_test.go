@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"image"
 	"image/color"
@@ -20,6 +19,7 @@ import (
 	"github.com/karty-game/karty-sdk/codec/qoi"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
 	"github.com/karty-game/karty/internal/sdk"
+	"github.com/pelletier/go-toml/v2"
 )
 
 func TestWorldMaterialMaximumRecipeFitsCache(t *testing.T) {
@@ -41,7 +41,7 @@ func TestWorldMaterialMaximumRecipeFitsCache(t *testing.T) {
 
 	recipe, err := worldMaterialRecipe(fixtureMaterialManifest(), layout, textures,
 		"linux-amd64", strings.Repeat("a", 64), materializeArguments("atlas.png", "."))
-	if err != nil || len(recipe.OptionsJSON()) > MaxCacheOptionsBytes {
+	if err != nil || len(recipe.OptionsTOML()) > MaxCacheOptionsBytes {
 		t.Fatalf("maximum grid recipe: %v", err)
 	}
 
@@ -81,7 +81,12 @@ func TestWorldMaterialCacheFramingRejectsMalformedLengths(t *testing.T) {
 
 			cached, err := NewProjectCache(t.TempDir()).Resolve(t.Context(), snapshot, recipe,
 				func(context.Context, SourceSnapshot, Recipe) (Processed, error) {
-					return Processed{Encoding: worldMaterialProcessor, Payload: payload, Metadata: layout}, nil
+					metadata, err := worldmaterial.EncodeLayout(layout)
+					if err != nil {
+						return Processed{}, err
+					}
+
+					return Processed{Encoding: worldMaterialProcessor, Payload: payload, Metadata: metadata}, nil
 				})
 			if err != nil {
 				t.Fatal(err)
@@ -128,7 +133,7 @@ func TestWorldMaterialCancellationAfterNativeNeverPublishes(t *testing.T) {
 		t.Fatal("temporary native outputs survived cancellation")
 	}
 
-	payloads, err := filepath.Glob(filepath.Join(root, ".karty", "cache", "assets", "v2", "*", "payload"))
+	payloads, err := filepath.Glob(filepath.Join(root, ".karty", "cache", "assets", "v3", "*", "payload"))
 	if err != nil || len(payloads) != 0 {
 		t.Fatalf("canceled result published: %v, %v", payloads, err)
 	}
@@ -206,7 +211,7 @@ func TestWorldMaterialNearestPackingInvalidatesSmoothCache(t *testing.T) {
 
 	for index := range revisions {
 		if revisions[index].Name == "packer" {
-			if revisions[index].Version != "5" {
+			if revisions[index].Version != "6" {
 				t.Fatal("nearest packer revision missing")
 			}
 
@@ -215,7 +220,12 @@ func TestWorldMaterialNearestPackingInvalidatesSmoothCache(t *testing.T) {
 		}
 	}
 
-	previous, err := NewRecipe(current.kind, current.processor, revisions, json.RawMessage(current.options))
+	var options map[string]any
+	if err := toml.Unmarshal(current.options, &options); err != nil {
+		t.Fatal(err)
+	}
+
+	previous, err := NewRecipe(current.kind, current.processor, revisions, options)
 	if err != nil || !found || previous.Digest() == current.Digest() {
 		t.Fatalf("previous smooth atlas can be reused: %v", err)
 	}
@@ -248,15 +258,19 @@ func TestWorldMaterialNativeFixtureFormats(t *testing.T) {
 		}
 	}
 
-	// Public layout remains JSON, despite private binary cache framing.
+	// Public layout and private payload framing both use binary codecs.
 	layout, err := worldmaterial.NewLayout([]uint32{0})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	metadata, err := worldmaterial.EncodeLayout(layout)
-	if err != nil || !json.Valid(metadata) {
-		t.Fatalf("layout JSON: %v", err)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := worldmaterial.DecodeLayout(metadata); err != nil {
+		t.Fatalf("binary layout: %v", err)
 	}
 }
 

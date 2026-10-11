@@ -5,11 +5,16 @@ kind = "world"
 
 [world]
 source = "world.yaml"
+# Use the standard sprite density cap, retaining more fan and decal detail.
+max_sprite_texels_per_unit = 128
 
 [[textures]]
 name = "olive"
 source = "olive.png"
 profile = "environment"
+
+[textures.materialize]
+preset = "metal"
 
 [textures.material_strengths]
 normal = 0.80
@@ -22,6 +27,9 @@ name = "ribbed"
 source = "ribbed.png"
 profile = "environment"
 
+[textures.materialize]
+preset = "metal"
+
 [textures.material_strengths]
 normal = 0.80
 height = 0.10
@@ -32,6 +40,9 @@ rim = 0.1
 name = "brick"
 source = "brick.png"
 profile = "environment"
+
+[textures.materialize]
+preset = "brick"
 
 [textures.material_strengths]
 normal = 0.80
@@ -44,6 +55,10 @@ name = "floor"
 source = "floor.png"
 profile = "environment"
 
+[textures.materialize]
+# Metal panels retain their direct-light highlights; planar reflections apply to liquid.
+preset = "metal"
+
 [textures.material_strengths]
 normal = 0.80
 height = 0.10
@@ -54,6 +69,9 @@ rim = 0.1
 name = "grate"
 source = "grate.png"
 profile = "environment"
+
+[textures.materialize]
+preset = "metal"
 
 [textures.material_strengths]
 normal = 0.80
@@ -66,6 +84,9 @@ name = "ceiling"
 source = "ceiling.png"
 profile = "environment"
 
+[textures.materialize]
+preset = "metal"
+
 [textures.material_strengths]
 normal = 0.80
 height = 0.10
@@ -76,6 +97,9 @@ rim = 0.1
 name = "concrete"
 source = "concrete.png"
 profile = "environment"
+
+[textures.materialize]
+preset = "concrete"
 
 [textures.material_strengths]
 normal = 0.80
@@ -88,6 +112,9 @@ name = "hazard"
 source = "hazard.png"
 profile = "environment"
 
+[textures.materialize]
+preset = "metal"
+
 [textures.material_strengths]
 normal = 0.80
 height = 0.10
@@ -98,6 +125,9 @@ rim = 0.1
 name = "steel"
 source = "steel.png"
 profile = "environment"
+
+[textures.materialize]
+preset = "metal"
 
 [textures.material_strengths]
 normal = 0.80
@@ -110,6 +140,9 @@ name = "crate"
 source = "crate.png"
 profile = "environment"
 
+[textures.materialize]
+preset = "metal"
+
 [textures.material_strengths]
 normal = 0.80
 height = 0.10
@@ -120,6 +153,9 @@ rim = 0.1
 name = "recess"
 source = "recess.png"
 profile = "environment"
+
+[textures.materialize]
+preset = "stone"
 
 [textures.material_strengths]
 normal = 0.80
@@ -132,11 +168,23 @@ name = "toxic"
 source = "toxic.png"
 profile = "environment"
 
+[textures.materialize]
+preset = "water"
+
 [textures.material_strengths]
 normal = 0.80
 height = 0.10
 ao = 0.80
 rim = 0.1
+
+[textures.emission]
+intensity = 0.8
+lights = ["acid-west-fill", "acid-east-fill"]
+
+[textures.emission.pulse]
+depth = 0.3
+period_seconds = 4.7
+phase_seconds = 1.1
 
 [[textures]]
 name = "lamp"
@@ -148,6 +196,25 @@ normal = 0.00
 height = 0.00
 ao = 0.00
 rim = 0.1
+
+[[textures]]
+name = "reactor-lamp"
+source = "lamp.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.0
+height = 0.0
+ao = 0.0
+rim = 0.1
+
+[textures.emission]
+intensity = 0.65
+lights = ["core-west", "core-east", "core-front"]
+
+[textures.emission.pulse]
+depth = 0.8
+period_seconds = 3.2
 
 [[textures]]
 name = "screen"
@@ -164,35 +231,117 @@ rim = 0.1
 name = "arrival-sign"
 source = "arrival-sign.png"
 profile = "interface"
+max_sprite_texels_per_unit = 0 # Keep authored lettering readable.
 
 [[textures]]
 name = "reactor-sign"
 source = "reactor-sign.png"
 profile = "interface"
+max_sprite_texels_per_unit = 0
 
 [[textures]]
 name = "exit-sign"
 source = "exit-sign.png"
 profile = "interface"
+max_sprite_texels_per_unit = 0
+
+[[textures]]
+name = "screen-glitch-1"
+source = "screen-glitch-1.png"
+profile = "environment"
+
+[[textures]]
+name = "screen-glitch-2"
+source = "screen-glitch-2.png"
+profile = "environment"
+
+[[textures]]
+name = "screen-glitch-3"
+source = "screen-glitch-3.png"
+profile = "environment"
+
+[[textures]]
+name = "fan-rotor-detailed"
+source = "fan-rotor-detailed.png"
+profile = "environment"
+
+[[textures]]
+name = "acid-boundary"
+source = "recess.png"
+profile = "environment"
+
+[[textures]]
+name = "piston"
+source = "piston.png"
+profile = "environment"
+
+# Neutral secondary modulation; maps are unused in this role.
+[[textures]]
+name = "wall-weathering"
+source = "wall-weathering.png"
+profile = "environment"
+
+# Fixed wall decal; alpha coverage supplies the irregular eroded outline.
+[[textures]]
+name = "rust-drips"
+source = "rust-drips.png"
+profile = "environment"
+
+# Original procedural white masks; GPU color curves provide their final hues.
+# Regenerate with samples/hangar/generate-particle-assets.go from the CLI root.
+[[textures]]
+name = "acid-sparkle"
+source = "acid-sparkle.png"
+profile = "environment"
+
+[[textures]]
+name = "barrel-flame-1"
+source = "barrel-flame-1.png"
+profile = "environment"
+
+[[textures]]
+name = "barrel-flame-2"
+source = "barrel-flame-2.png"
+profile = "environment"
+
+[[textures]]
+name = "barrel-flame-3"
+source = "barrel-flame-3.png"
+profile = "environment"
+
+[[textures]]
+name = "barrel-ember"
+source = "barrel-ember.png"
+profile = "environment"
+
+[[textures]]
+name = "barrel-coals"
+source = "barrel-coals.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+# Link the warm live lamp to a real solid top surface, separate from particles.
+[textures.emission]
+intensity = 0.60
+lights = ["barrel-fire-light"]
+
+[textures.emission.pulse]
+depth = 0.28
+period_seconds = 0.85
 
 [lightmap]
 enabled = true
-density = 5
+density = 4
 page_size = 1024
 padding = 4
 max_pages = 1
 max_texels = 1048576
 shadow_size = 256
-lights = [
-  "arrival-key",
-  "reactor-overhead",
-  "control-fill",
-  "zig-key",
-  "zig-far",
-  "extraction-key",
-  "loading-key",
-  "window-key",
-]
 offline = true
 bake_samples = 32
 bake_bounces = 2

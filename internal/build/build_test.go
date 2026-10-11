@@ -59,7 +59,7 @@ func TestRunBuildsSelfDescribingClient(t *testing.T) {
 		t.Fatalf("build activities: %v", activities)
 	}
 
-	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/assets/textures.go", "dist/raw/game.kart", "dist/raw/asset-report.json"} {
+	for _, path := range []string{".karty/engine/game.go", ".karty/engine/components.go", ".karty/assets/textures.go", "dist/raw/game.kart", "dist/raw/asset-report.toml"} {
 		if _, statErr := os.Stat(filepath.Join(directory, path)); statErr != nil {
 			t.Errorf("generated %s: %v", path, statErr)
 		}
@@ -175,15 +175,15 @@ profile = "sprite"
 func assertUnusedTextureStripped(t *testing.T, distribution string, count int) {
 	t.Helper()
 
-	contents, err := os.ReadFile(filepath.Join(distribution, "asset-report.json"))
+	contents, err := os.ReadFile(filepath.Join(distribution, "asset-report.toml"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, expected := range []string{
-		fmt.Sprintf(`"strippedTextureCount": %d`, count),
-		`"name": "sprites.unused"`,
-		`"status": "stripped"`,
+		fmt.Sprintf(`strippedTextureCount = %d`, count),
+		`name = 'sprites.unused'`,
+		`status = 'stripped'`,
 	} {
 		if !strings.Contains(string(contents), expected) {
 			t.Errorf("asset report missing %q: %s", expected, contents)
@@ -448,12 +448,12 @@ func TestRunRetainsExplicitlyKeptTexture(t *testing.T) {
 
 	assertTextureFileCount(t, filepath.Join(directory, "dist", "raw"), 2)
 
-	report, err := os.ReadFile(filepath.Join(directory, "dist", "raw", "asset-report.json"))
+	report, err := os.ReadFile(filepath.Join(directory, "dist", "raw", "asset-report.toml"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(report), `"reason": "explicit keep declaration"`) {
+	if !strings.Contains(string(report), `reason = 'explicit keep declaration'`) {
 		t.Errorf("asset report does not explain explicit keep: %s", report)
 	}
 }
@@ -461,16 +461,16 @@ func TestRunRetainsExplicitlyKeptTexture(t *testing.T) {
 func assertAssetMetadata(t *testing.T, distribution string) {
 	t.Helper()
 
-	contents, err := os.ReadFile(filepath.Join(distribution, "asset-report.json"))
+	contents, err := os.ReadFile(filepath.Join(distribution, "asset-report.toml"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assertGeneratedJSONNotice(t, "asset report", contents)
+	assertGeneratedTOMLNotice(t, "asset report", contents)
 
 	for _, expected := range []string{
-		`"processor": "qoi@1"`,
-		`"estimatedDecodedBytes"`,
+		`processor = 'qoi@1'`,
+		`estimatedDecodedBytes`,
 	} {
 		if !strings.Contains(string(contents), expected) {
 			t.Errorf("asset report missing %q: %s", expected, contents)
@@ -486,14 +486,14 @@ func assertNoCatalog(t *testing.T, distribution string) {
 	}
 }
 
-func assertGeneratedJSONNotice(t *testing.T, name string, contents []byte) {
+func assertGeneratedTOMLNotice(t *testing.T, name string, contents []byte) {
 	t.Helper()
 
 	for _, expected := range []string{
-		`"warning": "GENERATED FILE. DO NOT EDIT."`,
-		`"doNotEdit": "MANUAL CHANGES WILL BE OVERWRITTEN."`,
-		`"sourceOfTruth":`,
-		`"regenerate": "karty build"`,
+		`warning = 'GENERATED FILE. DO NOT EDIT.'`,
+		`doNotEdit = 'MANUAL CHANGES WILL BE OVERWRITTEN.'`,
+		`sourceOfTruth =`,
+		`regenerate = 'karty build'`,
 	} {
 		if !strings.Contains(string(contents), expected) {
 			t.Errorf("generated %s missing guard %q: %s", name, expected, contents)
@@ -513,7 +513,7 @@ func writeLegacyRootOutput(t *testing.T, directory string) {
 		t.Fatal(err)
 	}
 
-	for _, path := range []string{"game.kart", "catalog.json", "asset-report.json", filepath.Join("assets", "stale.png")} {
+	for _, path := range []string{"game.kart", "catalog.json", "asset-report.toml", filepath.Join("assets", "stale.png")} {
 		if err := os.WriteFile(filepath.Join(distribution, path), []byte("legacy"), 0o600); err != nil {
 			t.Fatal(err)
 		}

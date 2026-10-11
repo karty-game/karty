@@ -51,15 +51,15 @@ var (
 // ImageMetadata describes the normalized QOI output and the source properties
 // relevant to build reports. QOI always contains straight-alpha, 8-bit pixels.
 type ImageMetadata struct {
-	SourceFormat     ImageSourceFormat `json:"sourceFormat"`
-	SourceWidth      uint32            `json:"sourceWidth"`
-	SourceHeight     uint32            `json:"sourceHeight"`
-	SourceBitDepth   uint8             `json:"sourceBitDepth"`
-	Width            uint32            `json:"width"`
-	Height           uint32            `json:"height"`
-	BitDepth         uint8             `json:"bitDepth"`
-	PrecisionReduced bool              `json:"precisionReduced"`
-	DecodedBytes     uint64            `json:"decodedBytes"`
+	SourceFormat     ImageSourceFormat `toml:"sourceFormat"`
+	SourceWidth      uint32            `toml:"sourceWidth"`
+	SourceHeight     uint32            `toml:"sourceHeight"`
+	SourceBitDepth   uint8             `toml:"sourceBitDepth"`
+	Width            uint32            `toml:"width"`
+	Height           uint32            `toml:"height"`
+	BitDepth         uint8             `toml:"bitDepth"`
+	PrecisionReduced bool              `toml:"precisionReduced"`
+	DecodedBytes     uint64            `toml:"decodedBytes"`
 }
 
 // ProcessedImage is an owned, deterministic processor result. EncodedQOI does

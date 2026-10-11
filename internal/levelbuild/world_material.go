@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"slices"
 
@@ -22,6 +21,7 @@ type worldMaterialBuild struct {
 	metadata []byte
 	textures []assetpipeline.Texture
 	features []string
+	chunks   []ChunkArtifact
 	sources  []level.SourceEntry
 }
 
@@ -50,7 +50,15 @@ func compileMaterialWorld(
 		return world.Document{}, nil, err
 	}
 
+	if err := validateAnimationFrames(compiled, textures); err != nil {
+		return world.Document{}, nil, err
+	}
+
 	classifyCompiledFrames(&compiled, textures)
+
+	if err := compileMaterialEmission(&compiled, definition.Textures, textures); err != nil {
+		return world.Document{}, nil, err
+	}
 
 	encoded, err := world.Encode(compiled)
 	if err != nil {
@@ -109,6 +117,14 @@ func classifyCompiledFrames(document *world.Document, textures []metadataTexture
 
 func compileWorldAssets(ctx context.Context, directory string, definition manifest, textureMetadata []metadataTexture,
 	textures, data []level.SourceEntry, metadata []byte, assets *assetBuild) (worldMaterialBuild, error) {
+	if err := validateMaterializeSettings(definition, assets); err != nil {
+		return worldMaterialBuild{}, err
+	}
+
+	if err := validateMaterialEmission(definition, assets); err != nil {
+		return worldMaterialBuild{}, err
+	}
+
 	compiled, encoded, err := compileMaterialWorld(directory, definition, textureMetadata, textures)
 	if err != nil {
 		return worldMaterialBuild{}, err
@@ -119,6 +135,23 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV2)) {
 		return worldMaterialBuild{}, fmt.Errorf("advanced wall materials require %s and %s: %w",
 			asset.CapabilityWorldMaterialLayersV1, asset.CapabilityWorldMaterialAtlasV2, ErrManifest)
+	}
+
+	particleEntries, particleFeatures, err := compileWorldParticles(directory, definition, &compiled, textureMetadata, assets)
+	if err != nil {
+		return worldMaterialBuild{}, fmt.Errorf("level %q particles: %w", definition.Level.Name, err)
+	}
+
+	data = append(data, particleEntries...)
+
+	animations, err := worldAnimationFeatures(assets, compiled)
+	if err != nil {
+		return worldMaterialBuild{}, err
+	}
+
+	environment, err := worldEnvironmentFeatures(assets, compiled)
+	if err != nil {
+		return worldMaterialBuild{}, fmt.Errorf("level %q environment: %w", definition.Level.Name, err)
 	}
 
 	lighting, err := worldLightingFeatures(assets, compiled)
@@ -141,35 +174,81 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 		return worldMaterialBuild{}, err
 	}
 
+	materialize, err := resolveMaterializeSettings(definition.Textures, textureMetadata, compiled)
+	if err != nil {
+		return worldMaterialBuild{}, err
+	}
+
 	data = append(data, level.SourceEntry{Name: world.EntryName, Kind: level.EntryData, Data: encoded})
+
+	definition, chunkCache, cachedChunks, err := prepareWorldChunkCache(ctx, directory, definition, compiled, assets)
+	if err != nil {
+		return worldMaterialBuild{}, err
+	}
 
 	var projectDirectory string
 	if assets != nil {
 		projectDirectory = assets.projectRoot
 	}
 
-	data, metadata, lightmaps, err := buildWorldLightmaps(projectDirectory, directory, definition, compiled, data, metadata)
-	if err != nil {
-		return worldMaterialBuild{}, fmt.Errorf("level %q lightmaps: %w", definition.Level.Name, err)
+	var lightmaps []string
+	if definition.Chunks == nil || !definition.Chunks.Enabled {
+		data, metadata, lightmaps, err = buildWorldLightmaps(
+			projectDirectory,
+			directory,
+			definition,
+			compiled,
+			data,
+			metadata,
+			assets != nil && assets.development,
+		)
+		if err != nil {
+			return worldMaterialBuild{}, fmt.Errorf("level %q lightmaps: %w", definition.Level.Name, err)
+		}
 	}
 
-	atlas, err := buildWorldMaterials(ctx, assets, compiled, textures, data, metadata, strengths)
+	atlas, err := buildWorldMaterials(ctx, assets, compiled, textures, data, metadata, strengths, materialize)
 	if err != nil {
 		return worldMaterialBuild{}, fmt.Errorf("level %q material atlas: %w", definition.Level.Name, err)
 	}
 
+	if compiled.Emission != nil {
+		atlas.features = append(atlas.features, world.FeatureEmission)
+	}
+
+	atlas.features = append(atlas.features, particleFeatures...)
+	atlas.features = append(atlas.features, animations...)
+	atlas.features = append(atlas.features, environment...)
 	atlas.features = append(atlas.features, lighting...)
 	atlas.features = append(atlas.features, mapping...)
 	atlas.features = append(atlas.features, solids...)
 	atlas.features = append(atlas.features, lightmaps...)
 	atlas.features = append(atlas.features, world.Feature)
+
 	atlas.sources = textures
+	if definition.Chunks != nil && definition.Chunks.Enabled {
+		atlas, err = finishWorldChunks(ctx, directory, definition, compiled, atlas, assets, chunkCache, cachedChunks)
+		if err != nil {
+			return worldMaterialBuild{}, fmt.Errorf("level %q chunks: %w", definition.Level.Name, err)
+		}
+	}
+
+	if err := validateWorldRuntimeLights(&compiled, atlas); err != nil {
+		return worldMaterialBuild{}, fmt.Errorf("level %q world lighting: %w", definition.Level.Name, err)
+	}
 
 	return atlas, nil
 }
 
-func buildWorldMaterials(ctx context.Context, assets *assetBuild, document world.Document,
-	textures, data []level.SourceEntry, metadata []byte, strengths map[uint32]*worldmaterial.Strengths) (worldMaterialBuild, error) {
+func buildWorldMaterials(
+	ctx context.Context,
+	assets *assetBuild,
+	document world.Document,
+	textures, data []level.SourceEntry,
+	metadata []byte,
+	strengths map[uint32]*worldmaterial.Strengths,
+	options ...map[uint32]assetpipeline.MaterializeOptions,
+) (worldMaterialBuild, error) {
 	result := worldMaterialBuild{data: data, metadata: metadata}
 	if assets == nil || (!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1) &&
 		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV2)) {
@@ -195,7 +274,7 @@ func buildWorldMaterials(ctx context.Context, assets *assetBuild, document world
 		process = assetpipeline.ProcessWorldMaterials
 	}
 
-	pair, cached, err := process(ctx, assets.projectRoot, assets.manifest, document, textureBytes)
+	pair, cached, err := process(ctx, assets.projectRoot, assets.manifest, document, textureBytes, options...)
 	if err != nil {
 		return worldMaterialBuild{}, err
 	}
@@ -204,11 +283,19 @@ func buildWorldMaterials(ctx context.Context, assets *assetBuild, document world
 		return worldMaterialBuild{}, err
 	}
 
+	if len(pair.Reflectance) != 0 &&
+		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialReflectanceV1) {
+		return worldMaterialBuild{}, fmt.Errorf("reflectance requires %s: %w", worldmaterial.FeatureReflectance, ErrManifest)
+	}
+
 	if document.MaterialLayers != nil && pair.Layout.Schema != worldmaterial.SchemaV2 {
 		return worldMaterialBuild{}, worldmaterial.ErrAtlas
 	}
 
 	pair.Layout = applyMaterialStrengths(pair.Layout, strengths)
+	if err := worldmaterial.ValidateAnimationCoverage(&document, pair.Layout); err != nil {
+		return worldMaterialBuild{}, err
+	}
 
 	result.data, result.metadata, err = packageWorldMaterials(data, metadata, document, pair)
 	if err != nil {
@@ -222,6 +309,10 @@ func buildWorldMaterials(ctx context.Context, assets *assetBuild, document world
 		result.features = []string{worldmaterial.FeatureV2, world.FeatureMaterialLayers}
 	}
 
+	if len(pair.Reflectance) != 0 {
+		result.features = append(result.features, worldmaterial.FeatureReflectance)
+	}
+
 	return result, nil
 }
 
@@ -230,23 +321,35 @@ func buildWorldMaterials(ctx context.Context, assets *assetBuild, document world
 func describeWorldMaterials(pair worldmaterial.Pair, cached assetpipeline.Artifact) []assetpipeline.Texture {
 	const pixelBytes = 4
 
-	result := make([]assetpipeline.Texture, 0, 3)
+	result := make([]assetpipeline.Texture, 0, 5)
 
-	images := [][]byte{pair.Albedo, pair.Data}
-	if len(pair.MipTail) != 0 {
-		images = append(images, pair.MipTail)
+	images := []struct {
+		name        string
+		bytes       []byte
+		tail        bool
+		reflectance bool
+	}{
+		{worldmaterial.AlbedoEntry, pair.Albedo, false, false},
+		{worldmaterial.DataEntry, pair.Data, false, false},
+		{worldmaterial.MipTailEntry, pair.MipTail, true, false},
+		{worldmaterial.ReflectanceEntry, pair.Reflectance, false, true},
+		{worldmaterial.ReflectanceMipTailEntry, pair.ReflectanceMipTail, true, true},
 	}
-
-	for index, encoded := range images {
-		name := worldmaterial.AlbedoEntry
-		if index == 1 {
-			name = worldmaterial.DataEntry
+	for _, entry := range images {
+		if len(entry.bytes) == 0 {
+			continue
 		}
 
+		name, encoded := entry.name, entry.bytes
+
 		width, height := pair.Layout.Width, pair.Layout.Height
-		if index == len(images)-1 && len(pair.MipTail) != 0 {
-			name = worldmaterial.MipTailEntry
+		if entry.tail {
 			width, height = pair.Layout.MipDimensions()
+		}
+
+		processor := materialAtlasFeature(pair.Layout)
+		if entry.reflectance {
+			processor = worldmaterial.FeatureReflectance
 		}
 
 		digest := sha256.Sum256(encoded)
@@ -255,7 +358,7 @@ func describeWorldMaterials(pair worldmaterial.Pair, cached assetpipeline.Artifa
 			Kind: "world-material", Name: name, Profile: "world-material", Source: world.EntryName,
 			Output: checksum + ".qoi", ContentSHA256: checksum, OutputSHA256: checksum,
 			SourceSHA256: cached.SourceDigest, CacheKey: cached.CacheKey, CacheHit: cached.CacheHit,
-			Processor: materialAtlasFeature(pair.Layout), Encoding: "qoi", Width: width, Height: height,
+			Processor: processor, Encoding: "qoi", Width: width, Height: height,
 			OutputBytes:           int64(len(encoded)),
 			EstimatedDecodedBytes: int64(width) * int64(height) * pixelBytes,
 		})
@@ -291,7 +394,8 @@ func packageWorldMaterials(data []level.SourceEntry, metadata []byte,
 
 	for _, entry := range data {
 		if entry.Name == worldmaterial.LayoutEntry || entry.Name == worldmaterial.AlbedoEntry || entry.Name == worldmaterial.DataEntry ||
-			entry.Name == worldmaterial.MipTailEntry {
+			entry.Name == worldmaterial.MipTailEntry || entry.Name == worldmaterial.ReflectanceEntry ||
+			entry.Name == worldmaterial.ReflectanceMipTailEntry {
 			return nil, nil, ErrSource
 		}
 	}
@@ -301,18 +405,14 @@ func packageWorldMaterials(data []level.SourceEntry, metadata []byte,
 		return nil, nil, err
 	}
 
-	var identity map[string]json.RawMessage
-
-	if err := json.Unmarshal(metadata, &identity); err != nil || identity == nil {
+	identity, err := level.DecodeMetadata(metadata)
+	if err != nil {
 		return nil, nil, ErrManifest
 	}
 
-	identity[worldmaterial.MetadataKey], err = json.Marshal(pair.Layout.Schema)
-	if err != nil {
-		return nil, nil, err
-	}
+	identity[worldmaterial.MetadataKey] = level.StringValue(pair.Layout.Schema)
 
-	metadata, err = json.Marshal(identity)
+	metadata, err = level.EncodeMetadata(identity)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -324,6 +424,17 @@ func packageWorldMaterials(data []level.SourceEntry, metadata []byte,
 
 	if len(pair.MipTail) != 0 {
 		data = append(data, level.SourceEntry{Name: worldmaterial.MipTailEntry, Kind: level.EntryData, Data: pair.MipTail})
+	}
+
+	if len(pair.Reflectance) != 0 {
+		data = append(data, level.SourceEntry{Name: worldmaterial.ReflectanceEntry, Kind: level.EntryData, Data: pair.Reflectance})
+	}
+
+	if len(pair.ReflectanceMipTail) != 0 {
+		data = append(
+			data,
+			level.SourceEntry{Name: worldmaterial.ReflectanceMipTailEntry, Kind: level.EntryData, Data: pair.ReflectanceMipTail},
+		)
 	}
 
 	return data, metadata, nil

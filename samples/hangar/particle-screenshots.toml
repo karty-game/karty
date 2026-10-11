@@ -1,0 +1,29 @@
+[[views]]
+position = [12.6, -1.55, 1.9]
+yaw = 90
+pitch = -14
+output = 'dist/screenshots/particles-burning-barrel.png'
+
+[[views]]
+position = [9, -1.55, 1.7]
+yaw = 90
+pitch = -5
+output = 'dist/screenshots/particles-barrel-from-arrival.png'
+
+[[views]]
+position = [31, 23, 3]
+yaw = 180
+pitch = -30
+output = 'dist/screenshots/particles-acid-south.png'
+
+[[views]]
+position = [33, 26, 2]
+yaw = 80
+pitch = -14
+output = 'dist/screenshots/particles-acid-east.png'
+
+[[views]]
+position = [31, 14.6, 5.1]
+yaw = 0
+pitch = -14
+output = 'dist/screenshots/particles-acid-control-overlook.png'

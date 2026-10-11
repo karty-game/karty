@@ -30,6 +30,15 @@ materials and colored lighting.
 
 **[Explore the Hangar](https://karty-game.github.io/karty/main/hangar/)** · [Take a look](hangar/README.md)
 
+## Open Air / environment lab
+
+See the courtyard through two recessed windows, follow the covered passage
+outside, and look back into the room. Switch between daylight, cartoon,
+fantasy and space presets on the same geometry. An open north ground leaves
+room for future terrain and vegetation experiments.
+
+**[Take a look](environment/README.md)**
+
 ## 🎧 Media lab
 
 Turn up the music, layer on sound effects and play a video.
@@ -52,3 +61,9 @@ cd samples/ui-demo
 Open the address printed in your terminal. Edit, save and see your changes.
 Pick another sample by changing `ui-demo` to its folder name.
 For the courtyard, follow its [launch steps](world-camera/README.md#run-it).
+
+Sample preview CI installs each project's pinned public SDK, runs `karty bake`
+for each unchunked level with `[lightmap] enabled = true` and `offline = true`,
+then builds that project's web preview. Chunked levels bake every child during
+the build. A failed bake stops packaging; samples without offline lightmaps build
+directly.

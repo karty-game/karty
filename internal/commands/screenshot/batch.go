@@ -1,8 +1,8 @@
 package screenshot
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pelletier/go-toml/v2"
+	"github.com/pelletier/go-toml/v2/unstable"
 	"github.com/urfave/cli/v3"
 )
 
@@ -23,30 +25,30 @@ type viewRequest struct {
 }
 
 type authoredView struct {
-	Position []float64 `json:"position"`
-	Yaw      *float64  `json:"yaw"`
-	Pitch    *float64  `json:"pitch"`
-	FOV      *float64  `json:"fov"`
-	Output   string    `json:"output"`
+	Position []float64 `toml:"position"`
+	Yaw      *float64  `toml:"yaw"`
+	Pitch    *float64  `toml:"pitch"`
+	FOV      *float64  `toml:"fov"`
+	Output   string    `toml:"output"`
 }
 
 type nativeView struct {
-	Output string       `json:"output"`
-	Camera nativeCamera `json:"camera"`
+	Output string       `toml:"output"`
+	Camera nativeCamera `toml:"camera"`
 }
 
 // Field names match the versioned host process interface, independently of SDK bindings.
 type nativeCamera struct {
-	X      float64 `json:"x"`
-	Y      float64 `json:"y"`
-	Z      float64 `json:"z"`
-	Yaw    float64 `json:"yaw"`
-	Pitch  float64 `json:"pitch"`
-	FOV    float64 `json:"fov"`
-	Near   float64 `json:"near"`
-	Far    float64 `json:"far"`
-	Width  int     `json:"width"`
-	Height int     `json:"height"`
+	X      float64 `toml:"x"`
+	Y      float64 `toml:"y"`
+	Z      float64 `toml:"z"`
+	Yaw    float64 `toml:"yaw"`
+	Pitch  float64 `toml:"pitch"`
+	FOV    float64 `toml:"fov"`
+	Near   float64 `toml:"near"`
+	Far    float64 `toml:"far"`
+	Width  int     `toml:"width"`
+	Height int     `toml:"height"`
 }
 
 func viewOptions(command *cli.Command, defaults camera) ([]viewRequest, error) {
@@ -68,8 +70,6 @@ func viewOptions(command *cli.Command, defaults camera) ([]viewRequest, error) {
 }
 
 func readAuthoredViews(path string) ([]authoredView, error) {
-	var views []authoredView
-
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -85,18 +85,55 @@ func readAuthoredViews(path string) ([]authoredView, error) {
 		return nil, fmt.Errorf("batch file exceeds 64 KiB: %w", os.ErrInvalid)
 	}
 
-	decoder := json.NewDecoder(strings.NewReader(string(data)))
-	decoder.DisallowUnknownFields()
-
-	if err := decoder.Decode(&views); err != nil {
+	if err := validateAuthoredViewTables(data); err != nil {
 		return nil, err
 	}
 
-	if err := decoder.Decode(new(any)); err != io.EOF {
-		return nil, fmt.Errorf("batch must contain one JSON array: %w", os.ErrInvalid)
+	decoder := toml.NewDecoder(bytes.NewReader(data)).DisallowUnknownFields()
+
+	var batch struct {
+		Views []authoredView `toml:"views"`
+	}
+	if err := decoder.Decode(&batch); err != nil {
+		return nil, err
 	}
 
-	return views, nil
+	return batch.Views, nil
+}
+
+func validateAuthoredViewTables(contents []byte) error {
+	parser := unstable.Parser{}
+	parser.Reset(contents)
+
+	count := 0
+
+	for parser.NextExpression() {
+		expression := parser.Expression()
+		if expression.Kind != unstable.Table && expression.Kind != unstable.ArrayTable {
+			continue
+		}
+
+		key := expression.Key()
+		if !key.Next() || !bytes.Equal(key.Node().Data, []byte("views")) || key.Next() {
+			continue
+		}
+
+		if expression.Kind != unstable.ArrayTable || count == maxViews {
+			return fmt.Errorf("batch requires 1–64 [[views]] entries: %w", os.ErrInvalid)
+		}
+
+		count++
+	}
+
+	if err := parser.Error(); err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return fmt.Errorf("batch requires 1–64 [[views]] entries: %w", os.ErrInvalid)
+	}
+
+	return nil
 }
 
 func resolveViews(views []authoredView, defaults camera, level string) ([]viewRequest, error) {
@@ -192,15 +229,15 @@ func captureBatch(ctx context.Context, host, level string, features []string, re
 		}
 	}
 
-	file, err := os.CreateTemp("", "karty-screenshot-batch-*.json")
+	file, err := os.CreateTemp("", "karty-screenshot-batch-*.toml")
 	if err != nil {
 		return err
 	}
 	defer os.Remove(file.Name())
 
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
-	err = encoder.Encode(views)
+	err = toml.NewEncoder(file).Encode(struct {
+		Views []nativeView `toml:"views"`
+	}{Views: views})
 	closeErr := file.Close()
 
 	if err != nil {
@@ -211,7 +248,7 @@ func captureBatch(ctx context.Context, host, level string, features []string, re
 		return closeErr
 	}
 
-	command := exec.CommandContext(ctx, host, "--screenshot-protocol", "1", "--screenshot-level", level,
+	command := exec.CommandContext(ctx, host, "--screenshot-protocol", "2", "--screenshot-level", level,
 		"--screenshot-features", strings.Join(features, ","), "--screenshot-batch", file.Name())
 
 	command.Stdout, command.Stderr = diagnostics, diagnostics
@@ -220,7 +257,7 @@ func captureBatch(ctx context.Context, host, level string, features []string, re
 			return fmt.Errorf("native screenshot batch: %w", ctx.Err())
 		}
 
-		return fmt.Errorf("native screenshot batch failed; use a host supporting screenshot-v1 batches: %w", err)
+		return fmt.Errorf("native screenshot batch failed; use a host supporting screenshot-v2 TOML batches: %w", err)
 	}
 
 	for index, view := range views {

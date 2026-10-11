@@ -66,6 +66,7 @@ try {
     await page.waitForFunction(() => snapshots === 2);
     await page.screenshot({ path: resolve(artifacts, `lightmap-${viewport.width}.png`) });
     await page.keyboard.press("Escape");
+    await page.waitForFunction(() => !document.querySelector("#karty-lightmap-image").hasAttribute("src"));
     assert.equal(await page.locator("#karty-lightmap-image").getAttribute("src"), null);
     assert.equal(await page.evaluate(() => guestInputs), 0);
     await page.screenshot({ path: resolve(artifacts, `controls-${viewport.width}.png`) });
@@ -73,6 +74,13 @@ try {
       const box = await page.locator(`#${id}`).boundingBox();
       assert.ok(box && box.height >= 44 && box.x >= 0 && box.x + box.width <= viewport.width);
     }
+    await page.setContent('<!doctype html><html data-karty-state="running"><head></head><body></body></html>');
+    await page.evaluate(() => {
+      delete globalThis.kartySMAA;
+    });
+    await page.addScriptTag({ content: script });
+    assert.equal(await page.locator("#karty-aa-toggle").isVisible(), false);
+    assert.equal(await page.locator("#karty-lightmap-open").isEnabled(), true);
     assert.deepEqual(errors, []);
     await page.close();
   }

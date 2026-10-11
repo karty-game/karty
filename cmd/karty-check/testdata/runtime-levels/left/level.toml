@@ -4,4 +4,4 @@ kind = "runtime-arena"
 
 [[data]]
 name = "arena"
-source = "data/arena.json"
+source = "data/arena.bin"

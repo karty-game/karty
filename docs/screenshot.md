@@ -25,7 +25,7 @@ image_path=$(karty screenshot my-level --position 4.1,16.5,1.7 --yaw 24)
 | `--width`, `--height` | Image dimensions; default project resolution, maximum 1280 × 720.     |
 | `--output`, `-o`      | PNG path; default `dist/screenshots/<level>-<UTC timestamp>.png`.     |
 | `--host path`         | Local native host executable, overriding host discovery.              |
-| `--batch path`        | JSON array of 1–64 views captured in one native session.              |
+| `--batch path`        | TOML document with 1–64 views captured in one native session.         |
 | `--timeout duration`  | Native capture timeout, default `1m`; asset building happens first.   |
 
 Near/far clipping distances come from the project camera. Choose an eye point
@@ -41,16 +41,22 @@ image at that path.
 ## Batch capture
 
 ```sh
-karty screenshot my-level --batch views.json
+karty screenshot my-level --batch views.toml
 ```
 
-For example, `views.json`:
+For example, `views.toml`:
 
-```json
-[
-  {"position": [6, 2.2, 1.7], "yaw": 0, "output": "arrival.png"},
-  {"position": [4.1, 16.5, 1.7], "yaw": 24, "pitch": 3.4, "output": "view.png"}
-]
+```toml
+[[views]]
+position = [6.0, 2.2, 1.7]
+yaw = 0.0
+output = "arrival.png"
+
+[[views]]
+position = [4.1, 16.5, 1.7]
+yaw = 24.0
+pitch = 3.4
+output = "view.png"
 ```
 
 The level, textures and lighting load once. The same host process and graphics
@@ -84,7 +90,8 @@ baking requires an SDK advertising `world/lightmaps-prebaked@1`.
 Selection order is `--host`, `KARTY_HOST_NATIVE`, a staged project
 `dist/native/<platform>/karty-host` or `dist/native/karty-host`, then the
 SDK-pinned installed native host. Windows uses `karty-host.exe`.
-The selected host must support **screenshot-v1**; older hosts report an error.
+The selected host must support **screenshot-v1** for single images and **screenshot-v2**
+for TOML batches; older hosts report an error.
 The CLI uses a versioned process interface and public SDK formats, and does
 not import private engine source.
 

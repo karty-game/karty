@@ -64,6 +64,13 @@ func (g *grammar) shape(fieldType reflect.Type) *jsonschema.Schema {
 		}
 
 		return ref
+	case reflect.Array:
+		return &jsonschema.Schema{
+			Type:     "array",
+			MinItems: new(fieldType.Len()),
+			MaxItems: new(fieldType.Len()),
+			Items:    g.shape(fieldType.Elem()),
+		}
 	case reflect.Slice:
 		return &jsonschema.Schema{Types: []string{"array", "null"}, Items: g.shape(fieldType.Elem())}
 	case reflect.String:
@@ -99,52 +106,7 @@ func choice(values ...string) *jsonschema.Schema {
 }
 
 func (g *grammar) constraints() {
-	for _, definition := range g.definitions {
-		for name, property := range definition.Properties {
-			switch name {
-			case "id",
-				"kind",
-				"prefab",
-				"texture",
-				"from",
-				"to",
-				"material",
-				"floor_material",
-				"ceiling_material",
-				"side_material",
-				"top_material",
-				"bottom_material":
-				definition.Properties[name] = identifier()
-			case "rooms":
-				property.MaxItems = new(worldsource.MaxRooms)
-			case "prefabs":
-				property.MaxItems = new(worldsource.MaxPrefabs)
-			case "instances":
-				property.MaxItems = new(worldsource.MaxInstances)
-			case "connections":
-				property.MaxItems = new(worldsource.MaxConnections)
-			case "ports":
-				property.MaxItems = new(worldsource.MaxPorts)
-			case "contents":
-				property.MaxItems = new(worldsource.MaxContents)
-			case "solids":
-				property.MaxItems = new(world.MaxStaticSolids)
-			case "lights":
-				property.MaxItems = new(worldsource.MaxLights)
-			case "boundary":
-				property.Type, property.Types = "array", nil
-				property.MinItems, property.MaxItems = new(3), new(worldsource.MaxEdgesPerRoom)
-			case "footprint":
-				property.Type, property.Types = "array", nil
-				property.MinItems, property.MaxItems = new(3), new(world.MaxSolidVertices)
-			case "materials":
-				property.MaxItems = new(worldsource.MaxMaterialOverrides)
-			case "tags":
-				property.MaxItems = new(worldsource.MaxTags)
-				property.Items = &jsonschema.Schema{Type: "string", MinLength: new(1), MaxLength: new(worldsource.MaxTagBytes)}
-			}
-		}
-	}
+	g.propertyConstraints()
 
 	for _, scope := range []string{"Document", "Prefab"} {
 		for _, field := range []string{"solids", "contents"} {
@@ -161,6 +123,8 @@ func (g *grammar) constraints() {
 		"Solid":  {"id", "footprint", "side_material", "top_material", "bottom_material"},
 		"Sprite": {"texture", "facing", "alpha", "width", "height"}, "Lighting": {"version"},
 		"PointLight": {"id", "radius"}, "LightMotion": {"version", "period_seconds"},
+		"Animations": {"version", "presets"}, "AnimationPreset": {"name", "kind"}, "AnimationBinding": {"preset"}, "MaterialAnimation": {"material", "preset"},
+		"Environment": {"preset"}, "EnvironmentSun": {"azimuth", "elevation"},
 	} {
 		g.definitions[name].Required = required
 	}
@@ -178,6 +142,8 @@ func (g *grammar) constraints() {
 	)
 	set("Sprite", "facing", choice("camera-facing", "upright", "cross", "fixed"))
 	set("Sprite", "alpha", choice("cutout", "blend"))
+	g.environmentConstraints()
+	g.particleConstraints()
 
 	for _, field := range []string{"width", "height"} {
 		set("Sprite", field, &jsonschema.Schema{Type: "number", ExclusiveMinimum: new(float64(0)), Maximum: new(worldsource.MaxCoordinate)})
@@ -186,6 +152,8 @@ func (g *grammar) constraints() {
 	for _, field := range []string{"origin_x", "origin_y"} {
 		set("Sprite", field, number(0, 1))
 	}
+
+	g.animationConstraints()
 
 	set("Transform", "scale", number(0, worldsource.MaxCoordinate))
 	set("Actor", "scale", vector("xyz", 0, worldsource.MaxCoordinate))
@@ -281,6 +249,20 @@ func (g *grammar) versionRules() {
 			"boundary": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"bands": deny(), "secondary": deny()}}},
 		}}}}},
 		{worldsource.SolidsVersion, map[string]*jsonschema.Schema{"solids": deny(), "contents": deny()}},
+		{worldsource.AnimationsVersion, map[string]*jsonschema.Schema{
+			"animations": deny(),
+			"contents":   {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"actor": {Properties: map[string]*jsonschema.Schema{"animation": deny()}}}}},
+			"rooms":      {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"contents": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"actor": {Properties: map[string]*jsonschema.Schema{"animation": deny()}}}}}}}},
+		}},
+		{worldsource.ParticlesVersion, map[string]*jsonschema.Schema{
+			"particles": deny(), "particle_emitters": deny(), "rooms": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"particle_emitters": deny()}}},
+		}},
+		{worldsource.EnvironmentVersion, map[string]*jsonschema.Schema{
+			"environment": deny(),
+			"rooms": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
+				"sky": deny(), "boundary": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"sky": deny()}}},
+			}}},
+		}},
 	} {
 		fields := rule.fields
 		// Lighting and root UV are not prefab fields; restricting their absence
@@ -322,5 +304,114 @@ func (g *grammar) nonNullableLayers() {
 				}
 			}
 		}
+	}
+}
+
+func (g *grammar) propertyConstraints() {
+	for _, definition := range g.definitions {
+		for name, property := range definition.Properties {
+			switch name {
+			case "id", "name", "preset",
+				"kind",
+				"prefab",
+				"texture",
+				"from",
+				"to",
+				"material",
+				"floor_material",
+				"ceiling_material",
+				"side_material",
+				"top_material",
+				"bottom_material":
+				definition.Properties[name] = identifier()
+			case "rooms":
+				property.MaxItems = new(worldsource.MaxRooms)
+			case "prefabs":
+				property.MaxItems = new(worldsource.MaxPrefabs)
+			case "instances":
+				property.MaxItems = new(worldsource.MaxInstances)
+			case "connections":
+				property.MaxItems = new(worldsource.MaxConnections)
+			case "ports":
+				property.MaxItems = new(worldsource.MaxPorts)
+			case "contents":
+				property.MaxItems = new(worldsource.MaxContents)
+			case "solids":
+				property.MaxItems = new(world.MaxStaticSolids)
+			case "lights":
+				property.MaxItems = new(worldsource.MaxLights)
+			case "boundary":
+				property.Type, property.Types = "array", nil
+				property.MinItems, property.MaxItems = new(3), new(worldsource.MaxEdgesPerRoom)
+			case "footprint":
+				property.Type, property.Types = "array", nil
+				property.MinItems, property.MaxItems = new(3), new(world.MaxSolidVertices)
+			case "materials":
+				property.MaxItems = new(worldsource.MaxMaterialOverrides)
+			case "tags":
+				property.MaxItems = new(worldsource.MaxTags)
+				property.Items = &jsonschema.Schema{Type: "string", MinLength: new(1), MaxLength: new(worldsource.MaxTagBytes)}
+			}
+		}
+	}
+}
+
+func (g *grammar) animationConstraints() {
+	set := func(name, field string, s *jsonschema.Schema) { g.definitions[name].Properties[field] = s }
+	set("Animations", "version", &jsonschema.Schema{Type: "integer", Enum: []any{world.AnimationVersion}})
+
+	g.definitions["Animations"].Properties["presets"].MinItems = new(1)
+	g.definitions["Animations"].Properties["presets"].MaxItems = new(world.MaxAnimationPresets)
+	g.definitions["Animations"].Properties["materials"].MaxItems = new(world.MaxMaterialAnimations)
+
+	set("AnimationPreset", "kind", choice("flipbook", "liquid", "spin", "oscillate"))
+
+	for _, kind := range []struct {
+		name     string
+		required []string
+		allowed  []string
+	}{
+		{"flipbook", []string{"frames", "fps"}, []string{"frames", "fps", "interval_seconds"}},
+		{"liquid", []string{"frequency"}, []string{"flow", "amplitude", "frequency", "speed", "surface_amplitude", "opacity", "pixel_size"}},
+		{"spin", []string{"axis", "speed"}, []string{"axis", "pivot", "speed"}},
+		{"oscillate", []string{"offset", "period_seconds"}, []string{"offset", "period_seconds"}},
+	} {
+		props := map[string]*jsonschema.Schema{"kind": choice(kind.name)}
+
+		for _, field := range []string{"frames", "fps", "interval_seconds", "flow", "amplitude", "frequency", "speed", "axis", "pivot", "offset", "period_seconds", "surface_amplitude", "opacity", "pixel_size"} {
+			allowed := false
+			for _, name := range kind.allowed {
+				if field == name {
+					allowed = true
+				}
+			}
+
+			if !allowed {
+				props[field] = deny()
+			}
+		}
+
+		g.definitions["AnimationPreset"].OneOf = append(
+			g.definitions["AnimationPreset"].OneOf,
+			&jsonschema.Schema{Required: kind.required, Properties: props},
+		)
+	}
+
+	g.definitions["AnimationPreset"].Properties["frames"].MaxItems = new(world.MaxAnimationFrames)
+	g.definitions["AnimationPreset"].Properties["frames"].Items = identifier()
+
+	set("AnimationPreset", "fps", number(0, 120))
+	set("AnimationPreset", "interval_seconds", number(0, world.MaxAnimationSeconds))
+	set("AnimationPreset", "period_seconds", number(0, world.MaxAnimationSeconds))
+	set("AnimationPreset", "flow", vector("xy", -10, 10))
+	set("AnimationPreset", "amplitude", number(0, 1))
+	set("AnimationPreset", "surface_amplitude", number(0, .25))
+	set("AnimationPreset", "opacity", number(0, 1))
+	set("AnimationPreset", "pixel_size", &jsonschema.Schema{Type: "integer", Minimum: new(float64(0)), Maximum: new(float64(32))})
+	set("AnimationPreset", "frequency", number(0, 100))
+	set("AnimationPreset", "speed", number(-100, 100))
+
+	for _, name := range []string{"AnimationBinding", "MaterialAnimation"} {
+		set(name, "phase_seconds", number(0, world.MaxAnimationSeconds))
 	}
 }

@@ -108,11 +108,12 @@ func compileLooseContents(
 		}
 		if actor := authored.Actor; actor != nil {
 			compiled.Actor = &world.Actor{
-				Yaw:   actor.Yaw,
-				Pitch: actor.Pitch,
-				Roll:  actor.Roll,
-				Scale: world.Vec3(actor.Scale),
-				Tags:  append([]string(nil), actor.Tags...),
+				Yaw:       actor.Yaw,
+				Pitch:     actor.Pitch,
+				Roll:      actor.Roll,
+				Scale:     world.Vec3(actor.Scale),
+				Tags:      append([]string(nil), actor.Tags...),
+				Animation: compileAnimationBinding(actor.Animation),
 			}
 			if sprite := actor.Sprite; sprite != nil {
 				textureID, err := materialID(materials, sprite.Texture)

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,10 +15,12 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 const (
-	CacheSchemaVersion       = 2
+	CacheSchemaVersion       = 3
 	MaxCacheOptionsBytes     = 32 * 1024
 	MaxCacheMetadataBytes    = 64 * 1024
 	MaxCachePayloadBytes     = 64 * 1024 * 1024
@@ -41,8 +43,8 @@ var (
 // Revision identifies one implementation detail that can change processed
 // bytes, such as an importer, normalizer, filter, resampler, or codec.
 type Revision struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	Name    string `toml:"name"`
+	Version string `toml:"version"`
 }
 
 // Recipe is a canonical, immutable processor recipe. It deliberately excludes
@@ -56,10 +58,10 @@ type Recipe struct {
 }
 
 type recipeDocument struct {
-	Kind      string          `json:"kind"`
-	Processor string          `json:"processor"`
-	Revisions []Revision      `json:"revisions"`
-	Options   json.RawMessage `json:"options"`
+	Kind      string     `toml:"kind"`
+	Processor string     `toml:"processor"`
+	Revisions []Revision `toml:"revisions"`
+	Options   string     `toml:"options"`
 }
 
 // NewRecipe canonicalizes options and revisions and computes their stable
@@ -84,14 +86,14 @@ func NewRecipe(kind, processor string, revisions []Revision, options any) (Recip
 		previous = revision.Name
 	}
 
-	canonicalOptions, err := canonicalJSON(options)
-	if err != nil || len(canonicalOptions) == 0 || len(canonicalOptions) > MaxCacheOptionsBytes {
+	canonicalOptions, err := canonicalTOML(options)
+	if err != nil || len(canonicalOptions) > MaxCacheOptionsBytes {
 		return Recipe{}, ErrCacheRecipe
 	}
 
-	document := recipeDocument{Kind: kind, Processor: processor, Revisions: canonicalRevisions, Options: canonicalOptions}
+	document := recipeDocument{Kind: kind, Processor: processor, Revisions: canonicalRevisions, Options: string(canonicalOptions)}
 
-	encoded, err := json.Marshal(document)
+	encoded, err := toml.Marshal(document)
 	if err != nil {
 		return Recipe{}, ErrCacheRecipe
 	}
@@ -108,7 +110,7 @@ func (recipe Recipe) Kind() string          { return recipe.kind }
 func (recipe Recipe) Processor() string     { return recipe.processor }
 func (recipe Recipe) Digest() string        { return recipe.digest }
 func (recipe Recipe) Revisions() []Revision { return slices.Clone(recipe.revisions) }
-func (recipe Recipe) OptionsJSON() []byte   { return bytes.Clone(recipe.options) }
+func (recipe Recipe) OptionsTOML() []byte   { return bytes.Clone(recipe.options) }
 
 // SourceSnapshot is an immutable, content-hashed source captured before a
 // processor inspects it. Processors receive a copy through Bytes.
@@ -160,7 +162,7 @@ func (snapshot SourceSnapshot) Digest() string { return snapshot.digest }
 func (snapshot SourceSnapshot) Size() int64    { return int64(len(snapshot.contents)) }
 
 // Processed is the processor-neutral result published by Cache.Resolve.
-// Metadata must be JSON-marshalable and is stored as bounded canonical JSON.
+// Structured metadata uses bounded TOML; []byte metadata is preserved as an opaque binary artifact.
 type Processed struct {
 	Encoding string
 	Payload  []byte
@@ -180,7 +182,7 @@ type Artifact struct {
 	PayloadPath  string
 	EntryPath    string
 	OutputBytes  int64
-	Metadata     json.RawMessage
+	Metadata     []byte
 	CacheHit     bool
 }
 
@@ -189,22 +191,22 @@ type Cache struct {
 	root string
 }
 
-// NewProjectCache opens the project-owned asset cache schema v2 namespace.
+// NewProjectCache opens the project-owned asset cache schema v3 namespace.
 func NewProjectCache(projectRoot string) *Cache {
-	return &Cache{root: filepath.Join(projectRoot, ".karty", "cache", "assets", "v2")}
+	return &Cache{root: filepath.Join(projectRoot, ".karty", "cache", "assets", "v3")}
 }
 
 type cacheEntry struct {
-	Schema       int             `json:"schema"`
-	CacheKey     string          `json:"cacheKey"`
-	RecipeDigest string          `json:"recipeDigest"`
-	SourceDigest string          `json:"sourceDigest"`
-	OutputDigest string          `json:"outputDigest"`
-	OutputBytes  int64           `json:"outputBytes"`
-	Kind         string          `json:"kind"`
-	Processor    string          `json:"processor"`
-	Encoding     string          `json:"encoding"`
-	Metadata     json.RawMessage `json:"metadata"`
+	Schema       int    `toml:"schema"`
+	CacheKey     string `toml:"cacheKey"`
+	RecipeDigest string `toml:"recipeDigest"`
+	SourceDigest string `toml:"sourceDigest"`
+	OutputDigest string `toml:"outputDigest"`
+	OutputBytes  int64  `toml:"outputBytes"`
+	Kind         string `toml:"kind"`
+	Processor    string `toml:"processor"`
+	Encoding     string `toml:"encoding"`
+	Metadata     string `toml:"metadata"`
 }
 
 // Resolve returns a verified warm entry or runs processor once under a
@@ -273,7 +275,7 @@ func makeCacheEntry(key string, source SourceSnapshot, recipe Recipe, processed 
 		return cacheEntry{}, ErrCacheOutput
 	}
 
-	metadata, err := canonicalJSON(processed.Metadata)
+	metadata, err := canonicalCacheMetadata(processed.Metadata)
 	if err != nil || len(metadata) > MaxCacheMetadataBytes/2 {
 		return cacheEntry{}, ErrCacheOutput
 	}
@@ -283,7 +285,7 @@ func makeCacheEntry(key string, source SourceSnapshot, recipe Recipe, processed 
 	return cacheEntry{
 		Schema: CacheSchemaVersion, CacheKey: key, RecipeDigest: recipe.digest, SourceDigest: source.digest,
 		OutputDigest: hex.EncodeToString(outputDigest[:]), OutputBytes: int64(len(processed.Payload)),
-		Kind: recipe.kind, Processor: recipe.processor, Encoding: processed.Encoding, Metadata: metadata,
+		Kind: recipe.kind, Processor: recipe.processor, Encoding: processed.Encoding, Metadata: base64.StdEncoding.EncodeToString(metadata),
 	}, nil
 }
 
@@ -293,7 +295,7 @@ func (cache *Cache) load(path, key string, source SourceSnapshot, recipe Recipe)
 		return Artifact{}, false
 	}
 
-	metadataPath := filepath.Join(path, "metadata.json")
+	metadataPath := filepath.Join(path, "metadata.toml")
 	payloadPath := filepath.Join(path, "payload")
 
 	metadataInfo, err := os.Lstat(metadataPath)
@@ -308,14 +310,20 @@ func (cache *Cache) load(path, key string, source SourceSnapshot, recipe Recipe)
 
 	var entry cacheEntry
 
-	decoder := json.NewDecoder(bytes.NewReader(encoded))
+	decoder := toml.NewDecoder(bytes.NewReader(encoded))
 	decoder.DisallowUnknownFields()
 
-	if err := decoder.Decode(&entry); err != nil || decoder.Decode(&struct{}{}) != io.EOF ||
+	if err := decoder.Decode(&entry); err != nil ||
 		entry.Schema != CacheSchemaVersion || entry.CacheKey != key || entry.RecipeDigest != recipe.digest ||
 		entry.SourceDigest != source.digest || entry.Kind != recipe.kind || entry.Processor != recipe.processor ||
 		!validDigest(entry.OutputDigest) || !validCacheToken(entry.Encoding, maxEncodingLength) ||
-		entry.OutputBytes < 1 || entry.OutputBytes > MaxCachePayloadBytes || len(entry.Metadata) > MaxCacheMetadataBytes/2 || !json.Valid(entry.Metadata) {
+		entry.OutputBytes < 1 || entry.OutputBytes > MaxCachePayloadBytes ||
+		len(entry.Metadata) > base64.StdEncoding.EncodedLen(MaxCacheMetadataBytes/2) {
+		return Artifact{}, false
+	}
+
+	metadata, err := base64.StdEncoding.DecodeString(entry.Metadata)
+	if err != nil || len(metadata) > MaxCacheMetadataBytes/2 {
 		return Artifact{}, false
 	}
 
@@ -337,7 +345,7 @@ func (cache *Cache) load(path, key string, source SourceSnapshot, recipe Recipe)
 	return Artifact{
 		CacheKey: key, RecipeDigest: recipe.digest, SourceDigest: source.digest, OutputDigest: entry.OutputDigest,
 		Encoding: entry.Encoding, PayloadPath: payloadPath, EntryPath: path, OutputBytes: entry.OutputBytes,
-		Metadata: bytes.Clone(entry.Metadata),
+		Metadata: metadata,
 	}, true
 }
 
@@ -348,7 +356,7 @@ func (cache *Cache) publish(destination string, entry cacheEntry, payload []byte
 	}
 	defer os.RemoveAll(temporary)
 
-	metadata, err := json.Marshal(entry)
+	metadata, err := toml.Marshal(entry)
 	if err != nil || len(metadata) > MaxCacheMetadataBytes {
 		return ErrCacheOutput
 	}
@@ -357,7 +365,7 @@ func (cache *Cache) publish(destination string, entry cacheEntry, payload []byte
 		return err
 	}
 
-	if err := writeSyncedFile(filepath.Join(temporary, "metadata.json"), append(metadata, '\n')); err != nil {
+	if err := writeSyncedFile(filepath.Join(temporary, "metadata.toml"), append(metadata, '\n')); err != nil {
 		return err
 	}
 
@@ -455,22 +463,29 @@ func syncDirectory(path string) error {
 }
 
 func cacheKey(sourceDigest, recipeDigest string) string {
-	digest := sha256.Sum256([]byte("karty-asset-cache-v2\x00" + sourceDigest + "\x00" + recipeDigest))
+	digest := sha256.Sum256([]byte("karty-asset-cache-v3\x00" + sourceDigest + "\x00" + recipeDigest))
 
 	return hex.EncodeToString(digest[:])
 }
 
-func canonicalJSON(value any) ([]byte, error) {
+func canonicalTOML(value any) ([]byte, error) {
 	if value == nil {
-		return []byte("{}"), nil
+		return []byte{}, nil
 	}
 
-	encoded, err := json.Marshal(value)
-	if err != nil || !json.Valid(encoded) {
+	encoded, err := toml.Marshal(value)
+	if err != nil {
 		return nil, ErrCacheRecipe
 	}
 
 	return encoded, nil
+}
+func canonicalCacheMetadata(value any) ([]byte, error) {
+	if data, ok := value.([]byte); ok {
+		return bytes.Clone(data), nil
+	}
+
+	return canonicalTOML(value)
 }
 
 func validCacheToken(value string, maximum int) bool {

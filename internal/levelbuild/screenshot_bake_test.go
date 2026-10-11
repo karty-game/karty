@@ -2,7 +2,6 @@ package levelbuild
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"slices"
@@ -50,8 +49,8 @@ func TestScreenshotQuickBakeRepairAndReuse(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		var header worldlightmap.PrebakeManifest
-		if err := json.Unmarshal(data, &header); err != nil {
+		header, err := worldlightmap.DecodePrebakeManifest(data)
+		if err != nil {
 			t.Fatal(err)
 		}
 

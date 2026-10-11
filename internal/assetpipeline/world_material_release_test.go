@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty/internal/sdk"
 )
@@ -20,6 +21,7 @@ func TestWorldMaterialReleaseAtlas(t *testing.T) {
 	}
 
 	manifest := fixtureMaterialManifest()
+	manifest.Assets.Capabilities.Runtime = append(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialReflectanceV1)
 	manifest.Tools.MaterializeRevision = "3ad39f1308e3b2b62da81f557adc6d32697b616a"
 
 	for platform, checksum := range map[string]string{
@@ -52,8 +54,8 @@ func TestWorldMaterialReleaseAtlas(t *testing.T) {
 			return err
 		}
 
-		for _, name := range []string{"normal", "height", "ao"} {
-			encoded, err := readBoundedMaterialFile(filepath.Join(directory, "atlas_"+name+".png"), MaxCachePayloadBytes)
+		for _, name := range []string{"normal", "height", "ao", "metallic", "smoothness"} {
+			encoded, err := readBoundedMaterialFile(filepath.Join(directory, "atlas_"+name+".png"))
 			if err != nil {
 				return err
 			}
@@ -73,13 +75,20 @@ func TestWorldMaterialReleaseAtlas(t *testing.T) {
 	document := world.Document{Sectors: []world.Sector{{FloorMaterial: 9, CeilingMaterial: 9}}}
 	textures := fixtureTextures(t)
 
-	pair, cold, err := processWorldMaterials(ctx, root, manifest, document, textures, execute)
+	normal, height, metallic, ao := 0.8, 1.0, 1.0, 0.5
+	options := map[uint32]MaterializeOptions{
+		9: {Preset: "metal", NormalStrength: &normal, HeightContrast: &height, MetallicScale: &metallic, AODepthScale: &ao},
+	}
+
+	pair, cold, err := processWorldMaterials(ctx, root, manifest, document, textures, execute, options)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	warmPair, warm, err := processWorldMaterials(ctx, root, manifest, document, textures, execute)
-	if err != nil || calls != 1 || cold.CacheHit || !warm.CacheHit || !bytes.Equal(pair.Data, warmPair.Data) {
+	warmPair, warm, err := processWorldMaterials(ctx, root, manifest, document, textures, execute, options)
+	if err != nil || calls != 1 || cold.CacheHit || !warm.CacheHit || !bytes.Equal(pair.Data, warmPair.Data) ||
+		len(pair.Reflectance) == 0 || len(pair.ReflectanceMipTail) == 0 ||
+		!bytes.Equal(pair.Reflectance, warmPair.Reflectance) || !bytes.Equal(pair.ReflectanceMipTail, warmPair.ReflectanceMipTail) {
 		t.Fatalf("actual native cold/warm atlas: calls=%d warm=%v err=%v", calls, warm.CacheHit, err)
 	}
 }

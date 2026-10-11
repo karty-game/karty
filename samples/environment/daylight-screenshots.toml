@@ -1,0 +1,23 @@
+[[views]]
+position = [0, -8, 1.7]
+yaw = 0
+pitch = 4.6
+output = 'dist/screenshots/daylight-windows.png'
+
+[[views]]
+position = [1, 0, 1.7]
+yaw = -10.3
+pitch = 2.3
+output = 'dist/screenshots/daylight-courtyard.png'
+
+[[views]]
+position = [0, 12, 1.7]
+yaw = 180
+pitch = 3.4
+output = 'dist/screenshots/daylight-look-back.png'
+
+[[views]]
+position = [0, 32, 1.7]
+yaw = -20
+pitch = 10.3
+output = 'dist/screenshots/daylight-test-ground.png'

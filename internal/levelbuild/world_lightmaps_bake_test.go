@@ -140,7 +140,7 @@ func TestOfflineBakeAutomaticPackageAndStaleFallback(t *testing.T) {
 	writePrebakeFixture(t, filepath.Join(importDirectory, automaticBakeManifest), first)
 	writePrebakeFixture(t, filepath.Join(importDirectory, "lightmap.qoi"), imageBytes)
 
-	manualControls := "prebake = \".karty/imports/lightmap-prebake.json\"\nprebake_image = \".karty/imports/lightmap.qoi\""
+	manualControls := "prebake = \".karty/imports/lightmap-prebake.bin\"\nprebake_image = \".karty/imports/lightmap.qoi\""
 	writePrebakeFixture(t, manifestPath, []byte(strings.Replace(string(definitionBytes), "offline = true", manualControls, 1)))
 
 	if _, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); !errors.Is(err, worldlightmap.ErrLayout) {

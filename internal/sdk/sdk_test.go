@@ -41,6 +41,8 @@ func TestResolve(t *testing.T) {
 		asset.CapabilityWorldMaterialAtlasV1, asset.CapabilityWorldMaterialMappingV1,
 		asset.CapabilityWorldLightingV1, asset.CapabilityWorldStaticSolidsV1,
 		asset.CapabilityWorldLightmapsV1, asset.CapabilityWorldLightmapsPrebakedV1,
+		asset.CapabilityWorldAnimationsV1,
+		asset.CapabilityWorldEnvironmentV1,
 	} {
 		if !slices.Contains(manifest.Assets.Capabilities.Runtime, capability) {
 			t.Errorf("released default SDK omits %s", capability)

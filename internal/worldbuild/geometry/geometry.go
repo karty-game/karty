@@ -38,6 +38,20 @@ type edgeKey struct {
 //nolint:gocognit,gocyclo,maintidx // The phases share bounded identity and portal maps that are easier to audit together.
 func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Document, error) {
 	document := sdkworld.Document{Version: sdkworld.Version}
+	if expanded.Environment != nil {
+		environment := *expanded.Environment
+		if environment.Sun != nil {
+			sun := *environment.Sun
+			environment.Sun = &sun
+		}
+		if environment.TimeOfDay != nil {
+			environment.TimeOfDay = new(*environment.TimeOfDay)
+		}
+		if environment.CloudAmount != nil {
+			environment.CloudAmount = new(*environment.CloudAmount)
+		}
+		document.Environment = &environment
+	}
 	if err := validateExpandedUV(expanded); err != nil {
 		return sdkworld.Document{}, err
 	}
@@ -87,6 +101,7 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 			}
 			sector := sdkworld.Sector{
 				ID: room.ID + "#" + strconv.Itoa(polygonIndex), SourceRoom: room.SourceRoom, Instance: room.Instance,
+				Sky:   room.Sky,
 				Floor: compilePlane(room.Floor), Ceiling: compilePlane(room.Ceiling),
 				FloorMaterial: floorMaterial, CeilingMaterial: ceilingMaterial,
 				Walls: make([]sdkworld.Wall, len(polygon)),
@@ -111,6 +126,7 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 				}
 				if endIndex == (startIndex+1)%len(room.Boundary) {
 					authored := room.Boundary[startIndex]
+					wall.Sky = authored.Sky
 					wall.SourceEdge = authored.ID
 					wall.Material, err = materialID(materials, authored.Material)
 					if err != nil {
@@ -209,8 +225,9 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 				actor := content.Actor
 				compiledActor := &sdkworld.Actor{
 					Yaw: actor.Yaw, Pitch: actor.Pitch, Roll: actor.Roll,
-					Scale: sdkworld.Vec3{X: actor.Scale.X, Y: actor.Scale.Y, Z: actor.Scale.Z},
-					Tags:  append([]string(nil), actor.Tags...),
+					Scale:     sdkworld.Vec3{X: actor.Scale.X, Y: actor.Scale.Y, Z: actor.Scale.Z},
+					Tags:      append([]string(nil), actor.Tags...),
+					Animation: compileAnimationBinding(actor.Animation),
 				}
 				if actor.Sprite != nil {
 					assetID, assetErr := materialID(materials, actor.Sprite.Texture)
@@ -230,6 +247,9 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 		}
 	}
 	if err := compileLooseContents(&document, expanded.Contents, materials, usedMaterials); err != nil {
+		return sdkworld.Document{}, err
+	}
+	if err := compileAnimations(&document, expanded.Animations, materials, usedMaterials); err != nil {
 		return sdkworld.Document{}, err
 	}
 	if len(usedMaterials) > MaxMaterials {

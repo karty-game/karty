@@ -27,6 +27,11 @@ type camera struct {
 	width, height              int
 }
 
+// ResolveNativeHost selects a local or SDK-pinned native screenshot host.
+func ResolveNativeHost(ctx context.Context, override string, manifest sdk.Manifest) (string, error) {
+	return nativeHost(ctx, override, manifest)
+}
+
 // Command creates a native, one-shot world screenshot command.
 func Command() *cli.Command {
 	return &cli.Command{
@@ -39,7 +44,7 @@ func Command() *cli.Command {
 			&cli.IntFlag{Name: "width", Usage: "PNG width, at most 1280 (default: project resolution)"},
 			&cli.IntFlag{Name: "height", Usage: "PNG height, at most 720 (default: project resolution)"},
 			&cli.StringFlag{Name: "output", Aliases: []string{"o"}, Usage: "PNG path (default: dist/screenshots/<level>-<timestamp>.png)"},
-			&cli.StringFlag{Name: "batch", Usage: "JSON array of camera views; capture all in one native session"},
+			&cli.StringFlag{Name: "batch", Usage: "TOML camera views; capture all in one native session"},
 			&cli.StringFlag{Name: "host", Usage: "local native karty-host executable (or KARTY_HOST_NATIVE)"},
 			&cli.DurationFlag{Name: "timeout", Value: time.Minute, Usage: "maximum native capture duration"},
 		}, Action: run,

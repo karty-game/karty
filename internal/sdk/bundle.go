@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -90,17 +91,12 @@ func readBundle(version string, data []byte) (Manifest, error) {
 		}
 	}
 
-	metadata, err := fs.ReadFile(archive, "bundle.json")
+	compatibility, err := readCompatibility(archive, version)
 	if err != nil {
 		return Manifest{}, err
 	}
 
-	var compatibility Compatibility
-	if err = json.Unmarshal(metadata, &compatibility); err != nil {
-		return Manifest{}, err
-	}
-
-	if compatibility.Format != 1 || (compatibility.UISchema != 9 && compatibility.UISchema != 10 && compatibility.UISchema != 11) ||
+	if (compatibility.UISchema != 9 && compatibility.UISchema != 10 && compatibility.UISchema != 11) ||
 		(compatibility.ProjectCodegen != 1 && compatibility.ProjectCodegen != 2) {
 		return Manifest{}, bundleError("SDK requires unsupported bundle, UI schema or project generator; upgrade Karty")
 	}
@@ -348,3 +344,83 @@ func readBundleFile(path string) ([]byte, error) {
 }
 
 const authoredActionProjectCodegen = 2
+const tomlBundleFormat = 2
+const semanticVersionParts = 3
+
+func readCompatibility(archive fs.FS, version string) (Compatibility, error) {
+	if bundleUsesTOML(version) {
+		return readTOMLCompatibility(archive)
+	}
+
+	// Released SDK archives are immutable. Their build-only format1 metadata is
+	// read only for explicitly selected versions preceding the binary candidate.
+	data, err := compatibilityBytes(archive, "bundle.json")
+	if err != nil {
+		return Compatibility{}, err
+	}
+
+	var compatibility Compatibility
+	if err := json.Unmarshal(data, &compatibility); err != nil {
+		return Compatibility{}, err
+	}
+
+	if compatibility.Format != 1 {
+		return Compatibility{}, bundleError("SDK bundle format is unsupported")
+	}
+
+	return compatibility, nil
+}
+
+func readTOMLCompatibility(archive fs.FS) (Compatibility, error) {
+	if _, err := fs.Stat(archive, "bundle.json"); err == nil {
+		return Compatibility{}, bundleError("current SDK cannot contain legacy JSON bundle metadata")
+	} else if !os.IsNotExist(err) {
+		return Compatibility{}, err
+	}
+
+	data, err := compatibilityBytes(archive, "bundle.toml")
+	if err != nil {
+		return Compatibility{}, err
+	}
+
+	var compatibility Compatibility
+
+	decoder := toml.NewDecoder(bytes.NewReader(data)).DisallowUnknownFields()
+	if err := decoder.Decode(&compatibility); err != nil {
+		return Compatibility{}, err
+	}
+
+	if compatibility.Format != tomlBundleFormat {
+		return Compatibility{}, bundleError("SDK bundle format is unsupported")
+	}
+
+	return compatibility, nil
+}
+
+func compatibilityBytes(archive fs.FS, name string) ([]byte, error) {
+	data, err := fs.ReadFile(archive, name)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) == 0 || len(data) > 1024 {
+		return nil, bundleError("SDK bundle metadata exceeds bounds")
+	}
+
+	return data, nil
+}
+
+func bundleUsesTOML(version string) bool {
+	release, _, _ := strings.Cut(version, "-")
+
+	parts := strings.Split(release, ".")
+	if len(parts) != semanticVersionParts {
+		return true
+	}
+
+	major, majorErr := strconv.ParseUint(parts[0], 10, 64)
+	minor, minorErr := strconv.ParseUint(parts[1], 10, 64)
+	patch, patchErr := strconv.ParseUint(parts[2], 10, 64)
+
+	return majorErr != nil || minorErr != nil || patchErr != nil || major > 0 || minor > 0 || patch >= 11
+}

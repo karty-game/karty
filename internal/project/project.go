@@ -50,8 +50,9 @@ type Config struct {
 			Width  int `koanf:"width"`
 			Height int `koanf:"height"`
 		} `koanf:"resolution"`
-		Camera CameraConfig `koanf:"camera"`
-		Debug  struct {
+		Performance PerformanceConfig `koanf:"performance"`
+		Camera      CameraConfig      `koanf:"camera"`
+		Debug       struct {
 			Renderer bool `koanf:"renderer"`
 		} `koanf:"debug"`
 	} `koanf:"project"`
@@ -183,16 +184,21 @@ func Load(directory string) (Config, error) {
 	}
 
 	if config.Project.Resolution.Width == 0 {
-		config.Project.Resolution.Width = 960
+		config.Project.Resolution.Width = 1280
 	}
 
 	if config.Project.Resolution.Height == 0 {
-		config.Project.Resolution.Height = 540
+		config.Project.Resolution.Height = 720
 	}
 
 	if config.Project.Resolution.Width < 1 || config.Project.Resolution.Height < 1 {
 		return Config{}, fmt.Errorf("%s: %w", path, errInvalidResolution)
 	}
+	performance, err := normalizePerformanceConfig(config.Project.Performance)
+	if err != nil {
+		return Config{}, fmt.Errorf("%s: %w", path, err)
+	}
+	config.Project.Performance = performance
 
 	if err := loadCameraConfig(&config, configFile); err != nil {
 		return Config{}, fmt.Errorf("%s: %w", path, err)
