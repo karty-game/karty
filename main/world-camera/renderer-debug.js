@@ -132,6 +132,7 @@
     lightmap.disabled = typeof globalThis.kartyLightmapDebug !== "function";
     aa.disabled = typeof globalThis.kartySMAA !== "function";
     if (lightmap.disabled) lightmap.title = "Rebuild the candidate host to enable lightmap diagnostics.";
+    aa.hidden = aa.disabled;
     if (aa.disabled) aa.textContent = "AA unavailable";
     else updateAA(globalThis.kartySMAA().mode);
   };

@@ -76,6 +76,9 @@
     const manifests = WebAssembly.Module.customSections(module, "karty.manifest.v1");
     if (manifests.length !== 1) throw new Error("The game cartridge manifest section is missing or duplicated");
     globalThis.kartyManifestBundle = manifests[0];
+    const performanceProfiles = WebAssembly.Module.customSections(module, "karty.performance.v1");
+    if (performanceProfiles.length > 1) throw new Error("The game performance profile section is duplicated");
+    globalThis.kartyPerformanceBundle = performanceProfiles.length ? performanceProfiles[0] : null;
     return { module, instance: await WebAssembly.instantiate(module, imports) };
   };
   let go;
@@ -243,12 +246,172 @@
       })
       .finally(() => levelRequests.delete(requestID));
   };
+  // The host authorizes each descriptor against its mounted level catalog.
+  // Child paths are derived exclusively from a lowercase content digest.
+  const chunkRequests = new Map();
+  const maxChunkBytes = 32 * 1024 * 1024;
+  const maxChunkEnvelope = 16 * 1024 * 1024;
+  const chunkBytes = async (response, size) => {
+    const header = response.headers?.get("Content-Length");
+    const encoding = response.headers?.get("Content-Encoding");
+    // Fetch decodes HTTP compression; compressed transfer lengths differ from
+    // the immutable KLD byte length checked while reading the decoded stream.
+    if ((!encoding || encoding === "identity") && header !== null && header !== undefined && Number(header) !== size)
+      throw new Error("Chunk artifact size does not match the level catalog");
+    if (!response.body?.getReader) throw new Error("Chunk downloads require a readable response stream");
+    const bytes = new Uint8Array(size);
+    const reader = response.body.getReader();
+    let offset = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value.byteLength > size - offset) throw new Error("Chunk artifact exceeds the level catalog size");
+        bytes.set(value, offset);
+        offset += value.byteLength;
+      }
+      if (offset !== size) throw new Error("Chunk artifact size does not match the level catalog");
+      return bytes.buffer;
+    } catch (error) {
+      await reader.cancel().catch(() => {});
+      throw error;
+    } finally {
+      reader.releaseLock();
+    }
+  };
+  // Accept the bounded passive KLD ABI before instantiation. No imports, start
+  // function, loops, tables or unbounded memory declarations can run on load.
+  const passiveChunkModule = async (buffer) => {
+    const bytes = new Uint8Array(buffer);
+    if (
+      bytes.length < 8 ||
+      bytes.length > maxChunkBytes ||
+      bytes[0] !== 0 ||
+      bytes[1] !== 97 ||
+      bytes[2] !== 115 ||
+      bytes[3] !== 109 ||
+      bytes[4] !== 1 ||
+      bytes[5] !== 0 ||
+      bytes[6] !== 0 ||
+      bytes[7] !== 0
+    )
+      throw new Error("Chunk cartridge is not a passive KLD module");
+    let offset = 8;
+    const unsigned = (end) => {
+      let value = 0,
+        shift = 0;
+      for (let index = 0; index < 5; index++) {
+        if (offset >= end) throw new Error("Chunk cartridge section is truncated");
+        const byte = bytes[offset++];
+        if (index === 4 && byte & 0xf0) throw new Error("Chunk cartridge integer is invalid");
+        value += (byte & 127) * 2 ** shift;
+        if (!(byte & 128)) return value;
+        shift += 7;
+      }
+      throw new Error("Chunk cartridge integer is invalid");
+    };
+    for (const expected of [1, 3, 5, 7, 10, 11]) {
+      if (bytes[offset++] !== expected) throw new Error("Chunk cartridge sections are not passive");
+      const length = unsigned(bytes.length),
+        end = offset + length;
+      if (end > bytes.length) throw new Error("Chunk cartridge section is truncated");
+      if (expected === 5) {
+        if (unsigned(end) !== 1 || unsigned(end) !== 0 || unsigned(end) > 257 || offset !== end)
+          throw new Error("Chunk cartridge memory exceeds the envelope limit");
+      } else if (expected === 10) {
+        if (unsigned(end) !== 3) throw new Error("Chunk cartridge functions are invalid");
+        for (let index = 0; index < 3; index++) {
+          const bodyLength = unsigned(end),
+            bodyEnd = offset + bodyLength;
+          // Canonical KLD functions consist only of locals=0, i32.const, end.
+          if (bodyLength < 4 || bodyEnd > end || bytes[offset++] !== 0 || bytes[offset++] !== 0x41)
+            throw new Error("Chunk cartridge functions are not passive");
+          let terminated = false;
+          for (let leb = 0; leb < 5 && offset < bodyEnd; leb++) {
+            if (!(bytes[offset++] & 128)) {
+              terminated = true;
+              break;
+            }
+          }
+          if (!terminated || bytes[offset++] !== 0x0b || offset !== bodyEnd)
+            throw new Error("Chunk cartridge functions are not passive");
+        }
+        if (offset !== end) throw new Error("Chunk cartridge functions are invalid");
+      }
+      offset = end;
+    }
+    if (offset !== bytes.length) throw new Error("Chunk cartridge has unexpected sections");
+    const module = await WebAssembly.compile(buffer);
+    if (WebAssembly.Module.imports(module).length) throw new Error("Chunk cartridge has imports");
+    const exports = WebAssembly.Module.exports(module);
+    const functions = ["karty_level_abi_version", "karty_level_data_pointer", "karty_level_data_length"];
+    if (
+      exports.length !== 4 ||
+      !functions.every((name) => exports.some((entry) => entry.name === name && entry.kind === "function")) ||
+      !exports.some((entry) => entry.name === "memory" && entry.kind === "memory")
+    )
+      throw new Error("Chunk cartridge exports are invalid");
+    return module;
+  };
+  globalThis.kartyCancelChunk = (requestID) => {
+    chunkRequests.get(requestID)?.abort();
+    chunkRequests.delete(requestID);
+  };
+  globalThis.kartyRequestChunk = (requestID, digest, size, envelopeVersion) => {
+    globalThis.kartyCancelChunk(requestID);
+    if (
+      typeof digest !== "string" ||
+      !/^[0-9a-f]{64}$/.test(digest) ||
+      !Number.isSafeInteger(size) ||
+      size < 8 ||
+      size > maxChunkBytes ||
+      envelopeVersion !== 2
+    ) {
+      globalThis.kartyHostChunkFailed(requestID, 2, "Chunk descriptor is invalid");
+      return;
+    }
+    if (chunkRequests.size >= 16) {
+      globalThis.kartyHostChunkFailed(requestID, 7, "Too many concurrent chunk requests");
+      return;
+    }
+    const abort = new AbortController();
+    chunkRequests.set(requestID, abort);
+    const active = () => chunkRequests.get(requestID) === abort && !abort.signal.aborted;
+    Promise.resolve()
+      .then(async () => {
+        const artifact = `content/${digest}.kld`;
+        const response = await fetch(artifact, { signal: abort.signal });
+        if (!response.ok) throw new Error(`Could not load ${artifact} (HTTP ${response.status})`);
+        const bytes = await chunkBytes(response, size);
+        if (!active()) return;
+        const actual = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
+        if (actual !== digest) throw new Error("Chunk artifact hash does not match the level catalog");
+        const module = await passiveChunkModule(bytes);
+        if (!active()) return;
+        const instance = await WebAssembly.instantiate(module, {});
+        const exports = instance.exports;
+        if (exports.karty_level_abi_version() !== envelopeVersion) throw new Error("Chunk ABI version is unsupported");
+        const pointer = exports.karty_level_data_pointer() >>> 0;
+        const length = exports.karty_level_data_length() >>> 0;
+        const memory = new Uint8Array(exports.memory.buffer);
+        if (!length || length > maxChunkEnvelope || pointer > memory.length || length > memory.length - pointer)
+          throw new Error("Chunk cartridge data range is invalid");
+        if (active()) globalThis.kartyHostChunkLoaded(requestID, memory.slice(pointer, pointer + length));
+      })
+      .catch((error) => {
+        if (active() && error?.name !== "AbortError")
+          globalThis.kartyHostChunkFailed(requestID, 7, error?.message || String(error));
+      })
+      .finally(() => {
+        if (chunkRequests.get(requestID) === abort) chunkRequests.delete(requestID);
+      });
+  };
   Promise.resolve()
     .then(() => {
       state("loading-cartridge");
       status("Loading game cartridge…");
       go = new Go();
-      return loadClientWasm("game.kart?v=58d51f863a81b15f", imports);
+      return loadClientWasm("game.kart?v=9c1e210253f3494a", imports);
     })
     .then((result) => {
       client = result.instance;
@@ -282,7 +445,7 @@
       globalThis.kartyClientShutdown = () => client.exports.shutdown();
       client.exports._initialize();
       status("Starting the renderer…");
-      return loadWasm("karty-host.wasm?v=d85078c04216c01f", go.importObject);
+      return loadWasm("karty-host.wasm?v=9f3033c34a7b919d", go.importObject);
     })
     .then((result) => go.run(result.instance))
     .then(() => {
