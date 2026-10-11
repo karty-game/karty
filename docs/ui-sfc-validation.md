@@ -1,9 +1,12 @@
 # SFC-only UI validation
 
+This records the earlier SDK 0.0.9 candidate checks. Current public SDK 0.0.11
+release evidence is recorded in [CLI releases](releases.md#v002-preparation).
+
 Current authoring uses `.kui` SFCs and indented styles. Samples, current references,
 snippets and candidate starters put the template before the script. Released SDK
 snapshots remain unchanged. UI scaffolding needs the candidate's 0.0.2 templates;
-released game scaffolding remains supported. `mise run check-ui` selects SDK 0.0.9.
+released game scaffolding remains supported. These checks selected SDK 0.0.9.
 
 Checks from the corresponding repository roots, with Go cache in
 `/tmp/kartui-go-cache`:

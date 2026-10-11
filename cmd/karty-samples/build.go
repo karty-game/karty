@@ -28,7 +28,8 @@ func sampleNames(root string) ([]string, error) {
 	var names []string
 
 	for _, entry := range entries {
-		if !entry.IsDir() {
+		// Environment is still under development and is not a published demo.
+		if !entry.IsDir() || entry.Name() == "environment" {
 			continue
 		}
 

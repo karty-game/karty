@@ -129,11 +129,24 @@ try {
       cssWidth: canvas.getBoundingClientRect().width,
     }));
     assert.ok(dimensions.width >= dimensions.cssWidth * (mobile ? 1.9 : 0.9), "UI is not using display-density pixels");
+    // Let actual host updates observe key release before pressing the same key
+    // again. Consecutive Playwright presses can otherwise look like one held Tab.
+    const press = async (key) => {
+      await page.keyboard.press(key, { delay: 100 });
+      const releasedFrame = await page.evaluate(
+        () => globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame,
+      );
+      await page.waitForFunction(
+        (frame) =>
+          BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) > BigInt(frame) + 2n,
+        releasedFrame,
+      );
+    };
     // Navigate the current scaffold by focus order; theme spacing is not an API.
     const activate = async (tabs = 0, reverse = false) => {
       await page.waitForTimeout(150);
-      for (let i = 0; i < tabs; i++) await page.keyboard.press(reverse ? "Shift+Tab" : "Tab", { delay: 100 });
-      await page.keyboard.press("Enter", { delay: 100 });
+      for (let i = 0; i < tabs; i++) await press(reverse ? "Shift+Tab" : "Tab");
+      await press("Enter");
     };
     await activate();
     await page.waitForFunction(() => uiObserved.asset === "ui.levels");

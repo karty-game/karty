@@ -54,7 +54,7 @@ func TestDevelopmentBuildsGeometryAndUsesOnlyMatchingPrebuiltLighting(t *testing
 					t.Fatalf("dev lost geometry chunks: %d", len(artifact.Chunks))
 				}
 
-				envelope := executeLightmapEnvelope(t, artifact.Bytes)
+				envelope := decodePassiveEnvelope(t, artifact.Bytes)
 				worldBytes, _, found := envelope.Read(world.EntryName, 0, world.MaxEncodedSize)
 
 				document, err := world.Decode(worldBytes)
@@ -72,7 +72,7 @@ func TestDevelopmentBuildsGeometryAndUsesOnlyMatchingPrebuiltLighting(t *testing
 				}
 
 				for _, chunk := range artifact.Chunks {
-					child := executeLightmapEnvelope(t, chunk.Bytes)
+					child := decodePassiveEnvelope(t, chunk.Bytes)
 
 					_, _, prebaked := child.Read(worldlightmap.PrebakeEntryName, 0, worldlightmap.MaxPrebakeManifestSize)
 					if prebaked != wantBake {

@@ -65,7 +65,7 @@ Manual graphics, keyboard navigation and touch review remain separate.
 
 ## Published demos and pull request previews
 
-`mise run build-samples` builds the three published demos into `dist/samples-site/`, with
+`mise run build-samples` builds the four published demos into `dist/samples-site/`, with
 an index and redistribution notices. It installs each sample's exact published
 SDK and downloads the compatible host and Go browser runtime. No private engine
 access is required. SDK/host artifacts must be published before advancing this
@@ -79,8 +79,10 @@ uploads a `sample-site` artifact. It also supports manual dispatch.
 - `/pr/NUMBER/`: the pull request's merge-commit build.
 - `/`: latest samples and active preview links.
 
-Each sample has its own folder: `ui-demo/`, `media-lab/`, `world-camera/`,
-`hangar/`, or `environment/`. Deployment summaries include the actual preview URL; PR build
+Each published sample has its own folder: `ui-demo/`, `media-lab/`, `world-camera/`
+or `hangar/`. The unfinished `environment` sample remains in source and is excluded
+from the site. Each demo currently includes its own copy of the SDK-pinned web host.
+Deployment summaries include the actual preview URL; PR build
 summaries link to the expected URL. Closing/merging a PR removes its preview;
 subsequent deployments also prune closed previews. Failed builds preserve the
 last successful preview, and superseded builds are skipped.

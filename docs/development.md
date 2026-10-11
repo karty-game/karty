@@ -16,6 +16,9 @@ mise run build
 `CurrentSDK` before unit tests: missing cache entries download; corrupt ones fail.
 All tests use this SDK. Missing-capability coverage uses fixtures derived from
 the current bundle instead of installing legacy releases.
+The level-builder suite discovers every root test and runs batches of eight,
+each with the existing nine-second timeout. This keeps cache/bake and actual
+WASM checks within the budget on small CI runners as the suite grows.
 Direct `go test` requires an installed SDK. The shared checks in `hk.pkl` use
 golangci-lint for Go (including `govet`), yamllint for YAML, Taplo for TOML,
 and Prettier for YAML layout, JSON, Markdown and web files. Taplo validates
@@ -56,7 +59,7 @@ its reflection code into even small clients. Source-only profiling with the same
 TinyGo 0.42 toolchain measured a warm empty client at about 0.9 seconds on SDK
 0.0.8 and 9.2 seconds on SDK 0.0.9; adding the metadata decoder alone to the
 0.0.8 fixture reproduced the overhead. This excludes assets, lighting and browsers.
-The SDK 0.0.11 candidate replaces shipped metadata and resource documents with
+SDK 0.0.11 replaces shipped metadata and resource documents with
 bounded binary codecs. Generated identity readers and runtime resources do not
 parse JSON or use reflection; projects obtain the new formats with its matching
 bundle and host.
@@ -196,9 +199,10 @@ Use `GOWORK=off` when validating the released public dependencies in [go.mod](..
 ## Repository tooling
 
 `mise run build-samples` runs the Go sample-site builder in `cmd/karty-samples`.
-It discovers every project with a `samples/*/karty.toml`, builds its web output
-and includes it in the site index. Release preparation updates these projects
-to the current SDK; new samples need no registration in CLI code.
+It discovers projects with a `samples/*/karty.toml`, builds their web output
+and includes them in the site index. The unfinished `environment` project is
+excluded from publication. Release preparation updates sample SDK pins;
+new ready samples need no registration in CLI code.
 The Pages workflow uses its `assemble` subcommand through `mise run assemble-samples`
 to validate static artifacts, preserve other previews and prune closed PRs.
 Validation rejects links, unexpected paths, incomplete samples and outputs above

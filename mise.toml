@@ -22,11 +22,11 @@ lint = "mise run lint"
 test = "mise run test"
 
 [tasks.test]
-run = ["go run ./cmd/karty-release --check", "go run ./cmd/karty-test-sdk", "go test -timeout=9s ./..."]
+run = ["go run ./cmd/karty-release --check", "go run ./cmd/karty-test-sdk", "bash scripts/test.sh"]
 
 [tasks.test-unit]
 description = "Run unit tests without the published SDK download check"
-run = "go test -timeout=9s ./..."
+run = "bash scripts/test.sh"
 
 [tasks.check-materialize-pipeline]
 description = "Check per-asset material generation, cache reuse and level authoring"

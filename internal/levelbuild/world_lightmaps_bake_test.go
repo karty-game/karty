@@ -39,7 +39,7 @@ func TestOfflineBakeAutomaticPackageAndStaleFallback(t *testing.T) {
 			t.Fatalf("packaged prebake=%v want=%v", !wantBake, wantBake)
 		}
 
-		envelope := executeLightmapEnvelope(t, artifacts[0].Bytes)
+		envelope := decodePassiveEnvelope(t, artifacts[0].Bytes)
 
 		_, _, hasBake := envelope.Read(worldlightmap.PrebakeEntryName, 0, worldlightmap.MaxPrebakeManifestSize)
 		if hasBake != wantBake {
@@ -269,7 +269,7 @@ func TestOfflineBakesAndPackagedLightsAreLevelLocal(t *testing.T) {
 				wantBake, wantRed = wantSecond, 0.5
 			}
 
-			envelope := executeLightmapEnvelope(t, artifact.Bytes)
+			envelope := decodePassiveEnvelope(t, artifact.Bytes)
 			data, _, found := envelope.Read(world.EntryName, 0, world.MaxEncodedSize)
 
 			if !found {

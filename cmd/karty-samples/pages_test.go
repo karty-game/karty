@@ -129,7 +129,7 @@ func TestSampleDiscoveryIncludesNewProjects(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
-	for _, name := range []string{"first-demo", "new-demo"} {
+	for _, name := range []string{"first-demo", "new-demo", "environment"} {
 		writeFixture(t, filepath.Join(root, "samples", name, "karty.toml"), "[sdk]\nversion = '1.0.0'\n")
 	}
 

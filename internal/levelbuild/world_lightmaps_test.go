@@ -37,6 +37,19 @@ func enableFixtureLightmap(t *testing.T, root, settings string) {
 	}
 }
 
+// Cache lifecycle assertions inspect the SDK-validated canonical passive module.
+// Dedicated packaging tests execute the root and chunk modules in real WASM.
+func decodePassiveEnvelope(tb testing.TB, module []byte) level.Envelope {
+	tb.Helper()
+
+	envelope, err := level.DecodePassiveModule(module)
+	if err != nil {
+		tb.Fatal(err)
+	}
+
+	return envelope
+}
+
 func executeLightmapEnvelope(tb testing.TB, module []byte) level.Envelope {
 	tb.Helper()
 
