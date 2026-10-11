@@ -17,7 +17,7 @@ go test -timeout=9s "${unit_packages[@]}"
 listing=$(go test -timeout=9s "$level_package" -list '^(Test|Example|Fuzz)')
 level_tests=()
 while IFS= read -r name; do
-  if [[ "$name" =~ ^(Test|Example|Fuzz)[[:alnum:]_]+$ ]]; then
+  if [[ "$name" == Test* || "$name" == Example* || "$name" == Fuzz* ]]; then
     level_tests+=("$name")
   fi
 done <<< "$listing"
