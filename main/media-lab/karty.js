@@ -53,6 +53,47 @@
     }
     return WebAssembly.instantiate(await response.arrayBuffer(), imports);
   };
+  const hostSource = {url:"../runtime/0.0.11/9f3033c34a7b919d629ab65b6d14ee20c484b7953cdbfe18b5afc5710d72c36c.wasm",sha256:"9f3033c34a7b919d629ab65b6d14ee20c484b7953cdbfe18b5afc5710d72c36c"};
+  const readHostBytes = async (response) => {
+    // Startup downloads have a fixed bound, independent of server headers.
+    const maxBytes = 128 * 1024 * 1024;
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("The runtime download has no readable body.");
+    const chunks = [];
+    let size = 0;
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (value.length > maxBytes - size) {
+          await reader.cancel();
+          throw new Error("The game runtime exceeds the download limit.");
+        }
+        chunks.push(value);
+        size += value.length;
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return bytes;
+  };
+  const loadHostWasm = async (imports) => {
+    if (!hostSource.sha256) return loadWasm(hostSource.url, imports);
+    status("Loading the game runtime…");
+    const response = await fetchChecked(hostSource.url);
+    const bytes = await readHostBytes(response);
+    if (!globalThis.crypto?.subtle) throw new Error("Runtime verification requires HTTPS or localhost.");
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    const checksum = [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    if (checksum !== hostSource.sha256) throw new Error("The game runtime does not match its SDK release.");
+    return WebAssembly.instantiate(bytes, imports);
+  };
   const loadClientWasm = async (url, imports) => {
     const response = await fetchChecked(url);
     const module = await WebAssembly.compile(await response.arrayBuffer());
@@ -445,7 +486,7 @@
       globalThis.kartyClientShutdown = () => client.exports.shutdown();
       client.exports._initialize();
       status("Starting the renderer…");
-      return loadWasm("karty-host.wasm?v=9f3033c34a7b919d", go.importObject);
+      return loadHostWasm(go.importObject);
     })
     .then((result) => go.run(result.instance))
     .then(() => {

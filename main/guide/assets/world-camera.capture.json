@@ -1,0 +1,15 @@
+{
+  "sample": "world-camera",
+  "capturedAt": "2026-10-12T02:17:31.870Z",
+  "sourceCommit": "3bb2953071e02795e59cf96b8acd362cd21edbdf",
+  "sourceSha256": "3b667a0208946c2542d1e33cc901a7414b7530d60ace36aaf9557cb6b10f01cf",
+  "cartridgeSha256": "85782e4acb18dff681d61ff749e2da6cb4e0475679f2c9d63e370d73d5c75512",
+  "hostSha256": "9f3033c34a7b919d629ab65b6d14ee20c484b7953cdbfe18b5afc5710d72c36c",
+  "previewSha256": "c120eeba3b2bbc40b3685a196c4bd3b513d1e685b5e174dc532654816f4e11e4",
+  "width": 960,
+  "height": 540,
+  "browser": "Chromium 153.0.8010.12",
+  "backend": "headless browser",
+  "errors": [],
+  "build": "Existing dist/web artifacts. Capture does not rebuild the sample."
+}
