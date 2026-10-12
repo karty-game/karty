@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html"
 	"io"
 	"io/fs"
 	"os"
@@ -56,6 +57,10 @@ func validateSamples(source fs.FS) error {
 		return err
 	}
 
+	return validateSiteDirectories(source)
+}
+
+func validateSiteDirectories(source fs.FS) error {
 	entries, err := fs.ReadDir(source, ".")
 	if err != nil {
 		return err
@@ -64,12 +69,24 @@ func validateSamples(source fs.FS) error {
 	var samples int
 
 	for _, entry := range entries {
-		if entry.IsDir() {
-			if err = requireSampleFile(source, entry.Name()+"/index.html"); err != nil {
-				return err
-			}
+		if !entry.IsDir() {
+			continue
+		}
 
+		switch entry.Name() {
+		case "runtime":
+			err = validateRuntime(source)
+		case "guide":
+			if err = requireSampleFile(source, "guide/index.html"); err == nil {
+				err = requireSampleFile(source, "guide/guide.md")
+			}
+		default:
+			err = requireSampleFile(source, entry.Name()+"/index.html")
 			samples++
+		}
+
+		if err != nil {
+			return err
 		}
 	}
 
@@ -244,17 +261,13 @@ func updatePreviews(root *os.Root, openPRs []int) error {
 	return root.WriteFile("index.html", indexHTML("Latest demos and pull request previews.", links.String()), 0o600)
 }
 
-func writeIndex(directory, description, links string) error {
-	return os.WriteFile(filepath.Join(directory, "index.html"), indexHTML(description, links), 0o600)
-}
-
 func indexHTML(description, links string) []byte {
 	contents := `<!doctype html><html lang="en"><meta charset="utf-8">` +
 		`<meta name="viewport" content="width=device-width,initial-scale=1">` +
 		`<title>Karty samples</title><style>body{font:18px system-ui;max-width:48rem;` +
 		`margin:4rem auto;padding:0 1rem;background:#101827;color:#eef2ff}` +
 		`a{color:#91caff}li{margin:1rem 0}</style><h1>Karty samples</h1>` +
-		"<p>" + description + "</p><ul>" + links + "</ul></html>"
+		"<p>" + html.EscapeString(description) + "</p><ul>" + links + "</ul></html>"
 
 	return []byte(contents)
 }

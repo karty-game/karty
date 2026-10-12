@@ -5,8 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
+	"io"
+	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/karty-game/karty-sdk/format/asset"
@@ -14,6 +16,7 @@ import (
 	"github.com/karty-game/karty/internal/levelbuild"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
+	"github.com/karty-game/karty/internal/ui"
 	"github.com/urfave/cli/v3"
 )
 
@@ -93,28 +96,72 @@ func run(ctx context.Context, command *cli.Command) error {
 		)
 	}
 
-	_, err = levelbuild.BakeAll(ctx, ".", options, func(report levelbuild.BakeReport) {
-		fmt.Fprintf(
-			os.Stdout,
-			"Baked %s in %s: %d receiver texels, %d rays, %d samples, %d bounces\n  Denoise: %s (%s)\n  %s\n",
-			report.Name,
-			report.Duration.Round(time.Millisecond),
-			report.Stats.ReceiverTexels,
-			report.Stats.Rays,
-			report.Stats.Samples,
-			report.Stats.Bounces,
-			report.Stats.Denoise,
-			report.Stats.DenoiseDuration.Round(time.Millisecond),
-			report.Manifest,
-		)
+	started := time.Now()
 
-		if !report.Automatic {
-			fmt.Fprintln(
-				os.Stdout,
-				"  Set [lightmap] offline = true in this level's level.toml and remove explicit prebake paths to package this generated bake.",
-			)
+	var outputErr error
+
+	reports, err := levelbuild.BakeAll(ctx, ".", options, func(report levelbuild.BakeReport) {
+		if outputErr == nil {
+			outputErr = writeReport(command.Writer, report)
 		}
 	})
+	if err != nil {
+		return err
+	}
+
+	if outputErr != nil {
+		return outputErr
+	}
+
+	return writeSummary(command.Writer, reports, time.Since(started))
+}
+
+func writeReport(output io.Writer, report levelbuild.BakeReport) error {
+	var text strings.Builder
+
+	fmt.Fprintf(&text,
+		"Baked %s in %s\n  Receiver texels: %d | Rays: %d\n  Samples: %d | Bounces: %d\n  Denoise: %s in %s\n  Files: 2, %s\n  %s\n  %s\n",
+		report.Name,
+		report.Duration.Round(time.Millisecond),
+		report.Stats.ReceiverTexels,
+		report.Stats.Rays,
+		report.Stats.Samples,
+		report.Stats.Bounces,
+		report.Stats.Denoise,
+		report.Stats.DenoiseDuration.Round(time.Millisecond),
+		ui.Size(report.OutputBytes),
+		report.Manifest,
+		report.Image,
+	)
+
+	if !report.Automatic {
+		fmt.Fprintln(
+			&text,
+			"  Set [lightmap] offline = true in this level's level.toml and remove explicit prebake paths to package this bake.",
+		)
+	}
+
+	_, err := io.WriteString(output, text.String())
+
+	return err
+}
+
+func writeSummary(output io.Writer, reports []levelbuild.BakeReport, duration time.Duration) error {
+	var bytes int64
+
+	for _, report := range reports {
+		bytes += report.OutputBytes
+	}
+
+	_, err := fmt.Fprintf(
+		output,
+		"\nBake complete in %s\n  Levels: %d | Chunks: 0\n  Wrote %d files, %s, under %s\n  Standalone baking writes whole-level lighting. Builds bake chunk lighting.\n\nNext: karty build\n",
+		duration.Round(time.Millisecond),
+		len(reports),
+		len(reports)*2,
+		ui.Size(bytes),
+		filepath.ToSlash(filepath.Join(".karty", "bakes")),
+	)
 
 	return err
 }

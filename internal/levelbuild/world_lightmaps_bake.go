@@ -46,6 +46,8 @@ type BakeReport struct {
 	Duration  time.Duration
 	Stats     worldlightmapbake.Stats
 	Automatic bool
+	// OutputBytes counts the manifest and image published by this bake, excluding older cache entries.
+	OutputBytes int64
 }
 
 // BakeAll bakes enabled directional recipes. Level accepts a logical name or
@@ -252,12 +254,13 @@ func bakeLevel(ctx context.Context, projectDirectory, directory string, definiti
 	}
 
 	return BakeReport{
-		Name:      definition.Level.Name,
-		Manifest:  filepath.Join(cache, automaticBakeManifest),
-		Image:     filepath.Join(cache, imageName),
-		Duration:  time.Since(started),
-		Stats:     result.Stats,
-		Automatic: definition.Lightmap.Offline,
+		Name:        definition.Level.Name,
+		Manifest:    filepath.Join(cache, automaticBakeManifest),
+		Image:       filepath.Join(cache, imageName),
+		Duration:    time.Since(started),
+		Stats:       result.Stats,
+		Automatic:   definition.Lightmap.Offline,
+		OutputBytes: int64(len(manifest) + len(encoded)),
 	}, nil
 }
 

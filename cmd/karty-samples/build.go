@@ -9,9 +9,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
+	"github.com/karty-game/karty/internal/guide"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -56,13 +56,18 @@ func sampleNames(root string) ([]string, error) {
 	return names, nil
 }
 
-func buildSamples(root string) error {
+func buildSamples(root string, cdn bool) error {
 	root, err := filepath.Abs(root)
 	if err != nil {
 		return err
 	}
 
 	names, err := sampleNames(root)
+	if err != nil {
+		return err
+	}
+
+	cards, err := sampleCards(root, names)
 	if err != nil {
 		return err
 	}
@@ -77,7 +82,24 @@ func buildSamples(root string) error {
 	}
 
 	cli := filepath.Join(root, "dist", "karty")
+	if err = buildPublishedSamples(root, site, cli, names, cdn); err != nil {
+		return err
+	}
+
+	if err = guide.Generate(filepath.Join(site, "guide")); err != nil {
+		return err
+	}
+
+	if err = writeGallery(site, cards); err != nil {
+		return err
+	}
+
+	return validateSamples(os.DirFS(site))
+}
+
+func buildPublishedSamples(root, site, cli string, names []string, cdn bool) error {
 	installed := map[string]bool{}
+	hostURLs := map[string]string{}
 
 	for _, name := range names {
 		sample := filepath.Join(root, "samples", name)
@@ -95,12 +117,23 @@ func buildSamples(root string) error {
 			installed[version] = true
 		}
 
-		if err = buildSample(sample, cli); err != nil {
+		if cdn && hostURLs[version] == "" {
+			hostURLs[version], err = mirrorSampleHost(site, version)
+			if err != nil {
+				return err
+			}
+		}
+
+		if err = buildSample(sample, cli, hostURLs[version]); err != nil {
 			return err
 		}
 
 		target := filepath.Join(site, name)
 		if err = os.CopyFS(target, os.DirFS(filepath.Join(sample, "dist", "web"))); err != nil {
+			return err
+		}
+
+		if err = copySamplePreview(sample, target); err != nil {
 			return err
 		}
 
@@ -111,30 +144,33 @@ func buildSamples(root string) error {
 		}
 	}
 
-	var links strings.Builder
-
-	for _, name := range names {
-		fmt.Fprintf(&links, "<li><a href=\"%s/\">%s</a></li>", name, name)
-	}
-
-	return writeIndex(site, "Games and interfaces built with Karty.", links.String())
+	return nil
 }
 
 // buildSample regenerates configured offline lighting before packaging it. The
 // project's public SDK is installed by buildSamples before invoking either CLI command.
-func buildSample(directory, cli string) error {
+func buildSample(directory, cli, cdnURL string) error {
+	return buildSampleWithRunner(directory, cli, cdnURL, runCLI)
+}
+
+func buildSampleWithRunner(directory, cli, cdnURL string, run func(string, string, ...string) error) error {
 	levels, err := sampleBakeLevels(directory)
 	if err != nil {
 		return err
 	}
 
 	for _, name := range levels {
-		if err = runCLI(directory, cli, "bake", "--level", name); err != nil {
+		if err = run(directory, cli, "bake", "--level", name); err != nil {
 			return err
 		}
 	}
 
-	return runCLI(directory, cli, "build", "--target", "web")
+	args := []string{"build", "--target", "web"}
+	if cdnURL != "" {
+		args = append(args, "--cdn", cdnURL)
+	}
+
+	return run(directory, cli, args...)
 }
 
 func sampleBakeLevels(directory string) ([]string, error) {

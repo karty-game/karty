@@ -49,3 +49,20 @@ replace the incorrect cached artifact from the selected SDK release.
 Linux integration covers amd64/ARM64. Windows ARM64 cartridge/startup smoke
 detects early process failure, not pixels or gameplay; renderer changes still
 need graphics testing on relevant hardware.
+
+## Share a web runtime
+
+Web builds include their runtime by default. To share one runtime across games,
+host the project's pinned release `karty-host-web.wasm` at an HTTPS URL:
+
+```sh
+karty build --target web --cdn https://games.example/runtime/0.0.11/host.wasm
+```
+
+The launcher checks the signed SDK release checksum before running the host.
+Keep the mirror reachable and enable CORS if it is on another origin. The
+matching `wasm_exec.js` stays in the game directory. Use HTTPS or localhost.
+
+Direct GitHub release download URLs block browser CORS. The sample site uses
+one verified release copy per SDK in its shared GitHub Pages runtime directory.
+See the [versioned decision](decisions/web-cdn-v1.md).

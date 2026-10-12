@@ -6,6 +6,7 @@ repository guides describe current CLI behavior.
 
 ## Authoring and distribution
 
+- [Game authoring guide](guide-generator.md): choose 2D sprites/vectors/text, first person or isometric after CLI setup; UI, media and distribution apply to every path.
 - [World YAML schemas](level-yaml-schema-v1.md): local editor completions, level material catalogs and build validation.
 - [Client hooks and authored actions](client-hooks.md): SDK 0.0.9 candidate catalogs, editor schemas and typed adapters.
 - [UI sources](ui-source-discovery-v1.md): `.kui` discovery, staging and packaging.

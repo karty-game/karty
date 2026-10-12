@@ -66,10 +66,17 @@ Manual graphics, keyboard navigation and touch review remain separate.
 ## Published demos and pull request previews
 
 `mise run build-samples` builds the four published demos into `dist/samples-site/`, with
-an index and redistribution notices. It installs each sample's exact published
+screenshot cards, the game-making guide and redistribution notices. It installs each sample's exact published
 SDK and downloads the compatible host and Go browser runtime. No private engine
 access is required. SDK/host artifacts must be published before advancing this
 public build to a new version.
+
+The local default includes a web host in each sample. Run
+`mise run build-samples -- --cdn` to share one host per SDK version. The samples
+CI workflow uses this shared mode for published artifacts.
+The builder verifies the signed release manifest and host checksum, copies the
+host to `runtime/VERSION/SHA256.wasm`, then gives each web build its relative
+URL. Relative URLs keep the same layout in `main` and pull request previews.
 
 **Build samples** runs on `main` pushes and pull requests, including forks, and
 uploads a `sample-site` artifact. It also supports manual dispatch.
@@ -81,11 +88,43 @@ uploads a `sample-site` artifact. It also supports manual dispatch.
 
 Each published sample has its own folder: `ui-demo/`, `media-lab/`, `world-camera/`
 or `hangar/`. The unfinished `environment` sample remains in source and is excluded
-from the site. Each demo currently includes its own copy of the SDK-pinned web host.
+from the site. Each demo includes its own SDK-pinned web host unless the build
+selects the shared CDN option.
 Deployment summaries include the actual preview URL; PR build
 summaries link to the expected URL. Closing/merging a PR removes its preview;
 subsequent deployments also prune closed previews. Failed builds preserve the
 last successful preview, and superseded builds are skipped.
+
+### Sample cards and screenshots
+
+Each published sample has `preview.toml` with its title, a short description of
+what it teaches, and screenshot alt text. Its `preview.jpg` is a 960 by 540 JPEG
+under 512 KiB. The gallery copies that image beside the web build and links to
+the sample's GitHub folder. New samples need both files before site building.
+
+Build the changed samples, then refresh screenshots from the CLI root:
+
+```sh
+mise run capture-samples
+mise run check-samples
+```
+
+The capture task opens existing `dist/web` builds in Chromium. It binds a free
+loopback port and closes its server and browser when it finishes. It captures
+Orbital's menu, the Roman courtyard, Hangar's reactor hall and the playing media
+test video. It hides the optional runtime debug controls for the image.
+
+Review each image before keeping it. `preview.capture.json` records the source
+commit and source hash, cartridge and host hashes, image hash, browser version
+and page errors. These records identify the captured artifacts. The task does
+not rebuild them or prove that an old artifact matches the current source.
+It does not test physical audio, native rendering or real mobile hardware.
+
+The guide generator writes `guide/index.html` and `guide/guide.md` into the site.
+Publishing validates both files and keeps the existing path, file-count and
+200 MiB limits. A guide alone does not count as a playable sample site.
+The shared `runtime/` folder also does not count as a sample. Publishing checks
+its version folders, WASM headers and checksum-named files before copying it.
 
 ### One-time repository setup
 

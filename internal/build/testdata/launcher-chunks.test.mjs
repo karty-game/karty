@@ -5,7 +5,10 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { runInNewContext } from "node:vm";
 
-const source = await readFile(process.argv[2], "utf8");
+const source = (await readFile(process.argv[2], "utf8")).replace(
+  "@@HOST_SOURCE@@",
+  JSON.stringify({ url: "karty-host.wasm", sha256: "" }),
+);
 const fixture = new Uint8Array(await readFile(process.argv[3]));
 const substituted = new Uint8Array(await readFile(join(dirname(process.argv[3]), "chunk-other.kld")));
 const envelope = new Uint8Array(await readFile(join(dirname(process.argv[3]), "envelope.bin")));

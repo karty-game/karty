@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/karty-game/karty-sdk/format/asset"
@@ -61,11 +62,14 @@ type Options struct {
 	WasmTools     string
 	Host          string
 	Target        string
+	CDN           string
 	Platform      string
 	AirProxy      bool
 	Development   bool
 	Progress      func(string)
+	Summary       func(Summary)
 	rendererDebug bool
+	cdnHost       *cdnHost
 }
 
 func (options Options) progress(label string) {
@@ -83,6 +87,17 @@ func Run(ctx context.Context, directory string) error {
 //
 //nolint:gocognit,gocyclo,maintidx,wsl_v5 // This function intentionally keeps the transactional build sequence visible.
 func RunWithOptions(ctx context.Context, directory string, options Options) error {
+	started := time.Now()
+	if options.CDN != "" {
+		if options.Target != "web" {
+			return fmt.Errorf("--cdn requires --target web: %w", os.ErrInvalid)
+		}
+
+		if err := validateCDNURL(options.CDN); err != nil {
+			return err
+		}
+	}
+
 	if options.Platform != "" {
 		if options.Target == "web" {
 			return fmt.Errorf("--platform applies only to native builds: %w", os.ErrInvalid)
@@ -114,6 +129,12 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	manifest, err := sdk.Resolve(config.SDK.Version)
 	if err != nil {
 		return err
+	}
+	if options.CDN != "" {
+		options.cdnHost, err = resolveCDNHost(ctx, manifest, options.CDN, options.Host)
+		if err != nil {
+			return err
+		}
 	}
 	if manifest.Assets.TextureProfiles[project.DefaultTextureProfile].Processor == asset.ProcessorCopyPNGv1 {
 		config.Assets.Textures = slices.DeleteFunc(config.Assets.Textures, func(texture project.Texture) bool {
@@ -430,6 +451,14 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	if err := removeLegacyRootOutput(distributionDirectory); err != nil {
 		return err
 	}
+	if options.Summary != nil {
+		report, err := summarizeBuild(directory, config.Project.Name, manifest.Version, levels, assetReport, options)
+		if err != nil {
+			return fmt.Errorf("summarize build output: %w", err)
+		}
+		report.Duration = time.Since(started)
+		options.Summary(report)
+	}
 
 	return nil
 }
@@ -454,6 +483,18 @@ func stageRequestedTarget(
 
 	if options.Host == "" && options.Target == "" {
 		return nil
+	}
+
+	if options.cdnHost != nil {
+		runtime, err := toolchain.EnsureHost(ctx, options.cdnHost.Manifest, "web-runtime")
+		if err != nil {
+			return fmt.Errorf("resolve SDK web runtime: %w", err)
+		}
+
+		return stageTargetWithCDN(
+			distributionDirectory, rawDirectory, artifact, levels, "", "web", runtime, "", options.AirProxy,
+			gameTitle, options.rendererDebug, options.cdnHost,
+		)
 	}
 
 	localHost := options.Host != ""
@@ -1043,6 +1084,16 @@ func stageTarget(
 	hostArtifact, target, webRuntime, platform string,
 	airProxy bool, gameTitle string, rendererDebug bool,
 ) error {
+	return stageTargetWithCDN(distributionDirectory, rawDirectory, clientArtifact, levels, hostArtifact, target, webRuntime, platform,
+		airProxy, gameTitle, rendererDebug, nil)
+}
+
+func stageTargetWithCDN(
+	distributionDirectory, rawDirectory, clientArtifact string,
+	levels []levelbuild.Artifact,
+	hostArtifact, target, webRuntime, platform string,
+	airProxy bool, gameTitle string, rendererDebug bool, cdn *cdnHost,
+) error {
 	if target == "" {
 		target = "native"
 	}
@@ -1102,18 +1153,24 @@ func stageTarget(
 	}
 
 	if target == "web" {
-		for _, stale := range []string{"wasm_exec.js"} {
-			if err := os.Remove(filepath.Join(targetDirectory, stale)); err != nil && !os.IsNotExist(err) {
-				return fmt.Errorf("remove stale web artifact: %w", err)
-			}
-		}
-
-		if err := stageWebShell(targetDirectory, webRuntime, airProxy, gameTitle, rendererDebug); err != nil {
-			return err
-		}
+		return stageWebTarget(targetDirectory, webRuntime, airProxy, gameTitle, rendererDebug, cdn)
 	}
 
 	return nil
+}
+
+func stageWebTarget(targetDirectory, webRuntime string, airProxy bool, gameTitle string, rendererDebug bool, cdn *cdnHost) error {
+	if err := os.Remove(filepath.Join(targetDirectory, "wasm_exec.js")); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove stale web artifact: %w", err)
+	}
+
+	if cdn != nil {
+		if err := os.Remove(filepath.Join(targetDirectory, "karty-host.wasm")); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("remove bundled host for CDN build: %w", err)
+		}
+	}
+
+	return stageWebShell(targetDirectory, webRuntime, airProxy, gameTitle, rendererDebug, cdn)
 }
 
 //nolint:gosec // The caller supplies an explicit host path or a fixed packaged location.
@@ -1496,7 +1553,7 @@ func writeAssetReport(buildDirectory string, report assetpipeline.Report) error 
 	return nil
 }
 
-func stageWebShell(targetDirectory, wasmExec string, airProxy bool, gameTitle string, rendererDebug bool) error {
+func stageWebShell(targetDirectory, wasmExec string, airProxy bool, gameTitle string, rendererDebug bool, cdn *cdnHost) error {
 	if err := copyFile(wasmExec, filepath.Join(targetDirectory, "wasm_exec.js"), 0o600); err != nil {
 		return fmt.Errorf("stage wasm_exec.js: %w", err)
 	}
@@ -1506,12 +1563,12 @@ func stageWebShell(targetDirectory, wasmExec string, airProxy bool, gameTitle st
 		return fmt.Errorf("hash staged client: %w", err)
 	}
 
-	hostHash, err := fileHash(filepath.Join(targetDirectory, "karty-host.wasm"))
+	hostSource, err := webHostSource(targetDirectory, cdn)
 	if err != nil {
-		return fmt.Errorf("hash staged host: %w", err)
+		return err
 	}
 
-	launcher := strings.NewReplacer("@@CLIENT_HASH@@", clientHash, "@@HOST_HASH@@", hostHash).Replace(webLauncherTemplate)
+	launcher := strings.NewReplacer("@@CLIENT_HASH@@", clientHash, "@@HOST_SOURCE@@", hostSource).Replace(webLauncherTemplate)
 	if err := os.WriteFile(filepath.Join(targetDirectory, "karty.js"), []byte(launcher), 0o600); err != nil {
 		return fmt.Errorf("write web launcher: %w", err)
 	}

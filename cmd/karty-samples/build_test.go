@@ -44,19 +44,18 @@ func TestSampleBakeLevelsSelectConfiguredOfflineRecipes(t *testing.T) {
 func TestSampleBuildBakesBeforeWebPackaging(t *testing.T) {
 	t.Parallel()
 
-	if runtime.GOOS == "windows" {
-		t.Skip("fake CLI uses the POSIX shell")
-	}
-
 	for _, scenario := range []struct {
-		name     string
-		levels   []string
-		want     string
-		wantFail bool
+		name    string
+		levels  []string
+		want    [][]string
+		failure []string
+		cdnURL  string
 	}{
-		{name: "offline", levels: []string{"a", "z"}, want: "bake --level a\nbake --level z\nbuild --target web\n"},
-		{name: "no bake", want: "build --target web\n"},
-		{name: "failed bake", levels: []string{"broken", "z"}, want: "bake --level broken\n", wantFail: true},
+		{name: "offline", levels: []string{"a", "z"}, want: [][]string{{"bake", "--level", "a"}, {"bake", "--level", "z"}, {"build", "--target", "web"}}},
+		{name: "no bake", want: [][]string{{"build", "--target", "web"}}},
+		{name: "CDN", cdnURL: "../runtime/0.0.11/host.wasm", levels: []string{"a"}, want: [][]string{{"bake", "--level", "a"}, {"build", "--target", "web", "--cdn", "../runtime/0.0.11/host.wasm"}}},
+		{name: "failed bake", levels: []string{"broken", "z"}, want: [][]string{{"bake", "--level", "broken"}}, failure: []string{"bake", "--level", "broken"}},
+		{name: "failed build", levels: []string{"a"}, want: [][]string{{"bake", "--level", "a"}, {"build", "--target", "web"}}, failure: []string{"build", "--target", "web"}},
 	} {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
@@ -66,25 +65,30 @@ func TestSampleBuildBakesBeforeWebPackaging(t *testing.T) {
 				writeFixture(t, filepath.Join(directory, "levels", name, "level.toml"), "[lightmap]\nenabled = true\noffline = true\n")
 			}
 
-			cli := filepath.Join(directory, "fake-karty")
-			script := "#!/bin/sh\nprintf '%s\\n' \"$*\" >> commands.log\nif [ \"$1\" = bake ] && [ \"$3\" = broken ]; then exit 7; fi\n"
-			writeFixture(t, cli, script)
+			var commands [][]string
 
-			if err := os.Chmod(cli, 0o700); err != nil {
-				t.Fatal(err)
+			failure := os.ErrPermission
+
+			run := func(cwd, executable string, args ...string) error {
+				if cwd != directory || executable != "fixture-karty" {
+					t.Fatalf("command location = %q, %q", cwd, executable)
+				}
+
+				commands = append(commands, slices.Clone(args))
+
+				if slices.Equal(args, scenario.failure) {
+					return failure
+				}
+
+				return nil
 			}
 
-			err := buildSample(directory, cli)
-			if (err != nil) != scenario.wantFail {
-				t.Fatalf("build result: %v", err)
+			err := buildSampleWithRunner(directory, "fixture-karty", scenario.cdnURL, run)
+			if scenario.failure == nil && err != nil || scenario.failure != nil && !errors.Is(err, failure) {
+				t.Fatalf("build result = %v, expected failure = %v", err, scenario.failure)
 			}
 
-			commands, err := os.ReadFile(filepath.Join(directory, "commands.log"))
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if string(commands) != scenario.want {
+			if !slices.EqualFunc(commands, scenario.want, slices.Equal[[]string]) {
 				t.Fatalf("command order: %q, want %q", commands, scenario.want)
 			}
 		})

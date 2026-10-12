@@ -1,7 +1,7 @@
 # Implemented CLI behavior
 
 Projects use their exact SDK pin and generated `.karty/docs`, rather than the
-latest repository documentation. The default selection is SDK 0.0.8; future
+latest repository documentation. The default selection is SDK 0.0.11; future
 work is listed in [proposals](proposals.md).
 
 ## Projects and distribution

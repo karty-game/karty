@@ -17,7 +17,7 @@ import (
 	"github.com/karty-game/karty/internal/sdk"
 )
 
-func TestRunBuildsSelfDescribingClient(t *testing.T) {
+func TestRunBuildsSelfDescribingClientSummary(t *testing.T) {
 	t.Parallel()
 	directory := filepath.Join(t.TempDir(), "test-game")
 
@@ -43,9 +43,17 @@ func TestRunBuildsSelfDescribingClient(t *testing.T) {
 
 	var activities []string
 
+	var summary build.Summary
+
+	var completed int
+
 	runErr := build.RunWithOptions(context.Background(), directory, build.Options{
 		TinyGo: tinyGo, WasmTools: wasmTools,
 		Progress: func(label string) { activities = append(activities, label) },
+		Summary: func(report build.Summary) {
+			summary = report
+			completed++
+		},
 	})
 	if runErr != nil {
 		t.Fatalf("Run() error = %v", runErr)
@@ -69,6 +77,21 @@ func TestRunBuildsSelfDescribingClient(t *testing.T) {
 	assertUnusedTextureStripped(t, filepath.Join(directory, "dist", "raw"), 2)
 	assertDistributionRootContainsOnlyDirectories(t, filepath.Join(directory, "dist"))
 	assertNoCatalog(t, filepath.Join(directory, "dist", "raw"))
+
+	cartridgeInfo, err := os.Stat(filepath.Join(directory, "dist", "raw", "game.kart"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assetInfo, err := os.Stat(filepath.Join(directory, "dist", "raw", "asset-report.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if completed != 1 || summary.Target != "raw" || summary.Files != 2 || summary.CartridgeBytes != cartridgeInfo.Size() ||
+		summary.Bytes != cartridgeInfo.Size()+assetInfo.Size() || summary.Textures != 1 {
+		t.Fatalf("completed raw build summary = %+v, callback count = %d", summary, completed)
+	}
 }
 
 func TestRunBuildsAndStagesLevelCartridges(t *testing.T) {

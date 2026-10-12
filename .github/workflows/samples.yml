@@ -21,7 +21,7 @@ jobs:
       - name: Install headless software graphics dependencies
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
       - name: Bake offline lightmaps and build sample web previews
-        run: mise run build-samples
+        run: mise run build-samples -- --cdn
       - uses: actions/upload-artifact@v7
         with:
           name: sample-site

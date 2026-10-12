@@ -1,54 +1,59 @@
-# Made with Karty
+# Karty samples
 
-Fly a ship. Explore a Roman courtyard. Mix music, sound and video.
-These are playable examples of what you can make with Karty.
+Pick a sample to play, then open its source to see how it works.
+[Browse all demos](https://karty-game.github.io/karty/main/) or
+[make your first game](https://karty-game.github.io/karty/main/guide/).
 
-**[▶ Play the demos](https://karty-game.github.io/karty/main/)**
+## Orbital flight deck
 
-## 🚀 Orbital flight deck
+Build a game interface with KartUI tabs, settings, tooltips and inventory.
+Change the ship and thruster power while the flight runs.
 
-Your ship. Your call sign. Your cockpit.
-Switch ships, tune the thrusters and manage supplies while your flight keeps moving.
-A complete game interface with tabs, menus, tooltips and inventory.
+[![Orbital main menu inside a spaceship cockpit, with a planet outside.](ui-demo/preview.jpg)](https://karty-game.github.io/karty/main/ui-demo/)
 
-**[Play Orbital](https://karty-game.github.io/karty/main/ui-demo/)** · [Take a look](ui-demo/README.md)
+[Play sample](https://karty-game.github.io/karty/main/ui-demo/) |
+[Source on GitHub](https://github.com/karty-game/karty/tree/main/samples/ui-demo) |
+[Controls](ui-demo/README.md)
 
-## 🏛️ Roman court & galleries
+## Roman court and galleries
 
-Walk between marble columns, circle the basin and follow the light into the galleries.
-Switch to an isometric view to take in the whole world.
-Textured 3D spaces, lighting and touch controls, right in your browser.
+Build textured 3D rooms with reusable geometry and lights. Switch between
+first-person and isometric cameras, inspect actors and try touch controls.
 
-**[Explore the court](https://karty-game.github.io/karty/main/world-camera/)** · [Take a look](world-camera/README.md)
+[![Marble columns and a mosaic pool in the Roman courtyard.](world-camera/preview.jpg)](https://karty-game.github.io/karty/main/world-camera/)
 
-## The Hangar
+[Play sample](https://karty-game.github.io/karty/main/world-camera/) |
+[Source on GitHub](https://github.com/karty-game/karty/tree/main/samples/world-camera) |
+[Controls](world-camera/README.md)
 
-Walk from olive steel corridors into a green reactor chamber, climb to the
-control deck, look through service windows and cross the zigzag trench.
-An original Doom-inspired environment study with open passages, detailed
-materials and colored lighting.
+## Hangar: industrial 3D level
 
-**[Explore the Hangar](https://karty-game.github.io/karty/main/hangar/)** · [Take a look](hangar/README.md)
+Walk through connected rooms and stairs. Study layered materials, baked lighting,
+a camera-mounted torch, animated machinery and particles.
 
-## Open Air / environment lab
+[![Green-lit reactor machinery inside the Hangar's industrial hall.](hangar/preview.jpg)](https://karty-game.github.io/karty/main/hangar/)
 
-See the courtyard through two recessed windows, follow the covered passage
-outside, and look back into the room. Switch between daylight, cartoon,
-fantasy and space presets on the same geometry. An open north ground leaves
-room for future terrain and vegetation experiments.
+[Play sample](https://karty-game.github.io/karty/main/hangar/) |
+[Source on GitHub](https://github.com/karty-game/karty/tree/main/samples/hangar) |
+[Controls and authoring notes](hangar/README.md)
 
-**[Take a look](environment/README.md)**
+## Media lab
 
-## 🎧 Media lab
+Import images, sound, music and video. Play overlapping sound effects,
+toggle looping music and replay a video in one scene.
 
-Turn up the music, layer on sound effects and play a video.
-See how images, audio and video can share the same game scene.
+[![Media lab with image samples, a playing test video and audio controls.](media-lab/preview.jpg)](https://karty-game.github.io/karty/main/media-lab/)
 
-**[Try the media lab](https://karty-game.github.io/karty/main/media-lab/)** · [Take a look](media-lab/README.md)
+[Play sample](https://karty-game.github.io/karty/main/media-lab/) |
+[Source on GitHub](https://github.com/karty-game/karty/tree/main/samples/media-lab) |
+[Controls](media-lab/README.md)
+
+The [environment lab](environment/README.md) is still in development and has no
+published demo.
 
 ## Make it yours
 
-Want to change a sample? From the repository root:
+From the repository root:
 
 ```sh
 mise install
@@ -58,12 +63,10 @@ cd samples/ui-demo
 ../../dist/karty dev
 ```
 
-Open the address printed in your terminal. Edit, save and see your changes.
-Pick another sample by changing `ui-demo` to its folder name.
-For the courtyard, follow its [launch steps](world-camera/README.md#run-it).
+Open the address printed in your terminal. Edit and save to rebuild the preview.
+Replace `ui-demo` with another sample's folder name.
+The courtyard has separate [launch steps](world-camera/README.md#run-it).
 
-Sample preview CI installs each project's pinned public SDK, runs `karty bake`
-for each unchunked level with `[lightmap] enabled = true` and `offline = true`,
-then builds that project's web preview. Chunked levels bake every child during
-the build. A failed bake stops packaging; samples without offline lightmaps build
-directly.
+Sample CI installs each project's pinned public SDK. It bakes each unchunked level
+with offline lightmaps before building the web preview. Chunked levels bake their
+children during the build. A failed bake stops packaging.

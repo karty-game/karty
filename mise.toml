@@ -42,6 +42,38 @@ run = "go test -timeout=9s ./internal/levelbuild -run SpriteDensity -count=1 -v"
 [tasks.build]
 run = "go build -o dist/karty ./cmd/karty"
 
+[tasks.docs]
+description = "Refresh the guide and sample gallery, then serve them locally"
+run = [
+  "go run ./cmd/karty-samples preview",
+  'echo Docs: http://127.0.0.1:{{env.KARTY_DOCS_PORT | default(value="8081") | int(default=8081)}}/guide/',
+  'go run ./cmd/karty serve --addr "127.0.0.1:{{env.KARTY_DOCS_PORT | default(value="8081") | int(default=8081)}}" dist/samples-site',
+]
+
+[tasks.generate-guide]
+description = "Generate the Markdown game authoring guide and static reading page"
+run = "go run ./cmd/karty-guide -output dist/guide"
+
+[tasks.check-guide]
+description = "Validate guide examples, links, output confinement and rendering"
+run = "go test -timeout=9s ./internal/guide ./cmd/karty-guide"
+
+[tasks.check-summaries]
+description = "Check build and bake output counts and next commands"
+run = "go test -timeout=9s ./internal/commands/build ./internal/commands/bake ./internal/ui ./internal/build ./internal/levelbuild -run 'Summary|Size'"
+
+[tasks.check-cdn]
+description = "Validate shared browser runtime URLs, hashes and launcher behavior"
+run = "go test -timeout=9s ./internal/build ./internal/commands/build -run 'CDN|BrowserLauncher|BrowserChunkBridge|ResourceProducers'"
+
+[tasks.check-samples]
+description = "Validate sample gallery and static preview assembly"
+run = "go test -timeout=9s ./cmd/karty-samples"
+
+[tasks.capture-samples]
+description = "Capture sample gallery thumbnails from staged browser games"
+run = "node cmd/karty-samples/capture.mjs"
+
 [tasks.build-cli-linux-amd64]
 run = "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/cli/linux-amd64/karty ./cmd/karty"
 

@@ -8,7 +8,10 @@ import { createHash } from "node:crypto";
 
 const mock = process.argv[2] === "--mock";
 const directory = mock ? null : process.argv[2];
-const source = await readFile(mock ? process.argv[3] : join(directory, "karty.js"), "utf8");
+const source = (await readFile(mock ? process.argv[3] : join(directory, "karty.js"), "utf8")).replace(
+  "@@HOST_SOURCE@@",
+  JSON.stringify({ url: "karty-host.wasm", sha256: "" }),
+);
 if (!mock) {
   const html = await readFile(join(directory, "index.html"), "utf8");
   const scripts = [...html.matchAll(/<script\s+src="([^"]+)"\s*>/g)].map((match) => match[1]);
