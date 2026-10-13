@@ -2,15 +2,15 @@
 
 **Start building Go games in minutes.**
 
+- Make 2.5D retro shooters and isometric action RPGs.
+- Create 3D world by stacking 2D shapes without learning external tools like Blender.
+- Create, develop, preview, and package your game with one CLI.
+- Build one kartridge and run it anywhere (on the web, Linux, macOS, or Windows).
+- Built on [Ebitengine](https://ebitengine.org/) and [EbitenUI](https://github.com/ebitenui/ebitenui).
+
 > [!WARNING]
 > Karty is a work in progress under active development. APIs and features are
 > subject to change.
-
-- Make 2.5D retro shooters and isometric action RPGs.
-- Stack 2D shapes into worlds without learning Blender.
-- Create, preview, and package your game with one CLI.
-- Build one kartridge. Run it on the web, Linux, macOS, or Windows.
-- Built on [Ebitengine](https://ebitengine.org/) and [EbitenUI](https://github.com/ebitenui/ebitenui).
 
 | First-person Hangar                                                                                                                       | Isometric Roman court                                                                                                                                                    |
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
