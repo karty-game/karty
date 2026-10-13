@@ -466,7 +466,7 @@
       state("loading-cartridge");
       status("Loading game cartridge…");
       go = new Go();
-      return loadClientWasm("game.kart?v=a2fcd0b0b9ba04d3", imports);
+      return loadClientWasm("game.kart?v=a74e488cc9488533", imports);
     })
     .then((result) => {
       client = result.instance;
@@ -491,8 +491,10 @@
           const showGame = () => {
             if (globalThis.document?.documentElement?.dataset.kartyState === "error") return;
             const stats = globalThis.kartyWorldRenderer?.stats();
+            const cameras = stats?.cameras || [];
+            const activeCameras = cameras.filter((camera) => camera.active !== false);
             if (levelRequests.size || chunkRequests.size ||
-                stats?.cameras?.some((camera) => !camera.device?.frames)) {
+                (cameras.length && (!activeCameras.length || activeCameras.some((camera) => !camera.device?.frames)))) {
               status("Loading the map…");
               setTimeout(showGame, 100);
               return;

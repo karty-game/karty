@@ -491,8 +491,10 @@
           const showGame = () => {
             if (globalThis.document?.documentElement?.dataset.kartyState === "error") return;
             const stats = globalThis.kartyWorldRenderer?.stats();
+            const cameras = stats?.cameras || [];
+            const activeCameras = cameras.filter((camera) => camera.active !== false);
             if (levelRequests.size || chunkRequests.size ||
-                stats?.cameras?.some((camera) => !camera.device?.frames)) {
+                (cameras.length && (!activeCameras.length || activeCameras.some((camera) => !camera.device?.frames)))) {
               status("Loading the map…");
               setTimeout(showGame, 100);
               return;

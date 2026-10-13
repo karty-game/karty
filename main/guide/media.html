@@ -1072,6 +1072,21 @@ pre code {
             <li><a href="isometric.html" aria-current="false">3D isometric</a></li>
             
           </ul>
+          
+          <p>On this page</p>
+          <ol class="on-page">
+            
+            <li><a href="#choose-how-a-sound-reaches-the-player">Choose how a sound reaches the player</a></li>
+            
+            <li><a href="#set-the-listener-and-update-its-direction">Set the listener and update its direction</a></li>
+            
+            <li><a href="#play-a-positioned-one-shot">Play a positioned one-shot</a></li>
+            
+            <li><a href="#place-a-looping-sound-in-the-world">Place a looping sound in the world</a></li>
+            
+            <li><a href="#check-playback-and-package-media">Check playback and package media</a></li>
+            
+          </ol>
            
           <p>For every game</p>
           <ul aria-label="Shared topics">
@@ -1116,6 +1131,21 @@ pre code {
               
             </ul>
             
+            <p>On this page</p>
+            <ol class="on-page">
+              
+              <li><a href="#choose-how-a-sound-reaches-the-player">Choose how a sound reaches the player</a></li>
+              
+              <li><a href="#set-the-listener-and-update-its-direction">Set the listener and update its direction</a></li>
+              
+              <li><a href="#play-a-positioned-one-shot">Play a positioned one-shot</a></li>
+              
+              <li><a href="#place-a-looping-sound-in-the-world">Place a looping sound in the world</a></li>
+              
+              <li><a href="#check-playback-and-package-media">Check playback and package media</a></li>
+              
+            </ol>
+            
           </div>
         </details>
       </nav>
@@ -1139,6 +1169,27 @@ pre code {
 name = &#34;ui.click&#34;
 source = &#34;assets/sounds/click.wav&#34;
 
+[[assets.sound]]
+name = &#34;door.open&#34;
+source = &#34;assets/sounds/door/open.wav&#34;
+
+[assets.sound.transform]
+channels = &#34;mono&#34;
+
+[[assets.sound]]
+name = &#34;reactor.hum&#34;
+source = &#34;assets/sounds/reactor/hum.wav&#34;
+
+[assets.sound.transform]
+channels = &#34;mono&#34;
+
+[[assets.sound]]
+name = &#34;crate.scrape&#34;
+source = &#34;assets/sounds/crate/scrape.wav&#34;
+
+[assets.sound.transform]
+channels = &#34;mono&#34;
+
 [[assets.music]]
 name = &#34;theme&#34;
 source = &#34;assets/music/theme.wav&#34;
@@ -1161,8 +1212,58 @@ func (game *Game) stopMedia() {
 }
 </code></pre>
 <p>For <code>my-game</code>, the assets import is <code>example.com/my-game/.karty/assets</code>. Use the generated names in <code>.karty/assets/</code>. Play the click once per action, and start music once when entering a screen or level.</p>
+<h2 id="choose-how-a-sound-reaches-the-player">Choose how a sound reaches the player</h2>
+<p>Use <code>PlaySound</code> for centered interface feedback. Use <code>PlaySFXFrom</code> for a short effect that follows an object, such as a door opening. For a humming reactor or a moving crate&#39;s scraping loop, use a sound emitter. Music and environment streams provide a soundtrack or broad ambience; they have no source position.</p>
+<p>Spatial playback changes volume with distance and pans between the left and right speakers. Use mono WAV clips so the host can place them in the stereo field. The <code>channels = &#34;mono&#34;</code> transforms above downmix stereo recordings during the build. Keep emitter loops short: they use decoded sound assets, rather than streaming music. Sound assets are limited to 30 seconds and 6 MiB of decoded PCM per clip.</p>
+<h2 id="set-the-listener-and-update-its-direction">Set the listener and update its direction</h2>
+<p>For a world game, make the camera the audio receiver. Add <code>math</code> to your imports and this method to the room viewer:</p>
+<pre><code class="language-go">func (game *Game) updateAudioReceiver() {
+    if game.camera == nil { return }
+    yaw := float64(game.camera.Settings.Yaw)
+    game.SetAudioReceiver(game.camera, engine.AudioReceiverOptions{
+        Right: engine.NewVec2D(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
+    })
+}
+</code></pre>
+<p>Call <code>game.updateAudioReceiver()</code> after camera creation in <code>OnLevelReady</code>, and from your existing <code>OnUpdate</code> after movement and turning. Set it again when replacing the camera. The receiver follows the camera&#39;s world position; its output rectangle on screen does not change where the player hears from.</p>
+<p><code>Right</code> is the world direction of the right speaker. A yaw of zero faces positive Y, so the right direction is <code>(1, 0)</code>. The host does not derive this vector from camera yaw: update it as the player turns, or panning will keep the old direction. Camera pitch does not change this horizontal listener basis. For a 2D game, use the player entity as receiver and <code>(1, 0)</code> when positive X should always sound to the right. <code>ClearAudioReceiver()</code> silences spatial playback until another receiver is set.</p>
+<h2 id="play-a-positioned-one-shot">Play a positioned one-shot</h2>
+<p>Pass the existing door entity or resolved <code>engine.WorldActorRef</code> when the door opens. It must be a live audio entity:</p>
+<pre><code class="language-go">func (game *Game) playDoorSound(door engine.AudioEntity) {
+    game.PlaySFXFrom(assets.SoundDoorOpen, door, engine.SFXOptions{
+        Volume: 0.8, NearDistance: 1, FarDistance: 12,
+    })
+}
+</code></pre>
+<p>Call this once per opening, rather than every update. The voice follows the door until the clip ends. <code>NearDistance</code> is the range with no distance reduction; volume fades between near and far, and reaches silence at <code>FarDistance</code>. Use the same units as the entity positions: metres for the world guides, canvas coordinates for 2D entities. Set volume explicitly; zero is silent. Use finite values, volume in <code>[0, 4]</code>, a nonnegative near distance, and a far distance greater than near.</p>
+<p><code>PlaySFXFrom</code> uses XY distance. Z height, walls and doors do not obstruct this one-shot API. Use an emitter with <code>Loop: false</code> when a short effect needs XYZ distance or collision obstruction.</p>
+<h2 id="place-a-looping-sound-in-the-world">Place a looping sound in the world</h2>
+<p>The emitter API requires SDK **0.0.12 or newer** and its matching host. Check your project&#39;s <code>[sdk]</code> version and <code>.karty/docs/audio-emitters.md</code>. Create this emitter once from <code>OnLevelReady</code>, using <code>event.Handle</code> for the mounted level:</p>
+<pre><code class="language-go">func (game *Game) startReactorSound(level engine.LevelHandle) *engine.SoundEmitter {
+    return game.NewSoundEmitter(level, assets.SoundReactorHum,
+        engine.NewVec3D(6, 6, 1.5), engine.SoundEmitterOptions{
+            Volume: 0.6, NearDistance: 2, FarDistance: 16,
+            Loop: true, Occlusion: true,
+        })
+}
+</code></pre>
+<p>Keep the returned handle in <code>Game</code> so you can call <code>SetPosition</code>, <code>SetOptions</code> or <code>Stop</code>. Create it once; creating it every frame starts overlapping voices. Emitters measure XYZ distance, so a source on another floor becomes quieter. They also provide a gentle volume reduction behind the listener. The receiver and emitter must belong to the same mounted level to be audible.</p>
+<p><code>Occlusion: true</code> makes loaded collision geometry muffle the direct path to the listener. Walls and doors need collision to block sound; non-collidable props do not. Place the source outside solid geometry. Sound does not travel around corners, and there is no room reverb or acoustic portal transformation.</p>
+<p>For a moving object, attach the sound at creation. Pass a live crate entity or a resolved <code>engine.WorldActorRef</code> belonging to the same mounted level:</p>
+<pre><code class="language-go">func (game *Game) startCrateSound(level engine.LevelHandle, crate engine.AudioEntity) *engine.SoundEmitter {
+    return game.NewAttachedSoundEmitter(level, assets.SoundCrateScrape, crate,
+        engine.NewVec3D(0, 0, 0.3), engine.SoundEmitterOptions{
+            Volume: 0.5, NearDistance: 0.5, FarDistance: 9,
+            Loop: true, Occlusion: true,
+        })
+}
+</code></pre>
+<p>The offset uses world axes and follows the source; it does not rotate with the crate. Start the scraping loop when movement begins and stop it when movement ends. Setters preserve playback rather than restarting the clip. <code>SetOptions</code> replaces the options: include the original <code>Loop</code> value, because loop mode cannot change after creation. A stopped handle cannot restart; create a new one.</p>
+<p>Level unloading or source destruction stops an emitter. <code>Stop()</code> is also safe to call repeatedly or on a nil handle. Invalid creation arguments return nil; a non-nil handle does not guarantee admission when the host voice budget is full. There are at most 16 persistent emitters within the shared 32-voice sound budget. Keep handles and sound IDs out of save data. The <a href="../hangar/">Hangar sample</a> uses reactor hums and attached crate scraping loops.</p>
+<h2 id="check-playback-and-package-media">Check playback and package media</h2>
 <p>Browser audio needs player input before it can play. Video sources must already be MPEG-1 in an <code>.mpg</code> container, optionally with MP2 audio. The CLI does not convert MP4. One video plays at a time; pause, seeking, and video looping are not supported. The four position values set its top-left and display size.</p>
 <p>Keep the built <code>content/</code> folder when sharing music or video. Use <a href="../media-lab/">Media lab</a> to check playback and overlapping effects.</p>
+<p>For a spatial check, click the preview, walk toward and away from a source, then turn with the source beside you. Check that distance changes volume and turning changes the stereo balance. Test an occluded emitter behind a collidable wall. If it is silent, check the receiver, generated sound ID, mounted level, explicit volume and far distance, then look for voice-admission errors in host diagnostics.</p>
 <figure><img src="assets/media-lab.jpg" alt="Media lab shows video above three sound controls." loading="lazy"><figcaption>Media lab shows video above three sound controls.</figcaption></figure>
 </div>
         
