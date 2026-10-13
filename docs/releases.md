@@ -32,28 +32,18 @@ Preparation updates managed samples to `CurrentSDK`; tests reject drift and prep
 the selected SDK cache. `karty sdk current` prints the selection for scripts. Preparation
 does not commit, tag or publish. See [Development](development.md) for overrides.
 
-## Sky, physics and particles candidate
+## SDK 0.0.12 selection
 
-The CLI's next public format-module pin is **v0.0.14**, which is not yet
-published. Released module v0.0.12 lacks the project-sky contracts; v0.0.13
-also predates the complete candidate. Standalone candidate checks use a
-checksummed archive of the public SDK source in an isolated file proxy and
-module cache, with `GOWORK=off`. This requires no private source or credentials,
-but does not establish ordinary public-proxy availability. Record the archive
-and module content sums and exempt only the unpublished SDK module from the
-checksum database during that local check.
+The public format module **v0.0.14** and signed
+[SDK/host 0.0.12](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.0.12)
+are published. They are separate version selections: the format module resolves
+through the ordinary public Go proxy and checksum database; SDK installation
+verifies signed metadata and matching public bundle/host assets.
 
-Publish the reviewed public module as v0.0.14, verify its content sums through
-the ordinary public proxy/checksum database, then rerun `GOWORK=off mise run check`.
-Module publication and the signed engine SDK/host **0.0.12** release are separate
-operations. Both need explicit authorization; do not move an existing tag.
-
-Until SDK/host 0.0.12 is published, `CurrentSDK` remains 0.0.11. The environment,
-Hangar, crate-room and particle-lab samples explicitly select candidate 0.0.12;
-`SampleSDKVersion` preserves those pins. After matching SDK/host publication,
-advance `CurrentSDK`, run `mise run prepare-release`, and repeat customer
-integration against the published artifacts. A local candidate or host override
-does not qualify the CLI default's published integration path.
+`CurrentSDK` and all managed samples select 0.0.12. Run
+`mise run prepare-release` after a future selection change, then repeat
+`GOWORK=off mise run check` and customer integration against published assets.
+A local archive or host override does not qualify the published integration path.
 
 ## Publication gate
 
@@ -125,3 +115,61 @@ systems. Browser checks used headless Chromium; Materialize used software
 graphics. No physical audio, manual gameplay or physical mobile-device review
 was performed. Commit/push the final preparation and obtain green main-branch
 checks before tagging `v0.0.2`; preparation does not commit, tag or publish.
+
+## v0.0.2 release checks — 2026-10-13
+
+The reviewed working tree selects published SDK/hosts 0.0.12, public format
+module v0.0.14 and KartUI v0.0.6. `mise run prepare-release` synchronized all
+seven managed samples, including the three remaining 0.0.11 pins. Signed public
+SDK installation passed; its ZIP SHA-256 is
+`2ff8af37a16d97e5dda37a9131b22283a1a274f189f4ac29d5269aa267d0bf83`, matching
+the strict 64-byte cached digest.
+
+Asset probes now supply their own sprite instead of depending on the starter's
+removed `player.png`. Scaffold tests qualify the published vector/text starter;
+build fixtures retain their typed texture references and stripping assertions.
+Local docs snapshot complete validated project builds independently of SDK
+release status, preserving assembled games when no local build exists. Existing
+path, symlink, incomplete-build and previous-preview protection tests pass.
+
+Commands ran from the CLI root with:
+
+```sh
+export GOCACHE=/tmp/karty-engine-go-cache
+export GOLANGCI_LINT_CACHE=/tmp/karty-engine-lint-cache
+export GOWORK=off GOPROXY=https://proxy.golang.org GOSUMDB=sum.golang.org
+export GONOSUMDB= GONOPROXY=
+export KARTY_HOME=/tmp/karty-cli-release-home
+export XDG_CACHE_HOME=/tmp/karty-tinygo-xdg-cache
+export PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
+unset KARTY_HOST_NATIVE KARTY_HOST_WEB KARTY_HOST_CHECK KARTY_TEST_SDK
+```
+
+- `mise run check`: PASS formatting, lint (zero Go issues), sample-pin checks,
+  full unit and bounded level-builder tests (25.17 seconds), and CLI compilation.
+  Log: `/tmp/karty-cli-release-fixes-check-complete.log`.
+- `mise run check-integration`: PASS public-host native cartridge verification,
+  native/web starter packaging, actual TinyGo WASM launcher execution with a
+  host test double, actual Go/Ebiten host and cartridge execution in headless
+  Chromium, desktop/high-DPI primary-touch UI lifecycle, zero guest allocations
+  across 1,000 updates, and managed Air rebuild lifecycle (4.686 seconds).
+  Log: `/tmp/karty-cli-release-fixes-integration-final.log`.
+- `mise run build-cli-linux-amd64`, `mise run build-cli-linux-arm64`,
+  `mise run build-cli-darwin-arm64` and `mise run build-cli-windows-amd64`: PASS
+  all four distributed CLI target compilations. Logs:
+  `/tmp/karty-cli-release-fixes-PLATFORM.log`.
+
+The first customer-suite attempt passed smoke and the actual launcher check,
+then could not find Chromium because writable `XDG_CACHE_HOME` moved Playwright's
+default browser lookup. Setting `PLAYWRIGHT_BROWSERS_PATH` to the existing pinned
+Chromium cache passed the complete rerun while retaining TinyGo's writable cache.
+Initial log: `/tmp/karty-cli-release-fixes-integration.log`. Earlier release gates
+caught fixture-helper lint findings; the corrected complete gate passed without
+disabling rules. Logs: `/tmp/karty-cli-release-fixes-check.log` and
+`/tmp/karty-cli-release-fixes-check-final.log`.
+
+These results qualify this uncommitted Linux amd64 working tree and the named
+headless fixtures. Linux ARM64 customer execution and Windows ARM64 packaged-game
+startup remain release-workflow gates; cross-compilation does not qualify those
+devices. Sample-site rebuilding, physical audio, manual gameplay and hardware
+FPS were not rerun. Nothing was committed, tagged or published by this check.

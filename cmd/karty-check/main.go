@@ -15,6 +15,7 @@ import (
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
+	"github.com/karty-game/karty/internal/testfixture"
 	"github.com/karty-game/karty/internal/toolchain"
 )
 
@@ -122,6 +123,10 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 
 	project := filepath.Join(temporary, "runtime-probe")
 	if err := scaffold.CreateGame(project, "runtime-probe", manifest); err != nil {
+		return err
+	}
+
+	if err := testfixture.PlayerTexture(project); err != nil {
 		return err
 	}
 

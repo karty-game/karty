@@ -6,11 +6,10 @@ import (
 	"path/filepath"
 
 	"github.com/karty-game/karty/internal/guide"
-	"github.com/karty-game/karty/internal/release"
 )
 
 // previewSamples refreshes reading pages and screenshots without rebuilding games.
-// Local candidate demos use a complete snapshot of their existing web build.
+// Local demos use a complete snapshot of their existing web build.
 func previewSamples(directory string) error {
 	root, err := filepath.Abs(directory)
 	if err != nil {
@@ -45,7 +44,12 @@ func previewSamples(directory string) error {
 	defer project.Close()
 
 	for index, name := range names {
-		if release.SampleSDKVersion(name) != release.SDKVersion() {
+		local, err := useLocalSample(project, output, name)
+		if err != nil {
+			return err
+		}
+
+		if local {
 			if err := previewLocalSample(project, output, name, cards[index]); err != nil {
 				return err
 			}
@@ -67,6 +71,23 @@ func previewSamples(directory string) error {
 	}
 
 	return writeGallery(site, cards)
+}
+
+// Local builds take precedence over assembled previews regardless of SDK release
+// status. Preserve existing assembled games when no local build is available.
+func useLocalSample(project, output *os.Root, name string) (bool, error) {
+	if _, err := project.Lstat(filepath.Join("samples", name, "dist", "web")); err == nil {
+		return true, nil
+	} else if !os.IsNotExist(err) {
+		return false, err
+	}
+
+	_, err := output.Lstat(name)
+	if os.IsNotExist(err) {
+		return true, nil
+	}
+
+	return false, err
 }
 
 func requirePreviewDirectory(root *os.Root, name string) error {

@@ -15,6 +15,7 @@ import (
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
+	"github.com/karty-game/karty/internal/testfixture"
 )
 
 func TestRunBuildsSelfDescribingClientSummary(t *testing.T) {
@@ -26,7 +27,7 @@ func TestRunBuildsSelfDescribingClientSummary(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	createErr := scaffold.CreateGame(directory, "test-game", manifest)
+	createErr := createTexturedGame(directory, manifest)
 	if createErr != nil {
 		t.Fatalf("CreateGame() error = %v", createErr)
 	}
@@ -104,7 +105,7 @@ func TestRunBuildsAndStagesLevelCartridges(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
+	if err := createTexturedGame(directory, manifest); err != nil {
 		t.Fatal(err)
 	}
 
@@ -159,6 +160,24 @@ func TestRunBuildsAndStagesLevelCartridges(t *testing.T) {
 			t.Fatalf("%s level is not core Wasm", distribution)
 		}
 	}
+}
+
+func createTexturedGame(directory string, manifest sdk.Manifest) error {
+	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
+		return err
+	}
+
+	if err := testfixture.PlayerTexture(directory); err != nil {
+		return err
+	}
+
+	// Retain the fixture texture through a real typed reference in authored source.
+	source := []byte(`package main
+import "example.com/test-game/.karty/assets"
+var fixtureTexture = assets.TexturePlayer
+`)
+
+	return os.WriteFile(filepath.Join(directory, "src", "texture_fixture.go"), source, 0o600)
 }
 
 func addUnusedTexture(t *testing.T, directory string) {
@@ -247,7 +266,7 @@ func TestRunStagesNativeTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
+	if err := createTexturedGame(directory, manifest); err != nil {
 		t.Fatal(err)
 	}
 
@@ -284,7 +303,7 @@ func TestRunStagesWebTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
+	if err := createTexturedGame(directory, manifest); err != nil {
 		t.Fatal(err)
 	}
 
@@ -399,7 +418,7 @@ func TestRunRemovesStaleStrippedTextureOutput(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
+	if err := createTexturedGame(directory, manifest); err != nil {
 		t.Fatal(err)
 	}
 
@@ -445,7 +464,7 @@ func TestRunRetainsExplicitlyKeptTexture(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
+	if err := createTexturedGame(directory, manifest); err != nil {
 		t.Fatal(err)
 	}
 

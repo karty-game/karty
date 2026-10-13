@@ -96,7 +96,7 @@ func TestLocalDocsIncludePhysicsScreenshotAndCompletePlayableSnapshot(t *testing
 	}
 }
 
-func TestLocalDocsWithoutCandidateBuildShowSetupAndScreenshot(t *testing.T) {
+func TestLocalDocsWithoutBuildShowSetupAndScreenshot(t *testing.T) {
 	t.Parallel()
 
 	root := localPreviewProject(t, false)
@@ -109,7 +109,7 @@ func TestLocalDocsWithoutCandidateBuildShowSetupAndScreenshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, want := range []string{"Physics lab: crate room", "Build locally to play", "candidate SDK 0.0.12", `src="preview.jpg"`} {
+	for _, want := range []string{"Physics lab: crate room", "Build locally to play", "build the web target", `src="preview.jpg"`} {
 		if !strings.Contains(string(page), want) {
 			t.Fatalf("unbuilt local sample missing %q", want)
 		}
@@ -120,7 +120,7 @@ func TestLocalDocsWithoutCandidateBuildShowSetupAndScreenshot(t *testing.T) {
 	}
 }
 
-func TestLocalDocsReplaceHangarsReleasedBuildWithCandidateSnapshot(t *testing.T) {
+func TestLocalDocsReplaceHangarsReleasedBuildWithLocalSnapshot(t *testing.T) {
 	t.Parallel()
 
 	root := localPreviewProject(t, true)

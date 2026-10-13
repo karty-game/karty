@@ -17,8 +17,8 @@ import (
 //go:embed local-preview.html
 var localPreviewTemplate string
 
-// Local docs use existing artifacts and never install an unreleased SDK. Copy a
-// complete, confined snapshot before replacing this candidate's local preview.
+// Local docs use existing artifacts without installing an SDK. Copy a complete,
+// confined snapshot before replacing the local preview.
 func previewLocalSample(project, output *os.Root, name string, card sampleCard) error {
 	stage := filepath.Join("dist", ".docs-sample-"+rand.Text())
 	if err := project.Mkdir(stage, 0o700); err != nil {

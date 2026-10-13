@@ -1,8 +1,6 @@
 package scaffold_test
 
 import (
-	"bytes"
-	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,7 +25,7 @@ func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 		t.Fatalf("CreateGame() error = %v", createErr)
 	}
 
-	for _, path := range []string{"README.md", "karty.toml", "go.mod", ".gitignore", "src/main.go", "assets/textures/player.png", ".karty/engine/game.go", ".karty/engine/components.go", ".karty/assets/textures.go"} {
+	for _, path := range []string{"README.md", "karty.toml", "go.mod", ".gitignore", "src/main.go", ".karty/engine/game.go", ".karty/engine/components.go", ".karty/assets/textures.go"} {
 		if _, statErr := os.Stat(filepath.Join(destination, path)); statErr != nil {
 			t.Errorf("generated %s: %v", path, statErr)
 		}
@@ -69,18 +67,8 @@ func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 		t.Errorf("karty.toml = %q, conventional texture should not need a declaration", contents)
 	}
 
-	texture, err := os.ReadFile(filepath.Join(destination, "assets", "textures", "player.png"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	configuration, err := png.DecodeConfig(bytes.NewReader(texture))
-	if err != nil {
-		t.Fatalf("decode generated player texture: %v", err)
-	}
-
-	if configuration.Width != 32 || configuration.Height != 32 {
-		t.Errorf("generated player texture dimensions = %dx%d, want 32x32", configuration.Width, configuration.Height)
+	if _, err := os.Stat(filepath.Join(destination, "assets", "textures", "player.png")); !os.IsNotExist(err) {
+		t.Errorf("vector-only starter supplied an unexpected player texture: %v", err)
 	}
 
 	mainSource, err := os.ReadFile(filepath.Join(destination, "src", "main.go"))
@@ -92,7 +80,12 @@ func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 		t.Errorf("generated main.go uses an unavailable movement helper: %s", mainSource)
 	}
 
-	assertTypedTextureUse(t, mainSource)
+	for _, required := range []string{"First Spark", "NewVector2D", "NewText2D", "OnInputReset"} {
+		if !strings.Contains(string(mainSource), required) {
+			t.Errorf("generated starter missing %q", required)
+		}
+	}
+
 	assertExplicitRegistration(t, mainSource)
 
 	gitignore, err := os.ReadFile(filepath.Join(destination, ".gitignore"))
@@ -104,14 +97,6 @@ func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 		if !strings.Contains(string(gitignore), entry) {
 			t.Errorf(".gitignore = %q, missing %q", gitignore, entry)
 		}
-	}
-}
-
-func assertTypedTextureUse(t *testing.T, mainSource []byte) {
-	t.Helper()
-
-	if !strings.Contains(string(mainSource), "assets.TexturePlayer") {
-		t.Errorf("generated main.go does not use the typed texture reference: %s", mainSource)
 	}
 }
 

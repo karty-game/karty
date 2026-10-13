@@ -7,8 +7,7 @@ const CurrentSDK = "0.0.12"
 // SDKVersion returns the unprefixed version used by manifests and project files.
 func SDKVersion() string { return CurrentSDK }
 
-// SampleSDKVersion keeps new environment, physics and particle samples on the next candidate until release.
-// All other samples and the CLI default continue to use the published SDK.
-func SampleSDKVersion(name string) string {
+// SampleSDKVersion selects the published SDK for every managed sample.
+func SampleSDKVersion(_ string) string {
 	return CurrentSDK
 }
