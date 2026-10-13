@@ -134,7 +134,7 @@ run = "../../dist/karty serve"
 [tasks.check-materialize-software]
 description = "Generate real atlas maps using released Materialize and headless Mesa software OpenGL"
 env = { KARTY_TEST_MATERIALIZE_ATLAS = "1" }
-run = "go test -timeout=9s ./internal/assetpipeline -run '^TestWorldMaterialReleaseAtlas$' -count=1 -v"
+run = "bash scripts/check-materialize-software.sh"
 
 [tasks.generate-world-camera-materials]
 description = "Regenerate the world-camera sample's authored albedo textures"

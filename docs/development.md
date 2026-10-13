@@ -106,9 +106,14 @@ generation and cancellation failures are not retried or hidden.
 The Build samples and Checks workflows install libegl1 and libgl1-mesa-dri.
 Checks then runs
 `mise run check-materialize-software` without backend flags or Xvfb.
-It downloads the checksum-pinned release,
-generates actual normal/height/AO maps from a packed extruded atlas, merges and
-encodes both QOI textures, validates the pair, and checks warm-cache reuse.
+The pinned task prepares the signed current SDK, checksum-verified Materialize
+and first-use graphics state before the atlas regression's unchanged nine-second
+deadline. It shares real tool/driver cache directories between preparation and
+execution, using `KARTY_HOME` and `XDG_CACHE_HOME` when supplied or ignored
+`dist/validation/materialize/` directories otherwise. The preparation atlas cache
+is discarded. The timed fixture starts its own fresh material cache, generates
+actual normal/height/AO/metallic/smoothness maps, merges and encodes both QOI
+textures, validates the pair, and checks warm-cache reuse.
 Failures are errors, not skips or neutral-map substitutions.
 
 For headless `karty build` with an atlas-capable SDK, provide Mesa EGL/DRI
