@@ -40,20 +40,32 @@
     element("fullscreen").textContent = label;
     element("fullscreen").setAttribute("aria-label", label);
   });
-  const fetchChecked = async (url) => {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Could not load ${url} (HTTP ${response.status})`);
-    return response;
+  const fetchDownload = async (url, options, read = (response) => response) => {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          const error = new Error(`Could not load ${url} (HTTP ${response.status})`);
+          error.retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
+          throw error;
+        }
+        return await read(response);
+      } catch (error) {
+        if (options?.signal?.aborted || error?.name === "AbortError" || attempt === 2 ||
+            !(error?.name === "TypeError" || error?.retryable)) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+        if (options?.signal?.aborted) throw options.signal.reason;
+      }
+    }
   };
-  const loadWasm = async (url, imports) => {
-    const response = await fetchChecked(url);
-    // Static servers do not always supply application/wasm; keep them usable.
+  const loadWasm = (url, imports) => fetchDownload(url, undefined, async (response) => {
+    // Retry interrupted streaming bodies as well as failed initial requests.
     if (response.headers?.get("Content-Type")?.split(";")[0].trim() === "application/wasm") {
       return WebAssembly.instantiateStreaming(response, imports);
     }
     return WebAssembly.instantiate(await response.arrayBuffer(), imports);
-  };
-  const hostSource = {url:"../runtime/0.0.11/9f3033c34a7b919d629ab65b6d14ee20c484b7953cdbfe18b5afc5710d72c36c.wasm",sha256:"9f3033c34a7b919d629ab65b6d14ee20c484b7953cdbfe18b5afc5710d72c36c"};
+  });
+  const hostSource = {url:"../runtime/0.0.12/e23247624d625f868c62319b08c4954202852e3b8cfa619d848c557851aa3a58.wasm",sha256:"e23247624d625f868c62319b08c4954202852e3b8cfa619d848c557851aa3a58"};
   const readHostBytes = async (response) => {
     // Startup downloads have a fixed bound, independent of server headers.
     const maxBytes = 128 * 1024 * 1024;
@@ -86,8 +98,7 @@
   const loadHostWasm = async (imports) => {
     if (!hostSource.sha256) return loadWasm(hostSource.url, imports);
     status("Loading the game runtime…");
-    const response = await fetchChecked(hostSource.url);
-    const bytes = await readHostBytes(response);
+    const bytes = await fetchDownload(hostSource.url, undefined, readHostBytes);
     if (!globalThis.crypto?.subtle) throw new Error("Runtime verification requires HTTPS or localhost.");
     const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
     const checksum = [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -95,8 +106,8 @@
     return WebAssembly.instantiate(bytes, imports);
   };
   const loadClientWasm = async (url, imports) => {
-    const response = await fetchChecked(url);
-    const module = await WebAssembly.compile(await response.arrayBuffer());
+    const bytes = await fetchDownload(url, undefined, (response) => response.arrayBuffer());
+    const module = await WebAssembly.compile(bytes);
     const sections = WebAssembly.Module.customSections(module, "karty.assets.v1");
     if (sections.length !== 1) throw new Error("The game cartridge asset section is missing or duplicated");
     globalThis.kartyAssetBundle = sections[0];
@@ -210,6 +221,11 @@
       play_sound: (soundID) => globalThis.kartyHostPlaySound(soundID),
       play_sfx_from: (soundID, entityID, volume, nearDistance, farDistance) =>
         globalThis.kartyHostPlaySFXFrom(soundID, entityID, volume, nearDistance, farDistance),
+      set_sound_emitter: (emitterID, soundID, levelID, sourceID, x, y, z, volume, nearDistance, farDistance, flags) => {
+        if ((flags >>> 0) & ~3) return;
+        globalThis.kartyHostSetSoundEmitter?.(emitterID, soundID, levelID, sourceID, x, y, z, volume, nearDistance, farDistance, flags);
+      },
+      stop_sound_emitter: (emitterID) => globalThis.kartyHostStopSoundEmitter?.(emitterID),
       set_audio_receiver: (entityID, rightX, rightY) => globalThis.kartyHostSetAudioReceiver(entityID, rightX, rightY),
       clear_audio_receiver: () => globalThis.kartyHostClearAudioReceiver(),
       play_music: (streamID, looped, crossfadeMS) => globalThis.kartyHostPlayMusic(streamID, looped, crossfadeMS),
@@ -249,9 +265,7 @@
     levelRequests.set(requestID, abort);
     Promise.resolve()
       .then(async () => {
-        const response = await fetch(entry.artifact, { signal: abort.signal });
-        if (!response.ok) throw new Error(`Could not load ${entry.artifact} (HTTP ${response.status})`);
-        const bytes = await response.arrayBuffer();
+        const bytes = await fetchDownload(entry.artifact, { signal: abort.signal }, (response) => response.arrayBuffer());
         if (bytes.byteLength !== entry.size) throw new Error("Level artifact size does not match the game manifest");
         const digest = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
         if (digest !== entry.contentSha256) throw new Error("Level artifact hash does not match the game manifest");
@@ -421,9 +435,9 @@
     Promise.resolve()
       .then(async () => {
         const artifact = `content/${digest}.kld`;
-        const response = await fetch(artifact, { signal: abort.signal });
-        if (!response.ok) throw new Error(`Could not load ${artifact} (HTTP ${response.status})`);
-        const bytes = await chunkBytes(response, size);
+        // SHA-addressed child modules are immutable. Revisit prepared lighting
+        // through the browser's HTTP cache without retaining decoded atlases.
+        const bytes = await fetchDownload(artifact, { signal: abort.signal, cache: "force-cache" }, (response) => chunkBytes(response, size));
         if (!active()) return;
         const actual = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
         if (actual !== digest) throw new Error("Chunk artifact hash does not match the level catalog");
@@ -452,7 +466,7 @@
       state("loading-cartridge");
       status("Loading game cartridge…");
       go = new Go();
-      return loadClientWasm("game.kart?v=d0c9f7062b0b1a52", imports);
+      return loadClientWasm("game.kart?v=1b9e18dfe99ea222", imports);
     })
     .then((result) => {
       client = result.instance;
@@ -474,13 +488,26 @@
         }
         if (!ready) {
           ready = true;
-          state("running");
-          if (element("loading")) {
-            element("loading").setAttribute("aria-busy", "false");
-            element("loading").hidden = true;
-            element("fullscreen").hidden = !document.fullscreenEnabled;
-            document.querySelector("canvas")?.focus();
-          }
+          const showGame = () => {
+            if (globalThis.document?.documentElement?.dataset.kartyState === "error") return;
+            const stats = globalThis.kartyWorldRenderer?.stats();
+            if (levelRequests.size || chunkRequests.size ||
+                stats?.cameras?.some((camera) => !camera.device?.frames)) {
+              status("Loading the map…");
+              setTimeout(showGame, 100);
+              return;
+            }
+            state("running");
+            if (element("loading")) {
+              element("loading").setAttribute("aria-busy", "false");
+              element("loading").hidden = true;
+              element("fullscreen").hidden = !document.fullscreenEnabled;
+              document.querySelector("canvas")?.focus();
+            }
+          };
+          // Let the host apply this update's camera commands before checking.
+          if (globalThis.requestAnimationFrame) requestAnimationFrame(showGame);
+          else showGame();
         }
       };
       globalThis.kartyClientShutdown = () => client.exports.shutdown();

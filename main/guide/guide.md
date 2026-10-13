@@ -507,7 +507,7 @@ deck](../ui-demo/) shows menus, loading, inventory, gameplay, and pause screens.
 ## Build and share
 
 Use `--target web` for browsers and `--target native` for desktop games.
-SDK 0.0.11 provides these runtimes:
+SDK 0.0.12 provides these runtimes:
 
 | Game platform       | `--platform`    | Build on this machine             |
 | ------------------- | --------------- | --------------------------------- |
@@ -561,8 +561,8 @@ Explicit platforms use separate folders, such as
 folder and run `.\karty-host.exe --cartridge game.kart`.
 
 Share the whole selected folder, including its `content/` files.
-Include [RUNTIME_LICENSE.md](https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.11/RUNTIME_LICENSE.md)
-and [SDK_LICENSE.md](https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.11/SDK_LICENSE.md)
+Include [RUNTIME_LICENSE.md](https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/RUNTIME_LICENSE.md)
+and [SDK_LICENSE.md](https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/SDK_LICENSE.md)
 from your SDK release, plus notices required by your own assets and dependencies.
 Browser and desktop use the same source. Test each platform you ship.
 
@@ -573,7 +573,7 @@ when your dependencies create it.
 The runner recreates `.karty/` and `dist/`; do not commit those folders.
 
 Save this as `.github/workflows/game.yml` in a game project pinned to SDK
-0.0.11. It builds a browser game and a Windows ARM64 distribution on Linux,
+0.0.12. It builds a browser game and a Windows ARM64 distribution on Linux,
 then uploads each folder for review. It pins a public CLI source revision
 because the current [CLI binary release, v0.0.1](https://github.com/karty-game/karty/releases/tag/v0.0.1),
 predates `--platform`.
@@ -604,7 +604,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Install SDK and software material generation
         run: |
-          karty sdk install 0.0.11
+          karty sdk install 0.0.12
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
       - name: Build distributions
@@ -612,7 +612,7 @@ jobs:
           karty build --target web
           karty build --target native --platform windows-arm64
           for notice in RUNTIME_LICENSE.md SDK_LICENSE.md; do
-            curl -fsSL "https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.11/$notice" -o "$RUNNER_TEMP/$notice"
+            curl -fsSL "https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/$notice" -o "$RUNNER_TEMP/$notice"
             cp "$RUNNER_TEMP/$notice" dist/web/
             cp "$RUNNER_TEMP/$notice" dist/native/windows-arm64/
           done

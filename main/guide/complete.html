@@ -1526,7 +1526,7 @@ func setup(onResume func()) {}
 <p>Layouts share structure and styles. Component callbacks change game state. Call <code>Invalidate()</code> after changing data used by dynamic UI bindings. Test your layout at a narrow viewport before adding more screens. <a href="../ui-demo/">Orbital flight deck</a> shows menus, loading, inventory, gameplay, and pause screens.</p>
 <figure><img src="assets/ui-demo.jpg" alt="Orbital flight deck uses a left menu over its game artwork." loading="lazy"><figcaption>Orbital flight deck uses a left menu over its game artwork.</figcaption></figure>
 <h2 id="build-and-share">Build and share</h2>
-<p>Use <code class="command-flag">--target web</code> for browsers and <code class="command-flag">--target native</code> for desktop games. SDK 0.0.11 provides these runtimes:</p>
+<p>Use <code class="command-flag">--target web</code> for browsers and <code class="command-flag">--target native</code> for desktop games. SDK 0.0.12 provides these runtimes:</p>
 <p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Game platform</th><th scope="col"><code class="command-flag">--platform</code></th><th scope="col">Build on this machine</th></tr></thead><tbody><tr><td>Browser</td><td>Omit this flag</td><td>Any supported development machine</td></tr><tr><td>Linux x64</td><td><code>linux-amd64</code></td><td>Yes</td></tr><tr><td>Linux ARM64</td><td><code>linux-arm64</code></td><td>Yes</td></tr><tr><td>macOS Apple silicon</td><td><code>darwin-arm64</code></td><td>Yes</td></tr><tr><td>Windows x64</td><td><code>windows-amd64</code></td><td>Yes</td></tr><tr><td>Windows ARM64</td><td><code>windows-arm64</code></td><td>No native TinyGo toolchain</td></tr></tbody></table></div>
 <p>Every supported development machine can package any listed game platform. The CLI compiles one WASM cartridge and downloads the destination&#39;s checksum-verified host. Players need neither the CLI nor TinyGo.</p>
 <h3 id="publish-a-browser-game">Publish a browser game</h3>
@@ -1548,10 +1548,10 @@ karty build --target native --platform linux-arm64
 karty build --target native --platform darwin-arm64
 </code></pre>
 <p>Explicit platforms use separate folders, such as <code>dist/native/windows-arm64/</code>. On the destination Windows machine, open that folder and run <code>.\karty-host.exe --cartridge game.kart</code>.</p>
-<p>Share the whole selected folder, including its <code>content/</code> files. Include <a href="https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.11/RUNTIME_LICENSE.md">RUNTIME_LICENSE.md</a> and <a href="https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.11/SDK_LICENSE.md">SDK_LICENSE.md</a> from your SDK release, plus notices required by your own assets and dependencies. Browser and desktop use the same source. Test each platform you ship.</p>
+<p>Share the whole selected folder, including its <code>content/</code> files. Include <a href="https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/RUNTIME_LICENSE.md">RUNTIME_LICENSE.md</a> and <a href="https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/SDK_LICENSE.md">SDK_LICENSE.md</a> from your SDK release, plus notices required by your own assets and dependencies. Browser and desktop use the same source. Test each platform you ship.</p>
 <h3 id="build-in-ci">Build in CI</h3>
 <p>Commit <code>karty.toml</code>, <code>go.mod</code>, source code, and source assets. Include <code>go.sum</code> when your dependencies create it. The runner recreates <code>.karty/</code> and <code>dist/</code>; do not commit those folders.</p>
-<p>Save this as <code>.github/workflows/game.yml</code> in a game project pinned to SDK 0.0.11. It builds a browser game and a Windows ARM64 distribution on Linux, then uploads each folder for review. It pins a public CLI source revision because the current <a href="https://github.com/karty-game/karty/releases/tag/v0.0.1">CLI binary release, v0.0.1</a>, predates <code class="command-flag">--platform</code>. No private engine checkout or credentials are needed.</p>
+<p>Save this as <code>.github/workflows/game.yml</code> in a game project pinned to SDK 0.0.12. It builds a browser game and a Windows ARM64 distribution on Linux, then uploads each folder for review. It pins a public CLI source revision because the current <a href="https://github.com/karty-game/karty/releases/tag/v0.0.1">CLI binary release, v0.0.1</a>, predates <code class="command-flag">--platform</code>. No private engine checkout or credentials are needed.</p>
 <pre><code class="language-yaml">name: Build game
 on: [push, pull_request]
 permissions:
@@ -1576,7 +1576,7 @@ jobs:
           echo &#34;$(go env GOPATH)/bin&#34; &gt;&gt; &#34;$GITHUB_PATH&#34;
       - name: Install SDK and software material generation
         run: |
-          karty sdk install 0.0.11
+          karty sdk install 0.0.12
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
       - name: Build distributions
@@ -1584,7 +1584,7 @@ jobs:
           karty build --target web
           karty build --target native --platform windows-arm64
           for notice in RUNTIME_LICENSE.md SDK_LICENSE.md; do
-            curl -fsSL &#34;https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.11/$notice&#34; -o &#34;$RUNNER_TEMP/$notice&#34;
+            curl -fsSL &#34;https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/$notice&#34; -o &#34;$RUNNER_TEMP/$notice&#34;
             cp &#34;$RUNNER_TEMP/$notice&#34; dist/web/
             cp &#34;$RUNNER_TEMP/$notice&#34; dist/native/windows-arm64/
           done
