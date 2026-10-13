@@ -212,17 +212,6 @@ func TestRomanBuildLightmapSemanticLayout(t *testing.T) {
 
 	root := testfixture.WorldCameraGeometry(t, filepath.Join("..", "..", "samples", "world-camera"))
 
-	path := filepath.Join(root, "levels", "showcase", "level.toml")
-
-	definition, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// #nosec G703 -- this path is constructed beneath the local t.TempDir fixture.
-	if err := os.WriteFile(path, append(definition, []byte("\n[lightmap]\nenabled = true\n")...), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
 	artifacts, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
 	if err != nil {
 		t.Fatal(err)
@@ -236,9 +225,33 @@ func TestRomanBuildLightmapSemanticLayout(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	encoded, _, _ := envelope.Read(worldlightmap.EntryName, 0, worldlightmap.MaxEncodedSize)
+	// The richer sample uses one receiver page per chunk. Exercise the court's
+	// semantic layout against geometry executed from its real KLD WASM.
+	var sectors, solids []int
 
-	layout, err := worldlightmap.Decode(encoded, &document)
+	for index, sector := range document.Sectors {
+		if sector.Instance == "roman-court" {
+			sectors = append(sectors, index)
+		}
+	}
+
+	for index, solid := range document.StaticSolids.Items {
+		if strings.HasPrefix(solid.ID, "roman-court/") {
+			solids = append(solids, index)
+		}
+	}
+
+	layout, err := worldlightmap.CompileReceivers(document, worldlightmap.Options{}, sectors, solids)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encoded, err := worldlightmap.Encode(layout, &document)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	layout, err = worldlightmap.Decode(encoded, &document)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,17 +259,18 @@ func TestRomanBuildLightmapSemanticLayout(t *testing.T) {
 	sides := 0
 
 	for _, b := range layout.Bindings {
-		if b.Kind == "solid-side" {
+		if b.Kind == "solid-side" && b.Chart >= 0 {
 			sides++
 		}
 	}
 
-	if sides != 80 || len(layout.Pages) != 1 || layout.Pages[0].Width != 1024 {
+	// Columns, basin pieces and three suspended bowls with linked chains and a crossbeam.
+	if sides != 1240 || len(layout.Pages) != 1 || layout.Pages[0].Width != 1024 {
 		t.Fatalf("Roman per-edge layout: sides=%d pages=%v", sides, layout.Pages)
 	}
 
 	t.Logf(
-		"actual KLD WASM: %d semantic bindings, %d charts, %d solid sides, %d layout bytes",
+		"actual KLD WASM geometry, court layout: %d semantic bindings, %d charts, %d solid sides, %d layout bytes",
 		len(layout.Bindings),
 		len(layout.Charts),
 		sides,

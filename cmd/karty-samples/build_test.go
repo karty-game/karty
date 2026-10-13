@@ -150,6 +150,7 @@ func TestSampleBakeLevelsMatchCurrentProjects(t *testing.T) {
 		"world-camera": nil, // Chunk lightmaps are baked during the normal build.
 		"ui-demo":      nil,
 		"media-lab":    nil,
+		"particle-lab": nil,
 		"environment":  nil,
 	} {
 		names, err := sampleBakeLevels(filepath.Join("..", "..", "samples", name))

@@ -24,7 +24,7 @@ func CompileParticles(
 		return nil, worldparticles.ErrConfinement
 	}
 
-	if expanded.Particles.Version != worldparticles.Version {
+	if _, err := worldparticles.FeatureForVersion(expanded.Particles.Version); err != nil {
 		return nil, worldparticles.ErrVersion
 	}
 
@@ -36,7 +36,7 @@ func CompileParticles(
 	presets := map[string]worldparticles.Preset{}
 
 	for _, preset := range expanded.Particles.Presets {
-		compiled, err := worldsource.CompileParticlePreset(preset, textures)
+		compiled, err := worldsource.CompileParticlePresetForVersion(preset, textures, expanded.Particles.Version)
 		if err != nil {
 			return nil, err
 		}

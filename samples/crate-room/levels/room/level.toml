@@ -1,0 +1,118 @@
+[level]
+name = "levels.crate-room"
+kind = "world"
+
+[world]
+source = "world.yaml"
+
+[[textures]]
+name = "floor"
+source = "floor.png"
+profile = "environment"
+
+# Jointed concrete floor panels.
+[textures.materialize]
+preset = "concrete"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "ceiling"
+source = "ceiling.png"
+profile = "environment"
+
+# Concrete ceiling slab.
+[textures.materialize]
+preset = "concrete"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "wall"
+source = "wall.png"
+profile = "environment"
+
+# Horizontal concrete wall panels.
+[textures.materialize]
+preset = "concrete"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "wood"
+source = "wood.png"
+profile = "environment"
+
+# Wooden crate planks.
+[textures.materialize]
+preset = "wood"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "frame"
+source = "frame.png"
+profile = "environment"
+
+# Wooden crate frame battens.
+[textures.materialize]
+preset = "wood"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "ramp"
+source = "ramp.png"
+profile = "environment"
+
+# Hazard-painted steel banks; the paint is nonmetallic.
+[textures.materialize]
+preset = "metal"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "bumper"
+source = "bumper.png"
+profile = "environment"
+
+# Painted steel bumpers; the paint is nonmetallic.
+[textures.materialize]
+preset = "metal"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0

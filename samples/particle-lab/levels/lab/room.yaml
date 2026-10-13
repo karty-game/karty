@@ -1,0 +1,43 @@
+# Room source for generate-lab.go. Particle recipes are composed separately.
+version: 10
+uv: { mode: wrap }
+lighting:
+  version: 1
+  actors: true
+  ambient: { x: 0.28, y: 0.28, z: 0.28 }
+  # Quiet directional ambient separates the plain floor, walls and ceiling.
+  # No torch or bright local light changes the perceived particle colors.
+  ambient_cube:
+    positive_x: { x: 0.28, y: 0.28, z: 0.28 }
+    negative_x: { x: 0.24, y: 0.24, z: 0.24 }
+    positive_y: { x: 0.26, y: 0.26, z: 0.26 }
+    negative_y: { x: 0.24, y: 0.24, z: 0.24 }
+    positive_z: { x: 0.42, y: 0.42, z: 0.42 }
+    negative_z: { x: 0.18, y: 0.18, z: 0.18 }
+rooms:
+  - id: particle-lab
+    floor: { c: 0 }
+    ceiling: { c: 8 }
+    floor_material: room-floor
+    ceiling_material: room-ceiling
+    boundary:
+      - id: south
+        start: { x: -12, y: -12 }
+        end: { x: 12, y: -12 }
+        material: room-wall
+      - id: east
+        start: { x: 12, y: -12 }
+        end: { x: 12, y: 12 }
+        material: room-wall
+      - id: north
+        start: { x: 12, y: 12 }
+        end: { x: -12, y: 12 }
+        material: room-wall
+      - id: west
+        start: { x: -12, y: 12 }
+        end: { x: -12, y: -12 }
+        material: room-wall
+    contents:
+      - id: viewer-spawn
+        kind: spawn
+        position: { x: -4.6, y: -6.2, z: 2.4 }

@@ -1,124 +1,128 @@
 # Hangar particle authoring
 
-The sample's [world source](levels/hangar/world.yaml) uses version 10 and
-`particles.version: 1`, with candidate SDK 0.0.11. Its three presets drive eleven
-acid emitters and two barrel emitters. No gameplay update creates or moves
-individual particles. The host uploads schedules, curves and sprite regions at
-mount, then the GPU derives each particle from emitter time, its birth index and
-the authored seed.
+Hangar reuses the reviewed industrial recipes from
+[Particle Lab's library](../particle-lab/effects/library.yaml). World source v11,
+`particles.version: 2` and the sample's candidate SDK 0.0.12 support these
+GPU particle presets. Smoke and acid vapour use the GPU particle alpha path.
+Version 2 preserves the KWP1 binary layout and adds no guest API commands.
+The reference fire remains a visual prototype awaiting appearance acceptance;
+the retained recipes and successful execution checks do not imply final visual approval.
 
-## Effects and tuning
+## Effects and placements
 
-| Preset          | Emission                                                     | Lifetime          | Reserved slots per emitter |
-| --------------- | ------------------------------------------------------------ | ----------------- | -------------------------- |
-| `acid-sparkle`  | 12 per second for each 3-second cycle                        | 0.9–1.6 seconds   | 48                         |
-| `barrel-fire`   | 24 per second for each 2-second cycle                        | 0.40–0.65 seconds | 64                         |
-| `barrel-embers` | 8 per second plus six at 0.35 seconds in each 2-second cycle | 0.45–0.75 seconds | 32                         |
+| Effect                   | Placement origin `(x, y, z)` | Scale     | Layers                                                               | Declared capacity |
+| ------------------------ | ---------------------------- | --------- | -------------------------------------------------------------------- | ----------------- |
+| Reference barrel fire    | `(14.8, -1.55, 1.1)`         | 0.75      | Combined flame/smoke, embers and shaped tongues                      | 114               |
+| Reactor discharge        | `(6.3, 23.05, 3.7)`          | 0.70      | Charge, contact flash, segments, two branch passes, fallout and echo | 64                |
+| Twenty-four acid patches | Wet basin polygons below     | 0.80–1.10 | Micro shells, pocket bubbles, droplets, thin vapour and surface pops | 46 per patch      |
 
-The sample reserves 624 slots in total. Capacity prevents a new birth from
-reusing a still-living particle's slot; extra capacity stays inactive. Increasing
-the emission rate, burst count or maximum lifetime can require more slots.
-Cycling schedules must fit their period, and overlapping lifetimes reserve
-complete schedule groups. The compiler checks the actual uploaded float32
-values, so use its capacity error when tuning near a period boundary.
+The scene declares **1,282 capacity across 130 particle emitters**, with fourteen
+shared presets, twenty-six effect prefabs and twenty-six effect instances. Its
+finite schedules use **1,278 GPU slots**: barrel fire 111, discharge 63 and acid
+1,104. Every layer uses one static image and keeps the reviewed recipe values.
+Twenty-three acid adapters vary only phase and seed; instance scales widen the
+footprints. Patch phases span 0 to 1.633 seconds; every layer has started by
+about 2.53 seconds. Discharge repeats every 3.2 seconds, matching the reactor's
+existing emission pulse period. Particle and material-light clocks share the
+mounted-level time while remaining independent.
 
-The acid surface rests at Z = -1.10 and waves by 0.045 metres. Sparkles start at
-Z = -0.93, above the crests, then drift upward. Their narrow box supports fit the
-compiled sectors around the observation windows and zigzag. To make the effect
-more visible, first adjust its `color_over_life` opacity or emission rate; these
-do not enlarge its motion envelope. Larger sprites, wider spawn boxes, longer
-lifetimes and faster movement all enlarge the envelope and need a build check.
+The barrel rim reaches Z = 1.10, and its alcove ceiling is Z = 2.60. The imported
+reference fire uses a foot origin at the rim. Its complete moving particle and smoke
+billboard envelopes fit inside the alcove. The existing hot-coal solid
+surface and warm emission-linked lamp retain their authored behaviour.
 
-The barrel stands at `(14.8, -1.55)` in the inspection alcove, east of arrival.
-Its rim reaches Z = 1.10. Flames start at Z = 1.08 and embers at Z = 1.12;
-their complete motion and billboard envelopes fit below the Z = 2.60 ceiling.
-The body uses ordinary rigid solid collision. Particles have no collision and
-can pass through solids inside their owning sector.
+The discharge originates just outside the reactor's front-left ribbed vessel
+surface, where it is visible from the normal reactor landmark camera. A larger
+front-centre candidate crossed a compiled sector seam, so the placement uses a
+0.70-scale recipe whose complete envelopes fit one reactor sector. The reactor
+uses discharge only; fire remains at the barrel. Opaque vessel
+geometry hides sprites behind it; particles do not collide with solids.
 
-Size curves describe the square billboard edge length in world metres. Their
-`age` keys are normalized from 0 at birth to 1 at death. RGBA components use
-`[0,1]`, and each size/color curve has two to four strictly ordered keys including
-both endpoints. Velocity and acceleration follow the emitter's local axes,
-with Z up; positive drag damps velocity. Barrel flames use upright billboards
-and a three-frame 12 FPS flipbook. Sparkles and embers face the camera.
+The acid rests at Z = -1.10 and waves by 0.045 metres. The wider patches start
+above the crests at Z = -0.93, and their full sprite/motion bounds stay above each
+basin's Z = -1.20 floor. Keep the liquid's existing animation, transparency and
+lighting when tuning the effects. An authored room can decompose into multiple
+convex sectors; every emitter must fit one sector for its entire lifetime.
 
-Emitter `playback.mode: cycle` repeats emission. `once` finishes its schedule and
-lets existing particles drain; it does not restart. A delay shifts the emitter's
-start and subsequent cycle phase. Emitter and flipbook playback are separate
-settings: a one-shot emitter may use a cycling sprite animation while it lives.
-Changing cameras, hiding the emitter or resizing keeps the mounted-level clock.
-Release/remount starts a new lifecycle. Seeds select repeatable variation.
+All acid sources use Z = -0.93. The twenty-four patches cover the wet solid
+polygons at scales 0.80–1.10, compared with the earlier twelve 0.35-scale sources.
+The original bubbles are larger and distributed across substantially wider
+footprints; the additional independently phased patches increase bubble density.
 
-See the CLI's [particle contract](../../docs/particles.md) and
-[versioned decision](../../docs/decisions/world-particles-v1.md) for complete
-authoring fields and format limits.
+| Pool region       | Patches | Scales    |
+| ----------------- | ------- | --------- |
+| South-west trench | 3       | 0.80–1.10 |
+| South-east trench | 4       | 0.80–1.10 |
+| East entry        | 4       | 1.05–1.10 |
+| West lower bend   | 2       | 0.80–1.10 |
+| West upper bend   | 2       | 1.05–1.10 |
+| East lower bend   | 3       | 1.05–1.10 |
+| East upper bend   | 2       | 0.80–1.10 |
+| North pool        | 4       | 1.05–1.10 |
 
-## Reproduce the artwork
+Exact centres, scales, phases and seeds live in [generate-effects.go](generate-effects.go).
+Each layer's conservative motion and billboard envelope was checked inside the
+liquid footprint, within a compiled convex sector and clear of trench ducts and
+columns. The narrow 2×2 west-entry pocket is omitted because it cannot contain a
+whole five-layer recipe at these scales. The generator compiles the entire
+resolved world and rejects an envelope that escapes its sector before publishing.
 
-All six new images come from the checked-in
-[Go generator](generate-particle-assets.go), using the standard library without
-external artwork, downloads or random input:
+## Source ownership and regeneration
 
-| Asset                                             | Source dimensions | Purpose                                           |
-| ------------------------------------------------- | ----------------- | ------------------------------------------------- |
-| `acid-sparkle.png`                                | 96 × 96           | White droplet core and short rays with soft alpha |
-| `barrel-ember.png`                                | 64 × 64           | White elongated ember with soft alpha             |
-| `barrel-flame-1.png` through `barrel-flame-3.png` | 128 × 128 each    | White flame tongues with soft alpha               |
-| `barrel-coals.png`                                | 128 × 128         | Opaque dark coal fragments with orange fissures   |
+[generate-effects.go](generate-effects.go) selects `brackeys-fire-combined`,
+`industrial-discharge` and `industrial-acid` from the lab's generated reusable library.
+It follows prefab dependencies and particle texture references. All
+**11 required PNG textures**
+are copied byte-for-byte into `levels/hangar/textures/effects/`; `level.toml`
+references those confined paths with the sprite profile.
+
+The importer owns only clearly marked generated blocks for particle presets,
+effect prefabs, effect instances and texture declarations; it clears its obsolete
+smoke-animation block.
+Room geometry, connections, static solids, other actors, lighting and liquid
+ripples remain handwritten. The original barrel coal texture is retained.
+Source fire and smoke licences/checksums are recorded in the lab's
+[provenance files](../particle-lab/effects/sources/).
 
 From the CLI repository root:
 
 ```sh
-mise exec -- go run samples/hangar/generate-particle-assets.go
+mise run generate-particle-lab
+mise run generate-hangar-effects
+mise run check-hangar-effects
 ```
 
-The generator overwrites only these six files. Maintain its formulas alongside
-the PNGs; repeated runs with the pinned toolchain reproduce identical bytes.
-White RGB lets the GPU color curves supply green, yellow and orange independently
-of the masks. Every frame is registered in [level.toml](levels/hangar/level.toml).
+The final check verifies byte reproduction and compiles the complete Hangar to
+check all resolved references and analytical envelopes before publishing any
+source outputs. Do not edit generated blocks or copied texture PNGs by hand.
+Update the lab's handwritten recipe fragments for shared effects, this generator
+for placements/phases, and the owning static-asset sources for artwork changes.
 
-Particle frames must be square, and all frames in a preset need identical
-dimensions. Sequences sharing frames form one connected packing group. A group
-with multiple distinct frames must fit one 2048 × 2048 sprite atlas page,
-including two pixels of total padding in each frame dimension. Texture metadata
-is checked before level readiness; a group that cannot fit is rejected before
-its first draw. The existing single-texture exception permits an oversized
-singleton on a standalone page within the ordinary texture limits. Keep these
-masks small. The current `max_sprite_texels_per_unit` pass measures placed actor
-sprites and does not automatically downsize particle textures.
+## Rendering and review
 
-## Lighting and rendering limits
+Particles derive birth, motion, rotation, size and colour on the GPU from
+immutable schedules, curves and seeds. The guest sends no individual particle
+movement commands. Particle resources and sprite masks upload once at mount.
+Fire and smoke perform no recurring particle or ordinary sprite uploads.
 
-These particle sprites are unlit: their texture and color curve determine their
-appearance, independently of surrounding room lights and the torch. They do not
-emit light, cast shadows or appear in planar acid reflections. The barrel's warm
-lamp is a separate authored light, linked to the real `barrel-coals` solid top
-through its material emission pulse. The pulse lights nearby walls; the flame
-flipbook and particle colors have their own timing.
+The combined fire uses hybrid premultiplied blending for flame light and smoke
+coverage; its embers and discharge use additive blending. Acid uses ordinary
+alpha blending. Particles are unlit and test opaque depth
+and respect sector apertures, but draw after ordinary transparency. Place acid
+particles above the liquid so this order reads correctly. Alpha and hybrid fire
+materials use the source-over pass after additive particles, with opaque depth
+tests and no depth writes. Emitters retain authored submission order; there is no
+per-particle sorting or interleaving with ordinary transparent meshes. Charcoal
+smoke can attenuate the flame beneath it. Neither path emits light or casts a
+shadow. The barrel lamp and reactor material lights provide
+separate illumination.
 
-The sample uses additive blending. Particles test against opaque depth and obey
-sector/portal apertures. Additive sprites do not write depth and are drawn after
-the ordinary translucent surfaces; they do not participate in sorted smooth
-transparency or acquire attenuation from a transparent surface in front of them.
-The acid sparkles are placed above the liquid to keep that relationship clear.
-V1 also supports hard `cutout` sprites. Smooth smoke and order-independent alpha
-blending remain outside this contract.
+These effects do not appear in planar acid reflections. Neither particle version has arbitrary
+forces, turbulence solver, cross-sector particle trails or guest play/stop
+commands. Smoke rises, grows, rotates and fades through live particle lifetime curves and
+seeded velocities. It has no position-dependent wind or turbulence solver.
 
-Each emitter's entire lifetime envelope, including maximum billboard radius,
-must fit one compiled convex sector. An authored room with collinear portal
-edges can become several triangular sectors, even when its outer shape looks
-rectangular. The southern acid placements account for this decomposition.
-Particles cannot cross sectors in v1. Builds reject invalid confinement;
-retain the authored floors, portals and collision when adjusting an effect.
-
-General changing forces, attractors, turbulence, stateful simulation, moving
-emitters that leave world-space trails and gameplay play/stop/restart commands
-are outside this version. CPU work still owns emitter resources, clocks,
-visibility bounds and draw submission; the GPU owns per-particle animation.
-
-## Build and review
-
-From the CLI repository root, after installing the matching SDK/host:
+Use pinned tasks from the CLI root:
 
 ```sh
 mise run check-hangar-schema
@@ -127,20 +131,13 @@ mise run build-hangar-web
 mise run capture-hangar-particles
 ```
 
-If drum geometry, solid materials or static lighting changed, run
-`mise run bake-hangar` before the builds. The lamp linked to coal emission stays
-live. On headless Linux, wrap captures with
-`mise exec -- xvfb-run -a mise run capture-hangar-particles`.
-
-Captures land in `dist/screenshots/particles-*.png`. The native screenshot host
-loads the passive level and GPU renderer without starting the game's UI or
-gameplay. It samples startup ages, so it cannot fully demonstrate an established
-particle cycle. The [browser launch command](README.md#run-it) runs the actual
-game; choose **Burning barrel**, **Zigzag** or **Acid control**, and watch several
-seconds of birth/death, upward movement and flame frame changes. The torch can be
-disabled with F to inspect the barrel lamp's local lighting.
-
+Headless native captures need Xvfb and a matching host. The browser runs the
+actual game: choose **Burning barrel**, **Reactor** or **Zigzag** and watch several
+seconds of established motion. Passive startup stills supplement that review.
 Compilation, actual WASM mounting, native graphics, browser graphics and manual
-visual review are separate checks. The maintained engine validation records
-those outcomes; software graphics qualification does not establish physical
-phone frame rate or hardware-driver behavior.
+visual review are separate checks; software graphics does not establish physical
+phone frame rate.
+
+See the [particle contract](../../docs/particles.md) and
+[alpha blending decision](../../docs/decisions/world-particles-v2.md) for field bounds
+and renderer limits.

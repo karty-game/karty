@@ -8,7 +8,7 @@ and validate the same schemas before preparing the SDK or processing assets.
 The CLI generates these ignored files:
 
 - `.karty/schemas/worldsource.base.schema.json`: the common world grammar for
-  source versions 1–10, derived from the public SDK field vocabulary.
+  source versions 1–12, derived from the public SDK field vocabulary.
 - `.karty/schemas/levels/<directory>.schema.json`: a level schema referencing
   that base, with material and sprite texture names from its `level.toml` and
   prefab names from its world declarations.
@@ -66,6 +66,17 @@ Omit optional environment fields to select
 defaults; explicit null is rejected. Semantic checks additionally require an
 environment for sky rooms and permit sky edges only on unconnected boundaries
 inside sky rooms. See [environments](environments.md).
+
+Source v11 adds optional `environment.backdrop`: `none`, `mountains`, or `city`.
+Omission selects the preset's default. Older source versions reject explicit
+backdrop presence, including empty strings or null. SDK 0.0.12 candidate must
+advertise `world/environment-backdrop@1` to package an explicit selection.
+
+Source v12 adds optional `environment.sky` project PNG paths and presentation
+settings. Older source versions reject its presence, including null; optional
+paths/settings reject null. Images remain confined to the level directory.
+SDK 0.0.12 candidate must advertise `world/sky@1`; only referenced images are
+compiled into the versioned `@world/sky.bin` sidecar. See [environments](environments.md).
 
 Without a `levels` directory, `karty schema` emits just the base file. This is
 useful for standalone authoring fixtures whose headers reference the base.

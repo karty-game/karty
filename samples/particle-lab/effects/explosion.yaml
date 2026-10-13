@@ -1,0 +1,172 @@
+# Authored static-layer adaptation of Brackeys' FireExplosion (not its flipbook variant).
+# Source: https://github.com/Brackeys/vfx-in-godot/blob/23b58f272b828b0a894ed7ef72fbf9033ee9d177/vfx/scenes/fire_explosion.tscn
+# Source roles/counts: Fire64, Smoke32, Fireballs6, Debris10, Sparks50. Shock SphereMesh omitted.
+# This is an authored adaptation, not a declarative conversion or visual-parity claim.
+# Sphere/cone/radial correlations become bounded boxes; mesh debris becomes static flecks.
+# Collision, turbulence, HDR emission and per-particle random scale are unavailable.
+# Shorter ballistic lives avoid pretending to collide with the floor; alpha limits prevent
+# 64 overlapping SDR fire sprites from remaining saturated white. No extra hot-core sprite.
+version: 11
+particles:
+  version: 2
+  presets:
+    - name: industrial-explosion-flame-impulse
+      capacity: 64
+      emission:
+        bursts: [{ at_seconds: 0, count: 64 }]
+      lifetime_seconds: { min: 0.98, max: 1.4 }
+      spawn: { shape: box, half_extent: { x: 0.3, y: 0.3, z: 0.3 } }
+      velocity_min: { x: -0.2, y: -0.2, z: -0.2 }
+      velocity_max: { x: 0.2, y: 0.2, z: 0.2 }
+      acceleration: { z: 0.1 }
+      rotation_degrees: { min: 0, max: 360 }
+      rotation_speed_degrees: { min: -90, max: 90 }
+      sprite:
+        frames: [brackeys-flame-01-a]
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - { age: 0, value: 0.005 }
+        - { age: 0.0756302, value: 0.25 }
+        - { age: 0.403361, value: 0.25 }
+        - { age: 1, value: 0.179775 }
+      color_over_life:
+        - { age: 0, rgba: [1, 0.608967, 0.244135, 0] }
+        - { age: 0.0798319, rgba: [1, 0.608967, 0.244135, 0.18] }
+        - { age: 0.42, rgba: [0.72, 0.15, 0.015, 0.075] }
+        - { age: 1, rgba: [0.07, 0.007, 0.001, 0] }
+    - name: industrial-explosion-expanding-smoke
+      capacity: 32
+      emission:
+        bursts: [{ at_seconds: 0, count: 16 }, { at_seconds: 0.06, count: 10 }, { at_seconds: 0.12, count: 6 }]
+      lifetime_seconds: { min: 2.1, max: 3 }
+      spawn: { shape: box, half_extent: { x: 0.3, y: 0.3, z: 0.3 } }
+      velocity_min: { x: -0.15, y: -0.15, z: 0.0866025 }
+      velocity_max: { x: 0.15, y: 0.15, z: 0.3 }
+      rotation_degrees: { min: 0, max: 360 }
+      rotation_speed_degrees: { min: -10, max: 10 }
+      sprite:
+        frames: [brackeys-smoke-07-a]
+        playback: cycle
+        facing: camera-facing
+        blend: alpha
+      size_over_life:
+        - { age: 0, value: 0.26966325 }
+        - { age: 0.0672269, value: 0.48033675 }
+        - { age: 0.42, value: 0.6 }
+        - { age: 1, value: 0.75 }
+      color_over_life:
+        - { age: 0, rgba: [0.045, 0.045, 0.045, 0] }
+        - { age: 0.12, rgba: [0.045, 0.045, 0.045, 0.10] }
+        - { age: 0.592437, rgba: [0.055, 0.055, 0.055, 0.16] }
+        - { age: 1, rgba: [0.06, 0.06, 0.06, 0] }
+    - name: industrial-explosion-fire-fragments
+      capacity: 6
+      emission:
+        bursts: [{ at_seconds: 0.04, count: 6 }]
+      lifetime_seconds: { min: 0.54, max: 0.9 }
+      spawn: { shape: box, half_extent: { x: 0.05, y: 0.05, z: 0.05 } }
+      velocity_min: { x: -1.15, y: -0.8, z: 1.5 }
+      velocity_max: { x: 1.15, y: 0.8, z: 2.5 }
+      acceleration: { z: -4.5 }
+      drag: 0.25
+      rotation_degrees: { min: 0, max: 360 }
+      rotation_speed_degrees: { min: -120, max: 120 }
+      sprite:
+        frames: [brackeys-smoke-07-a]
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - { age: 0, value: 0.055 }
+        - { age: 0.14, value: 0.08 }
+        - { age: 0.6, value: 0.05 }
+        - { age: 1, value: 0.002 }
+      color_over_life:
+        - { age: 0, rgba: [1, 0.6665, 0.31, 0] }
+        - { age: 0.1, rgba: [1, 0.6665, 0.31, 0.8] }
+        - { age: 0.65, rgba: [0.78, 0.12, 0.01, 0.35] }
+        - { age: 1, rgba: [0.12, 0.015, 0.002, 0] }
+    - name: industrial-explosion-debris
+      capacity: 10
+      emission:
+        bursts: [{ at_seconds: 0.02, count: 10 }]
+      lifetime_seconds: { min: 0.4, max: 0.72 }
+      spawn: { shape: box, half_extent: { x: 0.12, y: 0.12, z: 0.05 } }
+      velocity_min: { x: -1.4, y: -1.1, z: 1.2 }
+      velocity_max: { x: 1.4, y: 1.1, z: 2.4 }
+      acceleration: { z: -4.4 }
+      rotation_degrees: { min: 0, max: 360 }
+      rotation_speed_degrees: { min: -300, max: 300 }
+      sprite:
+        frames: [lab-fleck]
+        playback: cycle
+        facing: camera-facing
+        blend: alpha
+      size_over_life:
+        - { age: 0, value: 0.04 }
+        - { age: 0.1, value: 0.06 }
+        - { age: 0.75, value: 0.045 }
+        - { age: 1, value: 0.018 }
+      color_over_life:
+        - { age: 0, rgba: [0.9, 0.381069, 0.03, 0] }
+        - { age: 0.08, rgba: [0.9, 0.381069, 0.03, 1] }
+        - { age: 0.55, rgba: [0.055, 0.035, 0.02, 0.9] }
+        - { age: 1, rgba: [0.02, 0.02, 0.02, 0] }
+    - name: industrial-explosion-radial-sparks
+      capacity: 50
+      emission:
+        bursts: [{ at_seconds: 0.03, count: 20 }, { at_seconds: 0.18, count: 20 }, { at_seconds: 0.38, count: 10 }]
+      lifetime_seconds: { min: 0.35, max: 1.35 }
+      spawn: { shape: box, half_extent: { x: 0.2, y: 0.2, z: 0.08 } }
+      velocity_min: { x: -0.7, y: -0.6, z: 0.2 }
+      velocity_max: { x: 0.7, y: 0.6, z: 1 }
+      acceleration: { z: 0.3 }
+      drag: 0.6
+      rotation_degrees: { min: 0, max: 360 }
+      rotation_speed_degrees: { min: -70, max: 70 }
+      sprite:
+        frames: [brackeys-trace-01-a]
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - { age: 0, value: 0.012 }
+        - { age: 0.0966386, value: 0.025 }
+        - { age: 0.65, value: 0.012 }
+        - { age: 1, value: 0.002 }
+      color_over_life:
+        - { age: 0, rgba: [1, 0.569981, 0.22841, 0] }
+        - { age: 0.0966386, rgba: [1, 0.569981, 0.22841, 0.8] }
+        - { age: 0.6, rgba: [0.8, 0.15, 0.015, 0.45] }
+        - { age: 1, rgba: [0.16, 0.015, 0.001, 0] }
+prefabs:
+  # Legacy demo ID; the sample UI labels this one-shot recipe Explosion.
+  - id: industrial-discharge-once
+    particle_emitters:
+      - id: flame-impulse
+        preset: industrial-explosion-flame-impulse
+        position: { z: 0.08 }
+        seed: 41021
+        playback: { mode: once, delay_seconds: 1.5 }
+      - id: expanding-smoke
+        preset: industrial-explosion-expanding-smoke
+        position: { z: 0.08 }
+        seed: 41033
+        playback: { mode: once, delay_seconds: 1.65 }
+      - id: fire-fragments
+        preset: industrial-explosion-fire-fragments
+        position: { z: 0.25 }
+        seed: 41047
+        playback: { mode: once, delay_seconds: 1.5 }
+      - id: debris
+        preset: industrial-explosion-debris
+        position: { z: 0.1 }
+        seed: 41057
+        playback: { mode: once, delay_seconds: 1.5 }
+      - id: outward-sparks
+        preset: industrial-explosion-radial-sparks
+        position: { z: 0.07 }
+        seed: 41077
+        playback: { mode: once, delay_seconds: 1.5 }

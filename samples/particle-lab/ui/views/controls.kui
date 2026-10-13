@@ -1,0 +1,100 @@
+<template>
+  <panel class="screen" modal="false">
+    <panel class="header">
+      <panel class="row">
+        <button enabled={ props.Ready() } onClick={ fire }>Fire</button>
+        <button enabled={ props.Ready() } onClick={ smoke }>Smoke</button>
+        <button enabled={ props.Ready() } onClick={ collection }>Collection</button>
+      </panel>
+      <label class="status">{ props.Status() }</label>
+    </panel>
+    if !props.Hidden() {
+      <panel class="dock-shell">
+        <EffectDock props={ EffectDockProps{ Ready: props.Ready, Mode: props.Mode, SelectFire: props.SelectFire, SelectSmoke: props.SelectSmoke, Visit: props.Visit, Rotate: props.Rotate, Zoom: props.Zoom, Center: props.Center, Restart: props.Restart, Hide: props.Hide } } />
+      </panel>
+    } else {
+      <button class="restore" onClick={ props.Show }>Controls</button>
+    }
+  </panel>
+</template>
+
+<script setup lang="go">
+type ControlsProps struct {
+	Ready func() bool
+	Status func() string
+	Hidden func() bool
+	Show func()
+	Hide func()
+	Mode func() int
+	SelectMode func(int)
+	SelectFire func(int)
+	SelectSmoke func(int)
+	Visit func(int)
+	Rotate func(float32)
+	Zoom func(float32)
+	Center func()
+	Restart func()
+}
+
+func setup(props ControlsProps) {
+	fire := func() { props.SelectMode(0) }
+	smoke := func() { props.SelectMode(1) }
+	collection := func() { props.SelectMode(2) }
+}
+</script>
+
+<style>
+.screen
+  background: #00000000
+.header
+  position: absolute
+  left: 8
+  top: 8
+  width: 320
+  background: #141b24ed
+  padding: 8
+  gap: 6
+  align: stretch
+.dock-shell
+  position: absolute
+  right: 8
+  bottom: 8
+  width: 300
+  padding: 0
+  align: stretch
+.row
+  direction: row
+  gap: 6
+  align: stretch
+.restore
+  position: absolute
+  right: 8
+  bottom: 8
+  width: 120
+.status
+  color: #edf1f6ff
+  font-size: 16
+button
+  background: #33475aff
+  color: #f3f6faff
+  min-height: 48
+  min-width: 44
+  font-size: 14
+  grow: 1
+button:hover
+  background: #496681ff
+button:focus
+  background: #537795ff
+button:pressed
+  background: #295b7bff
+button:disabled
+  background: #283542ff
+  color: #98a5b2ff
+@media (max-width: 600)
+  .header
+    right: 8
+    width: auto
+  .dock-shell
+    left: 8
+    width: auto
+</style>

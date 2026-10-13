@@ -26,11 +26,13 @@ let bytes = fixture,
   callbacks = [],
   instances = 0,
   compilations = 0,
-  readers = 0;
+  readers = 0,
+  transientFailures = 0;
 let delayedResolve;
 const context = {
   console: { error() {}, warn() {} },
   AbortController,
+  setTimeout: (callback) => setImmediate(callback),
   TextDecoder,
   Uint8Array,
   DataView,
@@ -54,7 +56,9 @@ const context = {
   },
   fetch: async (url, options) => {
     requests.push(url);
+    if (responseMode === "network-once" && transientFailures++ === 0) throw new TypeError("Network disconnected");
     assert.equal(url, `content/${digest(bytes)}.kld`, "chunk paths must derive solely from the approved digest");
+    assert.equal(options.cache, "force-cache", "immutable child modules reuse the bounded browser HTTP cache");
     const captured = bytes;
     if (responseMode === "delayed")
       await new Promise((resolve) => {
@@ -62,7 +66,7 @@ const context = {
       });
     let read = false;
     return {
-      ok: responseMode !== "http",
+      ok: responseMode !== "http" && !(responseMode === "http-once" && transientFailures++ === 0),
       status: 503,
       headers: {
         get: (name) =>
@@ -82,6 +86,8 @@ const context = {
                 readers++;
                 return {
                   read: async () => {
+                    if (responseMode === "body-once" && transientFailures++ === 0)
+                      throw new TypeError("Body disconnected");
                     if (read) return { done: true };
                     read = true;
                     if (responseMode === "oversize") return { done: false, value: new Uint8Array(captured.length + 1) };
@@ -137,6 +143,12 @@ await request("fallback", /require a readable response stream/);
 await request("compressed");
 assert.equal(instances, 2, "valid chunks must execute real WASM");
 await request("http", /HTTP 503/);
+for (const mode of ["network-once", "http-once", "body-once"]) {
+  transientFailures = 0;
+  const count = requests.length;
+  await request(mode);
+  assert.equal(requests.length - count, 2, `${mode} retries transport once`);
+}
 await request("header", /size does not match/);
 await request("oversize", /exceeds/);
 await request("truncated", /size does not match/);

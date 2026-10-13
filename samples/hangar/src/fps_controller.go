@@ -7,11 +7,13 @@ import (
 )
 
 // FPSController owns desktop input, two independent touch sticks and their overlay.
-// Camera collision and stair movement remain authoritative in the host.
+// The host owns movement, gravity and collision; small authored risers receive
+// grounded step assistance before the full player box reaches their edges.
 type FPSController struct {
 	game                *engine.Game
 	camera              *engine.EntityCamera3D
 	input               fps.Input
+	walker              fps.Walker
 	captured, touchMode bool
 	sticks              [2]stickOverlay
 	SceneContains       func(x, y float32) bool
@@ -115,19 +117,23 @@ func (controller *FPSController) Update(engine.Frame) {
 	}
 	settings := controller.camera.Settings
 	motion := controller.input.Step(settings.Yaw, settings.Pitch)
-	if motion.X == 0 && motion.Y == 0 && motion.Yaw == settings.Yaw && motion.Pitch == settings.Pitch {
-		return
-	}
-	settings.Position.X, settings.Position.Y, settings.Position.Z = fps.WalkAcidControl(
+	z := controller.walker.StepUp(
 		settings.Position.X, settings.Position.Y, settings.Position.Z,
 		settings.Position.X+motion.X, settings.Position.Y+motion.Y,
 	)
-	settings.Yaw, settings.Pitch = motion.Yaw, motion.Pitch
-	controller.camera.SetSettings(settings)
+	if z != settings.Position.Z || motion.Yaw != settings.Yaw || motion.Pitch != settings.Pitch {
+		settings.Position.Z = z
+		settings.Yaw, settings.Pitch = motion.Yaw, motion.Pitch
+		controller.camera.SetSettings(settings)
+	}
+	// Input displacements are fixed 60 Hz proposals; the host accepts velocity
+	// while retaining vertical momentum. Zero input stops horizontal movement.
+	controller.game.MovePhysicsBody(controller.camera, engine.NewVec2D(motion.X*60, motion.Y*60))
 }
 
 func (controller *FPSController) Reset() {
 	controller.input.Reset()
+	controller.walker.Reset()
 	controller.captured = false
 	controller.drawSticks()
 }
@@ -151,9 +157,9 @@ func (controller *FPSController) Close() {
 
 func (controller *FPSController) Help() string {
 	if controller.touchMode {
-		return "Left stick walk · Right stick look · Torch toggles beam"
+		return "Left stick walk and push crates · Right stick look · Torch toggles beam"
 	}
-	return "WASD walk · Mouse look · Esc release · Shift run · F torch · V view · H hide"
+	return "WASD walk and push crates · Mouse look · Esc release · Shift run · F torch · V view · H hide"
 }
 
 func (controller *FPSController) showSticks() {

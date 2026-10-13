@@ -37,6 +37,7 @@ type Content struct {
 type Actor struct {
 	Yaw, Pitch, Roll float64
 	Scale            worldsource.Vec3
+	SolidRenderer    string
 	Sprite           *worldsource.Sprite
 	Tags             []string
 	Animation        *worldsource.AnimationBinding
@@ -67,11 +68,13 @@ type Expanded struct {
 	Rooms       []Room
 	Connections []Connection
 	Environment *sdkworld.Environment
+	Sky         *worldsource.Sky
 	// Lighting retains authored global coordinates and order independently of
 	// prefab expansion. Its payload and light slice belong to this result.
 	Lighting *sdkworld.Lighting
 	// UV is nil for released source versions; v5 owns complete effective settings.
 	UV                   *worldsource.UVSettings
+	SolidPrefabs         []SolidPrefab
 	Solids               []worldsource.Solid
 	Contents             []Content
 	Animations           *worldsource.Animations
@@ -182,9 +185,10 @@ func Decode(contents []byte) (Expanded, error) {
 		ParticleEmitterRooms: result.particleEmitterRooms,
 	}
 	if document.Environment != nil {
+		expanded.Sky = document.Environment.Sky
 		expanded.Environment = &sdkworld.Environment{
 			Version: sdkworld.EnvironmentVersion, Preset: document.Environment.Preset,
-			Palette: document.Environment.Palette,
+			Palette: document.Environment.Palette, Backdrop: document.Environment.Backdrop,
 		}
 		if document.Environment.Sun != nil {
 			sun := *document.Environment.Sun
@@ -241,6 +245,10 @@ func Decode(contents []byte) (Expanded, error) {
 		expandMaterialUV(&expanded, document.UV)
 	}
 
+	if err := expandSolidRenderers(&expanded, &document, prefabs); err != nil {
+		return Expanded{}, err
+	}
+
 	return expanded, nil
 }
 
@@ -275,6 +283,9 @@ func rejectAliases(contents []byte) error {
 		return err
 	}
 	if err := validateEnvironmentPresence(&document); err != nil {
+		return err
+	}
+	if err := validateSolidRendererPresence(&document); err != nil {
 		return err
 	}
 	if err := validateParticlePresence(&document); err != nil {
@@ -505,7 +516,7 @@ func transformActor(authored *worldsource.Actor, transform affine, tagOverride [
 		Scale: worldsource.Vec3{
 			X: scale.X * transform.scale, Y: scale.Y * transform.scale, Z: scale.Z * transform.scale,
 		},
-		Sprite: sprite, Tags: tags, Animation: authored.Animation,
+		SolidRenderer: authored.SolidRenderer, Sprite: sprite, Tags: tags, Animation: authored.Animation,
 	}
 }
 

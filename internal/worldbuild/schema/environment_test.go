@@ -1,9 +1,11 @@
 package schema_test
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/karty-game/karty-sdk/format/worldsource"
 	"github.com/karty-game/karty/internal/worldbuild/schema"
 )
 
@@ -65,6 +67,43 @@ func TestEnvironmentSchemaControlsAndVersion(t *testing.T) {
 
 		if err := schema.Validate(value, schema.Level(value, []string{"surface"})); err == nil {
 			t.Fatal("invalid sky declaration accepted", name)
+		}
+	}
+}
+
+func TestEnvironmentBackdropSchema(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		version uint16
+		value   string
+		valid   bool
+	}{
+		{worldsource.EnvironmentBackdropVersion, "none", true},
+		{worldsource.EnvironmentBackdropVersion, "mountains", true},
+		{worldsource.EnvironmentBackdropVersion, "city", true},
+		{worldsource.EnvironmentBackdropVersion, "''", true},
+		{worldsource.EnvironmentBackdropVersion, "null", false},
+		{worldsource.EnvironmentBackdropVersion, "forest", false},
+		{worldsource.EnvironmentBackdropVersion - 1, "mountains", false},
+		{worldsource.EnvironmentBackdropVersion - 1, "''", false},
+		{worldsource.EnvironmentBackdropVersion - 1, "null", false},
+	} {
+		input := strings.Replace(
+			tinyWorld,
+			"version: 6",
+			"version: "+strconv.Itoa(int(test.version)),
+			1,
+		) + "environment: {preset: daylight, backdrop: " + test.value + "}\n"
+
+		value, err := schema.Parse([]byte(input))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = schema.Validate(value, schema.Level(value, []string{"surface"}))
+		if (err == nil) != test.valid {
+			t.Fatalf("v%d backdrop %s: valid=%v err=%v", test.version, test.value, test.valid, err)
 		}
 	}
 }

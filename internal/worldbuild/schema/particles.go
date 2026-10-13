@@ -3,6 +3,7 @@ package schema
 import (
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/karty-game/karty-sdk/format/worldparticles"
+	"github.com/karty-game/karty-sdk/format/worldsource"
 )
 
 func (g *grammar) particleConstraints() {
@@ -29,7 +30,7 @@ func (g *grammar) particleConstraints() {
 		g.definitions[name].Required = fields
 	}
 
-	set("Particles", "version", &jsonschema.Schema{Enum: []any{worldparticles.Version}})
+	set("Particles", "version", &jsonschema.Schema{Enum: []any{worldparticles.Version, worldparticles.AlphaVersion}})
 	set("Particles", "presets", array(&jsonschema.Schema{Ref: "#/$defs/ParticlePreset"}, 1, worldparticles.MaxPresets))
 	set("Particles", "emitters", array(&jsonschema.Schema{Ref: "#/$defs/ParticleEmitter"}, 0, worldparticles.MaxEmitters))
 	set(
@@ -55,7 +56,23 @@ func (g *grammar) particleConstraints() {
 	set("ParticleSprite", "fps", number(0, 1000))
 	set("ParticleSprite", "playback", choice("once", "cycle"))
 	set("ParticleSprite", "facing", choice("camera-facing", "upright"))
-	set("ParticleSprite", "blend", choice("additive", "cutout"))
+	set("ParticleSprite", "blend", choice("additive", "cutout", "alpha", "premultiplied"))
+	g.definitions["Particles"].AllOf = append(g.definitions["Particles"].AllOf, &jsonschema.Schema{
+		If: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"version": {Enum: []any{worldparticles.Version}}}},
+		Then: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
+			"presets": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
+				"sprite": {Properties: map[string]*jsonschema.Schema{"blend": choice("additive", "cutout")}},
+			}}},
+		}},
+	})
+	g.definitions["Document"].AllOf = append(g.definitions["Document"].AllOf, &jsonschema.Schema{
+		If: &jsonschema.Schema{
+			Properties: map[string]*jsonschema.Schema{"version": {ExclusiveMaximum: new(float64(worldsource.AlphaParticlesVersion))}},
+		},
+		Then: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
+			"particles": {Properties: map[string]*jsonschema.Schema{"version": {Enum: []any{worldparticles.Version}}}},
+		}},
+	})
 
 	g.definitions["ParticleSprite"].AllOf = append(g.definitions["ParticleSprite"].AllOf, &jsonschema.Schema{
 		If: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"frames": {MinItems: new(2)}}},

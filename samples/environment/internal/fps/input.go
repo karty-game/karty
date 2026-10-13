@@ -19,7 +19,7 @@ const (
 	controlCount
 )
 
-const StickRadius = float32(72)
+const StickRadius = float32(96)
 
 // Stick owns one finger for its entire gesture. Other fingers cannot steal it.
 type Stick struct {
@@ -34,7 +34,7 @@ type Input struct {
 }
 
 func New(width, height float32) Input {
-	return Input{Sticks: [2]Stick{{X: 140, Y: height - 200}, {X: width - 140, Y: height - 200}}}
+	return Input{Sticks: [2]Stick{{X: 140, Y: height - 140}, {X: width - 140, Y: height - 140}}}
 }
 
 func (input *Input) Key(control Control, down bool) { input.keys[control] = down }

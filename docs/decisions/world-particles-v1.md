@@ -1,6 +1,9 @@
 # World particles version 1
 
-Status: accepted for unreleased SDK 0.0.11.
+Status: implemented in SDK 0.0.11. Owners: public SDK format, CLI authoring and engine rendering.
+Current reference: [particles](../particles.md).
+[Version 2](world-particles-v2.md) extends this contract for candidate SDK 0.0.12;
+version 1 remains supported.
 
 World source version 10 introduces a version-1 particle block and optional
 room/prefab emitter arrays. Released source versions 1–9 retain their semantics

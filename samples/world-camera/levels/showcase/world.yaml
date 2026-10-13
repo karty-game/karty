@@ -1,8 +1,9 @@
 # $schema: ../../.karty/schemas/levels/showcase.schema.json
-version: 7
+version: 8
 
 rooms:
   - id: hall
+    wall_secondary: { texture: z-detail-grain, strength: 0.22, uv: { scale: { x: 5, y: 5 } } }
     wall_uv: { mode: wrap }
     wall_bands:
       top: { texture: wall-top, height: 0.5, repeat_width: 2 }
@@ -65,10 +66,48 @@ rooms:
           tags: [decal, interactive]
           sprite: { texture: decal, facing: fixed, alpha: blend, width: 1.2, height: 1.2, origin_x: 0.5, origin_y: 0.5 }
 
+      - id: south-torch-flame
+        kind: actor
+        position: { x: 1, y: 0.32, z: 2.68 }
+        actor:
+          tags: [wall-torch]
+          animation: { preset: brazier-fire }
+          sprite:
+            {
+              texture: z-hanging-fire-1,
+              facing: upright,
+              alpha: blend,
+              width: 0.45,
+              height: 0.65,
+              origin_x: 0.5,
+              origin_y: 1,
+            }
+      - id: west-torch-flame
+        kind: actor
+        position: { x: 0.32, y: 4.5, z: 2.68 }
+        actor:
+          tags: [wall-torch]
+          animation: { preset: brazier-fire }
+          sprite:
+            {
+              texture: z-hanging-fire-1,
+              facing: upright,
+              alpha: blend,
+              width: 0.45,
+              height: 0.65,
+              origin_x: 0.5,
+              origin_y: 1,
+            }
+
 prefabs:
   - id: gallery
+    instances:
+      - id: wall-torch
+        prefab: wall-sconce
+        transform: { translation: { x: 2, y: 0, z: 0 }, yaw_degrees: 0 }
     rooms:
       - id: room
+        wall_secondary: { texture: z-detail-grain, strength: 0.22, uv: { scale: { x: 5, y: 5 } } }
         wall_uv: { mode: wrap }
         wall_bands:
           top: { texture: wall-top, height: 0.5, repeat_width: 2 }
@@ -89,14 +128,36 @@ prefabs:
             actor:
               yaw_degrees: 45
               tags: [cross, gallery]
-              sprite: { texture: tree, facing: cross, alpha: cutout, width: 1.4, height: 3, origin_x: 0.5, origin_y: 1 }
+              sprite:
+                { texture: tree, facing: cross, alpha: cutout, width: 0.9, height: 2.1, origin_x: 0.5, origin_y: 1 }
+          - id: torch-flame
+            kind: actor
+            position: { x: 2, y: 0.32, z: 2.68 }
+            actor:
+              tags: [wall-torch]
+              animation: { preset: brazier-fire }
+              sprite:
+                {
+                  texture: z-hanging-fire-1,
+                  facing: upright,
+                  alpha: blend,
+                  width: 0.45,
+                  height: 0.65,
+                  origin_x: 0.5,
+                  origin_y: 1,
+                }
     ports:
       - { id: entrance, endpoint: { room: room, edge: entrance } }
       - { id: exit, endpoint: { room: room, edge: exit } }
 
   - id: corner
+    instances:
+      - id: wall-torch
+        prefab: wall-sconce
+        transform: { translation: { x: 1, y: 0, z: 0 }, yaw_degrees: 0 }
     rooms:
       - id: room
+        wall_secondary: { texture: z-detail-grain, strength: 0.22, uv: { scale: { x: 5, y: 5 } } }
         wall_uv: { mode: wrap }
         wall_bands:
           top: { texture: wall-top, height: 0.5, repeat_width: 2 }
@@ -119,13 +180,34 @@ prefabs:
               tags: [corner, fixed]
               sprite:
                 { texture: sign, facing: fixed, alpha: cutout, width: 1.4, height: 0.95, origin_x: 0.5, origin_y: 0.5 }
+          - id: torch-flame
+            kind: actor
+            position: { x: 1, y: 0.32, z: 2.68 }
+            actor:
+              tags: [wall-torch]
+              animation: { preset: brazier-fire }
+              sprite:
+                {
+                  texture: z-hanging-fire-1,
+                  facing: upright,
+                  alpha: blend,
+                  width: 0.45,
+                  height: 0.65,
+                  origin_x: 0.5,
+                  origin_y: 1,
+                }
     ports:
       - { id: entrance, endpoint: { room: room, edge: entrance } }
       - { id: exit, endpoint: { room: room, edge: exit } }
 
   - id: ascent
+    instances:
+      - id: wall-torch
+        prefab: wall-sconce
+        transform: { translation: { x: 0, y: 2, z: -0.2 }, yaw_degrees: -90 }
     rooms:
       - id: room
+        wall_secondary: { texture: z-detail-grain, strength: 0.22, uv: { scale: { x: 5, y: 5 } } }
         wall_uv: { mode: wrap }
         wall_bands:
           top: { texture: wall-top, height: 0.5, repeat_width: 2 }
@@ -147,6 +229,22 @@ prefabs:
               tags: [beacon, corridor]
               sprite:
                 { texture: ghost, facing: upright, alpha: blend, width: 1.1, height: 1.7, origin_x: 0.5, origin_y: 1 }
+          - id: torch-flame
+            kind: actor
+            position: { x: 0.32, y: 2, z: 2.48 }
+            actor:
+              tags: [wall-torch]
+              animation: { preset: brazier-fire }
+              sprite:
+                {
+                  texture: z-hanging-fire-1,
+                  facing: upright,
+                  alpha: blend,
+                  width: 0.45,
+                  height: 0.65,
+                  origin_x: 0.5,
+                  origin_y: 1,
+                }
     ports:
       - { id: entrance, endpoint: { room: room, edge: entrance } }
       - { id: exit, endpoint: { room: room, edge: exit } }
@@ -172,6 +270,1004 @@ prefabs:
         top_material: z-court-marble
         bottom_material: z-court-marble
         collision: true
+
+  # BEGIN generated hanging-brazier prefab
+  - id: hanging-brazier
+    solids:
+      - id: bowl
+        footprint:
+          - { x: 0.420000, y: 0.000000 }
+          - { x: 0.363731, y: 0.210000 }
+          - { x: 0.210000, y: 0.363731 }
+          - { x: 0.000000, y: 0.420000 }
+          - { x: -0.210000, y: 0.363731 }
+          - { x: -0.363731, y: 0.210000 }
+          - { x: -0.420000, y: 0.000000 }
+          - { x: -0.363731, y: -0.210000 }
+          - { x: -0.210000, y: -0.363731 }
+          - { x: -0.000000, y: -0.420000 }
+          - { x: 0.210000, y: -0.363731 }
+          - { x: 0.363731, y: -0.210000 }
+        bottom: { c: 3.500000 }
+        top: { c: 3.860000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: coals
+        footprint:
+          - { x: 0.360000, y: 0.000000 }
+          - { x: 0.311769, y: 0.180000 }
+          - { x: 0.180000, y: 0.311769 }
+          - { x: 0.000000, y: 0.360000 }
+          - { x: -0.180000, y: 0.311769 }
+          - { x: -0.311769, y: 0.180000 }
+          - { x: -0.360000, y: 0.000000 }
+          - { x: -0.311769, y: -0.180000 }
+          - { x: -0.180000, y: -0.311769 }
+          - { x: -0.000000, y: -0.360000 }
+          - { x: 0.180000, y: -0.311769 }
+          - { x: 0.311769, y: -0.180000 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-coals
+        top_material: z-hanging-coals
+        bottom_material: z-hanging-coals
+        collision: true
+      - id: rim-00
+        footprint:
+          - { x: 0.450000, y: 0.000000 }
+          - { x: 0.389711, y: 0.225000 }
+          - { x: 0.311769, y: 0.180000 }
+          - { x: 0.360000, y: 0.000000 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-01
+        footprint:
+          - { x: 0.389711, y: 0.225000 }
+          - { x: 0.225000, y: 0.389711 }
+          - { x: 0.180000, y: 0.311769 }
+          - { x: 0.311769, y: 0.180000 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-02
+        footprint:
+          - { x: 0.225000, y: 0.389711 }
+          - { x: 0.000000, y: 0.450000 }
+          - { x: 0.000000, y: 0.360000 }
+          - { x: 0.180000, y: 0.311769 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-03
+        footprint:
+          - { x: 0.000000, y: 0.450000 }
+          - { x: -0.225000, y: 0.389711 }
+          - { x: -0.180000, y: 0.311769 }
+          - { x: 0.000000, y: 0.360000 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-04
+        footprint:
+          - { x: -0.225000, y: 0.389711 }
+          - { x: -0.389711, y: 0.225000 }
+          - { x: -0.311769, y: 0.180000 }
+          - { x: -0.180000, y: 0.311769 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-05
+        footprint:
+          - { x: -0.389711, y: 0.225000 }
+          - { x: -0.450000, y: 0.000000 }
+          - { x: -0.360000, y: 0.000000 }
+          - { x: -0.311769, y: 0.180000 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-06
+        footprint:
+          - { x: -0.450000, y: 0.000000 }
+          - { x: -0.389711, y: -0.225000 }
+          - { x: -0.311769, y: -0.180000 }
+          - { x: -0.360000, y: 0.000000 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-07
+        footprint:
+          - { x: -0.389711, y: -0.225000 }
+          - { x: -0.225000, y: -0.389711 }
+          - { x: -0.180000, y: -0.311769 }
+          - { x: -0.311769, y: -0.180000 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-08
+        footprint:
+          - { x: -0.225000, y: -0.389711 }
+          - { x: -0.000000, y: -0.450000 }
+          - { x: -0.000000, y: -0.360000 }
+          - { x: -0.180000, y: -0.311769 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-09
+        footprint:
+          - { x: -0.000000, y: -0.450000 }
+          - { x: 0.225000, y: -0.389711 }
+          - { x: 0.180000, y: -0.311769 }
+          - { x: -0.000000, y: -0.360000 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-10
+        footprint:
+          - { x: 0.225000, y: -0.389711 }
+          - { x: 0.389711, y: -0.225000 }
+          - { x: 0.311769, y: -0.180000 }
+          - { x: 0.180000, y: -0.311769 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-11
+        footprint:
+          - { x: 0.389711, y: -0.225000 }
+          - { x: 0.450000, y: 0.000000 }
+          - { x: 0.360000, y: 0.000000 }
+          - { x: 0.311769, y: -0.180000 }
+        bottom: { c: 3.860000 }
+        top: { c: 3.900000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: west-strap
+        footprint:
+          - { x: -0.320000, y: -0.025000 }
+          - { x: -0.280000, y: -0.025000 }
+          - { x: -0.280000, y: 0.025000 }
+          - { x: -0.320000, y: 0.025000 }
+        bottom: { c: 3.980000 }
+        top: { c: 4.500000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: east-strap
+        footprint:
+          - { x: 0.280000, y: -0.025000 }
+          - { x: 0.320000, y: -0.025000 }
+          - { x: 0.320000, y: 0.025000 }
+          - { x: 0.280000, y: 0.025000 }
+        bottom: { c: 3.980000 }
+        top: { c: 4.500000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: north-strap
+        footprint:
+          - { x: -0.025000, y: 0.280000 }
+          - { x: 0.025000, y: 0.280000 }
+          - { x: 0.025000, y: 0.320000 }
+          - { x: -0.025000, y: 0.320000 }
+        bottom: { c: 3.980000 }
+        top: { c: 4.500000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: crown-crossbar
+        footprint:
+          - { x: -0.320000, y: -0.025000 }
+          - { x: 0.320000, y: -0.025000 }
+          - { x: 0.320000, y: 0.025000 }
+          - { x: -0.320000, y: 0.025000 }
+        bottom: { c: 4.460000 }
+        top: { c: 4.500000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: crown-spoke
+        footprint:
+          - { x: -0.025000, y: 0.000000 }
+          - { x: 0.025000, y: 0.000000 }
+          - { x: 0.025000, y: 0.320000 }
+          - { x: -0.025000, y: 0.320000 }
+        bottom: { c: 4.460000 }
+        top: { c: 4.500000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: crown
+        footprint:
+          - { x: 0.080000, y: 0.000000 }
+          - { x: 0.056569, y: 0.056569 }
+          - { x: 0.000000, y: 0.080000 }
+          - { x: -0.056569, y: 0.056569 }
+          - { x: -0.080000, y: 0.000000 }
+          - { x: -0.056569, y: -0.056569 }
+          - { x: -0.000000, y: -0.080000 }
+          - { x: 0.056569, y: -0.056569 }
+        bottom: { c: 4.450000 }
+        top: { c: 4.510000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: chain-00-left
+        footprint:
+          - { x: -0.080000, y: -0.020000 }
+          - { x: -0.040000, y: -0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+          - { x: -0.080000, y: 0.020000 }
+        bottom: { c: 4.490000 }
+        top: { c: 4.826667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-00-right
+        footprint:
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.080000, y: -0.020000 }
+          - { x: 0.080000, y: 0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+        bottom: { c: 4.490000 }
+        top: { c: 4.826667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-00-bottom
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 4.490000 }
+        top: { c: 4.530000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-00-top
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 4.786667 }
+        top: { c: 4.826667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-01-left
+        footprint:
+          - { x: -0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: -0.020000, y: -0.040000 }
+        bottom: { c: 4.786667 }
+        top: { c: 5.123333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-01-right
+        footprint:
+          - { x: -0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.080000 }
+          - { x: -0.020000, y: 0.080000 }
+        bottom: { c: 4.786667 }
+        top: { c: 5.123333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-01-bottom
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 4.786667 }
+        top: { c: 4.826667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-01-top
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 5.083333 }
+        top: { c: 5.123333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-02-left
+        footprint:
+          - { x: -0.080000, y: -0.020000 }
+          - { x: -0.040000, y: -0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+          - { x: -0.080000, y: 0.020000 }
+        bottom: { c: 5.083333 }
+        top: { c: 5.420000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-02-right
+        footprint:
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.080000, y: -0.020000 }
+          - { x: 0.080000, y: 0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+        bottom: { c: 5.083333 }
+        top: { c: 5.420000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-02-bottom
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 5.083333 }
+        top: { c: 5.123333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-02-top
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 5.380000 }
+        top: { c: 5.420000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-03-left
+        footprint:
+          - { x: -0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: -0.020000, y: -0.040000 }
+        bottom: { c: 5.380000 }
+        top: { c: 5.716667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-03-right
+        footprint:
+          - { x: -0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.080000 }
+          - { x: -0.020000, y: 0.080000 }
+        bottom: { c: 5.380000 }
+        top: { c: 5.716667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-03-bottom
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 5.380000 }
+        top: { c: 5.420000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-03-top
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 5.676667 }
+        top: { c: 5.716667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-04-left
+        footprint:
+          - { x: -0.080000, y: -0.020000 }
+          - { x: -0.040000, y: -0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+          - { x: -0.080000, y: 0.020000 }
+        bottom: { c: 5.676667 }
+        top: { c: 6.013333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-04-right
+        footprint:
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.080000, y: -0.020000 }
+          - { x: 0.080000, y: 0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+        bottom: { c: 5.676667 }
+        top: { c: 6.013333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-04-bottom
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 5.676667 }
+        top: { c: 5.716667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-04-top
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 5.973333 }
+        top: { c: 6.013333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-05-left
+        footprint:
+          - { x: -0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: -0.020000, y: -0.040000 }
+        bottom: { c: 5.973333 }
+        top: { c: 6.310000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-05-right
+        footprint:
+          - { x: -0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.080000 }
+          - { x: -0.020000, y: 0.080000 }
+        bottom: { c: 5.973333 }
+        top: { c: 6.310000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-05-bottom
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 5.973333 }
+        top: { c: 6.013333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-05-top
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 6.270000 }
+        top: { c: 6.310000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-06-left
+        footprint:
+          - { x: -0.080000, y: -0.020000 }
+          - { x: -0.040000, y: -0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+          - { x: -0.080000, y: 0.020000 }
+        bottom: { c: 6.270000 }
+        top: { c: 6.606667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-06-right
+        footprint:
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.080000, y: -0.020000 }
+          - { x: 0.080000, y: 0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+        bottom: { c: 6.270000 }
+        top: { c: 6.606667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-06-bottom
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 6.270000 }
+        top: { c: 6.310000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-06-top
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 6.566667 }
+        top: { c: 6.606667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-07-left
+        footprint:
+          - { x: -0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: -0.020000, y: -0.040000 }
+        bottom: { c: 6.566667 }
+        top: { c: 6.903333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-07-right
+        footprint:
+          - { x: -0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.080000 }
+          - { x: -0.020000, y: 0.080000 }
+        bottom: { c: 6.566667 }
+        top: { c: 6.903333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-07-bottom
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 6.566667 }
+        top: { c: 6.606667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-07-top
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 6.863333 }
+        top: { c: 6.903333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-08-left
+        footprint:
+          - { x: -0.080000, y: -0.020000 }
+          - { x: -0.040000, y: -0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+          - { x: -0.080000, y: 0.020000 }
+        bottom: { c: 6.863333 }
+        top: { c: 7.200000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-08-right
+        footprint:
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.080000, y: -0.020000 }
+          - { x: 0.080000, y: 0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+        bottom: { c: 6.863333 }
+        top: { c: 7.200000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-08-bottom
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 6.863333 }
+        top: { c: 6.903333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-08-top
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 7.160000 }
+        top: { c: 7.200000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-09-left
+        footprint:
+          - { x: -0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: -0.020000, y: -0.040000 }
+        bottom: { c: 7.160000 }
+        top: { c: 7.496667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-09-right
+        footprint:
+          - { x: -0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.080000 }
+          - { x: -0.020000, y: 0.080000 }
+        bottom: { c: 7.160000 }
+        top: { c: 7.496667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-09-bottom
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 7.160000 }
+        top: { c: 7.200000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-09-top
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 7.456667 }
+        top: { c: 7.496667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-10-left
+        footprint:
+          - { x: -0.080000, y: -0.020000 }
+          - { x: -0.040000, y: -0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+          - { x: -0.080000, y: 0.020000 }
+        bottom: { c: 7.456667 }
+        top: { c: 7.793333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-10-right
+        footprint:
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.080000, y: -0.020000 }
+          - { x: 0.080000, y: 0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+        bottom: { c: 7.456667 }
+        top: { c: 7.793333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-10-bottom
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 7.456667 }
+        top: { c: 7.496667 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-10-top
+        footprint:
+          - { x: -0.040000, y: -0.020000 }
+          - { x: 0.040000, y: -0.020000 }
+          - { x: 0.040000, y: 0.020000 }
+          - { x: -0.040000, y: 0.020000 }
+        bottom: { c: 7.753333 }
+        top: { c: 7.793333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-11-left
+        footprint:
+          - { x: -0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.080000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: -0.020000, y: -0.040000 }
+        bottom: { c: 7.753333 }
+        top: { c: 8.090000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-11-right
+        footprint:
+          - { x: -0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: 0.020000, y: 0.080000 }
+          - { x: -0.020000, y: 0.080000 }
+        bottom: { c: 7.753333 }
+        top: { c: 8.090000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-11-bottom
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 7.753333 }
+        top: { c: 7.793333 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: chain-11-top
+        footprint:
+          - { x: -0.020000, y: -0.040000 }
+          - { x: 0.020000, y: -0.040000 }
+          - { x: 0.020000, y: 0.040000 }
+          - { x: -0.020000, y: 0.040000 }
+        bottom: { c: 8.050000 }
+        top: { c: 8.090000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+  # END generated hanging-brazier prefab
+
+  # BEGIN generated wall-sconce prefab
+  - id: wall-sconce
+    solids:
+      - id: backplate
+        footprint:
+          - { x: -0.070000, y: -0.015000 }
+          - { x: 0.070000, y: -0.015000 }
+          - { x: 0.070000, y: 0.015000 }
+          - { x: -0.070000, y: 0.015000 }
+        bottom: { c: 2.180000 }
+        top: { c: 2.550000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: arm
+        footprint:
+          - { x: -0.025000, y: 0.000000 }
+          - { x: 0.025000, y: 0.000000 }
+          - { x: 0.025000, y: 0.320000 }
+          - { x: -0.025000, y: 0.320000 }
+        bottom: { c: 2.300000 }
+        top: { c: 2.340000 }
+        side_material: z-hanging-iron
+        top_material: z-hanging-iron
+        bottom_material: z-hanging-iron
+        collision: true
+      - id: stem
+        footprint:
+          - { x: 0.045000, y: 0.320000 }
+          - { x: 0.031820, y: 0.351820 }
+          - { x: 0.000000, y: 0.365000 }
+          - { x: -0.031820, y: 0.351820 }
+          - { x: -0.045000, y: 0.320000 }
+          - { x: -0.031820, y: 0.288180 }
+          - { x: -0.000000, y: 0.275000 }
+          - { x: 0.031820, y: 0.288180 }
+        bottom: { c: 2.220000 }
+        top: { c: 2.640000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: coals
+        footprint:
+          - { x: 0.075000, y: 0.320000 }
+          - { x: 0.053033, y: 0.373033 }
+          - { x: 0.000000, y: 0.395000 }
+          - { x: -0.053033, y: 0.373033 }
+          - { x: -0.075000, y: 0.320000 }
+          - { x: -0.053033, y: 0.266967 }
+          - { x: -0.000000, y: 0.245000 }
+          - { x: 0.053033, y: 0.266967 }
+        bottom: { c: 2.640000 }
+        top: { c: 2.680000 }
+        side_material: z-hanging-coals
+        top_material: z-hanging-coals
+        bottom_material: z-hanging-coals
+        collision: true
+      - id: rim-00
+        footprint:
+          - { x: 0.095000, y: 0.320000 }
+          - { x: 0.067175, y: 0.387175 }
+          - { x: 0.053033, y: 0.373033 }
+          - { x: 0.075000, y: 0.320000 }
+        bottom: { c: 2.620000 }
+        top: { c: 2.660000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-01
+        footprint:
+          - { x: 0.067175, y: 0.387175 }
+          - { x: 0.000000, y: 0.415000 }
+          - { x: 0.000000, y: 0.395000 }
+          - { x: 0.053033, y: 0.373033 }
+        bottom: { c: 2.620000 }
+        top: { c: 2.660000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-02
+        footprint:
+          - { x: 0.000000, y: 0.415000 }
+          - { x: -0.067175, y: 0.387175 }
+          - { x: -0.053033, y: 0.373033 }
+          - { x: 0.000000, y: 0.395000 }
+        bottom: { c: 2.620000 }
+        top: { c: 2.660000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-03
+        footprint:
+          - { x: -0.067175, y: 0.387175 }
+          - { x: -0.095000, y: 0.320000 }
+          - { x: -0.075000, y: 0.320000 }
+          - { x: -0.053033, y: 0.373033 }
+        bottom: { c: 2.620000 }
+        top: { c: 2.660000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-04
+        footprint:
+          - { x: -0.095000, y: 0.320000 }
+          - { x: -0.067175, y: 0.252825 }
+          - { x: -0.053033, y: 0.266967 }
+          - { x: -0.075000, y: 0.320000 }
+        bottom: { c: 2.620000 }
+        top: { c: 2.660000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-05
+        footprint:
+          - { x: -0.067175, y: 0.252825 }
+          - { x: -0.000000, y: 0.225000 }
+          - { x: -0.000000, y: 0.245000 }
+          - { x: -0.053033, y: 0.266967 }
+        bottom: { c: 2.620000 }
+        top: { c: 2.660000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-06
+        footprint:
+          - { x: -0.000000, y: 0.225000 }
+          - { x: 0.067175, y: 0.252825 }
+          - { x: 0.053033, y: 0.266967 }
+          - { x: -0.000000, y: 0.245000 }
+        bottom: { c: 2.620000 }
+        top: { c: 2.660000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      - id: rim-07
+        footprint:
+          - { x: 0.067175, y: 0.252825 }
+          - { x: 0.095000, y: 0.320000 }
+          - { x: 0.075000, y: 0.320000 }
+          - { x: 0.053033, y: 0.266967 }
+        bottom: { c: 2.620000 }
+        top: { c: 2.660000 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+  # END generated wall-sconce prefab
 
   - id: roman-peristyle
     instances:
@@ -199,6 +1295,15 @@ prefabs:
       - id: column-7
         prefab: roman-column
         transform: { translation: { x: -4, y: 8, z: 0 } }
+      - id: brazier-west
+        prefab: hanging-brazier
+        transform: { translation: { x: -9.1, y: 4.1, z: 0 } }
+      - id: brazier-center
+        prefab: hanging-brazier
+        transform: { translation: { x: -8.05, y: 4.1, z: 0 } }
+      - id: brazier-east
+        prefab: hanging-brazier
+        transform: { translation: { x: -6.9, y: 4.1, z: 0 } }
     rooms:
       - id: bay-0-0
         boundary:
@@ -208,6 +1313,8 @@ prefabs:
           - { id: west, start: { x: -16, y: 0 }, end: { x: -16, y: -4 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-1-0
@@ -218,6 +1325,8 @@ prefabs:
           - { id: west, start: { x: -12, y: 0 }, end: { x: -12, y: -4 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-2-0
@@ -228,6 +1337,8 @@ prefabs:
           - { id: west, start: { x: -8, y: 0 }, end: { x: -8, y: -4 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-3-0
@@ -238,6 +1349,8 @@ prefabs:
           - { id: west, start: { x: -4, y: 0 }, end: { x: -4, y: -4 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-0-1
@@ -248,30 +1361,32 @@ prefabs:
           - { id: west, start: { x: -16, y: 4 }, end: { x: -16, y: 0 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-1-1
         boundary:
           - { id: south, start: { x: -12, y: 0 }, end: { x: -8, y: 0 }, material: z-court-plaster }
-          - { id: east, start: { x: -8, y: 0 }, end: { x: -8, y: 1.575129 }, material: z-court-plaster }
-          - { id: basin-5, start: { x: -8, y: 1.575129 }, end: { x: -9.4, y: 1.575129 }, material: z-court-marble }
-          - { id: basin-4, start: { x: -9.4, y: 1.575129 }, end: { x: -10.8, y: 4 }, material: z-court-marble }
-          - { id: north, start: { x: -10.8, y: 4 }, end: { x: -12, y: 4 }, material: z-court-plaster }
+          - { id: east, start: { x: -8, y: 0 }, end: { x: -8, y: 4 }, material: z-court-plaster }
+          - { id: north, start: { x: -8, y: 4 }, end: { x: -12, y: 4 }, material: z-court-plaster }
           - { id: west, start: { x: -12, y: 4 }, end: { x: -12, y: 0 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 12 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-paving
         ceiling_material: z-court-sky
       - id: bay-2-1
         boundary:
           - { id: south, start: { x: -8, y: 0 }, end: { x: -4, y: 0 }, material: z-court-plaster }
           - { id: east, start: { x: -4, y: 0 }, end: { x: -4, y: 4 }, material: z-court-plaster }
-          - { id: north, start: { x: -4, y: 4 }, end: { x: -5.2, y: 4 }, material: z-court-plaster }
-          - { id: basin-7, start: { x: -5.2, y: 4 }, end: { x: -6.6, y: 1.575129 }, material: z-court-marble }
-          - { id: basin-6, start: { x: -6.6, y: 1.575129 }, end: { x: -8, y: 1.575129 }, material: z-court-marble }
-          - { id: west, start: { x: -8, y: 1.575129 }, end: { x: -8, y: 0 }, material: z-court-plaster }
+          - { id: north, start: { x: -4, y: 4 }, end: { x: -8, y: 4 }, material: z-court-plaster }
+          - { id: west, start: { x: -8, y: 4 }, end: { x: -8, y: 0 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 12 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-paving
         ceiling_material: z-court-sky
       - id: bay-3-1
@@ -282,6 +1397,8 @@ prefabs:
           - { id: west, start: { x: -4, y: 4 }, end: { x: -4, y: 0 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-0-2
@@ -292,32 +1409,84 @@ prefabs:
           - { id: west, start: { x: -16, y: 8 }, end: { x: -16, y: 4 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-1-2
         boundary:
-          - { id: south, start: { x: -12, y: 4 }, end: { x: -10.8, y: 4 }, material: z-court-plaster }
-          - { id: basin-3, start: { x: -10.8, y: 4 }, end: { x: -9.4, y: 6.424871 }, material: z-court-marble }
-          - { id: basin-2, start: { x: -9.4, y: 6.424871 }, end: { x: -8, y: 6.424871 }, material: z-court-marble }
-          - { id: east, start: { x: -8, y: 6.424871 }, end: { x: -8, y: 8 }, material: z-court-plaster }
+          - { id: south, start: { x: -12, y: 4 }, end: { x: -8, y: 4 }, material: z-court-plaster }
+          - { id: east, start: { x: -8, y: 4 }, end: { x: -8, y: 8 }, material: z-court-plaster }
           - { id: north, start: { x: -8, y: 8 }, end: { x: -12, y: 8 }, material: z-court-plaster }
           - { id: west, start: { x: -12, y: 8 }, end: { x: -12, y: 4 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 12 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-paving
         ceiling_material: z-court-sky
+        contents:
+          - id: brazier-center-flame
+            kind: actor
+            position: { x: -8.05, y: 4.1, z: 3.91 }
+            actor:
+              tags: [hanging-brazier]
+              animation: { preset: brazier-fire, phase_seconds: 0.2 }
+              sprite:
+                {
+                  texture: z-hanging-fire-1,
+                  facing: upright,
+                  alpha: blend,
+                  width: 0.7,
+                  height: 0.82,
+                  origin_x: 0.5,
+                  origin_y: 1,
+                }
+          - id: brazier-west-flame
+            kind: actor
+            position: { x: -9.1, y: 4.1, z: 3.91 }
+            actor:
+              tags: [hanging-brazier]
+              animation: { preset: brazier-fire, phase_seconds: 0 }
+              sprite:
+                {
+                  texture: z-hanging-fire-1,
+                  facing: upright,
+                  alpha: blend,
+                  width: 0.7,
+                  height: 0.82,
+                  origin_x: 0.5,
+                  origin_y: 1,
+                }
       - id: bay-2-2
         boundary:
-          - { id: south, start: { x: -5.2, y: 4 }, end: { x: -4, y: 4 }, material: z-court-plaster }
+          - { id: south, start: { x: -8, y: 4 }, end: { x: -4, y: 4 }, material: z-court-plaster }
           - { id: east, start: { x: -4, y: 4 }, end: { x: -4, y: 8 }, material: z-court-plaster }
           - { id: north, start: { x: -4, y: 8 }, end: { x: -8, y: 8 }, material: z-court-plaster }
-          - { id: west, start: { x: -8, y: 8 }, end: { x: -8, y: 6.424871 }, material: z-court-plaster }
-          - { id: basin-1, start: { x: -8, y: 6.424871 }, end: { x: -6.6, y: 6.424871 }, material: z-court-marble }
-          - { id: basin-0, start: { x: -6.6, y: 6.424871 }, end: { x: -5.2, y: 4 }, material: z-court-marble }
+          - { id: west, start: { x: -8, y: 8 }, end: { x: -8, y: 4 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 12 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-paving
         ceiling_material: z-court-sky
+        contents:
+          - id: brazier-east-flame
+            kind: actor
+            position: { x: -6.9, y: 4.1, z: 3.91 }
+            actor:
+              tags: [hanging-brazier]
+              animation: { preset: brazier-fire, phase_seconds: 0.4 }
+              sprite:
+                {
+                  texture: z-hanging-fire-1,
+                  facing: upright,
+                  alpha: blend,
+                  width: 0.7,
+                  height: 0.82,
+                  origin_x: 0.5,
+                  origin_y: 1,
+                }
       - id: bay-3-2
         boundary:
           - { id: south, start: { x: -4, y: 4 }, end: { x: 0, y: 4 }, material: z-court-plaster }
@@ -326,6 +1495,8 @@ prefabs:
           - { id: west, start: { x: -4, y: 8 }, end: { x: -4, y: 4 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-0-3
@@ -336,6 +1507,8 @@ prefabs:
           - { id: west, start: { x: -16, y: 12 }, end: { x: -16, y: 8 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-1-3
@@ -346,6 +1519,8 @@ prefabs:
           - { id: west, start: { x: -12, y: 12 }, end: { x: -12, y: 8 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-2-3
@@ -356,6 +1531,8 @@ prefabs:
           - { id: west, start: { x: -8, y: 12 }, end: { x: -8, y: 8 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
       - id: bay-3-3
@@ -366,461 +1543,767 @@ prefabs:
           - { id: west, start: { x: -4, y: 12 }, end: { x: -4, y: 8 }, material: z-court-plaster }
         floor: { c: 0 }
         ceiling: { c: 4.6 }
+        floor_secondary: { texture: z-detail-grain, strength: 0.16, uv: { scale: { x: 6, y: 6 } } }
+        wall_secondary: { texture: z-detail-grain, strength: 0.28, uv: { scale: { x: 7, y: 7 } } }
         floor_material: z-court-mosaic
         ceiling_material: z-court-coffer
-      # Concentric hexagonal steps and a recessed basin; split at bay seams.
-      - id: basin-step-1-0
-        boundary:
-          - { id: outer, start: { x: -5.2, y: 4 }, end: { x: -6.6, y: 6.424871 }, material: z-court-marble }
-          - { id: next, start: { x: -6.6, y: 6.424871 }, end: { x: -6.725, y: 6.208365 }, material: z-court-marble }
-          - { id: inner, start: { x: -6.725, y: 6.208365 }, end: { x: -5.45, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -5.45, y: 4 }, end: { x: -5.2, y: 4 }, material: z-court-marble }
-        floor: { c: 0.12 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-1-1
-        boundary:
-          - { id: outer, start: { x: -6.6, y: 6.424871 }, end: { x: -8, y: 6.424871 }, material: z-court-marble }
-          - { id: next, start: { x: -8, y: 6.424871 }, end: { x: -8, y: 6.208365 }, material: z-court-marble }
-          - { id: inner, start: { x: -8, y: 6.208365 }, end: { x: -6.725, y: 6.208365 }, material: z-court-marble }
-          - { id: previous, start: { x: -6.725, y: 6.208365 }, end: { x: -6.6, y: 6.424871 }, material: z-court-marble }
-        floor: { c: 0.12 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-1-2
-        boundary:
-          - { id: outer, start: { x: -8, y: 6.424871 }, end: { x: -9.4, y: 6.424871 }, material: z-court-marble }
-          - { id: next, start: { x: -9.4, y: 6.424871 }, end: { x: -9.275, y: 6.208365 }, material: z-court-marble }
-          - { id: inner, start: { x: -9.275, y: 6.208365 }, end: { x: -8, y: 6.208365 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 6.208365 }, end: { x: -8, y: 6.424871 }, material: z-court-marble }
-        floor: { c: 0.12 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-1-3
-        boundary:
-          - { id: outer, start: { x: -9.4, y: 6.424871 }, end: { x: -10.8, y: 4 }, material: z-court-marble }
-          - { id: next, start: { x: -10.8, y: 4 }, end: { x: -10.55, y: 4 }, material: z-court-marble }
-          - { id: inner, start: { x: -10.55, y: 4 }, end: { x: -9.275, y: 6.208365 }, material: z-court-marble }
-          - { id: previous, start: { x: -9.275, y: 6.208365 }, end: { x: -9.4, y: 6.424871 }, material: z-court-marble }
-        floor: { c: 0.12 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-1-4
-        boundary:
-          - { id: outer, start: { x: -10.8, y: 4 }, end: { x: -9.4, y: 1.575129 }, material: z-court-marble }
-          - { id: next, start: { x: -9.4, y: 1.575129 }, end: { x: -9.275, y: 1.791635 }, material: z-court-marble }
-          - { id: inner, start: { x: -9.275, y: 1.791635 }, end: { x: -10.55, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -10.55, y: 4 }, end: { x: -10.8, y: 4 }, material: z-court-marble }
-        floor: { c: 0.12 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-1-5
-        boundary:
-          - { id: outer, start: { x: -9.4, y: 1.575129 }, end: { x: -8, y: 1.575129 }, material: z-court-marble }
-          - { id: next, start: { x: -8, y: 1.575129 }, end: { x: -8, y: 1.791635 }, material: z-court-marble }
-          - { id: inner, start: { x: -8, y: 1.791635 }, end: { x: -9.275, y: 1.791635 }, material: z-court-marble }
-          - { id: previous, start: { x: -9.275, y: 1.791635 }, end: { x: -9.4, y: 1.575129 }, material: z-court-marble }
-        floor: { c: 0.12 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-1-6
-        boundary:
-          - { id: outer, start: { x: -8, y: 1.575129 }, end: { x: -6.6, y: 1.575129 }, material: z-court-marble }
-          - { id: next, start: { x: -6.6, y: 1.575129 }, end: { x: -6.725, y: 1.791635 }, material: z-court-marble }
-          - { id: inner, start: { x: -6.725, y: 1.791635 }, end: { x: -8, y: 1.791635 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 1.791635 }, end: { x: -8, y: 1.575129 }, material: z-court-marble }
-        floor: { c: 0.12 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-1-7
-        boundary:
-          - { id: outer, start: { x: -6.6, y: 1.575129 }, end: { x: -5.2, y: 4 }, material: z-court-marble }
-          - { id: next, start: { x: -5.2, y: 4 }, end: { x: -5.45, y: 4 }, material: z-court-marble }
-          - { id: inner, start: { x: -5.45, y: 4 }, end: { x: -6.725, y: 1.791635 }, material: z-court-marble }
-          - { id: previous, start: { x: -6.725, y: 1.791635 }, end: { x: -6.6, y: 1.575129 }, material: z-court-marble }
-        floor: { c: 0.12 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-2-0
-        boundary:
-          - { id: outer, start: { x: -5.45, y: 4 }, end: { x: -6.725, y: 6.208365 }, material: z-court-marble }
-          - { id: next, start: { x: -6.725, y: 6.208365 }, end: { x: -6.85, y: 5.991858 }, material: z-court-marble }
-          - { id: inner, start: { x: -6.85, y: 5.991858 }, end: { x: -5.7, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -5.7, y: 4 }, end: { x: -5.45, y: 4 }, material: z-court-marble }
-        floor: { c: 0.24 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-2-1
-        boundary:
-          - { id: outer, start: { x: -6.725, y: 6.208365 }, end: { x: -8, y: 6.208365 }, material: z-court-marble }
-          - { id: next, start: { x: -8, y: 6.208365 }, end: { x: -8, y: 5.991858 }, material: z-court-marble }
-          - { id: inner, start: { x: -8, y: 5.991858 }, end: { x: -6.85, y: 5.991858 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -6.85, y: 5.991858 },
-              end: { x: -6.725, y: 6.208365 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.24 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-2-2
-        boundary:
-          - { id: outer, start: { x: -8, y: 6.208365 }, end: { x: -9.275, y: 6.208365 }, material: z-court-marble }
-          - { id: next, start: { x: -9.275, y: 6.208365 }, end: { x: -9.15, y: 5.991858 }, material: z-court-marble }
-          - { id: inner, start: { x: -9.15, y: 5.991858 }, end: { x: -8, y: 5.991858 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 5.991858 }, end: { x: -8, y: 6.208365 }, material: z-court-marble }
-        floor: { c: 0.24 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-2-3
-        boundary:
-          - { id: outer, start: { x: -9.275, y: 6.208365 }, end: { x: -10.55, y: 4 }, material: z-court-marble }
-          - { id: next, start: { x: -10.55, y: 4 }, end: { x: -10.3, y: 4 }, material: z-court-marble }
-          - { id: inner, start: { x: -10.3, y: 4 }, end: { x: -9.15, y: 5.991858 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -9.15, y: 5.991858 },
-              end: { x: -9.275, y: 6.208365 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.24 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-2-4
-        boundary:
-          - { id: outer, start: { x: -10.55, y: 4 }, end: { x: -9.275, y: 1.791635 }, material: z-court-marble }
-          - { id: next, start: { x: -9.275, y: 1.791635 }, end: { x: -9.15, y: 2.008142 }, material: z-court-marble }
-          - { id: inner, start: { x: -9.15, y: 2.008142 }, end: { x: -10.3, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -10.3, y: 4 }, end: { x: -10.55, y: 4 }, material: z-court-marble }
-        floor: { c: 0.24 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-2-5
-        boundary:
-          - { id: outer, start: { x: -9.275, y: 1.791635 }, end: { x: -8, y: 1.791635 }, material: z-court-marble }
-          - { id: next, start: { x: -8, y: 1.791635 }, end: { x: -8, y: 2.008142 }, material: z-court-marble }
-          - { id: inner, start: { x: -8, y: 2.008142 }, end: { x: -9.15, y: 2.008142 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -9.15, y: 2.008142 },
-              end: { x: -9.275, y: 1.791635 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.24 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-2-6
-        boundary:
-          - { id: outer, start: { x: -8, y: 1.791635 }, end: { x: -6.725, y: 1.791635 }, material: z-court-marble }
-          - { id: next, start: { x: -6.725, y: 1.791635 }, end: { x: -6.85, y: 2.008142 }, material: z-court-marble }
-          - { id: inner, start: { x: -6.85, y: 2.008142 }, end: { x: -8, y: 2.008142 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 2.008142 }, end: { x: -8, y: 1.791635 }, material: z-court-marble }
-        floor: { c: 0.24 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-2-7
-        boundary:
-          - { id: outer, start: { x: -6.725, y: 1.791635 }, end: { x: -5.45, y: 4 }, material: z-court-marble }
-          - { id: next, start: { x: -5.45, y: 4 }, end: { x: -5.7, y: 4 }, material: z-court-marble }
-          - { id: inner, start: { x: -5.7, y: 4 }, end: { x: -6.85, y: 2.008142 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -6.85, y: 2.008142 },
-              end: { x: -6.725, y: 1.791635 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.24 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-3-0
-        boundary:
-          - { id: outer, start: { x: -5.7, y: 4 }, end: { x: -6.85, y: 5.991858 }, material: z-court-marble }
-          - { id: next, start: { x: -6.85, y: 5.991858 }, end: { x: -6.975, y: 5.775352 }, material: z-court-marble }
-          - { id: inner, start: { x: -6.975, y: 5.775352 }, end: { x: -5.95, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -5.95, y: 4 }, end: { x: -5.7, y: 4 }, material: z-court-marble }
-        floor: { c: 0.36 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-3-1
-        boundary:
-          - { id: outer, start: { x: -6.85, y: 5.991858 }, end: { x: -8, y: 5.991858 }, material: z-court-marble }
-          - { id: next, start: { x: -8, y: 5.991858 }, end: { x: -8, y: 5.775352 }, material: z-court-marble }
-          - { id: inner, start: { x: -8, y: 5.775352 }, end: { x: -6.975, y: 5.775352 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -6.975, y: 5.775352 },
-              end: { x: -6.85, y: 5.991858 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.36 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-3-2
-        boundary:
-          - { id: outer, start: { x: -8, y: 5.991858 }, end: { x: -9.15, y: 5.991858 }, material: z-court-marble }
-          - { id: next, start: { x: -9.15, y: 5.991858 }, end: { x: -9.025, y: 5.775352 }, material: z-court-marble }
-          - { id: inner, start: { x: -9.025, y: 5.775352 }, end: { x: -8, y: 5.775352 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 5.775352 }, end: { x: -8, y: 5.991858 }, material: z-court-marble }
-        floor: { c: 0.36 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-3-3
-        boundary:
-          - { id: outer, start: { x: -9.15, y: 5.991858 }, end: { x: -10.3, y: 4 }, material: z-court-marble }
-          - { id: next, start: { x: -10.3, y: 4 }, end: { x: -10.05, y: 4 }, material: z-court-marble }
-          - { id: inner, start: { x: -10.05, y: 4 }, end: { x: -9.025, y: 5.775352 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -9.025, y: 5.775352 },
-              end: { x: -9.15, y: 5.991858 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.36 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-3-4
-        boundary:
-          - { id: outer, start: { x: -10.3, y: 4 }, end: { x: -9.15, y: 2.008142 }, material: z-court-marble }
-          - { id: next, start: { x: -9.15, y: 2.008142 }, end: { x: -9.025, y: 2.224648 }, material: z-court-marble }
-          - { id: inner, start: { x: -9.025, y: 2.224648 }, end: { x: -10.05, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -10.05, y: 4 }, end: { x: -10.3, y: 4 }, material: z-court-marble }
-        floor: { c: 0.36 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-3-5
-        boundary:
-          - { id: outer, start: { x: -9.15, y: 2.008142 }, end: { x: -8, y: 2.008142 }, material: z-court-marble }
-          - { id: next, start: { x: -8, y: 2.008142 }, end: { x: -8, y: 2.224648 }, material: z-court-marble }
-          - { id: inner, start: { x: -8, y: 2.224648 }, end: { x: -9.025, y: 2.224648 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -9.025, y: 2.224648 },
-              end: { x: -9.15, y: 2.008142 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.36 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-3-6
-        boundary:
-          - { id: outer, start: { x: -8, y: 2.008142 }, end: { x: -6.85, y: 2.008142 }, material: z-court-marble }
-          - { id: next, start: { x: -6.85, y: 2.008142 }, end: { x: -6.975, y: 2.224648 }, material: z-court-marble }
-          - { id: inner, start: { x: -6.975, y: 2.224648 }, end: { x: -8, y: 2.224648 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 2.224648 }, end: { x: -8, y: 2.008142 }, material: z-court-marble }
-        floor: { c: 0.36 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-step-3-7
-        boundary:
-          - { id: outer, start: { x: -6.85, y: 2.008142 }, end: { x: -5.7, y: 4 }, material: z-court-marble }
-          - { id: next, start: { x: -5.7, y: 4 }, end: { x: -5.95, y: 4 }, material: z-court-marble }
-          - { id: inner, start: { x: -5.95, y: 4 }, end: { x: -6.975, y: 2.224648 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -6.975, y: 2.224648 },
-              end: { x: -6.85, y: 2.008142 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.36 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-rim-0
-        boundary:
-          - { id: outer, start: { x: -5.95, y: 4 }, end: { x: -6.975, y: 5.775352 }, material: z-court-marble }
-          - { id: next, start: { x: -6.975, y: 5.775352 }, end: { x: -7.14, y: 5.489564 }, material: z-court-marble }
-          - { id: inner, start: { x: -7.14, y: 5.489564 }, end: { x: -6.28, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -6.28, y: 4 }, end: { x: -5.95, y: 4 }, material: z-court-marble }
-        floor: { c: 0.64 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-rim-1
-        boundary:
-          - { id: outer, start: { x: -6.975, y: 5.775352 }, end: { x: -8, y: 5.775352 }, material: z-court-marble }
-          - { id: next, start: { x: -8, y: 5.775352 }, end: { x: -8, y: 5.489564 }, material: z-court-marble }
-          - { id: inner, start: { x: -8, y: 5.489564 }, end: { x: -7.14, y: 5.489564 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -7.14, y: 5.489564 },
-              end: { x: -6.975, y: 5.775352 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.64 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-rim-2
-        boundary:
-          - { id: outer, start: { x: -8, y: 5.775352 }, end: { x: -9.025, y: 5.775352 }, material: z-court-marble }
-          - { id: next, start: { x: -9.025, y: 5.775352 }, end: { x: -8.86, y: 5.489564 }, material: z-court-marble }
-          - { id: inner, start: { x: -8.86, y: 5.489564 }, end: { x: -8, y: 5.489564 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 5.489564 }, end: { x: -8, y: 5.775352 }, material: z-court-marble }
-        floor: { c: 0.64 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-rim-3
-        boundary:
-          - { id: outer, start: { x: -9.025, y: 5.775352 }, end: { x: -10.05, y: 4 }, material: z-court-marble }
-          - { id: next, start: { x: -10.05, y: 4 }, end: { x: -9.72, y: 4 }, material: z-court-marble }
-          - { id: inner, start: { x: -9.72, y: 4 }, end: { x: -8.86, y: 5.489564 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -8.86, y: 5.489564 },
-              end: { x: -9.025, y: 5.775352 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.64 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-rim-4
-        boundary:
-          - { id: outer, start: { x: -10.05, y: 4 }, end: { x: -9.025, y: 2.224648 }, material: z-court-marble }
-          - { id: next, start: { x: -9.025, y: 2.224648 }, end: { x: -8.86, y: 2.510436 }, material: z-court-marble }
-          - { id: inner, start: { x: -8.86, y: 2.510436 }, end: { x: -9.72, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -9.72, y: 4 }, end: { x: -10.05, y: 4 }, material: z-court-marble }
-        floor: { c: 0.64 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-rim-5
-        boundary:
-          - { id: outer, start: { x: -9.025, y: 2.224648 }, end: { x: -8, y: 2.224648 }, material: z-court-marble }
-          - { id: next, start: { x: -8, y: 2.224648 }, end: { x: -8, y: 2.510436 }, material: z-court-marble }
-          - { id: inner, start: { x: -8, y: 2.510436 }, end: { x: -8.86, y: 2.510436 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -8.86, y: 2.510436 },
-              end: { x: -9.025, y: 2.224648 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.64 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-rim-6
-        boundary:
-          - { id: outer, start: { x: -8, y: 2.224648 }, end: { x: -6.975, y: 2.224648 }, material: z-court-marble }
-          - { id: next, start: { x: -6.975, y: 2.224648 }, end: { x: -7.14, y: 2.510436 }, material: z-court-marble }
-          - { id: inner, start: { x: -7.14, y: 2.510436 }, end: { x: -8, y: 2.510436 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 2.510436 }, end: { x: -8, y: 2.224648 }, material: z-court-marble }
-        floor: { c: 0.64 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-rim-7
-        boundary:
-          - { id: outer, start: { x: -6.975, y: 2.224648 }, end: { x: -5.95, y: 4 }, material: z-court-marble }
-          - { id: next, start: { x: -5.95, y: 4 }, end: { x: -6.28, y: 4 }, material: z-court-marble }
-          - { id: inner, start: { x: -6.28, y: 4 }, end: { x: -7.14, y: 2.510436 }, material: z-court-marble }
-          - {
-              id: previous,
-              start: { x: -7.14, y: 2.510436 },
-              end: { x: -6.975, y: 2.224648 },
-              material: z-court-marble,
-            }
-        floor: { c: 0.64 }
-        ceiling: { c: 12 }
-        floor_material: z-court-marble
-        ceiling_material: z-court-sky
-      - id: basin-water-0
-        boundary:
-          - { id: outer, start: { x: -6.28, y: 4 }, end: { x: -7.14, y: 5.489564 }, material: z-court-marble }
-          - { id: next, start: { x: -7.14, y: 5.489564 }, end: { x: -8, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 4 }, end: { x: -6.28, y: 4 }, material: z-court-marble }
-        floor: { c: 0.50 }
-        ceiling: { c: 12 }
-        floor_material: z-court-water
-        ceiling_material: z-court-sky
-      - id: basin-water-1
-        boundary:
-          - { id: outer, start: { x: -7.14, y: 5.489564 }, end: { x: -8, y: 5.489564 }, material: z-court-marble }
-          - { id: next, start: { x: -8, y: 5.489564 }, end: { x: -8, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 4 }, end: { x: -7.14, y: 5.489564 }, material: z-court-marble }
-        floor: { c: 0.50 }
-        ceiling: { c: 12 }
-        floor_material: z-court-water
-        ceiling_material: z-court-sky
-      - id: basin-water-2
-        boundary:
-          - { id: outer, start: { x: -8, y: 5.489564 }, end: { x: -8.86, y: 5.489564 }, material: z-court-marble }
-          - { id: next, start: { x: -8.86, y: 5.489564 }, end: { x: -8, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 4 }, end: { x: -8, y: 5.489564 }, material: z-court-marble }
-        floor: { c: 0.50 }
-        ceiling: { c: 12 }
-        floor_material: z-court-water
-        ceiling_material: z-court-sky
-      - id: basin-water-3
-        boundary:
-          - { id: outer, start: { x: -8.86, y: 5.489564 }, end: { x: -9.72, y: 4 }, material: z-court-marble }
-          - { id: next, start: { x: -9.72, y: 4 }, end: { x: -8, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 4 }, end: { x: -8.86, y: 5.489564 }, material: z-court-marble }
-        floor: { c: 0.50 }
-        ceiling: { c: 12 }
-        floor_material: z-court-water
-        ceiling_material: z-court-sky
-      - id: basin-water-4
-        boundary:
-          - { id: outer, start: { x: -9.72, y: 4 }, end: { x: -8.86, y: 2.510436 }, material: z-court-marble }
-          - { id: next, start: { x: -8.86, y: 2.510436 }, end: { x: -8, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 4 }, end: { x: -9.72, y: 4 }, material: z-court-marble }
-        floor: { c: 0.50 }
-        ceiling: { c: 12 }
-        floor_material: z-court-water
-        ceiling_material: z-court-sky
-      - id: basin-water-5
-        boundary:
-          - { id: outer, start: { x: -8.86, y: 2.510436 }, end: { x: -8, y: 2.510436 }, material: z-court-marble }
-          - { id: next, start: { x: -8, y: 2.510436 }, end: { x: -8, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 4 }, end: { x: -8.86, y: 2.510436 }, material: z-court-marble }
-        floor: { c: 0.50 }
-        ceiling: { c: 12 }
-        floor_material: z-court-water
-        ceiling_material: z-court-sky
-      - id: basin-water-6
-        boundary:
-          - { id: outer, start: { x: -8, y: 2.510436 }, end: { x: -7.14, y: 2.510436 }, material: z-court-marble }
-          - { id: next, start: { x: -7.14, y: 2.510436 }, end: { x: -8, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 4 }, end: { x: -8, y: 2.510436 }, material: z-court-marble }
-        floor: { c: 0.50 }
-        ceiling: { c: 12 }
-        floor_material: z-court-water
-        ceiling_material: z-court-sky
-      - id: basin-water-7
-        boundary:
-          - { id: outer, start: { x: -7.14, y: 2.510436 }, end: { x: -6.28, y: 4 }, material: z-court-marble }
-          - { id: next, start: { x: -6.28, y: 4 }, end: { x: -8, y: 4 }, material: z-court-marble }
-          - { id: previous, start: { x: -8, y: 4 }, end: { x: -7.14, y: 2.510436 }, material: z-court-marble }
-        floor: { c: 0.50 }
-        ceiling: { c: 12 }
-        floor_material: z-court-water
-        ceiling_material: z-court-sky
+    # Each step/rim piece is an independent static volume; bays stay rectangular.
+    # A bronze crossbeam is supported by the west/east column pair at Y=4.
+    solids:
+      - id: brazier-crossbeam
+        footprint: [{ x: -12.4, y: 3.95 }, { x: -3.6, y: 3.95 }, { x: -3.6, y: 4.25 }, { x: -12.4, y: 4.25 }]
+        bottom: { c: 8.05 }
+        top: { c: 8.22 }
+        side_material: z-hanging-bronze
+        top_material: z-hanging-bronze
+        bottom_material: z-hanging-bronze
+        collision: true
+      # BEGIN generated rounded basin solids
+      - id: basin-ledge-00
+        footprint:
+          - { x: -6.400000, y: 1.700000 }
+          - { x: -6.115299, y: 1.737482 }
+          - { x: -6.187768, y: 2.007941 }
+          - { x: -6.400000, y: 1.980000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-00
+        footprint:
+          - { x: -6.400000, y: 1.980000 }
+          - { x: -6.187768, y: 2.007941 }
+          - { x: -6.265414, y: 2.297719 }
+          - { x: -6.400000, y: 2.280000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-01
+        footprint:
+          - { x: -6.115299, y: 1.737482 }
+          - { x: -5.850000, y: 1.847372 }
+          - { x: -5.990000, y: 2.089859 }
+          - { x: -6.187768, y: 2.007941 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-01
+        footprint:
+          - { x: -6.187768, y: 2.007941 }
+          - { x: -5.990000, y: 2.089859 }
+          - { x: -6.140000, y: 2.349667 }
+          - { x: -6.265414, y: 2.297719 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-02
+        footprint:
+          - { x: -5.850000, y: 1.847372 }
+          - { x: -5.622183, y: 2.022183 }
+          - { x: -5.820172, y: 2.220172 }
+          - { x: -5.990000, y: 2.089859 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-02
+        footprint:
+          - { x: -5.990000, y: 2.089859 }
+          - { x: -5.820172, y: 2.220172 }
+          - { x: -6.032304, y: 2.432304 }
+          - { x: -6.140000, y: 2.349667 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-03
+        footprint:
+          - { x: -5.622183, y: 2.022183 }
+          - { x: -5.447372, y: 2.250000 }
+          - { x: -5.689859, y: 2.390000 }
+          - { x: -5.820172, y: 2.220172 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-03
+        footprint:
+          - { x: -5.820172, y: 2.220172 }
+          - { x: -5.689859, y: 2.390000 }
+          - { x: -5.949667, y: 2.540000 }
+          - { x: -6.032304, y: 2.432304 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-04
+        footprint:
+          - { x: -5.447372, y: 2.250000 }
+          - { x: -5.337482, y: 2.515299 }
+          - { x: -5.607941, y: 2.587768 }
+          - { x: -5.689859, y: 2.390000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-04
+        footprint:
+          - { x: -5.689859, y: 2.390000 }
+          - { x: -5.607941, y: 2.587768 }
+          - { x: -5.897719, y: 2.665414 }
+          - { x: -5.949667, y: 2.540000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-05
+        footprint:
+          - { x: -5.337482, y: 2.515299 }
+          - { x: -5.300000, y: 2.800000 }
+          - { x: -5.580000, y: 2.800000 }
+          - { x: -5.607941, y: 2.587768 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-05
+        footprint:
+          - { x: -5.607941, y: 2.587768 }
+          - { x: -5.580000, y: 2.800000 }
+          - { x: -5.880000, y: 2.800000 }
+          - { x: -5.897719, y: 2.665414 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-06
+        footprint:
+          - { x: -5.300000, y: 2.800000 }
+          - { x: -5.300000, y: 5.200000 }
+          - { x: -5.580000, y: 5.200000 }
+          - { x: -5.580000, y: 2.800000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-06
+        footprint:
+          - { x: -5.580000, y: 2.800000 }
+          - { x: -5.580000, y: 5.200000 }
+          - { x: -5.880000, y: 5.200000 }
+          - { x: -5.880000, y: 2.800000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-07
+        footprint:
+          - { x: -5.300000, y: 5.200000 }
+          - { x: -5.337482, y: 5.484701 }
+          - { x: -5.607941, y: 5.412232 }
+          - { x: -5.580000, y: 5.200000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-07
+        footprint:
+          - { x: -5.580000, y: 5.200000 }
+          - { x: -5.607941, y: 5.412232 }
+          - { x: -5.897719, y: 5.334586 }
+          - { x: -5.880000, y: 5.200000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-08
+        footprint:
+          - { x: -5.337482, y: 5.484701 }
+          - { x: -5.447372, y: 5.750000 }
+          - { x: -5.689859, y: 5.610000 }
+          - { x: -5.607941, y: 5.412232 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-08
+        footprint:
+          - { x: -5.607941, y: 5.412232 }
+          - { x: -5.689859, y: 5.610000 }
+          - { x: -5.949667, y: 5.460000 }
+          - { x: -5.897719, y: 5.334586 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-09
+        footprint:
+          - { x: -5.447372, y: 5.750000 }
+          - { x: -5.622183, y: 5.977817 }
+          - { x: -5.820172, y: 5.779828 }
+          - { x: -5.689859, y: 5.610000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-09
+        footprint:
+          - { x: -5.689859, y: 5.610000 }
+          - { x: -5.820172, y: 5.779828 }
+          - { x: -6.032304, y: 5.567696 }
+          - { x: -5.949667, y: 5.460000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-10
+        footprint:
+          - { x: -5.622183, y: 5.977817 }
+          - { x: -5.850000, y: 6.152628 }
+          - { x: -5.990000, y: 5.910141 }
+          - { x: -5.820172, y: 5.779828 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-10
+        footprint:
+          - { x: -5.820172, y: 5.779828 }
+          - { x: -5.990000, y: 5.910141 }
+          - { x: -6.140000, y: 5.650333 }
+          - { x: -6.032304, y: 5.567696 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-11
+        footprint:
+          - { x: -5.850000, y: 6.152628 }
+          - { x: -6.115299, y: 6.262518 }
+          - { x: -6.187768, y: 5.992059 }
+          - { x: -5.990000, y: 5.910141 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-11
+        footprint:
+          - { x: -5.990000, y: 5.910141 }
+          - { x: -6.187768, y: 5.992059 }
+          - { x: -6.265414, y: 5.702281 }
+          - { x: -6.140000, y: 5.650333 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-12
+        footprint:
+          - { x: -6.115299, y: 6.262518 }
+          - { x: -6.400000, y: 6.300000 }
+          - { x: -6.400000, y: 6.020000 }
+          - { x: -6.187768, y: 5.992059 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-12
+        footprint:
+          - { x: -6.187768, y: 5.992059 }
+          - { x: -6.400000, y: 6.020000 }
+          - { x: -6.400000, y: 5.720000 }
+          - { x: -6.265414, y: 5.702281 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-13
+        footprint:
+          - { x: -6.400000, y: 6.300000 }
+          - { x: -9.600000, y: 6.300000 }
+          - { x: -9.600000, y: 6.020000 }
+          - { x: -6.400000, y: 6.020000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-13
+        footprint:
+          - { x: -6.400000, y: 6.020000 }
+          - { x: -9.600000, y: 6.020000 }
+          - { x: -9.600000, y: 5.720000 }
+          - { x: -6.400000, y: 5.720000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-14
+        footprint:
+          - { x: -9.600000, y: 6.300000 }
+          - { x: -9.884701, y: 6.262518 }
+          - { x: -9.812232, y: 5.992059 }
+          - { x: -9.600000, y: 6.020000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-14
+        footprint:
+          - { x: -9.600000, y: 6.020000 }
+          - { x: -9.812232, y: 5.992059 }
+          - { x: -9.734586, y: 5.702281 }
+          - { x: -9.600000, y: 5.720000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-15
+        footprint:
+          - { x: -9.884701, y: 6.262518 }
+          - { x: -10.150000, y: 6.152628 }
+          - { x: -10.010000, y: 5.910141 }
+          - { x: -9.812232, y: 5.992059 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-15
+        footprint:
+          - { x: -9.812232, y: 5.992059 }
+          - { x: -10.010000, y: 5.910141 }
+          - { x: -9.860000, y: 5.650333 }
+          - { x: -9.734586, y: 5.702281 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-16
+        footprint:
+          - { x: -10.150000, y: 6.152628 }
+          - { x: -10.377817, y: 5.977817 }
+          - { x: -10.179828, y: 5.779828 }
+          - { x: -10.010000, y: 5.910141 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-16
+        footprint:
+          - { x: -10.010000, y: 5.910141 }
+          - { x: -10.179828, y: 5.779828 }
+          - { x: -9.967696, y: 5.567696 }
+          - { x: -9.860000, y: 5.650333 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-17
+        footprint:
+          - { x: -10.377817, y: 5.977817 }
+          - { x: -10.552628, y: 5.750000 }
+          - { x: -10.310141, y: 5.610000 }
+          - { x: -10.179828, y: 5.779828 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-17
+        footprint:
+          - { x: -10.179828, y: 5.779828 }
+          - { x: -10.310141, y: 5.610000 }
+          - { x: -10.050333, y: 5.460000 }
+          - { x: -9.967696, y: 5.567696 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-18
+        footprint:
+          - { x: -10.552628, y: 5.750000 }
+          - { x: -10.662518, y: 5.484701 }
+          - { x: -10.392059, y: 5.412232 }
+          - { x: -10.310141, y: 5.610000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-18
+        footprint:
+          - { x: -10.310141, y: 5.610000 }
+          - { x: -10.392059, y: 5.412232 }
+          - { x: -10.102281, y: 5.334586 }
+          - { x: -10.050333, y: 5.460000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-19
+        footprint:
+          - { x: -10.662518, y: 5.484701 }
+          - { x: -10.700000, y: 5.200000 }
+          - { x: -10.420000, y: 5.200000 }
+          - { x: -10.392059, y: 5.412232 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-19
+        footprint:
+          - { x: -10.392059, y: 5.412232 }
+          - { x: -10.420000, y: 5.200000 }
+          - { x: -10.120000, y: 5.200000 }
+          - { x: -10.102281, y: 5.334586 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-20
+        footprint:
+          - { x: -10.700000, y: 5.200000 }
+          - { x: -10.700000, y: 2.800000 }
+          - { x: -10.420000, y: 2.800000 }
+          - { x: -10.420000, y: 5.200000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-20
+        footprint:
+          - { x: -10.420000, y: 5.200000 }
+          - { x: -10.420000, y: 2.800000 }
+          - { x: -10.120000, y: 2.800000 }
+          - { x: -10.120000, y: 5.200000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-21
+        footprint:
+          - { x: -10.700000, y: 2.800000 }
+          - { x: -10.662518, y: 2.515299 }
+          - { x: -10.392059, y: 2.587768 }
+          - { x: -10.420000, y: 2.800000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-21
+        footprint:
+          - { x: -10.420000, y: 2.800000 }
+          - { x: -10.392059, y: 2.587768 }
+          - { x: -10.102281, y: 2.665414 }
+          - { x: -10.120000, y: 2.800000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-22
+        footprint:
+          - { x: -10.662518, y: 2.515299 }
+          - { x: -10.552628, y: 2.250000 }
+          - { x: -10.310141, y: 2.390000 }
+          - { x: -10.392059, y: 2.587768 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-22
+        footprint:
+          - { x: -10.392059, y: 2.587768 }
+          - { x: -10.310141, y: 2.390000 }
+          - { x: -10.050333, y: 2.540000 }
+          - { x: -10.102281, y: 2.665414 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-23
+        footprint:
+          - { x: -10.552628, y: 2.250000 }
+          - { x: -10.377817, y: 2.022183 }
+          - { x: -10.179828, y: 2.220172 }
+          - { x: -10.310141, y: 2.390000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-23
+        footprint:
+          - { x: -10.310141, y: 2.390000 }
+          - { x: -10.179828, y: 2.220172 }
+          - { x: -9.967696, y: 2.432304 }
+          - { x: -10.050333, y: 2.540000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-24
+        footprint:
+          - { x: -10.377817, y: 2.022183 }
+          - { x: -10.150000, y: 1.847372 }
+          - { x: -10.010000, y: 2.089859 }
+          - { x: -10.179828, y: 2.220172 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-24
+        footprint:
+          - { x: -10.179828, y: 2.220172 }
+          - { x: -10.010000, y: 2.089859 }
+          - { x: -9.860000, y: 2.349667 }
+          - { x: -9.967696, y: 2.432304 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-25
+        footprint:
+          - { x: -10.150000, y: 1.847372 }
+          - { x: -9.884701, y: 1.737482 }
+          - { x: -9.812232, y: 2.007941 }
+          - { x: -10.010000, y: 2.089859 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-25
+        footprint:
+          - { x: -10.010000, y: 2.089859 }
+          - { x: -9.812232, y: 2.007941 }
+          - { x: -9.734586, y: 2.297719 }
+          - { x: -9.860000, y: 2.349667 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-26
+        footprint:
+          - { x: -9.884701, y: 1.737482 }
+          - { x: -9.600000, y: 1.700000 }
+          - { x: -9.600000, y: 1.980000 }
+          - { x: -9.812232, y: 2.007941 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-26
+        footprint:
+          - { x: -9.812232, y: 2.007941 }
+          - { x: -9.600000, y: 1.980000 }
+          - { x: -9.600000, y: 2.280000 }
+          - { x: -9.734586, y: 2.297719 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-ledge-27
+        footprint:
+          - { x: -9.600000, y: 1.700000 }
+          - { x: -6.400000, y: 1.700000 }
+          - { x: -6.400000, y: 1.980000 }
+          - { x: -9.600000, y: 1.980000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.100000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-rim-27
+        footprint:
+          - { x: -9.600000, y: 1.980000 }
+          - { x: -6.400000, y: 1.980000 }
+          - { x: -6.400000, y: 2.280000 }
+          - { x: -9.600000, y: 2.280000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.440000 }
+        side_material: z-court-marble
+        top_material: z-court-marble
+        bottom_material: z-court-marble
+        collision: true
+      - id: basin-bottom
+        footprint:
+          - { x: -6.400000, y: 2.280000 }
+          - { x: -6.265414, y: 2.297719 }
+          - { x: -6.140000, y: 2.349667 }
+          - { x: -6.032304, y: 2.432304 }
+          - { x: -5.949667, y: 2.540000 }
+          - { x: -5.897719, y: 2.665414 }
+          - { x: -5.880000, y: 2.800000 }
+          - { x: -5.880000, y: 5.200000 }
+          - { x: -5.897719, y: 5.334586 }
+          - { x: -5.949667, y: 5.460000 }
+          - { x: -6.032304, y: 5.567696 }
+          - { x: -6.140000, y: 5.650333 }
+          - { x: -6.265414, y: 5.702281 }
+          - { x: -6.400000, y: 5.720000 }
+          - { x: -9.600000, y: 5.720000 }
+          - { x: -9.734586, y: 5.702281 }
+          - { x: -9.860000, y: 5.650333 }
+          - { x: -9.967696, y: 5.567696 }
+          - { x: -10.050333, y: 5.460000 }
+          - { x: -10.102281, y: 5.334586 }
+          - { x: -10.120000, y: 5.200000 }
+          - { x: -10.120000, y: 2.800000 }
+          - { x: -10.102281, y: 2.665414 }
+          - { x: -10.050333, y: 2.540000 }
+          - { x: -9.967696, y: 2.432304 }
+          - { x: -9.860000, y: 2.349667 }
+          - { x: -9.734586, y: 2.297719 }
+          - { x: -9.600000, y: 2.280000 }
+        bottom: { c: 0.000000 }
+        top: { c: 0.160000 }
+        side_material: z-court-mosaic
+        top_material: z-court-mosaic
+        bottom_material: z-court-mosaic
+        collision: true
+      - id: basin-water
+        footprint:
+          - { x: -6.400000, y: 2.280000 }
+          - { x: -6.265414, y: 2.297719 }
+          - { x: -6.140000, y: 2.349667 }
+          - { x: -6.032304, y: 2.432304 }
+          - { x: -5.949667, y: 2.540000 }
+          - { x: -5.897719, y: 2.665414 }
+          - { x: -5.880000, y: 2.800000 }
+          - { x: -5.880000, y: 5.200000 }
+          - { x: -5.897719, y: 5.334586 }
+          - { x: -5.949667, y: 5.460000 }
+          - { x: -6.032304, y: 5.567696 }
+          - { x: -6.140000, y: 5.650333 }
+          - { x: -6.265414, y: 5.702281 }
+          - { x: -6.400000, y: 5.720000 }
+          - { x: -9.600000, y: 5.720000 }
+          - { x: -9.734586, y: 5.702281 }
+          - { x: -9.860000, y: 5.650333 }
+          - { x: -9.967696, y: 5.567696 }
+          - { x: -10.050333, y: 5.460000 }
+          - { x: -10.102281, y: 5.334586 }
+          - { x: -10.120000, y: 5.200000 }
+          - { x: -10.120000, y: 2.800000 }
+          - { x: -10.102281, y: 2.665414 }
+          - { x: -10.050333, y: 2.540000 }
+          - { x: -9.967696, y: 2.432304 }
+          - { x: -9.860000, y: 2.349667 }
+          - { x: -9.734586, y: 2.297719 }
+          - { x: -9.600000, y: 2.280000 }
+        bottom: { c: 0.170000 }
+        top: { c: 0.360000 }
+        side_material: z-water-boundary
+        top_material: z-court-water
+        bottom_material: z-water-boundary
+        collision: false
+    # END generated rounded basin solids
     connections:
       - { id: east-0-0, a: { room: bay-0-0, edge: east }, b: { room: bay-1-0, edge: west } }
       - { id: north-0-0, a: { room: bay-0-0, edge: north }, b: { room: bay-0-1, edge: south } }
@@ -846,186 +2329,16 @@ prefabs:
       - { id: east-0-3, a: { room: bay-0-3, edge: east }, b: { room: bay-1-3, edge: west } }
       - { id: east-1-3, a: { room: bay-1-3, edge: east }, b: { room: bay-2-3, edge: west } }
       - { id: east-2-3, a: { room: bay-2-3, edge: east }, b: { room: bay-3-3, edge: west } }
-      - {
-          id: basin-step-1-0-around,
-          a: { room: basin-step-1-0, edge: next },
-          b: { room: basin-step-1-1, edge: previous },
-        }
-      - { id: basin-step-1-0-court, a: { room: basin-step-1-0, edge: outer }, b: { room: bay-2-2, edge: basin-0 } }
-      - {
-          id: basin-step-1-1-around,
-          a: { room: basin-step-1-1, edge: next },
-          b: { room: basin-step-1-2, edge: previous },
-        }
-      - { id: basin-step-1-1-court, a: { room: basin-step-1-1, edge: outer }, b: { room: bay-2-2, edge: basin-1 } }
-      - {
-          id: basin-step-1-2-around,
-          a: { room: basin-step-1-2, edge: next },
-          b: { room: basin-step-1-3, edge: previous },
-        }
-      - { id: basin-step-1-2-court, a: { room: basin-step-1-2, edge: outer }, b: { room: bay-1-2, edge: basin-2 } }
-      - {
-          id: basin-step-1-3-around,
-          a: { room: basin-step-1-3, edge: next },
-          b: { room: basin-step-1-4, edge: previous },
-        }
-      - { id: basin-step-1-3-court, a: { room: basin-step-1-3, edge: outer }, b: { room: bay-1-2, edge: basin-3 } }
-      - {
-          id: basin-step-1-4-around,
-          a: { room: basin-step-1-4, edge: next },
-          b: { room: basin-step-1-5, edge: previous },
-        }
-      - { id: basin-step-1-4-court, a: { room: basin-step-1-4, edge: outer }, b: { room: bay-1-1, edge: basin-4 } }
-      - {
-          id: basin-step-1-5-around,
-          a: { room: basin-step-1-5, edge: next },
-          b: { room: basin-step-1-6, edge: previous },
-        }
-      - { id: basin-step-1-5-court, a: { room: basin-step-1-5, edge: outer }, b: { room: bay-1-1, edge: basin-5 } }
-      - {
-          id: basin-step-1-6-around,
-          a: { room: basin-step-1-6, edge: next },
-          b: { room: basin-step-1-7, edge: previous },
-        }
-      - { id: basin-step-1-6-court, a: { room: basin-step-1-6, edge: outer }, b: { room: bay-2-1, edge: basin-6 } }
-      - {
-          id: basin-step-1-7-around,
-          a: { room: basin-step-1-7, edge: next },
-          b: { room: basin-step-1-0, edge: previous },
-        }
-      - { id: basin-step-1-7-court, a: { room: basin-step-1-7, edge: outer }, b: { room: bay-2-1, edge: basin-7 } }
-      - {
-          id: basin-step-2-0-around,
-          a: { room: basin-step-2-0, edge: next },
-          b: { room: basin-step-2-1, edge: previous },
-        }
-      - { id: basin-step-2-0-rise, a: { room: basin-step-1-0, edge: inner }, b: { room: basin-step-2-0, edge: outer } }
-      - {
-          id: basin-step-2-1-around,
-          a: { room: basin-step-2-1, edge: next },
-          b: { room: basin-step-2-2, edge: previous },
-        }
-      - { id: basin-step-2-1-rise, a: { room: basin-step-1-1, edge: inner }, b: { room: basin-step-2-1, edge: outer } }
-      - {
-          id: basin-step-2-2-around,
-          a: { room: basin-step-2-2, edge: next },
-          b: { room: basin-step-2-3, edge: previous },
-        }
-      - { id: basin-step-2-2-rise, a: { room: basin-step-1-2, edge: inner }, b: { room: basin-step-2-2, edge: outer } }
-      - {
-          id: basin-step-2-3-around,
-          a: { room: basin-step-2-3, edge: next },
-          b: { room: basin-step-2-4, edge: previous },
-        }
-      - { id: basin-step-2-3-rise, a: { room: basin-step-1-3, edge: inner }, b: { room: basin-step-2-3, edge: outer } }
-      - {
-          id: basin-step-2-4-around,
-          a: { room: basin-step-2-4, edge: next },
-          b: { room: basin-step-2-5, edge: previous },
-        }
-      - { id: basin-step-2-4-rise, a: { room: basin-step-1-4, edge: inner }, b: { room: basin-step-2-4, edge: outer } }
-      - {
-          id: basin-step-2-5-around,
-          a: { room: basin-step-2-5, edge: next },
-          b: { room: basin-step-2-6, edge: previous },
-        }
-      - { id: basin-step-2-5-rise, a: { room: basin-step-1-5, edge: inner }, b: { room: basin-step-2-5, edge: outer } }
-      - {
-          id: basin-step-2-6-around,
-          a: { room: basin-step-2-6, edge: next },
-          b: { room: basin-step-2-7, edge: previous },
-        }
-      - { id: basin-step-2-6-rise, a: { room: basin-step-1-6, edge: inner }, b: { room: basin-step-2-6, edge: outer } }
-      - {
-          id: basin-step-2-7-around,
-          a: { room: basin-step-2-7, edge: next },
-          b: { room: basin-step-2-0, edge: previous },
-        }
-      - { id: basin-step-2-7-rise, a: { room: basin-step-1-7, edge: inner }, b: { room: basin-step-2-7, edge: outer } }
-      - {
-          id: basin-step-3-0-around,
-          a: { room: basin-step-3-0, edge: next },
-          b: { room: basin-step-3-1, edge: previous },
-        }
-      - { id: basin-step-3-0-rise, a: { room: basin-step-2-0, edge: inner }, b: { room: basin-step-3-0, edge: outer } }
-      - {
-          id: basin-step-3-1-around,
-          a: { room: basin-step-3-1, edge: next },
-          b: { room: basin-step-3-2, edge: previous },
-        }
-      - { id: basin-step-3-1-rise, a: { room: basin-step-2-1, edge: inner }, b: { room: basin-step-3-1, edge: outer } }
-      - {
-          id: basin-step-3-2-around,
-          a: { room: basin-step-3-2, edge: next },
-          b: { room: basin-step-3-3, edge: previous },
-        }
-      - { id: basin-step-3-2-rise, a: { room: basin-step-2-2, edge: inner }, b: { room: basin-step-3-2, edge: outer } }
-      - {
-          id: basin-step-3-3-around,
-          a: { room: basin-step-3-3, edge: next },
-          b: { room: basin-step-3-4, edge: previous },
-        }
-      - { id: basin-step-3-3-rise, a: { room: basin-step-2-3, edge: inner }, b: { room: basin-step-3-3, edge: outer } }
-      - {
-          id: basin-step-3-4-around,
-          a: { room: basin-step-3-4, edge: next },
-          b: { room: basin-step-3-5, edge: previous },
-        }
-      - { id: basin-step-3-4-rise, a: { room: basin-step-2-4, edge: inner }, b: { room: basin-step-3-4, edge: outer } }
-      - {
-          id: basin-step-3-5-around,
-          a: { room: basin-step-3-5, edge: next },
-          b: { room: basin-step-3-6, edge: previous },
-        }
-      - { id: basin-step-3-5-rise, a: { room: basin-step-2-5, edge: inner }, b: { room: basin-step-3-5, edge: outer } }
-      - {
-          id: basin-step-3-6-around,
-          a: { room: basin-step-3-6, edge: next },
-          b: { room: basin-step-3-7, edge: previous },
-        }
-      - { id: basin-step-3-6-rise, a: { room: basin-step-2-6, edge: inner }, b: { room: basin-step-3-6, edge: outer } }
-      - {
-          id: basin-step-3-7-around,
-          a: { room: basin-step-3-7, edge: next },
-          b: { room: basin-step-3-0, edge: previous },
-        }
-      - { id: basin-step-3-7-rise, a: { room: basin-step-2-7, edge: inner }, b: { room: basin-step-3-7, edge: outer } }
-      - { id: basin-rim-0-around, a: { room: basin-rim-0, edge: next }, b: { room: basin-rim-1, edge: previous } }
-      - { id: basin-rim-0-rise, a: { room: basin-step-3-0, edge: inner }, b: { room: basin-rim-0, edge: outer } }
-      - { id: basin-rim-1-around, a: { room: basin-rim-1, edge: next }, b: { room: basin-rim-2, edge: previous } }
-      - { id: basin-rim-1-rise, a: { room: basin-step-3-1, edge: inner }, b: { room: basin-rim-1, edge: outer } }
-      - { id: basin-rim-2-around, a: { room: basin-rim-2, edge: next }, b: { room: basin-rim-3, edge: previous } }
-      - { id: basin-rim-2-rise, a: { room: basin-step-3-2, edge: inner }, b: { room: basin-rim-2, edge: outer } }
-      - { id: basin-rim-3-around, a: { room: basin-rim-3, edge: next }, b: { room: basin-rim-4, edge: previous } }
-      - { id: basin-rim-3-rise, a: { room: basin-step-3-3, edge: inner }, b: { room: basin-rim-3, edge: outer } }
-      - { id: basin-rim-4-around, a: { room: basin-rim-4, edge: next }, b: { room: basin-rim-5, edge: previous } }
-      - { id: basin-rim-4-rise, a: { room: basin-step-3-4, edge: inner }, b: { room: basin-rim-4, edge: outer } }
-      - { id: basin-rim-5-around, a: { room: basin-rim-5, edge: next }, b: { room: basin-rim-6, edge: previous } }
-      - { id: basin-rim-5-rise, a: { room: basin-step-3-5, edge: inner }, b: { room: basin-rim-5, edge: outer } }
-      - { id: basin-rim-6-around, a: { room: basin-rim-6, edge: next }, b: { room: basin-rim-7, edge: previous } }
-      - { id: basin-rim-6-rise, a: { room: basin-step-3-6, edge: inner }, b: { room: basin-rim-6, edge: outer } }
-      - { id: basin-rim-7-around, a: { room: basin-rim-7, edge: next }, b: { room: basin-rim-0, edge: previous } }
-      - { id: basin-rim-7-rise, a: { room: basin-step-3-7, edge: inner }, b: { room: basin-rim-7, edge: outer } }
-      - { id: basin-water-0-rim, a: { room: basin-rim-0, edge: inner }, b: { room: basin-water-0, edge: outer } }
-      - { id: basin-water-0-around, a: { room: basin-water-0, edge: next }, b: { room: basin-water-1, edge: previous } }
-      - { id: basin-water-1-rim, a: { room: basin-rim-1, edge: inner }, b: { room: basin-water-1, edge: outer } }
-      - { id: basin-water-1-around, a: { room: basin-water-1, edge: next }, b: { room: basin-water-2, edge: previous } }
-      - { id: basin-water-2-rim, a: { room: basin-rim-2, edge: inner }, b: { room: basin-water-2, edge: outer } }
-      - { id: basin-water-2-around, a: { room: basin-water-2, edge: next }, b: { room: basin-water-3, edge: previous } }
-      - { id: basin-water-3-rim, a: { room: basin-rim-3, edge: inner }, b: { room: basin-water-3, edge: outer } }
-      - { id: basin-water-3-around, a: { room: basin-water-3, edge: next }, b: { room: basin-water-4, edge: previous } }
-      - { id: basin-water-4-rim, a: { room: basin-rim-4, edge: inner }, b: { room: basin-water-4, edge: outer } }
-      - { id: basin-water-4-around, a: { room: basin-water-4, edge: next }, b: { room: basin-water-5, edge: previous } }
-      - { id: basin-water-5-rim, a: { room: basin-rim-5, edge: inner }, b: { room: basin-water-5, edge: outer } }
-      - { id: basin-water-5-around, a: { room: basin-water-5, edge: next }, b: { room: basin-water-6, edge: previous } }
-      - { id: basin-water-6-rim, a: { room: basin-rim-6, edge: inner }, b: { room: basin-water-6, edge: outer } }
-      - { id: basin-water-6-around, a: { room: basin-water-6, edge: next }, b: { room: basin-water-7, edge: previous } }
-      - { id: basin-water-7-rim, a: { room: basin-rim-7, edge: inner }, b: { room: basin-water-7, edge: outer } }
-      - { id: basin-water-7-around, a: { room: basin-water-7, edge: next }, b: { room: basin-water-0, edge: previous } }
     ports:
       - { id: entrance, endpoint: { room: bay-3-1, edge: east } }
 
 instances:
+  - id: hall-sconce-south
+    prefab: wall-sconce
+    transform: { translation: { x: 1, y: 0, z: 0 } }
+  - id: hall-sconce-west
+    prefab: wall-sconce
+    transform: { translation: { x: 0, y: 4.5, z: 0 }, yaw_degrees: -90 }
   - id: roman-court
     prefab: roman-peristyle
     transform: { scale: 1 }
@@ -1089,12 +2402,28 @@ lighting:
     positive_z: { x: 0.30, y: 0.36, z: 0.44 }
     negative_z: { x: 0.04, y: 0.045, z: 0.04 }
   lights:
-    - { id: court-daylight, position: { x: -10.5, y: 2, z: 7 }, color: { x: 0.88, y: 0.91, z: 0.96 }, radius: 12 }
-    - { id: west-brazier, position: { x: -14, y: 4, z: 2.4 }, color: { x: 1, y: 0.42, z: 0.18 }, radius: 6 }
-    - { id: east-brazier, position: { x: -2, y: 4, z: 2.4 }, color: { x: 1, y: 0.62, z: 0.30 }, radius: 6 }
-    - { id: north-cool-fill, position: { x: -8, y: 10, z: 2.8 }, color: { x: 0.22, y: 0.58, z: 0.88 }, radius: 6 }
-    - { id: hall-fill, position: { x: 2, y: 1, z: 3 }, color: { x: 0.92, y: 0.83, z: 0.68 }, radius: 7 }
-    - { id: gallery-fill, position: { x: 10, y: 1, z: 3 }, color: { x: 0.74, y: 0.87, z: 1 }, radius: 9 }
+    - { id: brazier-west, position: { x: -9.1, y: 4.1, z: 4.2 }, color: { x: 1, y: 0.48, z: 0.16 }, radius: 5 }
+    - { id: brazier-center, position: { x: -8.05, y: 4.1, z: 4.2 }, color: { x: 1, y: 0.48, z: 0.16 }, radius: 5 }
+    - { id: brazier-east, position: { x: -6.9, y: 4.1, z: 4.2 }, color: { x: 1, y: 0.48, z: 0.16 }, radius: 5 }
+    - { id: court-daylight-0, position: { x: -10, y: 2, z: 4.2 }, color: { x: 0.82, y: 0.89, z: 0.96 }, radius: 6 }
+    - { id: court-daylight-1, position: { x: -6, y: 2, z: 4.2 }, color: { x: 0.82, y: 0.89, z: 0.96 }, radius: 6 }
+    - { id: court-daylight-2, position: { x: -10, y: 6, z: 4.2 }, color: { x: 0.82, y: 0.89, z: 0.96 }, radius: 6 }
+    - { id: court-daylight-3, position: { x: -6, y: 6, z: 4.2 }, color: { x: 0.82, y: 0.89, z: 0.96 }, radius: 6 }
+    - { id: court-lamp-0, position: { x: -14, y: -2, z: 2.6 }, color: { x: 1, y: 0.66, z: 0.36 }, radius: 3.8 }
+    - { id: court-lamp-1, position: { x: -8, y: -2, z: 2.6 }, color: { x: 1, y: 0.66, z: 0.36 }, radius: 3.8 }
+    - { id: court-lamp-2, position: { x: -2, y: -2, z: 2.6 }, color: { x: 1, y: 0.66, z: 0.36 }, radius: 3.8 }
+    - { id: court-lamp-3, position: { x: -14, y: 4, z: 2.6 }, color: { x: 1, y: 0.66, z: 0.36 }, radius: 3.8 }
+    - { id: court-lamp-4, position: { x: -2, y: 4, z: 2.6 }, color: { x: 1, y: 0.66, z: 0.36 }, radius: 3.8 }
+    - { id: court-lamp-5, position: { x: -14, y: 10, z: 2.6 }, color: { x: 1, y: 0.66, z: 0.36 }, radius: 3.8 }
+    - { id: court-lamp-6, position: { x: -8, y: 10, z: 2.6 }, color: { x: 1, y: 0.66, z: 0.36 }, radius: 3.8 }
+    - { id: court-lamp-7, position: { x: -2, y: 10, z: 2.6 }, color: { x: 1, y: 0.66, z: 0.36 }, radius: 3.8 }
+    - { id: gallery-lamp-0, position: { x: 1, y: 0.42, z: 2.98 }, color: { x: 1, y: 0.74, z: 0.43 }, radius: 4.2 }
+    - { id: gallery-lamp-1, position: { x: 0.42, y: 4.5, z: 2.98 }, color: { x: 1, y: 0.74, z: 0.43 }, radius: 4.2 }
+    - { id: gallery-lamp-2, position: { x: 6, y: 0.42, z: 2.98 }, color: { x: 1, y: 0.74, z: 0.43 }, radius: 4.2 }
+    - { id: gallery-lamp-3, position: { x: 10, y: 0.42, z: 2.98 }, color: { x: 1, y: 0.74, z: 0.43 }, radius: 4.2 }
+    - { id: gallery-lamp-4, position: { x: 14, y: 0.42, z: 2.98 }, color: { x: 1, y: 0.74, z: 0.43 }, radius: 4.2 }
+    - { id: gallery-lamp-5, position: { x: 17, y: 0.42, z: 2.98 }, color: { x: 1, y: 0.74, z: 0.43 }, radius: 4.2 }
+    - { id: gallery-lamp-6, position: { x: 16.42, y: 4, z: 2.78 }, color: { x: 1, y: 0.74, z: 0.43 }, radius: 4.2 }
     # Unbaked moving light: passes the corridor trees and the hall actors.
     - id: corridor-wanderer
       position: { x: 3, y: 1, z: 2.2 }
@@ -1104,3 +2433,22 @@ lighting:
         version: 1
         offset: { x: 12, y: 0, z: 0.8 }
         period_seconds: 12
+
+# The visible top ripples above a real mosaic bottom; hidden slab edges stay fixed.
+animations:
+  version: 1
+  presets:
+    - { name: brazier-fire, kind: flipbook, frames: [z-hanging-fire-1, z-hanging-fire-2, z-hanging-fire-3], fps: 10 }
+    - {
+        name: court-ripple,
+        kind: liquid,
+        amplitude: 0.045,
+        frequency: 1.6,
+        speed: 0.55,
+        surface_amplitude: 0.035,
+        opacity: 0.72,
+      }
+    - { name: hidden-water-boundary, kind: liquid, frequency: 1, opacity: 0 }
+  materials:
+    - { material: z-court-water, preset: court-ripple }
+    - { material: z-water-boundary, preset: hidden-water-boundary }

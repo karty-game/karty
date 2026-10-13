@@ -144,6 +144,9 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 	if err := compileSolids(&document, expanded, materials, usedMaterials); err != nil {
 		return sdkworld.Document{}, err
 	}
+	if err := compileSolidRenderers(&document, expanded, materials, usedMaterials); err != nil {
+		return sdkworld.Document{}, err
+	}
 	for _, sector := range document.Sectors {
 		usedMaterials[sector.FloorMaterial] = struct{}{}
 		usedMaterials[sector.CeilingMaterial] = struct{}{}

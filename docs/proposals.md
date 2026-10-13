@@ -1,7 +1,11 @@
 # Proposals
 
-Future work, not supported settings or a release schedule.
-See [Implemented behavior](implemented.md) for the current inventory.
+Status: open work. Owner: CLI, except shared contracts requiring engine/SDK decisions.
+No SDK version or release date is assigned to these proposals.
+See [implemented behavior](implemented.md) for supported features and
+[releases](releases.md) for candidate work already selected for a release.
+Accepted contracts live in `docs/decisions/`; move completed work into the
+current reference and link its decision rather than keeping it on this list.
 
 ## CLI/build
 

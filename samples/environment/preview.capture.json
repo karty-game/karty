@@ -1,0 +1,25 @@
+{
+  "sample": "environment",
+  "capturedAt": "2026-10-13T00:35:13.558Z",
+  "sourceCommit": "1e5f69df4064017f1b67c6c53617455aeb2edd6e",
+  "sourceSha256": "ba3b8de2abeae81f5ac562a67d64bb1aa576db1f3e0ba0f59944cad628c76208",
+  "cartridgeSha256": "781d0a57d0c91daf0815304c7997f34862ca1e6883878c0f374a7548115a1135",
+  "hostSha256": "9940848f9d66e6b82af057b04687cf447fadd1c20d2bd60ebd0e6fdc9f68b0f4",
+  "wasmResponses": [
+    {
+      "requestPath": "/environment/karty-host.wasm?v=9940848f9d66e6b8",
+      "sha256": "9940848f9d66e6b82af057b04687cf447fadd1c20d2bd60ebd0e6fdc9f68b0f4",
+      "bytes": 43493821,
+      "status": 200
+    }
+  ],
+  "wasmProvenance": "Locally served bytes matched successful, completed browser responses.",
+  "previewSha256": "a5cc4140336406195c9680a19e8d3c1145c12d162737886e85a7901432e7bbdd",
+  "width": 960,
+  "height": 540,
+  "browser": "Chromium 153.0.8010.12",
+  "backend": "Chromium SwiftShader WebGL2",
+  "settings": "?aa=false&worldScale=0.5",
+  "errors": [],
+  "build": "Existing ../../../../tmp/karty-gallery-capture/environment artifacts. Capture does not rebuild the sample."
+}

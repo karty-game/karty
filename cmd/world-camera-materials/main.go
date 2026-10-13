@@ -1,5 +1,7 @@
 // world-camera-materials generates original, seamless sample albedo artwork.
 // Run from the CLI repository root through mise run generate-world-camera-materials.
+// Surface classifications and Materialize recipes live in the handwritten
+// samples/world-camera/levels/showcase/level.toml; see docs/sample-materials.md.
 package main
 
 import (
@@ -61,7 +63,7 @@ func main() {
 func generate(only string) error {
 	generated := false
 
-	for _, name := range []string{"wall-top", "wall-bottom", "floor", "wall", "ceiling", "z-court-marble", "z-court-mosaic", "z-court-paving", "z-court-plaster", "z-court-coffer", "z-court-sky", "z-court-water"} {
+	for _, name := range []string{"wall-top", "wall-bottom", "floor", "wall", "ceiling", "z-court-marble", "z-court-mosaic", "z-court-paving", "z-court-plaster", "z-court-coffer", "z-court-sky", "z-court-water", "z-detail-grain", "z-hanging-bronze", "z-hanging-iron"} {
 		if only != "" && name != only {
 			continue
 		}
@@ -107,9 +109,33 @@ func generate(only string) error {
 }
 
 func pixel(name string, column, row int) color.NRGBA {
+	const (
+		bronzeRed   = 106
+		bronzeGreen = 68
+		bronzeBlue  = 30
+		ironRed     = 45
+		ironGreen   = 48
+		ironBlue    = 49
+	)
+
 	grain := uint8((column*grainColumnWeight + row*grainRowWeight) % grainLevels)
 
 	switch name {
+	case "z-hanging-bronze":
+		shade := uint8((column*11 + row*7) % 9)
+
+		return color.NRGBA{R: bronzeRed + shade, G: bronzeGreen + shade, B: bronzeBlue + shade, A: opaqueAlpha}
+	case "z-hanging-iron":
+		shade := uint8((column*7 + row*13) % 7)
+
+		return color.NRGBA{R: ironRed + shade, G: ironGreen + shade, B: ironBlue + shade, A: opaqueAlpha}
+	case "z-detail-grain":
+		// Neutral sRGB (188) preserves the primary color; periodic harmonics
+		// add broad mineral variation without introducing another set of joints.
+		x, y := 2*math.Pi*float64(column)/textureSize, 2*math.Pi*float64(row)/textureSize
+		shade := uint8(188 + 13*math.Sin(x+2*y) + 7*math.Cos(3*x-y))
+
+		return color.NRGBA{R: shade, G: shade, B: shade, A: opaqueAlpha}
 	case "wall-top", "wall-bottom":
 		return bandPixel(name, column, row)
 	case "z-court-marble", "z-court-mosaic", "z-court-paving", "z-court-plaster", "z-court-coffer", "z-court-sky", "z-court-water":

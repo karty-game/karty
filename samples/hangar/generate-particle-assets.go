@@ -1,8 +1,8 @@
 //go:build ignore
 
-// Generate the Hangar's original particle masks and opaque hot-coal texture.
-// No external artwork or random input is used. Writes acid-sparkle.png,
-// barrel-ember.png, barrel-flame-{1,2,3}.png and barrel-coals.png only.
+// Generate the Hangar's opaque hot-coal texture. No external artwork or random
+// input is used. Writes barrel-coals.png only; particle assets come from the
+// reusable Particle Lab recipes through generate-effects.go.
 // Run from the CLI repository root:
 //
 //	mise exec -- go run samples/hangar/generate-particle-assets.go
@@ -12,7 +12,6 @@ import (
 	"image"
 	"image/color"
 	"image/png"
-	"math"
 	"os"
 	"path/filepath"
 )
@@ -21,58 +20,6 @@ const particleAssetDirectory = "samples/hangar/levels/hangar"
 
 func main() {
 	writeBarrelCoals()
-	writeParticleMask("acid-sparkle", 96, func(x, y float64) float64 {
-		// A soft core and short, asymmetric rays read as bright suspended droplets.
-		core := math.Exp(-42 * (x*x + y*y))
-		rays := math.Exp(-9*(x*x+y*y)) * math.Exp(-85*math.Min(x*x, y*y))
-		return math.Min(1, core+0.28*rays)
-	})
-	writeParticleMask("barrel-ember", 64, func(x, y float64) float64 {
-		return math.Exp(-48*x*x - 18*y*y)
-	})
-	for frame := 0; frame < 3; frame++ {
-		phase := float64(frame) * 2 * math.Pi / 3
-		writeParticleMask([]string{"barrel-flame-1", "barrel-flame-2", "barrel-flame-3"}[frame], 128, func(x, y float64) float64 {
-			// Three tapering tongues merge at the base. Independent GPU particles
-			// rotate, rise and select frames to keep the barrel's flame in motion.
-			height := (0.87 - y) / 1.70
-			if height <= 0 || height >= 1 {
-				return 0
-			}
-			baseFade := math.Min(1, height*12)
-			tipFade := math.Min(1, (1-height)*10)
-			width := 0.34 * math.Pow(1-height, 0.72)
-			centre := 0.10 * math.Sin(height*5+phase) * height
-			main := math.Exp(-math.Pow((x-centre)/math.Max(width, 0.015), 2) * 2.5)
-			left := flameTongue(x, height, -0.21, 0.70, phase+1)
-			right := flameTongue(x, height, 0.21, 0.83, phase+3)
-			return math.Min(1, (main+0.55*left+0.45*right)*baseFade*tipFade)
-		})
-	}
-}
-
-func flameTongue(x, height, origin, tip, phase float64) float64 {
-	if height > tip {
-		return 0
-	}
-	progress := height / tip
-	width := 0.14 * math.Pow(1-progress, 0.7)
-	centre := origin*(1-progress*0.7) + 0.09*math.Sin(progress*5+phase)*progress
-	return math.Exp(-math.Pow((x-centre)/math.Max(width, 0.01), 2)*2.5) * math.Min(1, (1-progress)*9)
-}
-
-func writeParticleMask(name string, size int, coverage func(float64, float64) float64) {
-	img := image.NewNRGBA(image.Rect(0, 0, size, size))
-	for py := 0; py < size; py++ {
-		for px := 0; px < size; px++ {
-			x := 2*(float64(px)+0.5)/float64(size) - 1
-			y := 2*(float64(py)+0.5)/float64(size) - 1
-			alpha := byte(math.Round(math.Min(1, math.Max(0, coverage(x, y))) * 255))
-			// White RGB lets the GPU's color-over-life curve tint the mask.
-			img.SetNRGBA(px, py, color.NRGBA{R: 255, G: 255, B: 255, A: alpha})
-		}
-	}
-	writeParticleImage(name, img)
 }
 
 func writeBarrelCoals() {

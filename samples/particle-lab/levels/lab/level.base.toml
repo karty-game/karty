@@ -1,0 +1,40 @@
+# Room materials for generate-lab.go. The generator appends effect textures.
+[level]
+name = "levels.lab"
+kind = "world"
+
+[world]
+source = "world.yaml"
+
+[[textures]]
+name = "room-floor"
+source = "textures/room-floor.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "room-wall"
+source = "textures/room-wall.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "room-ceiling"
+source = "textures/room-ceiling.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0

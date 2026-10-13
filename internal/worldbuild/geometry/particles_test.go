@@ -1,9 +1,11 @@
 package geometry_test
 
 import (
+	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -115,7 +117,8 @@ func TestHangarParticleExamplesFitCompiledSectors(t *testing.T) {
 
 	var manifest struct {
 		Textures []struct {
-			Name string `toml:"name"`
+			Name   string `toml:"name"`
+			Source string `toml:"source"`
 		} `toml:"textures"`
 	}
 
@@ -124,9 +127,11 @@ func TestHangarParticleExamplesFitCompiledSectors(t *testing.T) {
 	}
 
 	textures := map[string]uint32{}
+	textureSources := map[string]string{}
 
 	for i, texture := range manifest.Textures {
 		textures[texture.Name] = uint32(i + 1)
+		textureSources[texture.Name] = texture.Source
 	}
 
 	expanded, err := source.Load(directory, "world.yaml")
@@ -144,9 +149,17 @@ func TestHangarParticleExamplesFitCompiledSectors(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(particles.Presets) != 3 || len(particles.Emitters) < 3 {
-		t.Fatalf("missing acid/fire catalog: %+v", particles)
+	if particles.Version != worldparticles.AlphaVersion || len(particles.Presets) != 14 || len(particles.Emitters) != 130 {
+		t.Fatalf(
+			"shared fire/discharge/acid catalog: version %d, %d presets, %d emitters",
+			particles.Version,
+			len(particles.Presets),
+			len(particles.Emitters),
+		)
 	}
+
+	checkHangarSharedEffectResources(t, directory, expanded, textureSources)
+	checkHangarBarrelSmoke(t, particles)
 
 	for _, emitter := range particles.Emitters {
 		if !worldparticles.BoundsInSector(emitter.Bounds, &compiledWorld.Sectors[emitter.Sector]) {
@@ -166,6 +179,109 @@ func TestHangarParticleExamplesFitCompiledSectors(t *testing.T) {
 
 	if err := worldparticles.ValidateForWorld(&decoded, &compiledWorld); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func checkHangarSharedEffectResources(t *testing.T, directory string, expanded source.Expanded, textures map[string]string) {
+	t.Helper()
+
+	libraryPath := filepath.Join("..", "..", "..", "samples", "particle-lab", "effects", "library.yaml")
+	library := decodeParticleLabDocument(t, readParticleLabFile(t, libraryPath))
+	presets := map[string]worldsource.ParticlePreset{}
+	frames := map[string]bool{}
+
+	for _, preset := range library.Particles.Presets {
+		presets[preset.Name] = preset
+	}
+
+	adaptations := 0
+
+	for _, preset := range expanded.Particles.Presets {
+		expected := presets[preset.Name]
+		// Only the Hangar importer owns these two barrel adaptations. Compare
+		// every field against the library after applying that narrow contract;
+		// vertical spawn, motion, lifetimes, colors and texture references remain
+		// identical, with the deliberate tongue size increase checked exactly.
+		switch preset.Name {
+		case "hangar-barrel-flamesmoke":
+			expected = presets["brackeys-fire-combined-flamesmoke-01"]
+			expected.Name = preset.Name
+			expected.Spawn.Shape = "box"
+			expected.Spawn.HalfExtent.X, expected.Spawn.HalfExtent.Y = .24, .18
+			adaptations++
+		case "hangar-barrel-tongues":
+			expected = presets["lab-fire-shaped-tongues"]
+			expected.Name = preset.Name
+			expected.Spawn.HalfExtent.X, expected.Spawn.HalfExtent.Y = .24, .18
+
+			expected.SizeOverLife = append([]worldparticles.ScalarKey(nil), expected.SizeOverLife...)
+			for index := range expected.SizeOverLife {
+				expected.SizeOverLife[index].Value *= 1.8
+			}
+
+			adaptations++
+		}
+
+		if !reflect.DeepEqual(preset, expected) {
+			t.Fatalf("Hangar preset %s diverged from the reusable library", preset.Name)
+		}
+
+		for _, frame := range preset.Sprite.Frames {
+			frames[frame] = true
+		}
+	}
+
+	if adaptations != 2 {
+		t.Fatalf("expected exactly two importer-owned barrel adaptations, got %d", adaptations)
+	}
+
+	for _, animation := range expanded.Animations.Presets {
+		if animation.Name == "industrial-fire-smoke" {
+			for _, frame := range animation.Frames {
+				frames[frame] = true
+			}
+		}
+	}
+
+	for frame := range frames {
+		copied := readParticleLabFile(t, filepath.Join(directory, textures[frame]))
+		original := readParticleLabOriginalTexture(t, particleLabRoot(), frame)
+
+		if !bytes.Equal(copied, original) {
+			t.Fatalf("Hangar texture %s diverged from its retained library asset", frame)
+		}
+	}
+}
+
+func checkHangarBarrelSmoke(t *testing.T, particles *worldparticles.Document) {
+	t.Helper()
+
+	count := 0
+
+	for _, emitter := range particles.Emitters {
+		if !strings.Contains(emitter.ID, "barrel-effects") {
+			continue
+		}
+
+		if emitter.Bounds.Max.Z >= 2.60 {
+			t.Fatalf("barrel layer %s reaches low ceiling: %v", emitter.ID, emitter.Bounds)
+		}
+
+		if emitter.Preset != "hangar-barrel-flamesmoke" {
+			continue
+		}
+
+		count++
+
+		for _, preset := range particles.Presets {
+			if preset.Name == emitter.Preset && (preset.Sprite.Blend != "premultiplied" || len(preset.Sprite.Frames) != 1) {
+				t.Fatal("barrel fire lost its reviewed single-image GPU flame/smoke layer")
+			}
+		}
+	}
+
+	if count != 1 {
+		t.Fatalf("expected one reused barrel smoke emitter, got %d", count)
 	}
 }
 

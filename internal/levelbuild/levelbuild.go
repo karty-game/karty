@@ -707,6 +707,10 @@ func readLevelManifest(directory string, assets *assetBuild) (manifest, error) {
 		return manifest{}, err
 	}
 
+	if err := validateEnvironmentLightmapKeys(contents); err != nil {
+		return manifest{}, err
+	}
+
 	if err := validateMaterializeSettings(definition, assets); err != nil {
 		return manifest{}, err
 	}

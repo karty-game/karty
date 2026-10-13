@@ -1,0 +1,108 @@
+<template>
+    <panel class="dock">
+      if props.Mode() == 0 {
+        <panel class="row">
+          <button enabled={ props.Ready() } onClick={ combined }>Combined</button>
+          <button enabled={ props.Ready() } onClick={ separate }>Separate</button>
+        </panel>
+        <button enabled={ props.Ready() } onClick={ compareFire }>Compare references</button>
+      }
+      if props.Mode() == 1 {
+        <panel class="row">
+          <button enabled={ props.Ready() } onClick={ thin }>Thin</button>
+          <button enabled={ props.Ready() } onClick={ rolls }>Rolls</button>
+        </panel>
+        <button enabled={ props.Ready() } onClick={ compareSmoke }>Compare smoke</button>
+      }
+      if props.Mode() == 2 {
+        <panel class="row">
+          <button enabled={ props.Ready() } onClick={ sparks }>Sparks</button>
+          <button enabled={ props.Ready() } onClick={ acid }>Acid</button>
+          <button enabled={ props.Ready() } onClick={ reactor }>Reactor</button>
+        </panel>
+        <panel class="row">
+          <button enabled={ props.Ready() } onClick={ discharge }>Discharge</button>
+          <button enabled={ props.Ready() } onClick={ once }>Explosion</button>
+          <button enabled={ props.Ready() } onClick={ overview }>Overview</button>
+        </panel>
+      }
+      <panel class="row">
+        <button enabled={ props.Ready() } onClick={ left }>Left</button>
+        <button enabled={ props.Ready() } onClick={ right }>Right</button>
+        <button enabled={ props.Ready() } onClick={ nearer }>Near</button>
+        <button enabled={ props.Ready() } onClick={ farther }>Far</button>
+      </panel>
+      <panel class="row">
+        <button enabled={ props.Ready() } onClick={ props.Center }>Center</button>
+        <button onClick={ props.Restart }>Restart</button>
+        <button onClick={ props.Hide }>Hide controls</button>
+      </panel>
+      <label class="help">Drag to rotate · Pinch to zoom</label>
+    </panel>
+
+</template>
+
+<script setup lang="go">
+type EffectDockProps struct {
+ Ready func() bool
+ Mode func() int
+ SelectFire func(int)
+ SelectSmoke func(int)
+ Visit func(int)
+ Rotate func(float32)
+ Zoom func(float32)
+ Center func()
+ Restart func()
+ Hide func()
+}
+
+func setup(props EffectDockProps) {
+	combined := func() { props.SelectFire(0) }
+	separate := func() { props.SelectFire(1) }
+	compareFire := func() { props.SelectFire(2) }
+	thin := func() { props.SelectSmoke(0) }
+	rolls := func() { props.SelectSmoke(1) }
+	compareSmoke := func() { props.SelectSmoke(2) }
+	sparks := func() { props.Visit(1) }
+	acid := func() { props.Visit(2) }
+	reactor := func() { props.Visit(3) }
+	discharge := func() { props.Visit(4) }
+	once := func() { props.Visit(5) }
+	overview := func() { props.Visit(6) }
+	left := func() { props.Rotate(-.15) }
+	right := func() { props.Rotate(.15) }
+	nearer := func() { props.Zoom(.82) }
+	farther := func() { props.Zoom(1.22) }
+}
+</script>
+
+<style>
+.dock
+  background: #141b24ed
+  padding: 8
+  gap: 6
+  align: stretch
+.row
+  direction: row
+  gap: 6
+  align: stretch
+.help
+  color: #adbfceff
+  font-size: 12
+button
+  background: #33475aff
+  color: #f3f6faff
+  min-height: 48
+  min-width: 44
+  font-size: 14
+  grow: 1
+button:hover
+  background: #496681ff
+button:focus
+  background: #537795ff
+button:pressed
+  background: #295b7bff
+button:disabled
+  background: #283542ff
+  color: #98a5b2ff
+</style>

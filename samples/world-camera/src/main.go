@@ -15,8 +15,9 @@ type Game struct {
 	level                                              engine.LevelHandle
 	controls                                           *engine.UI
 	status                                             string
-	inspecting, hidControls, channelHeld               bool
+	inspecting, touchMode, controlsHidden, channelHeld bool
 	actorCount                                         uint8
+	moveStick                                          moveStickOverlay
 }
 
 //go:wasmexport karty_register
@@ -30,10 +31,11 @@ func (game *Game) Hooks() engine.Hooks {
 		OnStart: game.Initialize, OnUpdate: game.advanceMotion, OnStop: game.Shutdown,
 		OnLevelReady: game.onLevelReady, OnActorQueryResult: game.onActorQuery,
 		OnLevelReleased: game.onLevelReleased, OnLevelFailed: game.onLevelFailed,
-		OnKeyDown:         func(key engine.Key) { game.onKey(key, true) },
-		OnKeyUp:           func(key engine.Key) { game.onKey(key, false) },
-		OnPointerReleased: game.onPointerReleased,
-		OnSequenceFailed:  func(failure engine.SequenceFailure) { game.setStatus(failure.Err.Error()) },
+		OnKeyDown:        func(key engine.Key) { game.onKey(key, true) },
+		OnKeyUp:          func(key engine.Key) { game.onKey(key, false) },
+		OnPointer:        game.onPointer,
+		OnInputReset:     game.resetInput,
+		OnSequenceFailed: func(failure engine.SequenceFailure) { game.setStatus(failure.Err.Error()) },
 	}
 }
 
@@ -126,12 +128,16 @@ func (game *Game) onLevelFailed(event engine.LevelFailed) {
 	game.setStatus("Level failed: " + event.Diagnostic)
 }
 func (game *Game) onKey(key engine.Key, down bool) {
-	if key == engine.KeyEscape && down && game.controls != nil {
-		game.hideControls()
-	}
-	if key == engine.KeyC && down && game.controls == nil {
+	if key == engine.KeyEscape && down {
+		game.SetCursorCaptured(false)
 		game.stopMotion()
-		game.showControls()
+	}
+	if key == engine.KeyC && down {
+		if game.controls == nil {
+			game.showControls()
+		} else {
+			game.hideControls()
+		}
 	}
 	if key == engine.KeyV && down && game.camera != nil {
 		game.setView(!game.isometric)
@@ -142,44 +148,60 @@ func (game *Game) onKey(key engine.Key, down bool) {
 		}
 		game.channelHeld = down
 	}
-	if key == engine.KeyLeft {
-		game.left = down && game.controls == nil
+	if key == engine.KeyI && down {
+		game.inspecting = !game.inspecting
+		game.stopMotion()
+		game.invalidateControls()
 	}
-	if key == engine.KeyRight {
-		game.right = down && game.controls == nil
+	if key == engine.KeyR && down {
+		game.reload()
 	}
-	if key == engine.KeyA {
+	if key == engine.KeyHome && down {
+		game.ResetOrbit()
+	}
+	if key == engine.KeyDigit1 && down {
+		game.visit(true)
+	}
+	if key == engine.KeyDigit2 && down {
+		game.visit(false)
+	}
+	switch key {
+	case engine.KeyZ:
+		game.left = down
+	case engine.KeyX:
+		game.right = down
+	case engine.KeyLeft:
+		game.lookLeft = down
+	case engine.KeyRight:
+		game.lookRight = down
+	case engine.KeyArrowUp:
+		game.lookUp = down
+	case engine.KeyArrowDown:
+		game.lookDown = down
+	case engine.KeyA:
 		game.strafeLeft = down
-	}
-	if key == engine.KeyD {
+	case engine.KeyD:
 		game.strafeRight = down
-	}
-	if key == engine.KeyW {
+	case engine.KeyW:
 		game.forward = down
-	}
-	if key == engine.KeyS {
+	case engine.KeyS:
 		game.backward = down
-	}
-	if key == engine.KeyQ {
+	case engine.KeyQ:
 		game.orbitLeft = down
-	}
-	if key == engine.KeyE {
+	case engine.KeyE:
 		game.orbitRight = down
+	case engine.KeyShiftLeft:
+		game.runLeft = down
+	case engine.KeyShiftRight:
+		game.runRight = down
+	case engine.KeyEqual:
+		game.zoomIn = down
+	case engine.KeyMinus:
+		game.zoomOut = down
 	}
 	game.invalidateControls()
 }
-func (game *Game) onPointerReleased(event engine.PointerEvent) {
-	if event.Button == engine.PointerPrimary && game.controls == nil && !game.hidControls {
-		game.stopMotion()
-		game.showControls()
-		return
-	}
-	if event.Button == engine.PointerSecondary && game.controls == nil && game.camera != nil && game.level != 0 {
-		game.reload()
-	}
-}
 func (game *Game) advanceMotion(frame engine.Frame) {
-	game.hidControls = false
 	game.cameraController.Update()
 	game.spinner.Update(frame.Number)
 }
@@ -191,6 +213,12 @@ func (game *Game) showCameraInfo() {
 }
 
 func (game *Game) Shutdown() {
+	game.SetCursorCaptured(false)
+	if game.moveStick.base != nil {
+		game.moveStick.base.Destroy()
+		game.moveStick.thumb.Destroy()
+		game.moveStick = moveStickOverlay{}
+	}
 	game.cameraController.Close()
 	game.marker.Reset()
 	game.spinner.Reset()
@@ -235,54 +263,37 @@ func (game *Game) showStatus() {
 			view = "Roman court / Isometric"
 		}
 	}
-	game.setStatus(view + " / " + game.outputName())
+	game.setStatus(view)
 }
 
 func (game *Game) showControls() {
+	game.controlsHidden = false
 	game.showCameraInfo()
 	game.controls = ui.Controls(ui.ControlsProps{
-		Ready:  func() bool { return game.camera != nil },
-		Status: func() string { return game.status },
-		Pose:   func() string { return game.cameraInfo },
-		Inspect: func(show bool) {
-			game.inspecting = show
-			if show {
-				game.stopMotion()
-			}
-		},
-		Isometric: func() bool { return game.isometric },
-		Courtyard: func() bool { return game.courtyard },
-		Output:    func() int { return int(game.output) },
-		Moving: func() bool {
-			return game.touchMove != 0 || game.touchStrafe != 0 || game.touchOrbit != 0 || game.touchPitch != 0 ||
-				game.forward || game.backward || game.strafeLeft || game.strafeRight || game.orbitLeft || game.orbitRight
-		},
-		View:    game.setView,
-		Channel: func(output int) { game.setOutput(engine.CameraOutput(output)) },
-		Visit:   game.visit,
-		Move: func(forward, strafe float32) {
-			game.touchMove, game.touchStrafe, game.touchOrbit, game.touchPitch = forward, strafe, 0, 0
-			game.invalidateControls()
-		},
-		Orbit: func(direction float32) {
-			game.touchOrbit, game.touchMove, game.touchStrafe, game.touchPitch = direction, 0, 0, 0
-			game.invalidateControls()
-		},
-		Look: func(direction float32) {
-			game.touchPitch, game.touchMove, game.touchStrafe, game.touchOrbit = direction, 0, 0, 0
-			game.invalidateControls()
-		},
-		Stop:   game.stopMotion,
-		Reload: game.reload,
-		Hide:   game.hideControls,
+		Ready:      func() bool { return game.camera != nil },
+		Help:       game.controlHelp,
+		Inspecting: func() bool { return game.inspecting },
+		Zoom:       game.Zoom,
+		Reset:      game.ResetOrbit,
+		Status:     func() string { return game.status },
+		Pose:       func() string { return game.cameraInfo },
+		Isometric:  func() bool { return game.isometric },
+		Courtyard:  func() bool { return game.courtyard },
+		View:       game.setView,
+		Visit:      game.visit,
+		Orbit:      game.RotateOrbit,
+		Hide:       game.hideControls,
 	})
 }
 
 func (game *Game) hideControls() {
+	game.controlsHidden = true
+	game.SetCursorCaptured(false)
 	game.stopMotion()
 	game.inspecting = false
-	game.hidControls = true
-	game.controls.Close()
+	if game.controls != nil {
+		game.controls.Close()
+	}
 	game.controls = nil
 }
 
@@ -297,8 +308,14 @@ func (game *Game) setStatus(status string) {
 	game.invalidateControls()
 }
 
+func (game *Game) resetInput() {
+	game.channelHeld = false
+	game.stopMotion()
+}
+
 func (game *Game) stopMotion() {
 	game.cameraController.Stop()
+	game.hideMoveStick()
 	game.invalidateControls()
 }
 
@@ -306,6 +323,7 @@ func (game *Game) setView(isometric bool) {
 	if game.camera == nil {
 		return
 	}
+	game.SetCursorCaptured(false)
 	game.stopMotion()
 	game.isometric = isometric
 	if isometric {
@@ -324,6 +342,7 @@ func (game *Game) reload() {
 		return
 	}
 	game.stopMotion()
+	game.SetCursorCaptured(false)
 	game.cameraController.Close()
 	game.marker.Reset()
 	game.spinner.Reset()
@@ -339,7 +358,9 @@ func (game *Game) visit(courtyard bool) {
 		return
 	}
 	game.stopMotion()
+	game.SetCursorCaptured(false)
 	game.courtyard, game.path, game.orbit = courtyard, 0, 0.9
+	game.offsetX, game.offsetY, game.orthoHeight = 0, 0, 0
 	game.camera.Destroy()
 	game.fps = game.routeCamera(0)
 	game.fps.Output = game.output

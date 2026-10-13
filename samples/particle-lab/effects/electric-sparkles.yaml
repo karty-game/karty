@@ -1,0 +1,236 @@
+# Compact electric contact: short flashes, staggered dash sparks and faint arcs.
+# Static CC0 Brackeys masks remain byte-identical in the imported catalog.
+# Unequal burst schedules provide authored irregular timing; seeds vary motion
+# and lifetime on the GPU. This is a stylized recipe, not a converted Godot scene.
+# Place the prefab foot at Z=0.9 in the lab. Seven layers reserve 54 slots.
+version: 11
+particles:
+  version: 2
+  presets:
+    - name: electric-sparkles-contact-cross
+      capacity: 7
+      emission:
+        bursts:
+          - { at_seconds: 0, count: 1 }
+          - { at_seconds: 0.03, count: 1 }
+          - { at_seconds: 0.39, count: 1 }
+          - { at_seconds: 0.91, count: 1 }
+          - { at_seconds: 0.938, count: 1 }
+          - { at_seconds: 2.06, count: 1 }
+          - { at_seconds: 2.83, count: 1 }
+      lifetime_seconds: { min: 0.028, max: 0.055 }
+      spawn: { shape: box, half_extent: { x: 0.035, y: 0.025, z: 0.01 } }
+      velocity_min: { x: -0.025, y: -0.02, z: 0.01 }
+      velocity_max: { x: 0.025, y: 0.02, z: 0.06 }
+      sprite: { frames: [brackeys-star-04-a], playback: cycle, facing: camera-facing, blend: additive }
+      rotation_degrees: { min: -180, max: 180 }
+      rotation_speed_degrees: { min: -70, max: 70 }
+      size_over_life:
+        - { age: 0, value: 0.045 }
+        - { age: 0.08, value: 0.21 }
+        - { age: 0.28, value: 0.10 }
+        - { age: 1, value: 0.012 }
+      color_over_life:
+        - { age: 0, rgba: [0.78, 0.91, 1, 0] }
+        - { age: 0.08, rgba: [0.93, 0.98, 1, 0.84] }
+        - { age: 0.28, rgba: [0.24, 0.57, 1, 0.25] }
+        - { age: 1, rgba: [0.045, 0.13, 0.48, 0] }
+
+    - name: electric-sparkles-blue-afterglint
+      capacity: 6
+      emission:
+        bursts:
+          - { at_seconds: 0.012, count: 1 }
+          - { at_seconds: 0.47, count: 1 }
+          - { at_seconds: 0.952, count: 1 }
+          - { at_seconds: 1.64, count: 1 }
+          - { at_seconds: 2.19, count: 1 }
+          - { at_seconds: 2.97, count: 1 }
+      lifetime_seconds: { min: 0.045, max: 0.095 }
+      spawn: { shape: box, half_extent: { x: 0.025, y: 0.02, z: 0.008 } }
+      sprite: { frames: [brackeys-spotlight-01-a], playback: cycle, facing: camera-facing, blend: additive }
+      size_over_life:
+        - { age: 0, value: 0.07 }
+        - { age: 0.11, value: 0.25 }
+        - { age: 0.45, value: 0.13 }
+        - { age: 1, value: 0.025 }
+      color_over_life:
+        - { age: 0, rgba: [0.16, 0.43, 1, 0] }
+        - { age: 0.11, rgba: [0.22, 0.54, 1, 0.12] }
+        - { age: 0.45, rgba: [0.07, 0.26, 0.75, 0.035] }
+        - { age: 1, rgba: [0.025, 0.08, 0.3, 0] }
+
+    - name: electric-sparkles-fine-dashes
+      capacity: 15
+      emission:
+        bursts:
+          - { at_seconds: 0, count: 4 }
+          - { at_seconds: 0.391, count: 2 }
+          - { at_seconds: 0.935, count: 5 }
+          - { at_seconds: 2.06, count: 2 }
+          - { at_seconds: 2.83, count: 2 }
+      lifetime_seconds: { min: 0.08, max: 0.19 }
+      spawn: { shape: box, half_extent: { x: 0.025, y: 0.02, z: 0.012 } }
+      velocity_min: { x: -2.4, y: -2.1, z: 0.9 }
+      velocity_max: { x: 2.4, y: 2.1, z: 3 }
+      acceleration: { z: -4.6 }
+      drag: 1.1
+      sprite: { frames: [brackeys-trace-01-a], playback: cycle, facing: camera-facing, blend: additive }
+      rotation_degrees: { min: -180, max: 180 }
+      rotation_speed_degrees: { min: -40, max: 40 }
+      size_over_life:
+        - { age: 0, value: 0.06 }
+        - { age: 0.08, value: 0.13 }
+        - { age: 0.55, value: 0.075 }
+        - { age: 1, value: 0.018 }
+      color_over_life:
+        - { age: 0, rgba: [0.78, 0.91, 1, 0] }
+        - { age: 0.08, rgba: [0.88, 0.96, 1, 0.86] }
+        - { age: 0.55, rgba: [0.18, 0.48, 0.95, 0.32] }
+        - { age: 1, rgba: [0.025, 0.075, 0.24, 0] }
+
+    - name: electric-sparkles-brief-ticks
+      capacity: 11
+      emission:
+        bursts:
+          - { at_seconds: 0.17, count: 2 }
+          - { at_seconds: 0.44, count: 1 }
+          - { at_seconds: 1.29, count: 3 }
+          - { at_seconds: 2.42, count: 2 }
+          - { at_seconds: 3.18, count: 3 }
+      lifetime_seconds: { min: 0.035, max: 0.11 }
+      spawn: { shape: box, half_extent: { x: 0.025, y: 0.02, z: 0.01 } }
+      velocity_min: { x: -3.4, y: -2.6, z: 0.15 }
+      velocity_max: { x: 3.4, y: 2.6, z: 2.5 }
+      acceleration: { z: -4.6 }
+      drag: 1.6
+      sprite: { frames: [brackeys-spark-06-a], playback: cycle, facing: camera-facing, blend: additive }
+      rotation_degrees: { min: -180, max: 180 }
+      rotation_speed_degrees: { min: -120, max: 120 }
+      size_over_life:
+        - { age: 0, value: 0.05 }
+        - { age: 0.06, value: 0.10 }
+        - { age: 0.42, value: 0.055 }
+        - { age: 1, value: 0.01 }
+      color_over_life:
+        - { age: 0, rgba: [0.68, 0.84, 1, 0] }
+        - { age: 0.06, rgba: [0.92, 0.98, 1, 0.8] }
+        - { age: 0.42, rgba: [0.2, 0.46, 0.94, 0.27] }
+        - { age: 1, rgba: [0.025, 0.07, 0.21, 0] }
+
+    - name: electric-sparkles-cooling-chips
+      capacity: 7
+      emission:
+        bursts:
+          - { at_seconds: 0.391, count: 2 }
+          - { at_seconds: 0.935, count: 2 }
+          - { at_seconds: 2.06, count: 2 }
+          - { at_seconds: 2.83, count: 1 }
+      lifetime_seconds: { min: 0.16, max: 0.34 }
+      spawn: { shape: box, half_extent: { x: 0.035, y: 0.025, z: 0.015 } }
+      velocity_min: { x: -1.05, y: -0.95, z: 0.55 }
+      velocity_max: { x: 1.05, y: 0.95, z: 1.55 }
+      acceleration: { z: -4.1 }
+      drag: 0.9
+      sprite: { frames: [brackeys-spark-06-a], playback: cycle, facing: camera-facing, blend: additive }
+      rotation_degrees: { min: -180, max: 180 }
+      rotation_speed_degrees: { min: -240, max: 240 }
+      size_over_life:
+        - { age: 0, value: 0.065 }
+        - { age: 0.07, value: 0.18 }
+        - { age: 0.48, value: 0.11 }
+        - { age: 1, value: 0.022 }
+      color_over_life:
+        - { age: 0, rgba: [0.56, 0.77, 1, 0] }
+        - { age: 0.07, rgba: [0.7, 0.88, 1, 0.74] }
+        - { age: 0.48, rgba: [0.08, 0.3, 0.72, 0.29] }
+        - { age: 1, rgba: [0.025, 0.055, 0.15, 0] }
+
+    - name: electric-sparkles-faint-curls
+      capacity: 4
+      emission:
+        bursts:
+          - { at_seconds: 0.112, count: 1 }
+          - { at_seconds: 0.167, count: 1 }
+          - { at_seconds: 1.503, count: 1 }
+          - { at_seconds: 3.731, count: 1 }
+      lifetime_seconds: { min: 0.018, max: 0.04 }
+      spawn: { shape: box, half_extent: { x: 0.02, y: 0.01, z: 0.015 } }
+      sprite: { frames: [brackeys-slash-04-a], playback: cycle, facing: camera-facing, blend: additive }
+      rotation_degrees: { min: -160, max: 160 }
+      rotation_speed_degrees: { min: -180, max: 180 }
+      size_over_life:
+        - { age: 0, value: 0.22 }
+        - { age: 0.06, value: 0.5 }
+        - { age: 0.28, value: 0.35 }
+        - { age: 1, value: 0.1 }
+      color_over_life:
+        - { age: 0, rgba: [0.07, 0.29, 1, 0] }
+        - { age: 0.06, rgba: [0.2, 0.52, 1, 0.13] }
+        - { age: 0.28, rgba: [0.05, 0.22, 0.78, 0.035] }
+        - { age: 1, rgba: [0.015, 0.055, 0.2, 0] }
+
+    - name: electric-sparkles-faint-filaments
+      capacity: 4
+      emission:
+        bursts:
+          - { at_seconds: 0.473, count: 1 }
+          - { at_seconds: 1.241, count: 1 }
+          - { at_seconds: 2.741, count: 1 }
+          - { at_seconds: 3.418, count: 1 }
+      lifetime_seconds: { min: 0.034, max: 0.055 }
+      spawn: { shape: box, half_extent: { x: 0.025, y: 0.02, z: 0.012 } }
+      velocity_min: { x: -0.09, y: -0.03, z: 0.015 }
+      velocity_max: { x: 0.09, y: 0.03, z: 0.05 }
+      sprite: { frames: [brackeys-trace-03-a], playback: cycle, facing: camera-facing, blend: additive }
+      rotation_degrees: { min: -160, max: 160 }
+      rotation_speed_degrees: { min: -160, max: 160 }
+      size_over_life:
+        - { age: 0, value: 0.15 }
+        - { age: 0.06, value: 0.35 }
+        - { age: 0.3, value: 0.23 }
+        - { age: 1, value: 0.035 }
+      color_over_life:
+        - { age: 0, rgba: [0.1, 0.3, 1, 0] }
+        - { age: 0.06, rgba: [0.4, 0.68, 1, 0.17] }
+        - { age: 0.3, rgba: [0.05, 0.22, 0.72, 0.045] }
+        - { age: 1, rgba: [0.015, 0.045, 0.17, 0] }
+
+prefabs:
+  - id: industrial-weld
+    particle_emitters:
+      - id: electric-contact-cross
+        preset: electric-sparkles-contact-cross
+        position: { z: 0.12 }
+        seed: 497311
+        playback: { mode: cycle, period_seconds: 3.71 }
+      - id: electric-blue-afterglint
+        preset: electric-sparkles-blue-afterglint
+        position: { x: 0.015, y: -0.005, z: 0.11 }
+        seed: 497323
+        playback: { mode: cycle, period_seconds: 3.29 }
+      - id: electric-fine-dashes
+        preset: electric-sparkles-fine-dashes
+        position: { z: 0.12 }
+        seed: 497339
+        playback: { mode: cycle, period_seconds: 3.71, delay_seconds: 0.019 }
+      - id: electric-brief-ticks
+        preset: electric-sparkles-brief-ticks
+        position: { x: -0.025, z: 0.13 }
+        seed: 497351
+        playback: { mode: cycle, period_seconds: 4.43, delay_seconds: 0.041 }
+      - id: electric-cooling-chips
+        preset: electric-sparkles-cooling-chips
+        position: { z: 0.13 }
+        seed: 497359
+        playback: { mode: cycle, period_seconds: 3.71, delay_seconds: 0.055 }
+      - id: electric-faint-curls
+        preset: electric-sparkles-faint-curls
+        position: { x: 0.08, z: 0.17 }
+        seed: 497381
+        playback: { mode: cycle, period_seconds: 4.61, delay_seconds: 0.023 }
+      - id: electric-faint-filaments
+        preset: electric-sparkles-faint-filaments
+        position: { x: -0.065, z: 0.08 }
+        seed: 497389
+        playback: { mode: cycle, period_seconds: 4.09, delay_seconds: 0.061 }

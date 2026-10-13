@@ -71,3 +71,58 @@ func TestParticleSchemaVersionPresenceAndCatalog(t *testing.T) {
 		}
 	}
 }
+
+func TestParticleOnlyPrefabSchema(t *testing.T) {
+	t.Parallel()
+
+	rooms, _, _ := strings.Cut(tinyWorld, "prefabs:")
+	presets, _, _ := strings.Cut(particleYAML, "  emitters:")
+
+	const emitter = "    particle_emitters:\n" +
+		"      - {id: source, preset: sparkle, position: {x: 0, y: 0, z: 0}, seed: 42, playback: {mode: cycle, period_seconds: 1}}\n"
+
+	input := strings.Replace(rooms, "version: 6", "version: 10", 1) + presets +
+		"prefabs:\n  - id: effect\n" + emitter +
+		"instances:\n  - {id: placed, prefab: effect, transform: {translation: {x: 0.5, y: 0.5, z: 1}}}\n"
+
+	for name, fixture := range map[string]string{
+		"valid":          input,
+		"empty emitters": strings.Replace(input, emitter, "    particle_emitters: []\n", 1),
+		"null emitters":  strings.Replace(input, emitter, "    particle_emitters: null\n", 1),
+		"empty prefab":   strings.Replace(input, emitter, "", 1),
+		"unknown preset": strings.Replace(input, "preset: sparkle", "preset: missing", 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			value, err := schema.Parse([]byte(fixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = schema.Validate(value, schema.Level(value, []string{"surface", "spark"}))
+			if (name == "valid") != (err == nil) {
+				t.Fatalf("particle-only prefab: %v", err)
+			}
+		})
+	}
+
+	for version := 1; version < 10; version++ {
+		t.Run(fmt.Sprintf("source%d", version), func(t *testing.T) {
+			t.Parallel()
+
+			// Omit root particles to isolate the prefab's source-version gate.
+			fixture := strings.Replace(input, presets, "", 1)
+			fixture = strings.Replace(fixture, "version: 10", fmt.Sprintf("version: %d", version), 1)
+
+			value, err := schema.Parse([]byte(fixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if err := schema.Validate(value, schema.Base()); err == nil {
+				t.Fatalf("source version %d accepted particle-only prefab", version)
+			}
+		})
+	}
+}

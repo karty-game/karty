@@ -33,6 +33,40 @@ func TestEnvironmentSourcePresenceGates(t *testing.T) {
 	}
 }
 
+func TestEnvironmentBackdropSourceVersionAndPresence(t *testing.T) {
+	t.Parallel()
+
+	for version := uint16(1); version < worldsource.EnvironmentBackdropVersion; version++ {
+		for _, value := range []string{"mountains", "none", "''", "null"} {
+			input := fmt.Sprintf("version: %d\nenvironment: {preset: daylight, backdrop: %s}\n%s", version, value, uvRoomYAML)
+			if _, err := source.Decode([]byte(input)); !errors.Is(err, worldsource.ErrVersion) {
+				t.Fatalf("v%d backdrop %s bypassed version gate: %v", version, value, err)
+			}
+		}
+	}
+
+	for _, value := range []string{"none", "mountains", "city", "''"} {
+		input := fmt.Sprintf(
+			"version: %d\nenvironment: {preset: fantasy, backdrop: %s}\n%s",
+			worldsource.EnvironmentBackdropVersion,
+			value,
+			uvRoomYAML,
+		)
+		if _, err := source.Decode([]byte(input)); err != nil {
+			t.Fatalf("valid backdrop %s rejected: %v", value, err)
+		}
+	}
+
+	input := fmt.Sprintf(
+		"version: %d\nenvironment: {preset: daylight, backdrop: null}\n%s",
+		worldsource.EnvironmentBackdropVersion,
+		uvRoomYAML,
+	)
+	if _, err := source.Decode([]byte(input)); !errors.Is(err, source.ErrYAML) {
+		t.Fatalf("null backdrop accepted: %v", err)
+	}
+}
+
 func TestEnvironmentPrefabExpansionKeepsGlobalSunAndSky(t *testing.T) {
 	t.Parallel()
 

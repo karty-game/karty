@@ -1,0 +1,29 @@
+[[views]]
+position = [38.8, 22, 0.5]
+yaw = 90
+pitch = 8
+output = 'dist/screenshots/pool-east-ramp.png'
+
+[[views]]
+position = [23, 25.2, 0.5]
+yaw = 0
+pitch = 8
+output = 'dist/screenshots/pool-west-ramp.png'
+
+[[views]]
+position = [31, 19, 3]
+yaw = 30
+pitch = -32
+output = 'dist/screenshots/pool-overview.png'
+
+[[views]]
+position = [45.3, 22, 1.8]
+yaw = -90
+pitch = -50
+output = 'dist/screenshots/pool-east-waterline.png'
+
+[[views]]
+position = [23, 31.3, 1.3]
+yaw = 180
+pitch = -50
+output = 'dist/screenshots/pool-west-waterline.png'

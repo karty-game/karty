@@ -1,0 +1,552 @@
+# Handwritten smoke and reactor recipes. The reviewed fire is composed from the flat Brackeys templates and fire-refinement.yaml.
+# Reusable static-mask industrial effects. No animated sprite frames or smoke actors.
+# Source v11 / particle v2 supports additive fire and GPU source-over alpha smoke.
+# Brackeys CC0 method is a technical baseline; the inaccessible user reference has not been matched.
+# Each prefab stays within ten emitter layers. Origin is each effect's foot.
+# Reference study precedes authoring; see ../README.md for sources and limitations.
+# Copy selected presets, prefabs and static texture declarations into a v11 world.
+# Effects reserve finite schedules; capacities are per emitter, not active counts.
+version: 11
+particles:
+  version: 2
+  presets:
+    # thin main-puffs: static-mask layer; live GPU motion and age curves.
+    - acceleration:
+        x: 0
+        "y": 0
+        z: 0.025
+      capacity: 13
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0
+        - age: 0.12
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0.18
+        - age: 0.64
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0.1
+        - age: 1
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0
+      drag: 0.2
+      emission:
+        duration_seconds: 3.19
+        rate: 4
+      lifetime_seconds:
+        max: 2.6
+        min: 1.6
+      name: industrial-smoke-thin-main-puffs
+      rotation_degrees:
+        max: 360
+        min: 0
+      rotation_speed_degrees:
+        max: 30
+        min: -30
+      size_over_life:
+        - age: 0
+          value: 0.25
+        - age: 0.12
+          value: 0.6
+        - age: 0.64
+          value: 1.05
+        - age: 1
+          value: 1.4
+      spawn:
+        half_extent:
+          x: 0.12
+          "y": 0.1
+          z: 0.025
+        shape: box
+      sprite:
+        blend: alpha
+        facing: upright
+        frames:
+          - lab-smoke-mask
+        playback: cycle
+      velocity_max:
+        x: 0.11
+        "y": 0.08
+        z: 0.95
+      velocity_min:
+        x: -0.09
+        "y": -0.08
+        z: 0.65
+    # thin stray-wisps: static-mask layer; live GPU motion and age curves.
+    - acceleration:
+        x: 0
+        "y": 0
+        z: 0
+      capacity: 7
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0
+        - age: 0.12
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0.1
+        - age: 0.64
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0.055
+        - age: 1
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0
+      drag: 0.25
+      emission:
+        duration_seconds: 3.43
+        rate: 2
+      lifetime_seconds:
+        max: 2.1
+        min: 1.1
+      name: industrial-smoke-thin-stray-wisps
+      rotation_degrees:
+        max: 360
+        min: 0
+      rotation_speed_degrees:
+        max: 40
+        min: -40
+      size_over_life:
+        - age: 0
+          value: 0.15
+        - age: 0.12
+          value: 0.35
+        - age: 0.64
+          value: 0.65
+        - age: 1
+          value: 0.85
+      spawn:
+        half_extent:
+          x: 0.16
+          "y": 0.12
+          z: 0.02
+        shape: box
+      sprite:
+        blend: alpha
+        facing: upright
+        frames:
+          - lab-smoke-mask
+        playback: cycle
+      velocity_max:
+        x: 0.2
+        "y": 0.1
+        z: 1.1
+      velocity_min:
+        x: -0.15
+        "y": -0.1
+        z: 0.8
+    # rolls dense-puffs: static-mask layer; live GPU motion and age curves.
+    - acceleration:
+        x: 0
+        "y": 0
+        z: 0
+      capacity: 23
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.055
+            - 0.055
+            - 0.058
+            - 0
+        - age: 0.12
+          rgba:
+            - 0.055
+            - 0.055
+            - 0.058
+            - 0.21
+        - age: 0.64
+          rgba:
+            - 0.055
+            - 0.055
+            - 0.058
+            - 0.13
+        - age: 1
+          rgba:
+            - 0.055
+            - 0.055
+            - 0.058
+            - 0
+      drag: 0.16
+      emission:
+        duration_seconds: 3.71
+        rate: 6
+      lifetime_seconds:
+        max: 3
+        min: 2
+      name: industrial-smoke-rolls-dense-puffs
+      rotation_degrees:
+        max: 360
+        min: 0
+      rotation_speed_degrees:
+        max: 30
+        min: -30
+      size_over_life:
+        - age: 0
+          value: 0.55
+        - age: 0.12
+          value: 1
+        - age: 0.64
+          value: 1.8
+        - age: 1
+          value: 2.4
+      spawn:
+        half_extent:
+          x: 0.32
+          "y": 0.2
+          z: 0.03
+        shape: box
+      sprite:
+        blend: alpha
+        facing: upright
+        frames:
+          - lab-smoke-strong-mask
+        playback: cycle
+      velocity_max:
+        x: 0.22
+        "y": 0.12
+        z: 1.05
+      velocity_min:
+        x: -0.18
+        "y": -0.12
+        z: 0.7
+    # rolls broad-back-puffs: static-mask layer; live GPU motion and age curves.
+    - acceleration:
+        x: 0.03
+        "y": 0
+        z: 0.02
+      capacity: 13
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0
+        - age: 0.12
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0.12
+        - age: 0.64
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0.075
+        - age: 1
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0
+      drag: 0.2
+      emission:
+        duration_seconds: 4.03
+        rate: 3
+      lifetime_seconds:
+        max: 3.3
+        min: 2.4
+      name: industrial-smoke-rolls-broad-back-puffs
+      rotation_degrees:
+        max: 360
+        min: 0
+      rotation_speed_degrees:
+        max: 18
+        min: -18
+      size_over_life:
+        - age: 0
+          value: 0.8
+        - age: 0.12
+          value: 1.4
+        - age: 0.64
+          value: 2.4
+        - age: 1
+          value: 3
+      spawn:
+        half_extent:
+          x: 0.38
+          "y": 0.24
+          z: 0.03
+        shape: box
+      sprite:
+        blend: alpha
+        facing: upright
+        frames:
+          - lab-smoke-mask
+        playback: cycle
+      velocity_max:
+        x: 0.15
+        "y": 0.15
+        z: 0.9
+      velocity_min:
+        x: -0.22
+        "y": -0.15
+        z: 0.6
+    # rolls front-wisps: static-mask layer; live GPU motion and age curves.
+    - acceleration:
+        x: 0
+        "y": 0
+        z: 0
+      capacity: 7
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0
+        - age: 0.12
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0.11
+        - age: 0.64
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0.07
+        - age: 1
+          rgba:
+            - 0.08
+            - 0.08
+            - 0.083
+            - 0
+      drag: 0.22
+      emission:
+        duration_seconds: 3.47
+        rate: 2
+      lifetime_seconds:
+        max: 2.2
+        min: 1.4
+      name: industrial-smoke-rolls-front-wisps
+      rotation_degrees:
+        max: 360
+        min: 0
+      rotation_speed_degrees:
+        max: 35
+        min: -35
+      size_over_life:
+        - age: 0
+          value: 0.3
+        - age: 0.12
+          value: 0.65
+        - age: 0.64
+          value: 1.1
+        - age: 1
+          value: 1.45
+      spawn:
+        half_extent:
+          x: 0.2
+          "y": 0.15
+          z: 0.02
+        shape: box
+      sprite:
+        blend: alpha
+        facing: upright
+        frames:
+          - lab-smoke-mask
+        playback: cycle
+      velocity_max:
+        x: 0.3
+        "y": 0.1
+        z: 1.3
+      velocity_min:
+        x: -0.1
+        "y": -0.1
+        z: 0.95
+    - name: industrial-reactor-plume
+      capacity: 16
+      emission: { rate: 12, duration_seconds: 1.3 }
+      lifetime_seconds: { min: 0.75, max: 0.95 }
+      spawn: { shape: box, half_extent: { x: 0.17, y: 0.12, z: 0.035 } }
+      velocity_min: { x: -0.15, y: -0.15, z: 1.8 }
+      velocity_max: { x: 0.15, y: 0.15, z: 2.7 }
+      acceleration: { z: 0.1 }
+      drag: 0.6
+      sprite: { frames: [lab-smoke-strong-mask], playback: cycle, facing: upright, blend: additive }
+      rotation_degrees: { min: -13, max: 13 }
+      rotation_speed_degrees: { min: -20, max: 20 }
+      size_over_life:
+        [{ age: 0, value: 0.75 }, { age: 0.22, value: 1.45 }, { age: 0.6, value: 1.1 }, { age: 1, value: 0.32 }]
+      color_over_life:
+        - { age: 0, rgba: [0.05, 0.46, 1, 0] }
+        - { age: 0.12, rgba: [0.23, 0.85, 1, 0.52] }
+        - { age: 0.55, rgba: [0.32, 0.37, 1, 0.36] }
+        - { age: 1, rgba: [0.18, 0.025, 0.54, 0] }
+    - name: industrial-reactor-core
+      capacity: 6
+      emission: { rate: 4, duration_seconds: 1.3 }
+      lifetime_seconds: { min: 0.25, max: 0.48 }
+      spawn: { shape: box, half_extent: { x: 0.09, y: 0.09, z: 0.01 } }
+      sprite: { frames: [lab-glow], playback: cycle, facing: camera-facing, blend: additive }
+      size_over_life: [{ age: 0, value: 0.45 }, { age: 0.15, value: 0.85 }, { age: 1, value: 0.5 }]
+      color_over_life:
+        [
+          { age: 0, rgba: [0.48, 0.85, 1, 0] },
+          { age: 0.16, rgba: [0.48, 0.85, 1, 0.38] },
+          { age: 1, rgba: [0.04, 0.26, 0.8, 0] },
+        ]
+    - name: industrial-reactor-echoes
+      capacity: 8
+      emission: { rate: 6, duration_seconds: 1.3 }
+      lifetime_seconds: { min: 0.65, max: 1 }
+      spawn: { shape: box, half_extent: { x: 0.08, y: 0.08, z: 0.04 } }
+      velocity_min: { z: 0.95 }
+      velocity_max: { z: 1.4 }
+      drag: 0.28
+      sprite: { frames: [lab-ring], playback: cycle, facing: camera-facing, blend: additive }
+      rotation_degrees: { min: -180, max: 180 }
+      rotation_speed_degrees: { min: -110, max: 110 }
+      size_over_life:
+        [{ age: 0, value: 0.3 }, { age: 0.2, value: 0.74 }, { age: 0.7, value: 1.3 }, { age: 1, value: 1.05 }]
+      color_over_life:
+        - { age: 0, rgba: [0.14, 0.67, 1, 0] }
+        - { age: 0.15, rgba: [0.14, 0.67, 1, 0.46] }
+        - { age: 0.64, rgba: [0.39, 0.21, 0.9, 0.2] }
+        - { age: 1, rgba: [0.19, 0.035, 0.48, 0] }
+    - name: industrial-reactor-ions
+      capacity: 24
+      emission: { rate: 12, duration_seconds: 2 }
+      lifetime_seconds: { min: 0.8, max: 1.4 }
+      spawn: { shape: box, half_extent: { x: 0.35, y: 0.25, z: 0.04 } }
+      velocity_min: { x: -0.28, y: -0.28, z: 1.6 }
+      velocity_max: { x: 0.28, y: 0.28, z: 2.8 }
+      acceleration: { z: 0.2 }
+      drag: 0.2
+      sprite: { frames: [lab-shard], playback: cycle, facing: camera-facing, blend: additive }
+      rotation_degrees: { min: -25, max: 25 }
+      rotation_speed_degrees: { min: -70, max: 70 }
+      size_over_life:
+        [{ age: 0, value: 0.07 }, { age: 0.12, value: 0.14 }, { age: 0.7, value: 0.08 }, { age: 1, value: 0.018 }]
+      color_over_life:
+        - { age: 0, rgba: [0.34, 0.89, 1, 0] }
+        - { age: 0.08, rgba: [0.34, 0.89, 1, 0.95] }
+        - { age: 0.64, rgba: [0.49, 0.26, 1, 0.75] }
+        - { age: 1, rgba: [0.29, 0.015, 0.6, 0] }
+  emitters: []
+prefabs:
+  # thin: 2 live layers, each with one static image; origin is the effect's foot.
+  - id: industrial-smoke-thin
+    particle_emitters:
+      - id: main-puffs
+        playback:
+          delay_seconds: 0
+          mode: cycle
+          period_seconds: 3.19
+        position:
+          x: 0
+          "y": 0
+          z: 0.24
+        preset: industrial-smoke-thin-main-puffs
+        seed: 3334
+      - id: stray-wisps
+        playback:
+          delay_seconds: 0.037
+          mode: cycle
+          period_seconds: 3.43
+        position:
+          x: 0.11
+          "y": 0.035
+          z: 0.45
+        preset: industrial-smoke-thin-stray-wisps
+        seed: 3431
+  # rolls: 3 live layers, each with one static image; origin is the effect's foot.
+  - id: industrial-smoke-rolls
+    particle_emitters:
+      - id: dense-puffs
+        playback:
+          delay_seconds: 0
+          mode: cycle
+          period_seconds: 3.71
+        position:
+          x: 0
+          "y": 0
+          z: 0.86
+        preset: industrial-smoke-rolls-dense-puffs
+        seed: 3528
+      - id: broad-back-puffs
+        playback:
+          delay_seconds: 0.037
+          mode: cycle
+          period_seconds: 4.03
+        position:
+          x: -0.2
+          "y": 0.1
+          z: 1.32
+        preset: industrial-smoke-rolls-broad-back-puffs
+        seed: 3625
+      - id: front-wisps
+        playback:
+          delay_seconds: 0.074
+          mode: cycle
+          period_seconds: 3.47
+        position:
+          x: 0.2
+          "y": -0.08
+          z: 0.7
+        preset: industrial-smoke-rolls-front-wisps
+        seed: 3722
+  - id: industrial-reactor
+    particle_emitters:
+      - {
+          id: main-plasma,
+          preset: industrial-reactor-plume,
+          position: { x: -0.1, z: 0.6 },
+          seed: 4111,
+          playback: { mode: cycle, period_seconds: 1.3 },
+        }
+      - {
+          id: secondary-plasma,
+          preset: industrial-reactor-plume,
+          position: { x: 0.18, y: 0.12, z: 0.6 },
+          scale: 0.68,
+          seed: 4127,
+          playback: { mode: cycle, period_seconds: 1.3, delay_seconds: 0.23 },
+        }
+      - {
+          id: compact-core,
+          preset: industrial-reactor-core,
+          position: { z: 0.26 },
+          seed: 4153,
+          playback: { mode: cycle, period_seconds: 1.3, delay_seconds: 0.07 },
+        }
+      - {
+          id: pulse-echoes,
+          preset: industrial-reactor-echoes,
+          position: { z: 0.72 },
+          seed: 4177,
+          playback: { mode: cycle, period_seconds: 1.3, delay_seconds: 0.31 },
+        }
+      - {
+          id: ascending-ions,
+          preset: industrial-reactor-ions,
+          position: { z: 0.5 },
+          seed: 4201,
+          playback: { mode: cycle, period_seconds: 2, delay_seconds: 0.11 },
+        }

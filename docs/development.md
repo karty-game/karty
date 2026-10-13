@@ -200,9 +200,12 @@ Use `GOWORK=off` when validating the released public dependencies in [go.mod](..
 
 `mise run build-samples` runs the Go sample-site builder in `cmd/karty-samples`.
 It discovers projects with a `samples/*/karty.toml`, builds their web output
-and includes them in the site index. The unfinished `environment` project is
-excluded from publication. Release preparation updates sample SDK pins;
-new ready samples need no registration in CLI code.
+and includes them in the site index. Publication requires every selected SDK
+and matching host to be available as public releases. Candidate samples can be
+reviewed locally with `mise run docs` using existing builds; see
+[sample development](sample-development.md) and [release pins](releases.md#sdk-pins).
+Release preparation updates managed sample SDK pins; new samples are discovered
+automatically.
 The Pages workflow uses its `assemble` subcommand through `mise run assemble-samples`
 to validate static artifacts, preserve other previews and prune closed PRs.
 Validation rejects links, unexpected paths, incomplete samples and outputs above

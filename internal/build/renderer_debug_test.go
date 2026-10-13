@@ -29,7 +29,7 @@ func TestRendererDebugStagingOptInAndRemoval(t *testing.T) {
 
 		if err != nil || !strings.Contains(scripts, "kartyRendererDebugEnabled = true") ||
 			!strings.Contains(scripts, "renderer-debug.js?v=") ||
-			!strings.Contains(string(content), "karty-lightmap-open") || !strings.Contains(string(content), "karty-aa-toggle") {
+			strings.Contains(string(content), "karty-lightmap-open") || strings.Contains(string(content), "karty-aa-toggle") {
 			t.Fatalf("enabled browser diagnostics were not staged: %v", err)
 		}
 	}

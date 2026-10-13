@@ -1,0 +1,101 @@
+[
+  {
+    "name": "computer",
+    "title": "Computer Fan",
+    "author": "magnus589",
+    "original_page": "https://freesound.org/people/magnus589/sounds/184565/",
+    "license": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "public_preview_url": "https://cdn.freesound.org/previews/184/184565_2812229-hq.mp3",
+    "downloaded_preview_sha256": "7a4e054646ae4770b11e7b7b4c5cd9a209332d1912a6d0248687327c50a432ac",
+    "source_wav_path": "computer.wav",
+    "source_wav_sha256": "65659904db41cb47c0693fbe487aad3a224f9f757d7b44b2b0bb346c8906c3c8",
+    "conversion": "Chromium OfflineAudioContext decodeAudioData resampled48k, stereo average to mono, quantize PCM16 (no synthesis)",
+    "metadata": {
+      "sample_rate": 48000,
+      "channels": 1,
+      "sample_width": 2,
+      "frames": 1141371,
+      "duration_seconds": 23.7785625
+    }
+  },
+  {
+    "name": "reactor",
+    "title": "MACHFan_big_industrial_fan_white_noise_Olympus_LS-P4.wav",
+    "author": "DBS_Sounds",
+    "original_page": "https://freesound.org/people/DBS_Sounds/sounds/613158/",
+    "license": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "public_preview_url": "https://cdn.freesound.org/previews/613/613158_13589881-hq.mp3",
+    "downloaded_preview_sha256": "feb292ef555bc42433738939aaa029e41c43d61c241d78d6db59e64c726a4416",
+    "source_wav_path": "reactor.wav",
+    "source_wav_sha256": "e0ef7cac0afc4d0c6fe61845e7e7ee0194fd9d6e301866dace75d2be20f0eefd",
+    "conversion": "Chromium OfflineAudioContext MP3 decode/resample48k, stereo average to mono, PCM16; full recording unchanged, no normalization, no synth",
+    "metadata": {
+      "sample_rate": 48000,
+      "channels": 1,
+      "sample_width": 2,
+      "frames": 1617068,
+      "duration_seconds": 33.688916666666664
+    }
+  },
+  {
+    "name": "crate",
+    "title": "Scrapes, scrape-2.wav",
+    "author": "AntumDeluge",
+    "original_page": "https://opengameart.org/content/scrapes",
+    "license": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "download_url": "https://opengameart.org/sites/default/files/scrapes.zip",
+    "download_sha256": "9598070ddd77ed99e922df1d4472a249624adcd945794d1b6eba88ac77f6a014",
+    "source_wav_path": "crate.wav",
+    "source_wav_sha256": "9b93f353f0155ffa391b1074a1595dd00321e8c604efe0ca9c1192a5f86129a0",
+    "conversion": "Original mono PCM16 WAV from archive, retained without modification",
+    "metadata": {
+      "sample_rate": 44100,
+      "channels": 1,
+      "sample_width": 2,
+      "frames": 56666
+    }
+  },
+  {
+    "name": "fire",
+    "title": "Bonfire",
+    "author": "forfie",
+    "original_page": "https://freesound.org/people/forfie/sounds/364992/",
+    "license": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "public_preview_url": "https://cdn.freesound.org/previews/364/364992_4351264-hq.mp3",
+    "downloaded_preview_sha256": "ed733cc2101f0c25f00b6fe172fa323bda6da95f83a9eba44f7a53d4b0b153d2",
+    "source_wav_path": "fire.wav",
+    "source_wav_sha256": "97d0dcd5389464caaa82b8e9d63db0e509d3a21c0e62cd836a8eb254db38044f",
+    "conversion": "Chromium OfflineAudioContext MP3 decode/resample48k, stereo average to mono, PCM16; full recording retained, no synthesis",
+    "metadata": {
+      "sample_rate": 48000,
+      "channels": 1,
+      "sample_width": 2,
+      "frames": 1718784,
+      "duration_seconds": 35.808
+    }
+  },
+  {
+    "name": "acid",
+    "title": "running water bubbles-03.aif",
+    "author": "kijjaz",
+    "original_page": "https://freesound.org/people/kijjaz/sounds/16741/",
+    "license": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "public_preview_url": "https://cdn.freesound.org/previews/16/16741_26950-hq.mp3",
+    "downloaded_preview_sha256": "6f341453a7514243613d2b07496d2837de28853d1cbb6b662d976fda3363bd74",
+    "source_wav_path": "acid.wav",
+    "source_wav_sha256": "6bf73d4c51de97b443bc7276813eb6b5d0a8a75e8df470fb7b17870c436e45ad",
+    "conversion": "Chromium OfflineAudioContext MP3 decode/resample48k, stereo average to mono, PCM16; full recording retained, no synthesis",
+    "metadata": {
+      "sample_rate": 48000,
+      "channels": 1,
+      "sample_width": 2,
+      "frames": 713402,
+      "duration_seconds": 14.862541666666667
+    }
+  }
+]

@@ -117,3 +117,34 @@ func TestPreparationDiscoversSamplesAndLeavesStandaloneProjectsAlone(t *testing.
 		}
 	}
 }
+
+func TestPreparationRetainsDeclaredCandidateSamples(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	for _, name := range []string{"crate-room", "hangar", "particle-lab"} {
+		path := filepath.Join(root, "samples", name, "karty.toml")
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := os.WriteFile(path, []byte("[sdk]\nversion = '0.0.12'\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := run(root, true); err != nil {
+		t.Fatalf("declared candidate pins rejected: %v", err)
+	}
+
+	if err := run(root, false); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, name := range []string{"crate-room", "hangar", "particle-lab"} {
+		data, err := os.ReadFile(filepath.Join(root, "samples", name, "karty.toml"))
+		if err != nil || !strings.Contains(string(data), "0.0.12") {
+			t.Fatalf("%s candidate pin changed: %s, %v", name, data, err)
+		}
+	}
+}

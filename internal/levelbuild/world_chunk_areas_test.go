@@ -112,8 +112,12 @@ func TestWorldCameraSampleChunkAreasKeepWholeCourtyard(t *testing.T) {
 	}
 
 	artifacts, err := BuildAllWithAssets(t.Context(), root, 4, "", directLightmapSDK(t))
-	if err != nil || len(artifacts) != 1 || len(artifacts[0].Chunks) != 6 {
-		t.Fatalf("sample authored areas did not produce six chunks: %v", err)
+	if err != nil || len(artifacts) != 1 {
+		t.Fatalf("sample authored areas: %v", err)
+	}
+
+	if len(artifacts[0].Chunks) != 6 {
+		t.Fatalf("sample authored areas produced %d chunks, want six", len(artifacts[0].Chunks))
 	}
 
 	envelope := executeLightmapEnvelope(t, artifacts[0].Bytes)
@@ -154,7 +158,7 @@ func TestWorldCameraSampleChunkAreasKeepWholeCourtyard(t *testing.T) {
 
 	slices.Sort(counts)
 
-	if !slices.Equal(counts, []int{1, 1, 1, 2, 3, 61}) || courtyardChunk < 0 || len(catalog.Chunks[courtyardChunk].Solids) != 8 {
+	if !slices.Equal(counts, []int{1, 1, 1, 2, 3, 16}) || courtyardChunk < 0 || len(catalog.Chunks[courtyardChunk].Solids) != 271 {
 		t.Fatalf("authored areas lost courtyard sectors or columns: counts=%v courtyard=%d", counts, courtyardChunk)
 	}
 
@@ -184,7 +188,7 @@ func checkWorldCameraChunkLightmapPages(t *testing.T, definition manifest, docum
 
 	for _, chunk := range plan.Chunks {
 		page := 512
-		if len(chunk.Sectors) == 61 {
+		if len(chunk.Sectors) == 16 {
 			page = 1024
 		}
 

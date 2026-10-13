@@ -33,6 +33,18 @@ invocations. Shared encoding/resampling rules provide technical consistency;
 albedo brightness, color and authored surface differences are not equalized.
 Actual GPU execution and visual comparisons require separate smoke checks.
 
+## Explicit nonmetal correction (2026-10-13)
+
+Real sample atlas inspection found that the pinned tool adds specular evidence
+after multiplying its metallic detector by `metallic_scale`, leaving nonzero
+metallic pixels even with an explicit zero. The CLI clears only the generated
+metallic channel for explicit zero after validating all tool maps. Omitted and
+positive scales retain the tool result, and smoothness remains unchanged.
+Material asset processor revision 3 and atlas processor revision 7 invalidate
+both cache layers. The existing authoring/wire format and pinned tool remain
+unchanged. Regression coverage checks packed tiles, gutters, mips, warm reuse
+and regeneration when the explicit zero is removed.
+
 ## Validation (2026-10-09)
 
 - `mise run build`: passed; CLI compilation only.

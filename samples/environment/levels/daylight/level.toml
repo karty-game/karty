@@ -5,6 +5,24 @@ kind = "world"
 [world]
 source = "world.yaml"
 
+[lightmap]
+enabled = true
+offline = true
+density = 24
+page_size = 1024
+padding = 2
+bake_samples = 16
+bake_bounces = 1
+bake_denoise = "medium"
+
+[lightmap.environment]
+times = [0, 9, 12, 17]
+default_time = 12
+weather_variants = false
+
+[chunks]
+enabled = true
+
 [[textures]]
 name = "stone"
 source = "stone.png"
@@ -75,9 +93,9 @@ preset = "foliage"
 metallic_scale = 0
 
 [textures.material_strengths]
-normal = 0.35
-height = 0.05
-ao = 0.5
+normal = 0.22
+height = 0.015
+ao = 0.35
 rim = 0.0
 
 [[textures]]
@@ -90,9 +108,24 @@ preset = "wood"
 metallic_scale = 0
 
 [textures.material_strengths]
-normal = 0.35
-height = 0.05
-ao = 0.5
+normal = 0.22
+height = 0.025
+ao = 0.35
+rim = 0.0
+
+[[textures]]
+name = "wood-edge"
+source = "wood-edge.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "wood"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.22
+height = 0.025
+ao = 0.35
 rim = 0.0
 
 [[textures]]
@@ -108,4 +141,52 @@ metallic_scale = 0.35
 normal = 0.35
 height = 0.05
 ao = 0.5
+rim = 0.0
+
+[[textures]]
+name = "furniture-steel"
+source = "furniture-steel.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "metal"
+metallic_scale = 0.8
+
+[textures.material_strengths]
+normal = 0.16
+height = 0.01
+ao = 0.25
+rim = 0.0
+
+[[textures]]
+name = "slate"
+source = "slate.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "stone"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.35
+height = 0.05
+ao = 0.5
+rim = 0.0
+
+[[textures]]
+name = "glass"
+source = "glass.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "water"
+metallic_scale = 0
+normal_strength = 0
+ao_depth_scale = 0
+height_contrast = 0
+
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
 rim = 0.0

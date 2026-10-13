@@ -28,8 +28,14 @@ func compileWorldParticles(
 		return nil, nil, nil
 	}
 
-	if assets == nil || !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldParticlesV1) {
-		return nil, nil, fmt.Errorf("particles require SDK advertising %s: %w", asset.CapabilityWorldParticlesV1, ErrManifest)
+	feature, err := worldparticles.FeatureForVersion(expanded.Particles.Version)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	capability := asset.Capability(feature)
+	if assets == nil || !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, capability) {
+		return nil, nil, fmt.Errorf("particles require SDK advertising %s: %w", capability, ErrManifest)
 	}
 
 	ids := map[string]uint32{}
@@ -55,7 +61,7 @@ func compileWorldParticles(
 	return []level.SourceEntry{
 		{Name: worldparticles.EntryName, Kind: level.EntryData, Data: encoded},
 	}, []string{
-		worldparticles.Feature,
+		feature,
 	}, nil
 }
 

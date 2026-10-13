@@ -140,6 +140,8 @@ func (g *grammar) constraints() {
 		"direction",
 		choice("", string(worldsource.PortalBoth), string(worldsource.PortalAToB), string(worldsource.PortalBToA)),
 	)
+	set("Prefab", "renderable", &jsonschema.Schema{Type: "boolean"})
+	set("Actor", "solid_renderer", identifier())
 	set("Sprite", "facing", choice("camera-facing", "upright", "cross", "fixed"))
 	set("Sprite", "alpha", choice("cutout", "blend"))
 	g.environmentConstraints()
@@ -227,6 +229,12 @@ func (g *grammar) versionRules() {
 			})
 		}
 	}
+	// Particle emitters can supply the complete contents of a reusable prefab.
+	// The source-version rule below continues to reject them before version 10.
+	g.definitions["Prefab"].AnyOf = append(g.definitions["Prefab"].AnyOf, &jsonschema.Schema{
+		Required:   []string{"particle_emitters"},
+		Properties: map[string]*jsonschema.Schema{"particle_emitters": {Type: "array", MinItems: new(1)}},
+	})
 
 	for _, rule := range []struct {
 		version uint16
@@ -254,6 +262,11 @@ func (g *grammar) versionRules() {
 			"contents":   {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"actor": {Properties: map[string]*jsonschema.Schema{"animation": deny()}}}}},
 			"rooms":      {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"contents": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"actor": {Properties: map[string]*jsonschema.Schema{"animation": deny()}}}}}}}},
 		}},
+		{worldsource.SolidRenderersVersion, map[string]*jsonschema.Schema{
+			"renderable": deny(),
+			"contents":   {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"actor": {Properties: map[string]*jsonschema.Schema{"solid_renderer": deny()}}}}},
+			"rooms":      {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"contents": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"actor": {Properties: map[string]*jsonschema.Schema{"solid_renderer": deny()}}}}}}}},
+		}},
 		{worldsource.ParticlesVersion, map[string]*jsonschema.Schema{
 			"particles": deny(), "particle_emitters": deny(), "rooms": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"particle_emitters": deny()}}},
 		}},
@@ -262,6 +275,12 @@ func (g *grammar) versionRules() {
 			"rooms": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
 				"sky": deny(), "boundary": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"sky": deny()}}},
 			}}},
+		}},
+		{worldsource.EnvironmentBackdropVersion, map[string]*jsonschema.Schema{
+			"environment": {Properties: map[string]*jsonschema.Schema{"backdrop": deny()}},
+		}},
+		{worldsource.SkyVersion, map[string]*jsonschema.Schema{
+			"environment": {Properties: map[string]*jsonschema.Schema{"sky": deny()}},
 		}},
 	} {
 		fields := rule.fields

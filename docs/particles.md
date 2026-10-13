@@ -1,6 +1,10 @@
 # Authored GPU sprite particles
 
 Candidate SDK 0.0.11 supports world source version 10 with `particles.version: 1`.
+Candidate SDK 0.0.12 adds source version 11 with `particles.version: 2` and
+smooth `sprite.blend: alpha` and hybrid `sprite.blend: premultiplied`. Source v10 and particle version 1 retain their
+existing additive/cutout semantics. The selected SDK must advertise the exact
+particle capability used by the level.
 Particle presets and placed emitters are YAML authored; the renderer calculates
 birth/death, movement, billboard animation and appearance on the GPU from emitter
 time and seed. The CPU manages emitter resources and submits fixed particle
@@ -84,13 +88,13 @@ Keys must remain strictly increasing after float32 conversion, and every adjacen
 uploaded age difference must be at least `2^-126` (about `1.17549435e-38`). This
 prevents collapsed or zero interpolation intervals on portable GPUs.
 
-| `sprite` field | Requirement and meaning                                                                                                                 |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `frames`       | Required ordered list of 1–16 declared texture names.                                                                                   |
-| `fps`          | Optional, default 0; allowed 0–1,000. Multiple frames require an uploaded float32 value of at least `2^-126`.                           |
-| `playback`     | Required `once` or `cycle`. `once` holds the final flipbook frame; `cycle` wraps frames. This controls each particle's image animation. |
-| `facing`       | Required `camera-facing` or `upright`. Upright billboards remain vertical around world Z.                                               |
-| `blend`        | Required `additive` or `cutout`. Additive suits sparks/fire. Cutout uses hard alpha edges; smooth alpha smoke is outside this version.  |
+| `sprite` field | Requirement and meaning                                                                                                                                                                   |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frames`       | Required ordered list of 1–16 declared texture names.                                                                                                                                     |
+| `fps`          | Optional, default 0; allowed 0–1,000. Multiple frames require an uploaded float32 value of at least `2^-126`.                                                                             |
+| `playback`     | Required `once` or `cycle`. `once` holds the final flipbook frame; `cycle` wraps frames. This controls each particle's image animation.                                                   |
+| `facing`       | Required `camera-facing` or `upright`. Upright billboards remain vertical around world Z.                                                                                                 |
+| `blend`        | Required `additive` or `cutout`; particle version 2 also accepts `alpha` and `premultiplied`. Alpha supports smooth smoke; premultiplied retains light independently of lifetime opacity. |
 
 The host packs each preset's frames together before readiness. A connected group
 of multiple frame textures must fit a 2,048×2,048 sprite atlas page, including two
@@ -108,6 +112,29 @@ geometry, test opaque depth, and receive no foreground-alpha attenuation. They
 do not cast shadows, appear in reflection passes, illuminate the world, or affect
 lighting bakes. Add a separate authored point light when a fire should light its room.
 
+Version 2 alpha particles draw in a dedicated premultiplied source-over pass
+after ordinary transparency and additive particles, testing opaque depth while
+leaving depth unchanged. Emitters follow stable authored submission order;
+individual particles are not sorted and there is no order-independent
+transparency. Intersections between different-colour transparent layers have
+approximate ordering. Constant charcoal RGB with animated opacity is a useful
+smoke recipe; overlapping same-colour layers commute and can attenuate fire.
+The versioned decision is [world particles v2](decisions/world-particles-v2.md).
+
+Version 2 `premultiplied` uses the same pass and depth rules, with RGB independent
+of the lifetime curve's opacity. For a straight-alpha texture `T` and colour
+curve `C`, its output is `(T.rgb * T.a * C.rgb, T.a * C.a)`. Ordinary `alpha`
+also multiplies RGB by `C.a`. Thus a hot particle can emit light at low or zero
+curve opacity, then darken the background as its RGB fades and its opacity
+grows. Texture alpha still confines both contributions to the sprite. Textures
+remain straight-alpha assets; the shader multiplies texture alpha exactly once.
+
+A layer may use one static texture, for example
+`sprite: {frames: [smoke-mask], playback: cycle, facing: camera-facing, blend: alpha}`.
+Animate its emission, lifetime, seed variation, velocity, drag, rotation and
+size/RGBA curves to create the moving effect. A static texture needs no `fps`,
+actor animation or guest per-particle updates. Format limits remain unchanged.
+
 ## Placed emitter fields
 
 | Field                     | Requirement and meaning                                                                                                            |
@@ -123,6 +150,9 @@ lighting bakes. Add a separate authored point light when a fire should light its
 | `playback.delay_seconds`  | Optional, default 0; 0–3,600 seconds before the first schedule starts.                                                             |
 
 Rooms and prefabs can contain `particle_emitters` arrays referencing root presets.
+An effect prefab can contain only these emitters; no placeholder geometry or
+actor is required. See the [industrial particle lab](../samples/particle-lab/README.md)
+for layered reusable effects and an empty room for visual tuning.
 An emitter-only prefab is valid; no marker or geometry is required inside it.
 Their positions, yaw and scale follow the composed prefab transform. Velocity,
 acceleration and spawn support are emitter-local: yaw rotates them around Z;
@@ -174,14 +204,15 @@ insufficient capacity, without killing a surviving particle or silently dropping
 births. Spare slots stay inactive. Each emitter reserves its preset's full capacity,
 so two emitters using capacity 48 consume 96 level slots.
 
-| Resource               | Budget                                                                                               |
-| ---------------------- | ---------------------------------------------------------------------------------------------------- |
-| Presets                | 1–64 when particles are present.                                                                     |
-| Emitters               | 1–256 after expansion; authored root/room/prefab emitter definitions also have a combined 256 limit. |
-| Capacity               | 1–4,096 per emitter; 65,536 slots total per level.                                                   |
-| Births                 | 1–4,096 per finite rate-plus-burst schedule.                                                         |
-| Frames / bursts / keys | 16 frames and 16 bursts per preset; 2–4 keys per size/colour curve.                                  |
-| Encoded resource       | At most 1 MiB.                                                                                       |
+| Resource               | Budget                                                                                                          |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Presets                | 1–64 when particles are present.                                                                                |
+| Emitters               | 1–256 after expansion; authored root/room/prefab emitter definitions also have a combined 256 limit.            |
+| Capacity               | 1–4,096 per emitter; 65,536 slots total per level.                                                              |
+| Births                 | 1–4,096 per finite rate-plus-burst schedule.                                                                    |
+| Frames / bursts / keys | 16 frames and 16 bursts per preset; 2–4 keys per size/colour curve.                                             |
+| Encoded resource       | At most 1 MiB.                                                                                                  |
+| Camera frame           | At most 65,536 reserved slots, counting repeated emitter draws through portal windows and transformed contexts. |
 
 ## Resolving confinement errors
 
@@ -210,7 +241,8 @@ small spawn strips for this reason.
 references. Builds also check related lifecycle values, float32 curve/frame
 precision, required capacity, processed frame dimensions and sector confinement.
 The CLI generates typed `@world/particles` data and declares `world/particles@1`
-with `world/sectors@1`; do not declare this generated resource in `[[data]]`.
+or `world/particles@2` according to the payload version, with `world/sectors@1`;
+do not declare this generated resource in `[[data]]`.
 The host repeats complete validation and checks texture identity/atlas packing
 before readiness. Source versions 1–9 reject particle fields, including null;
 SDKs without the capability cannot build or mount these effects.
@@ -225,3 +257,6 @@ fields, collisions, cross-sector motion, lighting contribution or smooth alpha/O
 See the [versioned decision](decisions/world-particles-v1.md) and
 [Hangar's authored world](../samples/hangar/levels/hangar/world.yaml) for the working
 acid sparkles, barrel fire and ember presets.
+The reference fire in Particle Lab and Hangar remains a visual prototype awaiting
+appearance acceptance. Builds and software graphics checks do not establish
+physical-phone performance or real touch-device behavior.

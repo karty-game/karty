@@ -12,3 +12,14 @@ go.work.sum
 .karty/
 .codex/
 .agents/
+
+# Per-level copies generated from the reusable Particle Lab asset library.
+samples/particle-lab/levels/*/textures/
+samples/hangar/levels/hangar/textures/effects/
+samples/particle-lab/effects/textures/lab-*.png
+samples/particle-lab/effects/textures/room-*.png
+samples/particle-lab/effects/textures/smoke-room-*.png
+samples/particle-lab/effects/library.yaml
+samples/particle-lab/levels/*/world.yaml
+samples/particle-lab/levels/*/level.toml
+samples/particle-lab/preview.capture.json

@@ -140,6 +140,17 @@ func buildWorldChunks(ctx context.Context, directory string, definition manifest
 		return worldMaterialBuild{}, err
 	}
 
+	if definition.Lightmap != nil && definition.Lightmap.Environment != nil {
+		options.CompactLightmaps = true
+		options.Lightmap.CapsWithinSourceRoom = true
+		options.Lightmap.CompactPacking = true
+
+		options.SolidOwners, err = worldchunk.BalancedSolidOwners(document, options.Lightmap)
+		if err != nil {
+			return worldMaterialBuild{}, err
+		}
+	}
+
 	plan, err := worldchunk.Plan(document, options)
 	if err != nil {
 		return worldMaterialBuild{}, err
@@ -173,16 +184,27 @@ func buildWorldChunks(ctx context.Context, directory string, definition manifest
 			return worldMaterialBuild{}, err
 		}
 
-		artifact, descriptor, err := encodeWorldChunk(
-			ctx,
-			document,
-			definition.Level.Name,
-			chunk,
-			materials,
-			bakeOptions,
-			options.NoLightmap,
-			pixelCaches...,
+		var (
+			artifact   ChunkArtifact
+			descriptor worldchunk.Chunk
+			variants   []ChunkArtifact
 		)
+		if definition.Lightmap != nil && definition.Lightmap.Environment != nil {
+			artifact, descriptor, variants, err = encodeEnvironmentWorldChunk(ctx, document, definition.Level.Name, chunk,
+				materials, bakeOptions, *definition.Lightmap.Environment, pixelCaches...)
+		} else {
+			artifact, descriptor, err = encodeWorldChunk(
+				ctx,
+				document,
+				definition.Level.Name,
+				chunk,
+				materials,
+				bakeOptions,
+				options.NoLightmap,
+				pixelCaches...,
+			)
+		}
+
 		if err != nil {
 			return worldMaterialBuild{}, err
 		}
@@ -202,13 +224,10 @@ func buildWorldChunks(ctx context.Context, directory string, definition manifest
 		}
 
 		result.chunks = append(result.chunks, artifact)
+		result.chunks = append(result.chunks, variants...)
 
 		catalog.Chunks = append(catalog.Chunks, descriptor)
-		if descriptor.LightmapBytes != 0 && chunk.Layout.RuntimeBake != nil {
-			for _, id := range chunk.Layout.RuntimeBake.LightIDs {
-				baked[id] = true
-			}
-		}
+		appendChunkBakedLights(baked, descriptor, chunk)
 	}
 
 	appendCatalogBakedLights(&catalog, &document, baked)
@@ -264,7 +283,12 @@ func applyWorldChunks(
 
 	result.features = append(result.features, worldchunk.Feature)
 	if definition.Lightmap != nil && definition.Lightmap.Enabled {
-		result.features = append(result.features, worldlightmap.Feature, worldlightmap.PrebakeFeature)
+		result.features = append(result.features, worldlightmap.Feature)
+		if definition.Lightmap.Environment != nil {
+			result.features = append(result.features, worldlightmap.EnvironmentVariantsFeature)
+		} else {
+			result.features = append(result.features, worldlightmap.PrebakeFeature)
+		}
 	}
 
 	return result, nil
@@ -494,4 +518,12 @@ func resolveChunkLightmapPixels(
 	}
 
 	return image, reflectance, rgbmRange, nil
+}
+
+func appendChunkBakedLights(baked map[string]bool, descriptor worldchunk.Chunk, chunk worldchunk.PlannedChunk) {
+	if descriptor.LightmapBytes != 0 && chunk.Layout.RuntimeBake != nil {
+		for _, id := range chunk.Layout.RuntimeBake.LightIDs {
+			baked[id] = true
+		}
+	}
 }

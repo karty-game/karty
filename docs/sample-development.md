@@ -16,8 +16,10 @@ mise run check-sample-clients
 mise run check-world-camera-hooks
 ```
 
-`check-sample-clients` compiles the actual sample clients against public SDK
-bindings and all `.kui` components/layouts. A small flight fixture dispatches
+`check-sample-clients` compiles actual sample clients against their pinned SDK
+bindings and all `.kui` components/layouts. Candidate client checks require that
+SDK to be installed locally; public checks skip unavailable candidates and never
+download an unreleased SDK. A small flight fixture dispatches
 generated widget callbacks and checks gameplay effects, preferences,
 pause/remount and idle frames that emit no commands. World-camera component
 fixtures cover movement, accepted host poses and UI refresh.
@@ -62,10 +64,24 @@ Manual graphics, keyboard navigation and touch review remain separate.
   lighting, component hooks, camera configuration and explicit graphics checks.
 - [Media lab notes](sample-media-lab.md): source formats, clip generation and
   optional browser playback checks.
+- [Particle lab](../samples/particle-lab/README.md): reusable fire and smoke
+  recipes, reference sources, touch controls and isolated review rooms.
+- [Physics lab](../samples/crate-room/README.md): box colliders, pushing, shooting,
+  explosions and sloped banks.
+
+## Local docs gallery
+
+`mise run docs` refreshes the guide and gallery, then serves them on
+`http://127.0.0.1:8081/`. The local gallery includes Hangar, Physics lab, Environment, World camera, UI,
+Media and Particle lab, in that order, with screenshots and uses complete snapshots of their `dist/web` builds when available.
+Build candidate samples with their pinned SDK and matching host before opening
+their playable cards. A checkout without these builds shows setup instructions instead;
+docs generation needs no private engine checkout or unreleased SDK download.
+`mise run preview-docs` refreshes the files without starting another server.
 
 ## Published demos and pull request previews
 
-`mise run build-samples` builds the four published demos into `dist/samples-site/`, with
+`mise run build-samples` builds all seven demos into `dist/samples-site/`, with
 screenshot cards, the game-making guide and redistribution notices. It installs each sample's exact published
 SDK and downloads the compatible host and Go browser runtime. No private engine
 access is required. SDK/host artifacts must be published before advancing this
@@ -86,9 +102,10 @@ uploads a `sample-site` artifact. It also supports manual dispatch.
 - `/pr/NUMBER/`: the pull request's merge-commit build.
 - `/`: latest samples and active preview links.
 
-Each published sample has its own folder: `ui-demo/`, `media-lab/`, `world-camera/`
-or `hangar/`. The unfinished `environment` sample remains in source and is excluded
-from the site. Each demo includes its own SDK-pinned web host unless the build
+Each published sample has its own folder: `hangar/`, `crate-room/`,
+`environment/`, `world-camera/`, `ui-demo/`, `media-lab/` and `particle-lab/`.
+The published and local galleries use the same sample list and priority order.
+Each demo includes its own SDK-pinned web host unless the build
 selects the shared CDN option.
 Deployment summaries include the actual preview URL; PR build
 summaries link to the expected URL. Closing/merging a PR removes its preview;
@@ -111,13 +128,20 @@ mise run check-samples
 
 The capture task opens existing `dist/web` builds in Chromium. It binds a free
 loopback port and closes its server and browser when it finishes. It captures
-Orbital's menu, the Roman courtyard, Hangar's reactor hall and the playing media
-test video. It hides the optional runtime debug controls for the image.
+Orbital's menu, the Roman courtyard, Hangar's reactor hall, Environment's daylight courtyard and the playing media
+test video, plus Particle Lab's medium fire. It hides the optional
+runtime debug controls for the image. Capture one changed sample with
+`mise exec -- node cmd/karty-samples/capture.mjs particle-lab`.
 
 Review each image before keeping it. `preview.capture.json` records the source
 commit and source hash, cartridge and host hashes, image hash, browser version
-and page errors. These records identify the captured artifacts. The task does
+and page errors. Source hashes include tracked and untracked files while excluding
+ignored build output, README text and preview files. These records identify the captured artifacts. The task does
 not rebuild them or prove that an old artifact matches the current source.
+For WASM provenance, the local server hashes the bytes it serves and the browser
+confirms successful response completion. The report records each loaded WASM
+path, checksum and byte count; it does not depend on Chromium retaining large
+response bodies in its inspector cache.
 It does not test physical audio, native rendering or real mobile hardware.
 
 The guide generator writes `guide/index.html` and `guide/guide.md` into the site.

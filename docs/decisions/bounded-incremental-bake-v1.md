@@ -1,6 +1,7 @@
 # Bounded incremental chunk bake, version 1
 
-Status: candidate SDK 0.0.11, 2026-10-11. Released producer bytes stay unchanged.
+Status: implemented for SDK 0.0.11. Owners: public SDK baker and CLI cache.
+Decision date: 2026-10-11. Current reference: [lightmaps](../lightmaps.md).
 
 The optional TOML `bake_max_ray_distance` is finite, positive and no greater
 than the authored coordinate bound, 1,000,000 world units. It limits each

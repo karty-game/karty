@@ -8,7 +8,7 @@ SDK tags do not trigger CLI publication; SDK, CLI and module versions may differ
 ## SDK pins
 
 `CurrentSDK` in [internal/release/version.go](../internal/release/version.go) is the
-single SDK selection for CLI defaults, samples and tests. Update it once, then
+released SDK selection for CLI defaults and ordinary tests. Update it once, then
 run `mise run prepare-release` to synchronize the managed sample manifests.
 Tests install only this SDK. Capability checks read its bundle metadata rather
 than matching SDK or API release numbers.
@@ -31,6 +31,29 @@ mise run check-integration
 Preparation updates managed samples to `CurrentSDK`; tests reject drift and prepare
 the selected SDK cache. `karty sdk current` prints the selection for scripts. Preparation
 does not commit, tag or publish. See [Development](development.md) for overrides.
+
+## Sky, physics and particles candidate
+
+The CLI's next public format-module pin is **v0.0.14**, which is not yet
+published. Released module v0.0.12 lacks the project-sky contracts; v0.0.13
+also predates the complete candidate. Standalone candidate checks use a
+checksummed archive of the public SDK source in an isolated file proxy and
+module cache, with `GOWORK=off`. This requires no private source or credentials,
+but does not establish ordinary public-proxy availability. Record the archive
+and module content sums and exempt only the unpublished SDK module from the
+checksum database during that local check.
+
+Publish the reviewed public module as v0.0.14, verify its content sums through
+the ordinary public proxy/checksum database, then rerun `GOWORK=off mise run check`.
+Module publication and the signed engine SDK/host **0.0.12** release are separate
+operations. Both need explicit authorization; do not move an existing tag.
+
+Until SDK/host 0.0.12 is published, `CurrentSDK` remains 0.0.11. The environment,
+Hangar, crate-room and particle-lab samples explicitly select candidate 0.0.12;
+`SampleSDKVersion` preserves those pins. After matching SDK/host publication,
+advance `CurrentSDK`, run `mise run prepare-release`, and repeat customer
+integration against the published artifacts. A local candidate or host override
+does not qualify the CLI default's published integration path.
 
 ## Publication gate
 

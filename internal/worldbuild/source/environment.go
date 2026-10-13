@@ -59,7 +59,7 @@ func validateEnvironmentMapping(node *yaml.Node, version uint16) error {
 		}
 
 		if name == "environment" {
-			if err := validateEnvironmentNode(value); err != nil {
+			if err := validateEnvironmentNode(value, version); err != nil {
 				return err
 			}
 		}
@@ -68,9 +68,17 @@ func validateEnvironmentMapping(node *yaml.Node, version uint16) error {
 	return nil
 }
 
-func validateEnvironmentNode(node *yaml.Node) error {
+func validateEnvironmentNode(node *yaml.Node, version uint16) error {
 	for i := 0; i+1 < len(node.Content); i += 2 {
 		name, value := node.Content[i].Value, node.Content[i+1]
+		if name == "backdrop" && version < worldsource.EnvironmentBackdropVersion {
+			return worldsource.ErrVersion
+		}
+
+		if name == "sky" && version < worldsource.SkyVersion {
+			return worldsource.ErrVersion
+		}
+
 		if value.Tag == "!!null" {
 			return ErrYAML
 		}
@@ -79,6 +87,26 @@ func validateEnvironmentNode(node *yaml.Node) error {
 			if err := validateEnvironmentSunNode(value); err != nil {
 				return err
 			}
+		}
+
+		if name == "sky" {
+			if err := validateSkyPresence(value); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateSkyPresence(node *yaml.Node) error {
+	if node.Tag == "!!null" {
+		return ErrYAML
+	}
+
+	for _, child := range node.Content {
+		if err := validateSkyPresence(child); err != nil {
+			return err
 		}
 	}
 

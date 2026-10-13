@@ -13,4 +13,24 @@ far = 120
 ortho_height = 50
 
 [sdk]
-version = "0.0.11"
+version = "0.0.12"
+
+[[assets.sound]]
+name = "reactor-hum"
+source = "assets/sounds/reactor-hum.wav"
+
+[[assets.sound]]
+name = "computer-idle"
+source = "assets/sounds/computer-idle.wav"
+
+[[assets.sound]]
+name = "crate-scrape"
+source = "assets/sounds/crate-scrape.wav"
+
+[[assets.sound]]
+name = "fire-ambience"
+source = "assets/sounds/fire-ambience.wav"
+
+[[assets.sound]]
+name = "acid-ambience"
+source = "assets/sounds/acid-ambience.wav"

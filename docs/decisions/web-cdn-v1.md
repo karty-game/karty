@@ -1,6 +1,8 @@
 # Shared web runtime, version 1
 
-Status: CLI option, 2026-10-12. No SDK or wire format changes.
+Status: implemented. Owner: CLI. Decision date: 2026-10-12.
+Current reference: [distribution](../distribution.md#share-a-web-runtime).
+No SDK or wire format changes.
 
 `karty build --target web` keeps the host in `dist/web`. Add `--cdn <host-url>`
 to load the host from a shared mirror instead:

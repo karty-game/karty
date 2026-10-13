@@ -1,0 +1,140 @@
+version: 11
+uv: { mode: wrap }
+lighting:
+  version: 1
+  actors: true
+  ambient: { x: 0.22, y: 0.25, z: 0.3 }
+  lights:
+    - { id: warm-left, position: { x: -6, y: -3, z: 6 }, color: { x: 1, y: 0.77, z: 0.48 }, radius: 24 }
+    - { id: cool-right, position: { x: 7, y: 8, z: 6 }, color: { x: 0.4, y: 0.65, z: 1 }, radius: 24 }
+rooms:
+  - id: crate-room
+    floor: { c: 0 }
+    ceiling: { c: 9 }
+    floor_material: floor
+    ceiling_material: ceiling
+    boundary:
+      - { id: south, start: { x: -11, y: -14 }, end: { x: 11, y: -14 }, material: wall }
+      - { id: east, start: { x: 11, y: -14 }, end: { x: 11, y: 14 }, material: wall }
+      - { id: north, start: { x: 11, y: 14 }, end: { x: -11, y: 14 }, material: wall }
+      - { id: west, start: { x: -11, y: 14 }, end: { x: -11, y: -14 }, material: wall }
+prefabs:
+  - id: crate
+    renderable: true
+    solids:
+      - id: wood
+        footprint: [{ x: -0.495, y: -0.495 }, { x: 0.495, y: -0.495 }, { x: 0.495, y: 0.495 }, { x: -0.495, y: 0.495 }]
+        bottom: { c: -0.495 }
+        top: { c: 0.495 }
+        side_material: wood
+        top_material: wood
+        bottom_material: wood
+      - id: left
+        footprint: [{ x: -0.5, y: -0.51 }, { x: -0.43, y: -0.51 }, { x: -0.43, y: 0.51 }, { x: -0.5, y: 0.51 }]
+        bottom: { c: -0.51 }
+        top: { c: 0.51 }
+        side_material: frame
+        top_material: frame
+        bottom_material: frame
+      - id: right
+        footprint: [{ x: 0.43, y: -0.51 }, { x: 0.5, y: -0.51 }, { x: 0.5, y: 0.51 }, { x: 0.43, y: 0.51 }]
+        bottom: { c: -0.51 }
+        top: { c: 0.51 }
+        side_material: frame
+        top_material: frame
+        bottom_material: frame
+      - id: bottom
+        footprint: [{ x: -0.43, y: -0.51 }, { x: 0.43, y: -0.51 }, { x: 0.43, y: 0.51 }, { x: -0.43, y: 0.51 }]
+        bottom: { c: -0.5 }
+        top: { c: -0.43 }
+        side_material: frame
+        top_material: frame
+        bottom_material: frame
+      - id: top
+        footprint: [{ x: -0.43, y: -0.51 }, { x: 0.43, y: -0.51 }, { x: 0.43, y: 0.51 }, { x: -0.43, y: 0.51 }]
+        bottom: { c: 0.43 }
+        top: { c: 0.5 }
+        side_material: frame
+        top_material: frame
+        bottom_material: frame
+
+# Banks and bumpers use the same collision-enabled geometry as rendering.
+solids:
+  - id: west-bank
+    footprint: [{ x: -10.8, y: -9 }, { x: -8, y: -9 }, { x: -8, y: 13.5 }, { x: -10.8, y: 13.5 }]
+    bottom: { c: -0.05 }
+    top: { a: -0.7, c: -5.45 }
+    side_material: ramp
+    top_material: ramp
+    bottom_material: ramp
+    collision: true
+  - id: east-bank
+    footprint: [{ x: 8, y: -9 }, { x: 10.8, y: -9 }, { x: 10.8, y: 13.5 }, { x: 8, y: 13.5 }]
+    bottom: { c: -0.05 }
+    top: { a: 0.7, c: -5.45 }
+    side_material: ramp
+    top_material: ramp
+    bottom_material: ramp
+    collision: true
+  - id: back-bank
+    footprint: [{ x: -8, y: 11.5 }, { x: 8, y: 11.5 }, { x: 8, y: 13.5 }, { x: -8, y: 13.5 }]
+    bottom: { c: -0.05 }
+    top: { b: 0.85, c: -9.625 }
+    side_material: ramp
+    top_material: ramp
+    bottom_material: ramp
+    collision: true
+  - id: bumper-1
+    footprint:
+      [
+        { x: -3.65, y: -5.0 },
+        { x: -3.899, y: -4.399 },
+        { x: -4.5, y: -4.15 },
+        { x: -5.101, y: -4.399 },
+        { x: -5.35, y: -5.0 },
+        { x: -5.101, y: -5.601 },
+        { x: -4.5, y: -5.85 },
+        { x: -3.899, y: -5.601 },
+      ]
+    bottom: { c: 0 }
+    top: { c: 0.75 }
+    side_material: bumper
+    top_material: bumper
+    bottom_material: bumper
+    collision: true
+  - id: bumper-2
+    footprint:
+      [
+        { x: 5.35, y: -5.0 },
+        { x: 5.101, y: -4.399 },
+        { x: 4.5, y: -4.15 },
+        { x: 3.899, y: -4.399 },
+        { x: 3.65, y: -5.0 },
+        { x: 3.899, y: -5.601 },
+        { x: 4.5, y: -5.85 },
+        { x: 5.101, y: -5.601 },
+      ]
+    bottom: { c: 0 }
+    top: { c: 0.75 }
+    side_material: bumper
+    top_material: bumper
+    bottom_material: bumper
+    collision: true
+  - id: bumper-3
+    footprint:
+      [
+        { x: 0.85, y: 7.75 },
+        { x: 0.601, y: 8.351 },
+        { x: 0.0, y: 8.6 },
+        { x: -0.601, y: 8.351 },
+        { x: -0.85, y: 7.75 },
+        { x: -0.601, y: 7.149 },
+        { x: -0.0, y: 6.9 },
+        { x: 0.601, y: 7.149 },
+      ]
+    bottom: { c: 0 }
+    top: { c: 0.75 }
+    side_material: bumper
+    top_material: bumper
+    bottom_material: bumper
+    collision: true

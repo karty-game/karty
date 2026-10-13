@@ -1,0 +1,16 @@
+[project]
+name = "particle-lab"
+compiler = "tinygo"
+
+[project.resolution]
+width = 720
+height = 720
+
+[project.camera]
+fov_y_degrees = 68
+near = 0.05
+far = 60
+ortho_height = 24
+
+[sdk]
+version = "0.0.12"

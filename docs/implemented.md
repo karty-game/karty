@@ -1,12 +1,16 @@
 # Implemented CLI behavior
 
-Projects use their exact SDK pin and generated `.karty/docs`, rather than the
-latest repository documentation. The default selection is SDK 0.0.11; future
-work is listed in [proposals](proposals.md).
+Projects use their exact SDK pin and generated `.karty/docs`. The CLI's released
+default and candidate sample selections are owned by
+[internal/release/version.go](../internal/release/version.go); see
+[release pins](releases.md#sdk-pins) and the
+[current candidate](releases.md#sky-physics-and-particles-candidate).
+The inventory below depends on the selected bundle's capabilities and matching
+host. Unresolved work is listed in [proposals](proposals.md).
 
 ## Projects and distribution
 
-- With supporting SDK 0.0.9 candidate bundles, derive typed action catalogs,
+- With supporting SDK bundles, derive typed action catalogs,
   per-level editor schemas and staged invocation adapters from Go declarations.
   Validate optional authored sequences and their actor targets before compilation.
   See [client hooks and actions](client-hooks.md).
@@ -36,10 +40,17 @@ work is listed in [proposals](proposals.md).
 - Generate typed IDs for one-shots, music, environment audio and MPEG-1 video.
   Stage streaming sidecars; host playback owns loops, fades and stream lifetime.
 - Install SDK-pinned released Materialize binaries with archive/warm-cache
-  verification. SDK 0.0.8 pins Materialize 2.0.0; native builds/releases belong to
-  public karty-tools rather than CLI source scaffolding.
+  verification. Native tool builds and releases belong to public karty-tools;
+  the selected SDK owns executable pins.
 - Build paired world albedo/normal/height/AO atlases, per-material L0–L8 mips
   and bounded strength metadata. Warm atlas caches avoid tool execution.
+- Per-world-surface `[textures.materialize]` presets and optional generation
+  overrides, with finite bounds, capability checks and unknown-key rejection.
+  Materialize runs on independently normalized/cached 256×256 assets before
+  atlas assembly. Automatic seamless processing has no author-facing switch.
+  Existing normal/height/AO packaging and runtime strengths remain supported;
+  SDKs advertising `world/material-reflectance@1` add optional metallic/smoothness
+  companions for direct specular rendering in the matching host.
 
 See [assets](assets.md) for configuration, mapping, cache identities and bounds.
 Generated world materials need a supported graphics backend; levels without
@@ -72,11 +83,3 @@ OpenGL fallback described in [development](development.md).
 [Samples](../samples/README.md) cover game/UI/media and authored worlds. The
 [world-camera sample](../samples/world-camera/README.md) exercises both cameras,
 keyboard/touch HUDs, tags, static solids, moving lights, offline bakes and reloads.
-
-- Per-world-surface `[textures.materialize]` presets and optional generation
-  overrides, with finite bounds, capability checks and unknown-key rejection.
-  Materialize runs on independently normalized/cached 256×256 assets before
-  atlas assembly. Automatic seamless processing has no author-facing switch.
-  Existing normal/height/AO packaging and runtime strengths remain supported;
-  candidate SDK 0.0.11 adds optional metallic/smoothness companions for direct
-  specular rendering in the matching host.

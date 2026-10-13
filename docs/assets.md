@@ -197,9 +197,9 @@ Build/dev use identical processing; dev watches supported image and WAV sources.
 
 ## Build-time world materials (SDK 0.0.8)
 
-The released default SDK is **0.0.8**. A selected SDK must explicitly
-advertise `world/material-atlas@1` and provide complete Materialize tool pins to
-enable this pipeline for authored worlds. Atlas capability without tool pins is
+See [release pins](releases.md#sdk-pins) for the CLI's default selection.
+The selected SDK must explicitly advertise `world/material-atlas@1` and provide
+complete Materialize tool pins to enable this pipeline for authored worlds. Atlas capability without tool pins is
 an invalid SDK; a tool pin alone does not opt in.
 
 The Go build/dev asset workflow packs surface materials in first-use order
@@ -264,6 +264,11 @@ Omitted settings use Materialize's `default` preset and that preset's parameter
 defaults. Presets include `auto` and the pinned tool's named presets; invalid names
 fail the build. Numeric overrides must be finite and between 0 and 16 inclusive;
 explicit zero is retained. Unknown keys, including `seamless`, fail the build.
+An explicit `metallic_scale = 0` also clears residual metallic evidence in the
+CLI import step after validating the generated maps. The pinned tool can add
+specular evidence after scaling its detector; this correction preserves
+smoothness, normal, height and AO data. Both material and atlas cache revisions
+include this policy.
 Controls require an atlas-capable SDK, a world source and a texture used by a world
 surface with generated material data. Sprite-only textures and color-only secondary
 surfaces cannot use these controls. Presets are `default`, `auto`, `skin`, `floor`,

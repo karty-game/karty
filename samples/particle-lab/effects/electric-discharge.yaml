@@ -1,0 +1,195 @@
+# Authored sprite-segment discharge; static primitives are not a complete bolt drawing.
+# Primary references: Epic Niagara Beam Effect (short lifetime / jitter / segmented beam)
+# https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-create-a-beam-effect-in-niagara-for-unreal-engine
+# and burst/fallout composition:
+# https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-create-a-sparks-effect-in-niagara-for-unreal-engine
+# Karty has no ribbons, connected endpoints or live jitter field. Independently seeded
+# birth positions, angles and staggered short-lived segments approximate crackling forks.
+# This is an authored adaptation, not Niagara import or renderer-parity evidence.
+# Seven layers / six presets: two branch passes share their static primitive/preset.
+version: 11
+particles:
+  version: 2
+  presets:
+    - name: industrial-electric-charge
+      capacity: 14
+      emission: { rate: 16, duration_seconds: 0.78 }
+      lifetime_seconds: { min: 0.12, max: 0.24 }
+      spawn: { shape: box, half_extent: { x: 0.07, y: 0.04, z: 0.07 } }
+      velocity_min: { x: -0.1, y: -0.05, z: 0.1 }
+      velocity_max: { x: 0.1, y: 0.05, z: 0.3 }
+      drag: 0.6
+      sprite:
+        frames: [brackeys-spotlight-01-a]
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - { age: 0, value: 0.015 }
+        - { age: 0.36, value: 0.07 }
+        - { age: 0.73, value: 0.035 }
+        - { age: 1, value: 0.002 }
+      color_over_life:
+        - { age: 0, rgba: [0.1, 0.25, 1, 0] }
+        - { age: 0.36, rgba: [0.2, 0.55, 1, 0.35] }
+        - { age: 0.73, rgba: [0.1, 0.3, 0.8, 0.15] }
+        - { age: 1, rgba: [0.06, 0.12, 0.35, 0] }
+    - name: industrial-electric-contact
+      capacity: 3
+      emission:
+        bursts: [{ at_seconds: 0.82, count: 1 }, { at_seconds: 0.872, count: 1 }, { at_seconds: 0.913, count: 1 }]
+      lifetime_seconds: { min: 0.035, max: 0.055 }
+      spawn: { shape: point }
+      rotation_degrees: { min: 0, max: 360 }
+      sprite:
+        frames: [lab-flash]
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - { age: 0, value: 0.04 }
+        - { age: 0.12, value: 0.3 }
+        - { age: 0.45, value: 0.16 }
+        - { age: 1, value: 0.002 }
+      color_over_life:
+        - { age: 0, rgba: [0.5, 0.7, 1, 0] }
+        - { age: 0.12, rgba: [0.75, 0.85, 1, 0.8] }
+        - { age: 0.45, rgba: [0.2, 0.4, 1, 0.3] }
+        - { age: 1, rgba: [0.08, 0.12, 0.5, 0] }
+    - name: industrial-electric-segments
+      capacity: 10
+      emission:
+        bursts: [{ at_seconds: 0.82, count: 5 }, { at_seconds: 0.876, count: 3 }, { at_seconds: 0.916, count: 2 }]
+      lifetime_seconds: { min: 0.045, max: 0.078 }
+      spawn: { shape: box, half_extent: { x: 0.18, y: 0.04, z: 0.14 } }
+      velocity_min: { x: -1.1, y: -0.15, z: -0.35 }
+      velocity_max: { x: 1.1, y: 0.15, z: 0.35 }
+      rotation_degrees: { min: -65, max: 65 }
+      rotation_speed_degrees: { min: -180, max: 180 }
+      sprite:
+        frames: [lab-streak]
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - { age: 0, value: 0.2 }
+        - { age: 0.1, value: 0.85 }
+        - { age: 0.6, value: 0.65 }
+        - { age: 1, value: 0.06 }
+      color_over_life:
+        - { age: 0, rgba: [0.3, 0.55, 1, 0] }
+        - { age: 0.1, rgba: [0.55, 0.8, 1, 0.75] }
+        - { age: 0.6, rgba: [0.12, 0.35, 1, 0.35] }
+        - { age: 1, rgba: [0.05, 0.08, 0.45, 0] }
+    - name: industrial-electric-branches
+      capacity: 9
+      emission:
+        bursts: [{ at_seconds: 0.832, count: 4 }, { at_seconds: 0.88, count: 3 }, { at_seconds: 0.922, count: 2 }]
+      lifetime_seconds: { min: 0.03, max: 0.066 }
+      spawn: { shape: box, half_extent: { x: 0.13, y: 0.04, z: 0.08 } }
+      velocity_min: { x: -0.4, y: -0.1, z: -0.25 }
+      velocity_max: { x: 0.4, y: 0.1, z: 0.25 }
+      rotation_degrees: { min: -85, max: 85 }
+      rotation_speed_degrees: { min: -200, max: 200 }
+      sprite:
+        frames: [lab-streak]
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - { age: 0, value: 0.08 }
+        - { age: 0.1, value: 0.45 }
+        - { age: 0.55, value: 0.32 }
+        - { age: 1, value: 0.025 }
+      color_over_life:
+        - { age: 0, rgba: [0.2, 0.45, 1, 0] }
+        - { age: 0.1, rgba: [0.45, 0.7, 1, 0.6] }
+        - { age: 0.55, rgba: [0.08, 0.3, 0.9, 0.25] }
+        - { age: 1, rgba: [0.04, 0.08, 0.3, 0] }
+    - name: industrial-electric-fallout
+      capacity: 18
+      emission:
+        bursts: [{ at_seconds: 0.9, count: 18 }]
+      lifetime_seconds: { min: 0.28, max: 0.62 }
+      spawn: { shape: box, half_extent: { x: 0.12, y: 0.07, z: 0.08 } }
+      velocity_min: { x: -0.55, y: -0.22, z: 0.15 }
+      velocity_max: { x: 0.55, y: 0.22, z: 0.65 }
+      acceleration: { z: -1.5 }
+      drag: 0.7
+      rotation_degrees: { min: 0, max: 360 }
+      rotation_speed_degrees: { min: -180, max: 180 }
+      sprite:
+        frames: [lab-fleck]
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - { age: 0, value: 0.026 }
+        - { age: 0.1, value: 0.045 }
+        - { age: 0.65, value: 0.02 }
+        - { age: 1, value: 0.003 }
+      color_over_life:
+        - { age: 0, rgba: [0.5, 0.85, 1, 0] }
+        - { age: 0.1, rgba: [0.5, 0.85, 1, 0.8] }
+        - { age: 0.65, rgba: [0.85, 0.35, 0.08, 0.35] }
+        - { age: 1, rgba: [0.12, 0.025, 0.002, 0] }
+    - name: industrial-electric-echo
+      capacity: 1
+      emission:
+        bursts: [{ at_seconds: 0.96, count: 1 }]
+      lifetime_seconds: { min: 0.22, max: 0.32 }
+      spawn: { shape: point }
+      rotation_degrees: { min: 0, max: 360 }
+      sprite:
+        frames: [lab-ring]
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - { age: 0, value: 0.22 }
+        - { age: 0.2, value: 0.75 }
+        - { age: 0.7, value: 1.12 }
+        - { age: 1, value: 1.12 }
+      color_over_life:
+        - { age: 0, rgba: [0.1, 0.35, 1, 0] }
+        - { age: 0.2, rgba: [0.12, 0.4, 1, 0.07] }
+        - { age: 0.7, rgba: [0.07, 0.2, 0.6, 0.025] }
+        - { age: 1, rgba: [0.03, 0.06, 0.2, 0] }
+prefabs:
+  - id: industrial-discharge
+    particle_emitters:
+      - id: charge
+        preset: industrial-electric-charge
+        position: { z: 0.3 }
+        seed: 51031
+        playback: { mode: cycle, period_seconds: 3.2 }
+      - id: contact
+        preset: industrial-electric-contact
+        position: { z: 0.3 }
+        seed: 51043
+        playback: { mode: cycle, period_seconds: 3.2 }
+      - id: channels
+        preset: industrial-electric-segments
+        position: { z: 0.3 }
+        seed: 51047
+        playback: { mode: cycle, period_seconds: 3.2 }
+      - id: left-branches
+        preset: industrial-electric-branches
+        position: { x: -0.17, z: 0.2 }
+        seed: 51059
+        playback: { mode: cycle, period_seconds: 3.2 }
+      - id: right-branches
+        preset: industrial-electric-branches
+        position: { x: 0.17, z: 0.38 }
+        seed: 51071
+        playback: { mode: cycle, period_seconds: 3.2 }
+      - id: fallout
+        preset: industrial-electric-fallout
+        position: { z: 0.3 }
+        seed: 51073
+        playback: { mode: cycle, period_seconds: 3.2 }
+      - id: echo
+        preset: industrial-electric-echo
+        position: { z: 0.35 }
+        seed: 51089
+        playback: { mode: cycle, period_seconds: 3.2 }

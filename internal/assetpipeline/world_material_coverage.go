@@ -67,6 +67,14 @@ func secondaryOnlyMaterials(document world.Document) map[uint32]bool {
 		}
 	}
 
+	if document.SolidRenderers != nil {
+		for _, prefab := range document.SolidRenderers.Prefabs {
+			for _, solid := range prefab.Solids {
+				full[solid.SideMaterial], full[solid.TopMaterial], full[solid.BottomMaterial] = true, true, true
+			}
+		}
+	}
+
 	for id := range full {
 		delete(result, id)
 	}
@@ -163,6 +171,16 @@ func materialGenerationInput(ctx context.Context, layout worldmaterial.Layout, a
 
 // A shared main/secondary/band texture must satisfy its opaque consumer too.
 func requiresOpaqueMaterial(document world.Document, materialID uint32) bool {
+	if document.SolidRenderers != nil {
+		for _, prefab := range document.SolidRenderers.Prefabs {
+			for _, solid := range prefab.Solids {
+				if solid.SideMaterial == materialID || solid.TopMaterial == materialID || solid.BottomMaterial == materialID {
+					return true
+				}
+			}
+		}
+	}
+
 	secondary := func(layer *world.SurfaceSecondary) bool { return layer != nil && layer.Material == materialID }
 	for _, sector := range document.Sectors {
 		if sector.FloorMaterial == materialID || sector.CeilingMaterial == materialID || secondary(sector.FloorSecondary) ||

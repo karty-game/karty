@@ -52,6 +52,96 @@ func writeReflectanceFixture(directory string) error {
 	return nil
 }
 
+func TestWorldMaterialReflectanceExplicitZeroSuppressesToolSpecularEvidence(t *testing.T) {
+	t.Parallel()
+
+	manifest, document, textures := reflectanceFixtureManifest(), fixtureMaterialWorld(), fixtureTextures(t)
+	root, calls := t.TempDir(), 0
+	execute := func(_ context.Context, _ sdk.Manifest, directory string, _ []string) error {
+		calls++
+		// Emulate the tool's nonzero specular evidence even with scale zero.
+		return writeReflectanceFixture(directory)
+	}
+	zero := 0.0
+	options := map[uint32]MaterializeOptions{3: {Preset: "concrete", MetallicScale: &zero}}
+
+	pair, _, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute, options)
+	if err != nil || calls != 4 {
+		t.Fatalf("cold nonmetal atlas: calls=%d err=%v", calls, err)
+	}
+
+	assertExplicitNonmetalAtlas(t, pair)
+
+	_, warm, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute, options)
+	if err != nil || !warm.CacheHit || calls != 4 {
+		t.Fatalf("warm nonmetal atlas: calls=%d err=%v", calls, err)
+	}
+	// Removing the explicit zero must restore the preset/tool result and
+	// regenerate only this asset, rather than reuse its nonmetal cache entry.
+	options[3] = MaterializeOptions{Preset: "concrete"}
+
+	restored, changed, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute, options)
+	if err != nil || changed.CacheHit || calls != 5 {
+		t.Fatalf("omitted scale rebuild: calls=%d err=%v", calls, err)
+	}
+
+	_, restoredPixels, err := qoi.Decode(restored.Reflectance)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, rect := range restored.Layout.Materials {
+		if rect.MaterialID == 3 && restoredPixels.NRGBAAt(rect.X, rect.Y).R != 32 {
+			t.Fatal("omitted metallic scale was treated as explicit zero")
+		}
+	}
+}
+
+func assertExplicitNonmetalAtlas(t *testing.T, pair worldmaterial.Pair) {
+	t.Helper()
+
+	_, pixels, err := qoi.Decode(pair.Reflectance)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, tail, err := qoi.Decode(pair.ReflectanceMipTail)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for slot, rect := range pair.Layout.Materials {
+		for row := -rect.Gutter; row < rect.Height+rect.Gutter; row++ {
+			for column := -rect.Gutter; column < rect.Width+rect.Gutter; column++ {
+				got := pixels.NRGBAAt(rect.X+column, rect.Y+row)
+
+				wantMetal := uint8(32 + 64*(min(max(column, 0), rect.Width-1)%2))
+				if rect.MaterialID == 3 {
+					wantMetal = 0
+				}
+
+				wantSmoothness := uint8(255 * (min(max(row, 0), rect.Height-1) % 2))
+				if got != (color.NRGBA{R: wantMetal, G: wantSmoothness, A: 255}) {
+					t.Fatalf("material %d changed smoothness or retained metallic evidence: %v", rect.MaterialID, got)
+				}
+			}
+		}
+
+		for mip := 1; mip <= worldmaterial.MipLevels; mip++ {
+			mipRect, _ := pair.Layout.MipRect(mip, slot, true)
+
+			wantMetal := uint8(64)
+			if rect.MaterialID == 3 {
+				wantMetal = 0
+			}
+
+			if got := tail.NRGBAAt(mipRect.X, mipRect.Y); got != (color.NRGBA{R: wantMetal, G: 128, A: 255}) {
+				t.Fatalf("material %d mip %d: %v", rect.MaterialID, mip, got)
+			}
+		}
+	}
+}
+
 func TestWorldMaterialReflectanceCacheAndLinearMips(t *testing.T) {
 	t.Parallel()
 

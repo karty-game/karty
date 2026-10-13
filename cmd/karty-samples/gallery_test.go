@@ -6,6 +6,7 @@ import (
 	"image/jpeg"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -43,8 +44,8 @@ func TestGalleryExplainsEachPublishedSample(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(cards) != 4 {
-		t.Fatalf("published samples: %d", len(cards))
+	if !slices.Equal(names, []string{"hangar", "crate-room", "environment", "world-camera", "ui-demo", "media-lab", "particle-lab"}) {
+		t.Fatalf("published samples: %v", names)
 	}
 
 	output := t.TempDir()
@@ -88,8 +89,55 @@ func TestGalleryExplainsEachPublishedSample(t *testing.T) {
 		}
 	}
 
-	if !strings.Contains(page, `href="guide/"`) || strings.Contains(page, "environment/") {
-		t.Fatal("guide missing or unfinished environment published")
+	if !strings.Contains(page, `href="guide/"`) || !strings.Contains(page, `href="environment/"`) {
+		t.Fatal("guide or environment missing from published gallery")
+	}
+}
+
+func TestGalleryIncludesEnvironmentInPriorityOrder(t *testing.T) {
+	t.Parallel()
+
+	root := filepath.Join("..", "..")
+
+	names, err := sampleNames(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []string{"hangar", "crate-room", "environment", "world-camera", "ui-demo", "media-lab", "particle-lab"}
+	if !slices.Equal(names, want) {
+		t.Fatalf("gallery order: %v", names)
+	}
+
+	cards, err := sampleCards(root, names)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := t.TempDir()
+	if err := writeGallery(output, cards); err != nil {
+		t.Fatal(err)
+	}
+
+	contents, err := os.ReadFile(filepath.Join(output, "index.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	page := string(contents)
+	previous := -1
+
+	for _, name := range want {
+		position := strings.Index(page, `src="`+name+`/preview.jpg"`)
+		if position <= previous {
+			t.Fatalf("%s missing or out of order in rendered gallery", name)
+		}
+
+		previous = position
+	}
+
+	if !strings.Contains(page, "non-Euclidean level geometry") {
+		t.Fatal("world-camera card does not advertise non-Euclidean geometry")
 	}
 }
 

@@ -219,7 +219,7 @@ func TestWorldCameraSampleLevelCompiles(t *testing.T) {
 	}
 	// Column detail now belongs to independent solids; the actual migrated fixture
 	// has a pinned room/portal graph, independent of shaft facet counts.
-	if document.Version != sdkworld.Version || document.Lighting != nil || len(document.Sectors) != 69 || len(document.Contents) != 12 {
+	if document.Version != sdkworld.Version || document.Lighting != nil || len(document.Sectors) != 24 || len(document.Contents) != 22 {
 		t.Fatalf("sample world v%d = %d sectors, %d contents", document.Version, len(document.Sectors), len(document.Contents))
 	}
 
@@ -288,7 +288,7 @@ func checkOpaquePattern(t *testing.T, materialID uint32, texture image.Image) {
 
 func checkWorldCameraColumns(t *testing.T, document sdkworld.Document) {
 	t.Helper()
-	if document.StaticSolids == nil || document.StaticSolids.Version != 1 || len(document.StaticSolids.Items) != 8 {
+	if document.StaticSolids == nil || document.StaticSolids.Version != 1 || len(document.StaticSolids.Items) != 355 {
 		t.Fatal("court lacks eight independent solid shafts")
 	}
 	bays := map[string]bool{}
@@ -306,7 +306,7 @@ func checkWorldCameraColumns(t *testing.T, document sdkworld.Document) {
 			}
 		}
 	}
-	if len(bays) != 16 || portals != 236 {
+	if len(bays) != 16 || portals != 66 {
 		t.Fatalf("court partition changed: bays=%d directed portals=%d", len(bays), portals)
 	}
 	centers := []sdkworld.Vec2{
@@ -319,7 +319,11 @@ func checkWorldCameraColumns(t *testing.T, document sdkworld.Document) {
 		{X: -8, Y: 8},
 		{X: -4, Y: 8},
 	}
-	for index, solid := range document.StaticSolids.Items {
+	index := 0
+	for _, solid := range document.StaticSolids.Items {
+		if !strings.Contains(solid.ID, "/column-") {
+			continue
+		}
 		if solid.ID != fmt.Sprintf("roman-court/column-%d/shaft", index) || !solid.Collision || solid.Bottom != (sdkworld.Plane{}) ||
 			solid.Top != (sdkworld.Plane{C: 12}) ||
 			solid.SideMaterial != 10 ||
@@ -339,6 +343,7 @@ func checkWorldCameraColumns(t *testing.T, document sdkworld.Document) {
 		if math.Abs(perimeter-10*math.Sin(math.Pi/10)) > 1e-5 {
 			t.Fatalf("column%d not regular decagon", index)
 		}
+		index++
 	}
 }
 
@@ -391,8 +396,8 @@ func checkWorldCameraActors(t *testing.T, document sdkworld.Document) {
 			actors[content.ID] = content
 		}
 	}
-	if len(actors) != 11 {
-		t.Fatalf("sample authored actors = %d, want 11", len(actors))
+	if len(actors) != 21 {
+		t.Fatalf("sample authored actors = %d, want 21", len(actors))
 	}
 	for authoredID, facing := range map[string]sdkworld.SpriteFacing{
 		"hall/player-marker":            sdkworld.SpriteCameraFacing,
@@ -465,50 +470,30 @@ func checkWorldCameraCourtMaterials(t *testing.T, sector sdkworld.Sector) {
 	}
 }
 
-// Verify visible relief on the compiled geometry, including concave bay
-// decomposition, rather than depending only on the authored room count.
+// Verify basin relief comes from retained volumes while the underlying bays stay flat.
 func checkWorldCameraBasin(t *testing.T, document sdkworld.Document) {
 	t.Helper()
-	for _, sector := range document.Sectors {
-		if sector.Instance != "roman-court" || !strings.HasPrefix(sector.SourceRoom, "basin-") {
-			continue
-		}
-		for _, wall := range sector.Walls {
-			if wall.Portal < 0 {
-				t.Fatalf("basin edge %s/%s is disconnected", sector.SourceRoom, wall.SourceEdge)
-			}
-		}
-	}
 	for _, sample := range []struct{ x, height float64 }{
-		{-5, 0}, {-5.35, .12}, {-5.6, .24}, {-5.82, .36}, {-6.12, .64}, {-7.7, .50},
+		{-5, 0}, {-5.4, .10}, {-5.7, .44}, {-6.0, .36}, {-7.7, .36},
 	} {
-		matches := 0
-		for _, sector := range document.Sectors {
-			if sector.Instance != "roman-court" {
+		height := 0.0
+		for _, solid := range document.StaticSolids.Items {
+			if !strings.Contains(solid.ID, "/basin-") {
 				continue
 			}
-			if worldCameraSectorContains(sector, sample.x, 4.1) {
-				matches++
-				height := sector.Floor.A*sample.x + sector.Floor.B*4.1 + sector.Floor.C
-				if math.Abs(height-sample.height) > 1e-9 {
-					t.Fatalf("basin floor at (%g,4.1) = %g, want %g", sample.x, height, sample.height)
+			inside := true
+			for i, point := range solid.Footprint {
+				next := solid.Footprint[(i+1)%len(solid.Footprint)]
+				if (next.X-point.X)*(4.1-point.Y)-(next.Y-point.Y)*(sample.x-point.X) < -1e-9 {
+					inside = false
 				}
 			}
+			if inside {
+				height = max(height, solid.Top.C)
+			}
 		}
-		if matches != 1 {
-			t.Fatalf("basin point (%g,4.1) belongs to %d sectors", sample.x, matches)
-		}
-	}
-}
-
-func worldCameraSectorContains(sector sdkworld.Sector, x, y float64) bool {
-	for _, wall := range sector.Walls {
-		cross := (wall.End.X-wall.Start.X)*(y-wall.Start.Y) -
-			(wall.End.Y-wall.Start.Y)*(x-wall.Start.X)
-		if cross < -1e-9 {
-			return false
+		if math.Abs(height-sample.height) > 1e-9 {
+			t.Fatalf("basin top at (%g,4.1) = %g, want %g", sample.x, height, sample.height)
 		}
 	}
-
-	return true
 }

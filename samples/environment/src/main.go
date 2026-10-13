@@ -10,16 +10,18 @@ import (
 
 type Game struct {
 	engine.Game
-	camera      *engine.EntityCamera3D
-	level       engine.LevelHandle
-	request     engine.LevelRequestID
-	panel       *engine.UI
-	fps         *FPSController
-	keys        [256]bool
-	style, view int
-	status      string
-	timeOfDay   float32
-	cloudAmount float32
+	camera       *engine.EntityCamera3D
+	chairs       [12]*engine.EntityWorldSolid
+	level        engine.LevelHandle
+	request      engine.LevelRequestID
+	panel        *engine.UI
+	fps          *FPSController
+	keys         [256]bool
+	view         int
+	status       string
+	controlsOpen bool
+	timeOfDay    float32
+	cloudAmount  float32
 }
 
 //go:wasmexport karty_register
@@ -38,6 +40,7 @@ func (game *Game) Hooks() engine.Hooks {
 			}
 			game.request = 0
 			game.level = event.Handle
+			game.createChairs()
 			game.applyEnvironment()
 			game.visit(game.view)
 		},
@@ -52,36 +55,52 @@ func (game *Game) Hooks() engine.Hooks {
 	}
 }
 
-var styles = [...]string{"daylight", "cartoon", "fantasy", "space"}
-
 func (game *Game) start() {
 	game.fps = NewFPSController(&game.Game)
 	game.fps.SceneContains = func(x, y float32) bool {
-		return game.panel == nil || (y > 270 && y < 500 && (x < float32(config.ResolutionWidth)-380 || y < 440))
+		return !game.controlsOpen && x >= 0 && x <= float32(config.ResolutionWidth) &&
+			y >= 160 && y <= float32(config.ResolutionHeight)
 	}
 	game.fps.OnTouchMode = game.invalidate
 	game.showPanel()
-	game.selectStyle(0)
+	game.loadLevel()
 }
 
 func (game *Game) showPanel() {
+	game.controlsOpen = false
+	game.panel = ui.Hud(ui.HudProps{
+		Status: func() string { return game.status }, Environment: game.environmentLabel,
+		Open: game.showControls,
+	})
+}
+
+func (game *Game) showControls() {
+	game.fps.Release()
+	if game.panel != nil {
+		game.panel.Close()
+	}
+	game.controlsOpen = true
 	game.panel = ui.Explorer(ui.ExplorerProps{
-		Status: func() string { return game.status }, Controls: game.fps.Help,
-		Style: func() string { return styles[game.style] }, SelectStyle: game.selectStyle,
-		Visit: game.visit, Hide: func() { game.panel.Close(); game.panel = nil },
+		Visit: func(index int) { game.visit(index); game.hideControls() }, Close: game.hideControls,
 		Environment: game.environmentLabel, SetTime: game.setTime,
 		CloudAmount: func() int32 { return int32(game.cloudAmount*100 + .5) }, SetCloudAmount: game.setCloudAmount,
 		ResetEnvironment: game.resetEnvironment,
 	})
 }
 
-func (game *Game) selectStyle(index int) {
-	if index < 0 || index >= len(styles) {
-		return
+func (game *Game) hideControls() {
+	game.fps.Release()
+	if game.panel != nil {
+		game.panel.Close()
 	}
+	game.showPanel()
+}
+
+func (game *Game) loadLevel() {
 	if game.request != 0 {
 		game.CancelLevel(game.request)
 	}
+	game.clearChairs()
 	game.fps.SetCamera(nil)
 	if game.camera != nil {
 		game.camera.Destroy()
@@ -91,11 +110,10 @@ func (game *Game) selectStyle(index int) {
 		game.ReleaseLevel(game.level)
 		game.level = 0
 	}
-	game.style = index
-	game.timeOfDay, game.cloudAmount = 15, .35
-	game.status = "Preparing " + styles[index] + "..."
+	game.timeOfDay, game.cloudAmount = 12, .35
+	game.status = "Preparing daylight..."
 	game.invalidate()
-	game.request = game.RequestLevel("levels." + styles[index])
+	game.request = game.RequestLevel("levels.daylight")
 }
 
 func (game *Game) environmentLabel() string {
@@ -119,7 +137,7 @@ func (game *Game) setCloudAmount(percent int32) {
 }
 
 func (game *Game) resetEnvironment() {
-	game.timeOfDay, game.cloudAmount = 15, .35
+	game.timeOfDay, game.cloudAmount = 12, .35
 	game.applyEnvironment()
 }
 
@@ -136,10 +154,12 @@ type viewpoint struct {
 }
 
 var viewpoints = [...]viewpoint{
-	{"WINDOWS / passage on the right leads outside", 0, -8, 1.7, 0, .08},
-	{"COURTYARD / the view through the windows", 1, 0, 1.7, -.18, .04},
-	{"LOOK BACK / connected indoor observation room", 0, 12, 1.7, 3.14159, .06},
-	{"TEST GROUND / future terrain and vegetation", 0, 32, 1.7, -.35, .18},
+	// Frame the west recess obliquely, with its dining table in the foreground
+	// and the courtyard and mountains visible beyond the glass.
+	{"Windows", -8.3, -10.5, 1.7, .55, .06},
+	{"Courtyard", 1, 0, 1.7, -.08, .04},
+	{"Look back", 1, 13, 1.7, 3.20, .08},
+	{"Test ground", 0, 32, 1.7, -.35, .18},
 }
 
 func (game *Game) visit(index int) {
@@ -158,6 +178,10 @@ func (game *Game) visit(index int) {
 		OrthoHeight: config.CameraOrthoHeight, ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
 	})
 	game.camera.SetLayer(-10)
+	game.SetPhysicsBox(game.camera, engine.PhysicsBox{
+		HalfExtents: engine.NewVec3D(.3, .3, .85), Offset: engine.NewVec3D(0, 0, -.85),
+		Mass: 80, Friction: .5, LockRotation: true,
+	})
 	game.fps.SetCamera(game.camera)
 	if _, err := game.WatchTransform(game.camera, nil); err != nil {
 		game.status = err.Error()
@@ -170,7 +194,7 @@ func (game *Game) visit(index int) {
 
 func (game *Game) key(key engine.Key, down bool) {
 	game.fps.Key(key, down)
-	if key != engine.KeyV && key != engine.KeyP && key != engine.KeyH &&
+	if key != engine.KeyV && key != engine.KeyH &&
 		key != engine.KeyT && key != engine.KeyC && key != engine.KeyR {
 		return
 	}
@@ -182,8 +206,6 @@ func (game *Game) key(key engine.Key, down bool) {
 	switch key {
 	case engine.KeyV:
 		game.visit((game.view + 1) % len(viewpoints))
-	case engine.KeyP:
-		game.selectStyle((game.style + 1) % len(styles))
 	case engine.KeyT:
 		time := float32(9)
 		switch game.timeOfDay {
@@ -209,12 +231,7 @@ func (game *Game) key(key engine.Key, down bool) {
 	case engine.KeyR:
 		game.resetEnvironment()
 	case engine.KeyH:
-		if game.panel != nil {
-			game.panel.Close()
-			game.panel = nil
-		} else {
-			game.showPanel()
-		}
+		game.showControls()
 	}
 }
 
@@ -225,6 +242,7 @@ func (game *Game) invalidate() {
 }
 
 func (game *Game) stop() {
+	game.clearChairs()
 	game.fps.Close()
 	if game.camera != nil {
 		game.camera.Destroy()

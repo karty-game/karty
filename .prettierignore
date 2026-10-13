@@ -10,3 +10,8 @@
 **/*.generated.*
 # Compiled world fixtures require canonical wire bytes, rather than editor layout.
 **/*.world.json
+# Retained CC0 assets/source metadata and deterministic particle import reports.
+samples/particle-lab/effects/imports/brackeys/
+# Original converted templates retain byte checksums in sources/static-assets.json.
+samples/particle-lab/effects/brackeys-fire-combined.yaml
+samples/particle-lab/effects/brackeys-fire-separate.yaml

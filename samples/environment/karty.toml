@@ -13,7 +13,7 @@ far = 120
 ortho_height = 60
 
 [project.debug]
-renderer = true
+renderer = false
 
 [sdk]
-version = "0.0.11"
+version = "0.0.12"

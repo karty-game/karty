@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "provenance": {
+    "repository": "https://github.com/Brackeys/vfx-in-godot",
+    "commit": "23b58f272b828b0a894ed7ef72fbf9033ee9d177",
+    "license": "CC0-1.0",
+    "licenseEvidenceURL": "https://brackeysgames.itch.io/brackeys-vfx-bundle",
+    "sourceSHA256": "19c4994f065dc186fa034e99b865a2b19a377dddfd3228511cfae5ffb58172a0"
+  },
+  "assets": [
+    {
+      "file": "textures/brackeys-circle-02-a.png",
+      "sha256": "3e027fb3ddf09966f510132177dae586ac9cdc44967ff963114bc762e248a1f9",
+      "bytes": 35053,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/circle_02_a.png",
+      "texture": "brackeys-circle-02-a",
+      "sourcePremultipliedAlpha": false
+    },
+    {
+      "file": "textures/brackeys-circle-04-a.png",
+      "sha256": "a1f867578108e3fc17d9e9675f4237bf1aa3faf4cba78d823375676df59bfdcd",
+      "bytes": 39482,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/circle_04_a.png",
+      "texture": "brackeys-circle-04-a",
+      "sourcePremultipliedAlpha": false
+    },
+    {
+      "file": "textures/brackeys-flame-01-a.png",
+      "sha256": "e4ff76756be8962d6e8d9198f49c1ee63f22a09ac1d29d5e2b2baba35871c019",
+      "bytes": 30031,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/flame_01_a.png",
+      "texture": "brackeys-flame-01-a",
+      "sourcePremultipliedAlpha": false
+    },
+    {
+      "file": "textures/brackeys-slash-04-a.png",
+      "sha256": "5c452a8a602e197702bb2197f550dba22f53a3774a7395a1b79ac0b91db19a90",
+      "bytes": 10790,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/slash_04_a.png",
+      "texture": "brackeys-slash-04-a",
+      "sourcePremultipliedAlpha": false
+    },
+    {
+      "file": "textures/brackeys-smoke-07-a.png",
+      "sha256": "7a2448e7c2fefc0888fd068c37ec991d44309ecdae8ca338cec5e63d7065b700",
+      "bytes": 57163,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/smoke_07_a.png",
+      "texture": "brackeys-smoke-07-a",
+      "sourcePremultipliedAlpha": false
+    },
+    {
+      "file": "textures/brackeys-smoke-07-strong-a.png",
+      "sha256": "94006c02d2d163b0ae1049e937b260f166c4c4b3029e49183731412d0a922fe2",
+      "bytes": 60579,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/smoke_07_strong_a.png",
+      "texture": "brackeys-smoke-07-strong-a",
+      "sourcePremultipliedAlpha": true
+    },
+    {
+      "file": "textures/brackeys-spark-06-a.png",
+      "sha256": "d568e145abc3dfb311fa1af22e8c25a91e2772106dde2df137ed06a29dd3143c",
+      "bytes": 47139,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/spark_06_a.png",
+      "texture": "brackeys-spark-06-a",
+      "sourcePremultipliedAlpha": false
+    },
+    {
+      "file": "textures/brackeys-spotlight-01-a.png",
+      "sha256": "95e02b339012aedc584815b14e5456fa1af9fb596dd9c8368f5a44a53bda9343",
+      "bytes": 37942,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/spotlight_01_a.png",
+      "texture": "brackeys-spotlight-01-a",
+      "sourcePremultipliedAlpha": false
+    },
+    {
+      "file": "textures/brackeys-star-04-a.png",
+      "sha256": "0f6a766aefdaca9d4593cffb0d12851010acfaf7e57ad76ba1ee1ec1a9b2902c",
+      "bytes": 21482,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/star_04_a.png",
+      "texture": "brackeys-star-04-a",
+      "sourcePremultipliedAlpha": false
+    },
+    {
+      "file": "textures/brackeys-trace-01-a.png",
+      "sha256": "4cb2eb10e742aafa83b5a66dfd4bb109ba8b7651d396a4fa35f543f83a7338c3",
+      "bytes": 15622,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/trace_01_a.png",
+      "texture": "brackeys-trace-01-a",
+      "sourcePremultipliedAlpha": false
+    },
+    {
+      "file": "textures/brackeys-trace-03-a.png",
+      "sha256": "af54fdaff44fc6bf2c21893d6ae86d67f9851bb81d7d65717837f27687ad900a",
+      "bytes": 21503,
+      "sourcePath": "vfx/brackeys_particle_bundle/particles/alpha/trace_03_a.png",
+      "texture": "brackeys-trace-03-a",
+      "sourcePremultipliedAlpha": false
+    },
+    {
+      "file": "brackeys-fire-combined.yaml",
+      "sha256": "459ca4505aba634d761b3c385c59d9a38ca5b7bfbece898445f05c2dba5d81d8",
+      "bytes": 4144,
+      "sourcePath": "vfx/scenes/fire.tscn",
+      "sourceSHA256": "7a069f907c5069252f6a63366395953408a7dd0e3f1cf4ca262735bdd5f5bc19",
+      "sourceParent": "Fire - Combined"
+    },
+    {
+      "file": "brackeys-fire-separate.yaml",
+      "sha256": "bced9834aff0d4e2f58b48af8dbb2062714fec81ac4d43e6cbabf07968396df5",
+      "bytes": 6148,
+      "sourcePath": "vfx/scenes/fire.tscn",
+      "sourceSHA256": "7a069f907c5069252f6a63366395953408a7dd0e3f1cf4ca262735bdd5f5bc19",
+      "sourceParent": "Fire - Seperate"
+    },
+    {
+      "file": "sources/LICENSE-PARTICLES.txt",
+      "sha256": "ceb9b8eaa4e91ed9d381f35c3c4f33ac30b329423cdba5294d211414826c0ac5",
+      "bytes": 1702
+    },
+    {
+      "file": "sources/pixi/Fire.png",
+      "sha256": "b7a330148b31ec5c52ba5dbeedc014f1e030b4462935f048f55d4aee46e96e25",
+      "bytes": 466,
+      "sourcePath": "https://particle-emitter-editor.pixijs.io/assets/images/Fire.png",
+      "license": "MIT"
+    }
+  ]
+}

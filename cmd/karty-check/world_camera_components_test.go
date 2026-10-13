@@ -52,7 +52,7 @@ func TestWorldCameraComponents(t *testing.T) {
 	writeComponentFixture(t, directory, ".karty/config/project.go", []byte(componentConfigFixture))
 
 	sample := filepath.Join("..", "..", "samples", "world-camera")
-	for _, name := range []string{"cameras.go", "hud.go", "actors.go"} {
+	for _, name := range []string{"cameras.go", "pointer.go", "hud.go", "actors.go"} {
 		copyComponentFixture(t, filepath.Join(sample, "src", name), directory, filepath.Join("src", name))
 	}
 
@@ -126,6 +126,29 @@ func componentNativeImports(contents []byte) ([]byte, error) {
 		function.Doc = nil
 
 		function.Body = &ast.BlockStmt{}
+		audioStub := ""
+
+		switch function.Name.Name {
+		case "hostSetSoundEmitter":
+			audioStub = "fixtureAudioCalls=append(fixtureAudioCalls,FixtureAudioCall{emitterID,soundID,levelID,sourceID,x,y,z,volume,nearDistance,farDistance,flags})"
+		case "hostStopSoundEmitter":
+			audioStub = "fixtureAudioStops=append(fixtureAudioStops,emitterID)"
+		}
+
+		if audioStub != "" {
+			stub, err := parser.ParseFile(token.NewFileSet(), "audio_stub.go", "package engine\nfunc capture(){"+audioStub+"}", 0)
+			if err != nil {
+				return nil, err
+			}
+
+			stubFunction, valid := stub.Decls[0].(*ast.FuncDecl)
+			if !valid {
+				return nil, fmt.Errorf("invalid audio capture function: %w", os.ErrInvalid)
+			}
+
+			function.Body = stubFunction.Body
+		}
+
 		if function.Name.Name == "hostSubmitCommands" {
 			stub, err := parser.ParseFile(
 				token.NewFileSet(),
@@ -234,6 +257,12 @@ const componentEngineFixture = `package engine
 var fixtureCommands []byte
 func FixtureBegin(){beginCommands(1)}
 func FixtureCommands()[]byte{finishCommands();return fixtureCommands}
+type FixtureAudioCall struct {Emitter,Sound,Level,Source uint32;X,Y,Z,Volume,Near,Far float32;Flags uint32}
+var fixtureAudioCalls []FixtureAudioCall
+var fixtureAudioStops []uint32
+func FixtureAudioReset(){fixtureAudioCalls=nil;fixtureAudioStops=nil}
+func FixtureAudioCalls()[]FixtureAudioCall{return fixtureAudioCalls}
+func FixtureAudioStops()[]uint32{return fixtureAudioStops}
 `
 const cameraHookEngineFixture = `package engine
 func FixtureStart(){initialize()}

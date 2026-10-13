@@ -13,7 +13,7 @@ func TestBrowserLauncher(t *testing.T) {
 		t.Skip("Node unavailable; required by mise run check-web")
 	}
 
-	for _, mode := range []string{"sound-present", "sound-absent", "sound-duplicate", "http-failure", "wasm-fallback"} {
+	for _, mode := range []string{"sound-present", "sound-absent", "sound-duplicate", "http-failure", "wasm-fallback", "delayed-presentation"} {
 		cmd := exec.CommandContext(t.Context(), "node", "testdata/launcher.test.mjs", "--mock", "templates/launcher.js.tmpl")
 
 		cmd.Env = append(os.Environ(), "KARTY_TEST_HTTP_FAILURE=0", "KARTY_TEST_WASM_FALLBACK=0", "KARTY_TEST_SOUND_SECTIONS=present")
@@ -27,6 +27,10 @@ func TestBrowserLauncher(t *testing.T) {
 
 		if mode == "wasm-fallback" {
 			cmd.Env = append(cmd.Env, "KARTY_TEST_WASM_FALLBACK=1")
+		}
+
+		if mode == "delayed-presentation" {
+			cmd.Env = append(cmd.Env, "KARTY_TEST_PRESENTATION_DELAY=1")
 		}
 
 		if output, err := cmd.CombinedOutput(); err != nil {

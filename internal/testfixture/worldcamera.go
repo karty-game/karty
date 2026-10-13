@@ -72,37 +72,28 @@ func WorldCameraGeometry(t *testing.T, sourceRoot string) string {
 
 	mapping := document.Content[0]
 	for index := 0; index < len(mapping.Content); index += 2 {
-		if mapping.Content[index].Value == "lighting" {
+		if mapping.Content[index].Value == "lighting" || mapping.Content[index].Value == "animations" {
 			mapping.Content = append(mapping.Content[:index], mapping.Content[index+2:]...)
 
-			break
+			index -= 2
 		}
 	}
 
-	// Advanced material fixtures explicitly opt in separately; older geometry
-	// fixtures preserve their released capability baseline.
-	var removeLayers func(*yaml.Node)
+	// Geometry-only fixtures retain the opaque water baseline and texture IDs.
+	var replaceWaterBoundary func(*yaml.Node)
 
-	removeLayers = func(node *yaml.Node) {
-		if node.Kind == yaml.MappingNode {
-			for index := 0; index+1 < len(node.Content); {
-				switch node.Content[index].Value {
-				case "wall_bands", "bands", "floor_secondary", "ceiling_secondary", "wall_secondary", "secondary":
-					node.Content = append(node.Content[:index], node.Content[index+2:]...)
+	replaceWaterBoundary = func(node *yaml.Node) {
+		if node.Kind == yaml.ScalarNode && node.Value == "z-water-boundary" {
+			node.Value = "z-court-water"
+		}
 
-					continue
-				}
-
-				removeLayers(node.Content[index+1])
-				index += 2
-			}
-		} else {
-			for _, child := range node.Content {
-				removeLayers(child)
-			}
+		for _, child := range node.Content {
+			replaceWaterBoundary(child)
 		}
 	}
-	removeLayers(&document)
+	replaceWaterBoundary(&document)
+
+	removeGeometryMaterialLayers(&document)
 
 	data, err = yaml.Marshal(&document)
 	if err != nil {
@@ -126,13 +117,43 @@ func geometryTextures(t *testing.T, textures []any) []any {
 			t.Fatal("sample texture declaration is invalid")
 		}
 		// Preserve released fixture IDs and opaque inputs after disabling bands.
-		if texture["name"] == "wall-top" || texture["name"] == "wall-bottom" {
+		if texture["name"] == "wall-top" || texture["name"] == "wall-bottom" || texture["name"] == "z-detail-grain" ||
+			texture["name"] == "z-water-boundary" {
 			continue
 		}
 
 		delete(texture, "material_strengths")
+		delete(texture, "materialize")
+		delete(texture, "emission")
 		kept = append(kept, texture)
 	}
 
 	return kept
+}
+
+func removeGeometryMaterialLayers(document *yaml.Node) {
+	// Advanced material fixtures explicitly opt in separately; older geometry
+	// fixtures preserve their released capability baseline.
+	var removeLayers func(*yaml.Node)
+
+	removeLayers = func(node *yaml.Node) {
+		if node.Kind == yaml.MappingNode {
+			for index := 0; index+1 < len(node.Content); {
+				switch node.Content[index].Value {
+				case "wall_bands", "bands", "floor_secondary", "ceiling_secondary", "wall_secondary", "secondary", "animation":
+					node.Content = append(node.Content[:index], node.Content[index+2:]...)
+
+					continue
+				}
+
+				removeLayers(node.Content[index+1])
+				index += 2
+			}
+		} else {
+			for _, child := range node.Content {
+				removeLayers(child)
+			}
+		}
+	}
+	removeLayers(document)
 }

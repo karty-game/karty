@@ -1,0 +1,18 @@
+# Match the independent smoke views in src/main.go.
+[[views]]
+position = [0, -10, 2.9]
+yaw = 0
+pitch = 0
+output = "dist/screenshots/smoke/comparison.png"
+
+[[views]]
+position = [-2.3, -3.2, 2.5]
+yaw = -12.33908728
+pitch = 0
+output = "dist/screenshots/smoke/thin.png"
+
+[[views]]
+position = [4.4, -4.5, 2.85]
+yaw = -17.28149837
+pitch = 0
+output = "dist/screenshots/smoke/rolls.png"

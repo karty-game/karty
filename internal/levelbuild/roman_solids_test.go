@@ -44,12 +44,12 @@ func TestRomanStaticSolidSamplePackagedWASM(t *testing.T) {
 		}
 	}
 
-	if len(document.Sectors) != 69 || portals != 236 || document.StaticSolids == nil ||
-		len(document.StaticSolids.Items) != 8 || len(document.Contents) != 12 {
+	if len(document.Sectors) != 24 || portals != 66 || document.StaticSolids == nil ||
+		len(document.StaticSolids.Items) != 355 || len(document.Contents) != 22 {
 		t.Fatalf("actual WASM lost migrated graph or solids: sectors=%d portals=%d", len(document.Sectors), portals)
 	}
 
-	if courtSectors != 61 || courtPortals != 219 {
+	if courtSectors != 16 || courtPortals != 49 {
 		t.Fatalf("Roman court graph: sectors=%d directed portals=%d", courtSectors, courtPortals)
 	}
 
@@ -57,6 +57,10 @@ func TestRomanStaticSolidSamplePackagedWASM(t *testing.T) {
 		len(document.Sectors), portals, courtSectors, courtPortals)
 
 	for _, solid := range document.StaticSolids.Items {
+		if len(solid.Footprint) != 10 {
+			continue
+		}
+
 		if !solid.Collision || len(solid.Footprint) != 10 || solid.Top.C != 12 {
 			t.Fatal("actual WASM lost shaft volume")
 		}

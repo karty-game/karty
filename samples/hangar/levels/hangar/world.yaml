@@ -1,170 +1,978 @@
 # Original Hangar environment.
 # All connected wall spans are open; door mechanisms are deferred.
-version: 10
+version: 11
+# BEGIN PARTICLE LAB EFFECTS: particles
 particles:
-  version: 1
+  version: 2
   presets:
-    - name: acid-sparkle
-      capacity: 48
-      emission: { rate: 12, duration_seconds: 3 }
-      lifetime_seconds: { min: 0.9, max: 1.6 }
-      spawn: { shape: box, half_extent: { x: 0.9, y: 0.12, z: 0.01 } }
-      velocity_min: { x: -0.045, y: -0.045, z: 0.28 }
-      velocity_max: { x: 0.045, y: 0.045, z: 0.55 }
-      acceleration: { z: 0.08 }
-      drag: 0.12
-      sprite: { frames: [acid-sparkle], playback: cycle, facing: camera-facing, blend: additive }
-      rotation_degrees: { min: -45, max: 45 }
-      rotation_speed_degrees: { min: -50, max: 50 }
+    - name: acid-micro-shells
+      capacity: 19
+      emission:
+        rate: 13
+        duration_seconds: 1.43
+      lifetime_seconds:
+        min: 0.26
+        max: 0.56
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.62
+          "y": 0.44
+          z: 0.015
+      velocity_min:
+        x: -0.1
+        "y": -0.08
+        z: 0.12
+      velocity_max:
+        x: 0.1
+        "y": 0.08
+        z: 0.28
+      acceleration:
+        x: 0
+        "y": 0
+        z: 0.18
+      drag: 0.4
+      sprite:
+        frames:
+          - brackeys-circle-02-a
+        playback: cycle
+        facing: camera-facing
+        blend: alpha
       size_over_life:
-        - { age: 0, value: 0.11 }
-        - { age: 0.15, value: 0.14 }
-        - { age: 1, value: 0.025 }
+        - age: 0
+          value: 0.035
+        - age: 0.18
+          value: 0.11
+        - age: 0.76
+          value: 0.15
+        - age: 1
+          value: 0.18
       color_over_life:
-        - { age: 0, rgba: [0.24, 0.95, 0.32, 0] }
-        - { age: 0.12, rgba: [0.24, 0.95, 0.32, 0.9] }
-        - { age: 1, rgba: [0.06, 0.40, 0.14, 0] }
-    - name: barrel-fire
-      capacity: 64
-      emission: { rate: 24, duration_seconds: 2 }
-      lifetime_seconds: { min: 0.40, max: 0.65 }
-      spawn: { shape: box, half_extent: { x: 0.15, y: 0.15, z: 0.01 } }
-      velocity_min: { x: -0.04, y: -0.04, z: 0.70 }
-      velocity_max: { x: 0.04, y: 0.04, z: 1.30 }
-      acceleration: { z: 0.35 }
+        - age: 0
+          rgba:
+            - 0.35
+            - 0.57
+            - 0.09
+            - 0
+        - age: 0.15
+          rgba:
+            - 0.65
+            - 0.83
+            - 0.21
+            - 0.42
+        - age: 0.7
+          rgba:
+            - 0.36
+            - 0.7
+            - 0.05
+            - 0.32
+        - age: 1
+          rgba:
+            - 0.22
+            - 0.49
+            - 0.025
+            - 0
+      rotation_degrees:
+        min: -180
+        max: 180
+      rotation_speed_degrees:
+        min: -10
+        max: 10
+    - name: acid-pocket-bubbles
+      capacity: 6
+      emission:
+        rate: 2.8
+        duration_seconds: 1.79
+      lifetime_seconds:
+        min: 0.48
+        max: 0.92
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.54
+          "y": 0.35
+          z: 0.012
+      velocity_min:
+        x: -0.09
+        "y": -0.06
+        z: 0.06
+      velocity_max:
+        x: 0.09
+        "y": 0.06
+        z: 0.18
+      acceleration:
+        x: 0
+        "y": 0
+        z: 0.1
+      drag: 0.2
+      sprite:
+        frames:
+          - brackeys-circle-04-a
+        playback: cycle
+        facing: camera-facing
+        blend: alpha
+      size_over_life:
+        - age: 0
+          value: 0.07
+        - age: 0.42
+          value: 0.19
+        - age: 0.88
+          value: 0.31
+        - age: 1
+          value: 0.03
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.31
+            - 0.52
+            - 0.07
+            - 0
+        - age: 0.12
+          rgba:
+            - 0.55
+            - 0.79
+            - 0.15
+            - 0.34
+        - age: 0.82
+          rgba:
+            - 0.48
+            - 0.72
+            - 0.1
+            - 0.29
+        - age: 1
+          rgba:
+            - 0.25
+            - 0.45
+            - 0.045
+            - 0
+      rotation_degrees:
+        min: -180
+        max: 180
+      rotation_speed_degrees:
+        min: -12
+        max: 12
+    - name: acid-ballistic-droplets
+      capacity: 12
+      emission:
+        rate: 5.2
+        duration_seconds: 1.61
+        bursts:
+          - at_seconds: 0.32
+            count: 2
+          - at_seconds: 1.03
+            count: 1
+      lifetime_seconds:
+        min: 0.24
+        max: 0.46
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.58
+          "y": 0.4
+          z: 0.02
+      velocity_min:
+        x: -0.33
+        "y": -0.24
+        z: 0.85
+      velocity_max:
+        x: 0.33
+        "y": 0.24
+        z: 1.35
+      acceleration:
+        x: 0
+        "y": 0
+        z: -4
+      drag: 0.12
+      sprite:
+        frames:
+          - brackeys-trace-01-a
+        playback: cycle
+        facing: camera-facing
+        blend: alpha
+      size_over_life:
+        - age: 0
+          value: 0.035
+        - age: 0.12
+          value: 0.13
+        - age: 0.55
+          value: 0.075
+        - age: 1
+          value: 0.025
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.65
+            - 0.85
+            - 0.18
+            - 0
+        - age: 0.15
+          rgba:
+            - 0.85
+            - 0.98
+            - 0.5
+            - 0.72
+        - age: 0.55
+          rgba:
+            - 0.38
+            - 0.72
+            - 0.06
+            - 0.52
+        - age: 1
+          rgba:
+            - 0.2
+            - 0.44
+            - 0.035
+            - 0
+      rotation_degrees:
+        min: -24
+        max: 24
+      rotation_speed_degrees:
+        min: -35
+        max: 35
+    - name: acid-thin-vapor
+      capacity: 5
+      emission:
+        rate: 2.2
+        duration_seconds: 1.87
+      lifetime_seconds:
+        min: 0.7
+        max: 1.25
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.46
+          "y": 0.33
+          z: 0.015
+      velocity_min:
+        x: -0.06
+        "y": -0.04
+        z: 0.23
+      velocity_max:
+        x: 0.08
+        "y": 0.06
+        z: 0.38
+      acceleration:
+        x: 0
+        "y": 0
+        z: 0.03
+      drag: 0.4
+      sprite:
+        frames:
+          - brackeys-smoke-07-a
+        playback: cycle
+        facing: camera-facing
+        blend: alpha
+      size_over_life:
+        - age: 0
+          value: 0.15
+        - age: 0.32
+          value: 0.29
+        - age: 0.72
+          value: 0.42
+        - age: 1
+          value: 0.5
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.21
+            - 0.38
+            - 0.065
+            - 0
+        - age: 0.24
+          rgba:
+            - 0.31
+            - 0.49
+            - 0.11
+            - 0.07
+        - age: 0.7
+          rgba:
+            - 0.25
+            - 0.41
+            - 0.085
+            - 0.035
+        - age: 1
+          rgba:
+            - 0.18
+            - 0.3
+            - 0.05
+            - 0
+      rotation_degrees:
+        min: -180
+        max: 180
+      rotation_speed_degrees:
+        min: -18
+        max: 18
+    - name: acid-surface-pops
+      capacity: 4
+      emission:
+        bursts:
+          - at_seconds: 0
+            count: 1
+          - at_seconds: 0.36
+            count: 1
+          - at_seconds: 1.11
+            count: 1
+          - at_seconds: 1.94
+            count: 1
+      lifetime_seconds:
+        min: 0.12
+        max: 0.21
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.62
+          "y": 0.44
+          z: 0.006
+      velocity_min:
+        x: -0.05
+        "y": -0.05
+        z: 0.07
+      velocity_max:
+        x: 0.05
+        "y": 0.05
+        z: 0.12
+      sprite:
+        frames:
+          - brackeys-circle-04-a
+        playback: cycle
+        facing: camera-facing
+        blend: alpha
+      size_over_life:
+        - age: 0
+          value: 0.045
+        - age: 0.2
+          value: 0.16
+        - age: 0.5
+          value: 0.22
+        - age: 1
+          value: 0.27
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.46
+            - 0.65
+            - 0.12
+            - 0
+        - age: 0.16
+          rgba:
+            - 0.72
+            - 0.92
+            - 0.34
+            - 0.44
+        - age: 0.5
+          rgba:
+            - 0.3
+            - 0.62
+            - 0.08
+            - 0.2
+        - age: 1
+          rgba:
+            - 0.21
+            - 0.42
+            - 0.035
+            - 0
+      rotation_degrees:
+        min: -180
+        max: 180
+    - name: industrial-electric-charge
+      capacity: 14
+      emission:
+        rate: 16
+        duration_seconds: 0.78
+      lifetime_seconds:
+        min: 0.12
+        max: 0.24
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.07
+          "y": 0.04
+          z: 0.07
+      velocity_min:
+        x: -0.1
+        "y": -0.05
+        z: 0.1
+      velocity_max:
+        x: 0.1
+        "y": 0.05
+        z: 0.3
       drag: 0.6
       sprite:
-        frames: [barrel-flame-1, barrel-flame-2, barrel-flame-3]
-        fps: 12
+        frames:
+          - brackeys-spotlight-01-a
         playback: cycle
-        facing: upright
+        facing: camera-facing
         blend: additive
-      rotation_degrees: { min: -12, max: 12 }
-      rotation_speed_degrees: { min: -12, max: 12 }
       size_over_life:
-        - { age: 0, value: 0.52 }
-        - { age: 0.25, value: 0.48 }
-        - { age: 1, value: 0.23 }
+        - age: 0
+          value: 0.015
+        - age: 0.36
+          value: 0.07
+        - age: 0.73
+          value: 0.035
+        - age: 1
+          value: 0.002
       color_over_life:
-        - { age: 0, rgba: [1, 0.80, 0.27, 0] }
-        - { age: 0.12, rgba: [1, 0.62, 0.12, 0.85] }
-        - { age: 0.6, rgba: [1, 0.24, 0.035, 0.5] }
-        - { age: 1, rgba: [0.65, 0.06, 0.005, 0] }
-    - name: barrel-embers
+        - age: 0
+          rgba:
+            - 0.1
+            - 0.25
+            - 1
+            - 0
+        - age: 0.36
+          rgba:
+            - 0.2
+            - 0.55
+            - 1
+            - 0.35
+        - age: 0.73
+          rgba:
+            - 0.1
+            - 0.3
+            - 0.8
+            - 0.15
+        - age: 1
+          rgba:
+            - 0.06
+            - 0.12
+            - 0.35
+            - 0
+    - name: industrial-electric-contact
+      capacity: 3
+      emission:
+        bursts:
+          - at_seconds: 0.82
+            count: 1
+          - at_seconds: 0.872
+            count: 1
+          - at_seconds: 0.913
+            count: 1
+      lifetime_seconds:
+        min: 0.035
+        max: 0.055
+      spawn:
+        shape: point
+      sprite:
+        frames:
+          - lab-flash
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - age: 0
+          value: 0.04
+        - age: 0.12
+          value: 0.3
+        - age: 0.45
+          value: 0.16
+        - age: 1
+          value: 0.002
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.5
+            - 0.7
+            - 1
+            - 0
+        - age: 0.12
+          rgba:
+            - 0.75
+            - 0.85
+            - 1
+            - 0.8
+        - age: 0.45
+          rgba:
+            - 0.2
+            - 0.4
+            - 1
+            - 0.3
+        - age: 1
+          rgba:
+            - 0.08
+            - 0.12
+            - 0.5
+            - 0
+      rotation_degrees:
+        min: 0
+        max: 360
+    - name: industrial-electric-segments
+      capacity: 10
+      emission:
+        bursts:
+          - at_seconds: 0.82
+            count: 5
+          - at_seconds: 0.876
+            count: 3
+          - at_seconds: 0.916
+            count: 2
+      lifetime_seconds:
+        min: 0.045
+        max: 0.078
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.18
+          "y": 0.04
+          z: 0.14
+      velocity_min:
+        x: -1.1
+        "y": -0.15
+        z: -0.35
+      velocity_max:
+        x: 1.1
+        "y": 0.15
+        z: 0.35
+      sprite:
+        frames:
+          - lab-streak
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - age: 0
+          value: 0.2
+        - age: 0.1
+          value: 0.85
+        - age: 0.6
+          value: 0.65
+        - age: 1
+          value: 0.06
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.3
+            - 0.55
+            - 1
+            - 0
+        - age: 0.1
+          rgba:
+            - 0.55
+            - 0.8
+            - 1
+            - 0.75
+        - age: 0.6
+          rgba:
+            - 0.12
+            - 0.35
+            - 1
+            - 0.35
+        - age: 1
+          rgba:
+            - 0.05
+            - 0.08
+            - 0.45
+            - 0
+      rotation_degrees:
+        min: -65
+        max: 65
+      rotation_speed_degrees:
+        min: -180
+        max: 180
+    - name: industrial-electric-branches
+      capacity: 9
+      emission:
+        bursts:
+          - at_seconds: 0.832
+            count: 4
+          - at_seconds: 0.88
+            count: 3
+          - at_seconds: 0.922
+            count: 2
+      lifetime_seconds:
+        min: 0.03
+        max: 0.066
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.13
+          "y": 0.04
+          z: 0.08
+      velocity_min:
+        x: -0.4
+        "y": -0.1
+        z: -0.25
+      velocity_max:
+        x: 0.4
+        "y": 0.1
+        z: 0.25
+      sprite:
+        frames:
+          - lab-streak
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - age: 0
+          value: 0.08
+        - age: 0.1
+          value: 0.45
+        - age: 0.55
+          value: 0.32
+        - age: 1
+          value: 0.025
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.2
+            - 0.45
+            - 1
+            - 0
+        - age: 0.1
+          rgba:
+            - 0.45
+            - 0.7
+            - 1
+            - 0.6
+        - age: 0.55
+          rgba:
+            - 0.08
+            - 0.3
+            - 0.9
+            - 0.25
+        - age: 1
+          rgba:
+            - 0.04
+            - 0.08
+            - 0.3
+            - 0
+      rotation_degrees:
+        min: -85
+        max: 85
+      rotation_speed_degrees:
+        min: -200
+        max: 200
+    - name: industrial-electric-fallout
+      capacity: 18
+      emission:
+        bursts:
+          - at_seconds: 0.9
+            count: 18
+      lifetime_seconds:
+        min: 0.28
+        max: 0.62
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.12
+          "y": 0.07
+          z: 0.08
+      velocity_min:
+        x: -0.55
+        "y": -0.22
+        z: 0.15
+      velocity_max:
+        x: 0.55
+        "y": 0.22
+        z: 0.65
+      acceleration:
+        x: 0
+        "y": 0
+        z: -1.5
+      drag: 0.7
+      sprite:
+        frames:
+          - lab-fleck
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - age: 0
+          value: 0.026
+        - age: 0.1
+          value: 0.045
+        - age: 0.65
+          value: 0.02
+        - age: 1
+          value: 0.003
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.5
+            - 0.85
+            - 1
+            - 0
+        - age: 0.1
+          rgba:
+            - 0.5
+            - 0.85
+            - 1
+            - 0.8
+        - age: 0.65
+          rgba:
+            - 0.85
+            - 0.35
+            - 0.08
+            - 0.35
+        - age: 1
+          rgba:
+            - 0.12
+            - 0.025
+            - 0.002
+            - 0
+      rotation_degrees:
+        min: 0
+        max: 360
+      rotation_speed_degrees:
+        min: -180
+        max: 180
+    - name: industrial-electric-echo
+      capacity: 1
+      emission:
+        bursts:
+          - at_seconds: 0.96
+            count: 1
+      lifetime_seconds:
+        min: 0.22
+        max: 0.32
+      spawn:
+        shape: point
+      sprite:
+        frames:
+          - lab-ring
+        playback: cycle
+        facing: camera-facing
+        blend: additive
+      size_over_life:
+        - age: 0
+          value: 0.22
+        - age: 0.2
+          value: 0.75
+        - age: 0.7
+          value: 1.12
+        - age: 1
+          value: 1.12
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0.1
+            - 0.35
+            - 1
+            - 0
+        - age: 0.2
+          rgba:
+            - 0.12
+            - 0.4
+            - 1
+            - 0.07
+        - age: 0.7
+          rgba:
+            - 0.07
+            - 0.2
+            - 0.6
+            - 0.025
+        - age: 1
+          rgba:
+            - 0.03
+            - 0.06
+            - 0.2
+            - 0
+      rotation_degrees:
+        min: 0
+        max: 360
+    - name: hangar-barrel-flamesmoke
+      capacity: 64
+      emission:
+        rate: 25.6
+        duration_seconds: 2.5
+      lifetime_seconds:
+        min: 2
+        max: 2.5
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.24
+          "y": 0.18
+          z: 0
+      velocity_min:
+        x: -0.0522934456485949
+        "y": -0.0522934456485949
+        z: 0.2988584094275236
+      velocity_max:
+        x: 0.0522934456485949
+        "y": 0.0522934456485949
+        z: 0.6
+      sprite:
+        frames:
+          - brackeys-smoke-07-strong-a
+        playback: cycle
+        facing: camera-facing
+        blend: premultiplied
+      size_over_life:
+        - age: 0
+          value: 0.233146
+        - age: 0.2109375
+          value: 0.24377946719980237
+        - age: 0.75
+          value: 0.311358671875
+        - age: 1
+          value: 0.3258425
+      color_over_life:
+        - age: 0
+          rgba:
+            - 0
+            - 0
+            - 0
+            - 0
+        - age: 0.097306915
+          rgba:
+            - 0.6894937189099749
+            - 0.22890075795232
+            - 0
+            - 0.07058824
+        - age: 0.3360861
+          rgba:
+            - 0.0016360373066967562
+            - 0.001636037840565876
+            - 0.001636036950784
+            - 0.0754902
+        - age: 1
+          rgba:
+            - 0
+            - 0
+            - 0
+            - 0
+      rotation_degrees:
+        min: 1.07288e-05
+        max: 360
+      rotation_speed_degrees:
+        min: -30
+        max: 30
+    - name: brackeys-fire-combined-embers-02
+      capacity: 18
+      emission:
+        rate: 7.499999999999999
+        duration_seconds: 2.4000000000000004
+      lifetime_seconds:
+        min: 0.5999999999999999
+        max: 3
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.07
+          "y": 0.07
+          z: 0.07
+      velocity_min:
+        x: -0.1368080573302675
+        "y": -0.1368080573302675
+        z: 0.1879385241571817
+      velocity_max:
+        x: 0.1368080573302675
+        "y": 0.1368080573302675
+        z: 0.4
+      sprite:
+        frames:
+          - brackeys-spotlight-01-a
+        playback: cycle
+        facing: camera-facing
+        blend: alpha
+      size_over_life:
+        - age: 0
+          value: 0.0125
+        - age: 0.25
+          value: 0.011161341796875002
+        - age: 0.7890625
+          value: 0.004915378649675847
+        - age: 1
+          value: 0.0039325875
+      color_over_life:
+        - age: 0
+          rgba:
+            - 1
+            - 0.72281
+            - 0.345682
+            - 0
+        - age: 0.239496
+          rgba:
+            - 1
+            - 0.72281
+            - 0.345682
+            - 1
+        - age: 0.703125
+          rgba:
+            - 1
+            - 0.72281
+            - 0.345682
+            - 0.9858633785459454
+        - age: 1
+          rgba:
+            - 1
+            - 0.72281
+            - 0.345682
+            - 0
+    - name: hangar-barrel-tongues
       capacity: 32
       emission:
-        rate: 8
-        duration_seconds: 2
-        bursts: [{ at_seconds: 0.35, count: 6 }]
-      lifetime_seconds: { min: 0.45, max: 0.75 }
-      spawn: { shape: box, half_extent: { x: 0.13, y: 0.13, z: 0.02 } }
-      velocity_min: { x: -0.18, y: -0.18, z: 0.70 }
-      velocity_max: { x: 0.18, y: 0.18, z: 1.35 }
-      acceleration: { z: -0.30 }
-      drag: 0.12
-      sprite: { frames: [barrel-ember], playback: cycle, facing: camera-facing, blend: additive }
+        rate: 24
+        duration_seconds: 1.19
+      lifetime_seconds:
+        min: 0.48
+        max: 0.78
+      spawn:
+        shape: box
+        half_extent:
+          x: 0.24
+          "y": 0.18
+          z: 0.015
+      velocity_min:
+        x: -0.07
+        "y": -0.035
+        z: 0.48
+      velocity_max:
+        x: 0.11
+        "y": 0.035
+        z: 0.85
+      acceleration:
+        x: 0.045
+        "y": 0
+        z: 0.06
+      drag: 0.3
+      sprite:
+        frames:
+          - lab-fire-tongue
+        playback: cycle
+        facing: upright
+        blend: premultiplied
       size_over_life:
-        - { age: 0, value: 0.045 }
-        - { age: 1, value: 0.012 }
+        - age: 0
+          value: 0.07200000000000001
+        - age: 0.18
+          value: 0.234
+        - age: 0.55
+          value: 0.18000000000000002
+        - age: 1
+          value: 0.0216
       color_over_life:
-        - { age: 0, rgba: [1, 0.78, 0.22, 0.9] }
-        - { age: 1, rgba: [0.85, 0.12, 0.015, 0] }
-  emitters:
-    # Surface Z=-1.10; spawn just above its wave crests. Each motion envelope
-    # stays inside its basin sector, clear of the elevated zigzag walkway.
-    - {
-        id: acid-south-sparkles-0,
-        preset: acid-sparkle,
-        position: { x: 25, y: 17, z: -0.93 },
-        seed: 101,
-        playback: { mode: cycle, period_seconds: 3 },
-      }
-    - {
-        id: acid-south-sparkles-1,
-        preset: acid-sparkle,
-        position: { x: 29, y: 16.7, z: -0.93 },
-        seed: 107,
-        playback: { mode: cycle, period_seconds: 3, delay_seconds: 0.25 },
-      }
-    - {
-        id: acid-south-sparkles-2,
-        preset: acid-sparkle,
-        position: { x: 34.94, y: 16.5, z: -0.93 },
-        seed: 113,
-        playback: { mode: cycle, period_seconds: 3, delay_seconds: 0.5 },
-      }
-    - {
-        id: acid-south-sparkles-3,
-        preset: acid-sparkle,
-        position: { x: 37, y: 19, z: -0.93 },
-        seed: 127,
-        playback: { mode: cycle, period_seconds: 3, delay_seconds: 0.75 },
-      }
-    - {
-        id: acid-entry-sparkles-0,
-        preset: acid-sparkle,
-        position: { x: 32.5, y: 22, z: -0.93 },
-        seed: 131,
-        playback: { mode: cycle, period_seconds: 3, delay_seconds: 0.4 },
-      }
-    - {
-        id: acid-entry-sparkles-1,
-        preset: acid-sparkle,
-        position: { x: 37.2, y: 22, z: -0.93 },
-        seed: 137,
-        playback: { mode: cycle, period_seconds: 3, delay_seconds: 0.9 },
-      }
-    - {
-        id: acid-west-sparkles-0,
-        preset: acid-sparkle,
-        position: { x: 26.2, y: 26.7, z: -0.93 },
-        seed: 139,
-        playback: { mode: cycle, period_seconds: 3, delay_seconds: 0.6 },
-      }
-    - {
-        id: acid-west-sparkles-1,
-        preset: acid-sparkle,
-        position: { x: 26.2, y: 29.2, z: -0.93 },
-        seed: 149,
-        playback: { mode: cycle, period_seconds: 3, delay_seconds: 0.2 },
-      }
-    - {
-        id: acid-east-sparkles-0,
-        preset: acid-sparkle,
-        position: { x: 37.6, y: 26, z: -0.93 },
-        seed: 151,
-        playback: { mode: cycle, period_seconds: 3, delay_seconds: 0.8 },
-      }
-    - {
-        id: acid-east-sparkles-1,
-        preset: acid-sparkle,
-        position: { x: 37.6, y: 30, z: -0.93 },
-        seed: 157,
-        playback: { mode: cycle, period_seconds: 3, delay_seconds: 0.3 },
-      }
-    - {
-        id: acid-east-sparkles-2,
-        preset: acid-sparkle,
-        position: { x: 35, y: 33, z: -0.93 },
-        seed: 163,
-        playback: { mode: cycle, period_seconds: 3, delay_seconds: 0.7 },
-      }
-    # The small fire and its complete sprite envelope stay below the 2.60 m
-    # alcove ceiling. The barrel is away from the arrival-to-reactor route.
-    - {
-        id: inspection-barrel-fire,
-        preset: barrel-fire,
-        position: { x: 14.8, y: -1.55, z: 1.08 },
-        seed: 181,
-        playback: { mode: cycle, period_seconds: 2 },
-      }
-    - {
-        id: inspection-barrel-embers,
-        preset: barrel-embers,
-        position: { x: 14.8, y: -1.55, z: 1.12 },
-        seed: 191,
-        playback: { mode: cycle, period_seconds: 2 },
-      }
+        - age: 0
+          rgba:
+            - 0
+            - 0
+            - 0
+            - 0
+        - age: 0.18
+          rgba:
+            - 0.38
+            - 0.18
+            - 0.013
+            - 0.018
+        - age: 0.55
+          rgba:
+            - 0.23
+            - 0.059
+            - 0.001
+            - 0.006
+        - age: 1
+          rgba:
+            - 0
+            - 0
+            - 0
+            - 0
+      rotation_degrees:
+        min: 72
+        max: 108
+      rotation_speed_degrees:
+        min: -24
+        max: 30
+# END PARTICLE LAB EFFECTS: particles
 animations:
   version: 1
   presets:
@@ -189,6 +997,8 @@ animations:
     # Start extended; retract into the floor body with the rod always embedded.
     - { name: service-piston, kind: oscillate, offset: { z: -0.25 }, period_seconds: 1.8 }
     - { name: hidden-liquid-boundary, kind: liquid, frequency: 1, opacity: 0 }
+    # BEGIN PARTICLE LAB EFFECTS: animations
+    # END PARTICLE LAB EFFECTS: animations
   materials:
     - { material: screen, preset: terminal-glitch }
     - { material: toxic, preset: acid-ripple }
@@ -200,6 +1010,7 @@ rooms:
     ceiling: { c: 4.80 }
     floor_material: floor
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -237,6 +1048,7 @@ rooms:
     ceiling: { c: 2.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -257,6 +1069,7 @@ rooms:
     ceiling: { c: 7.20 }
     floor_material: floor
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -286,6 +1099,7 @@ rooms:
     ceiling: { c: 3.10 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -308,6 +1122,7 @@ rooms:
     ceiling: { c: 2.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -326,6 +1141,7 @@ rooms:
     ceiling: { c: 4.80 }
     floor_material: floor
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -352,6 +1168,7 @@ rooms:
     ceiling: { c: 2.70 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -373,6 +1190,7 @@ rooms:
     ceiling: { c: 6.20 }
     floor_material: concrete
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -400,6 +1218,7 @@ rooms:
     ceiling: { c: 5.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -424,6 +1243,7 @@ rooms:
     ceiling: { c: 5.60 }
     floor_material: concrete
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -454,6 +1274,7 @@ rooms:
     ceiling: { c: 2.70 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: -0.45, y: -6.00 }, end: { x: 0.00, y: -6.00 }, material: steel }
@@ -461,10 +1282,11 @@ rooms:
       - { id: edge-2, start: { x: 0.00, y: -4.00 }, end: { x: -0.45, y: -4.00 }, material: steel }
       - { id: edge-3, start: { x: -0.45, y: -4.00 }, end: { x: -0.45, y: -6.00 }, material: steel }
   - id: trench-south
-    floor: { c: -1.20 }
+    floor: { c: -3.50 }
     ceiling: { c: 9.00 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -488,6 +1310,7 @@ rooms:
     ceiling: { c: 9.00 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 22.00, y: 20.00 }, end: { x: 30.00, y: 20.00 }, material: steel }
@@ -496,10 +1319,11 @@ rooms:
       - { id: edge-3, start: { x: 26.00, y: 24.00 }, end: { x: 22.00, y: 24.00 }, material: steel }
       - { id: edge-4, start: { x: 22.00, y: 24.00 }, end: { x: 22.00, y: 20.00 }, material: steel }
   - id: trench-entry-east
-    floor: { c: -1.20 }
+    floor: { c: -3.50 }
     ceiling: { c: 9.00 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -518,6 +1342,7 @@ rooms:
     ceiling: { c: 3.10 }
     floor_material: floor
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -539,6 +1364,7 @@ rooms:
     ceiling: { c: 2.60 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -557,6 +1383,7 @@ rooms:
     ceiling: { c: 2.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -575,6 +1402,7 @@ rooms:
     ceiling: { c: 3.20 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -594,6 +1422,7 @@ rooms:
     ceiling: { c: 3.20 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -610,11 +1439,13 @@ rooms:
       - { id: edge-4, start: { x: 50.00, y: 38.00 }, end: { x: 32.00, y: 38.00 }, material: ribbed }
       - { id: edge-5, start: { x: 32.00, y: 38.00 }, end: { x: 30.00, y: 38.00 }, material: ribbed }
       - { id: edge-6, start: { x: 30.00, y: 38.00 }, end: { x: 30.00, y: 34.00 }, material: ribbed }
+  # Continuous pool-exit ramps; strips retain the existing directed portals.
   - id: trench-stair-0
-    floor: { c: -1.00 }
-    ceiling: { c: 3.20 }
+    floor: { a: 0.616666666667, c: -28.1666666667 }
+    ceiling: { a: 0.333333333333, c: -12.1333333333 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 40.00, y: 20.00 }, end: { x: 41.00, y: 20.00 }, material: steel }
@@ -622,10 +1453,11 @@ rooms:
       - { id: edge-2, start: { x: 41.00, y: 24.00 }, end: { x: 40.00, y: 24.00 }, material: steel }
       - { id: edge-3, start: { x: 40.00, y: 24.00 }, end: { x: 40.00, y: 20.00 }, material: steel }
   - id: west-trench-stair-0
-    floor: { c: -1.00 }
-    ceiling: { c: 3.10 }
+    floor: { b: 0.583333333333, c: -18.6666666667 }
+    ceiling: { b: 0.333333333333, c: -7.56666666667 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 22.00, y: 26.00 }, end: { x: 24.00, y: 26.00 }, material: steel }
@@ -633,10 +1465,11 @@ rooms:
       - { id: edge-2, start: { x: 24.00, y: 27.00 }, end: { x: 22.00, y: 27.00 }, material: steel }
       - { id: edge-3, start: { x: 22.00, y: 27.00 }, end: { x: 22.00, y: 26.00 }, material: steel }
   - id: trench-stair-1
-    floor: { c: -0.80 }
-    ceiling: { c: 3.20 }
+    floor: { a: 0.616666666667, c: -28.1666666667 }
+    ceiling: { a: 0.333333333333, c: -12.1333333333 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 41.00, y: 20.00 }, end: { x: 42.00, y: 20.00 }, material: steel }
@@ -644,10 +1477,11 @@ rooms:
       - { id: edge-2, start: { x: 42.00, y: 24.00 }, end: { x: 41.00, y: 24.00 }, material: steel }
       - { id: edge-3, start: { x: 41.00, y: 24.00 }, end: { x: 41.00, y: 20.00 }, material: steel }
   - id: west-trench-stair-1
-    floor: { c: -0.80 }
-    ceiling: { c: 3.10 }
+    floor: { b: 0.583333333333, c: -18.6666666667 }
+    ceiling: { b: 0.333333333333, c: -7.56666666667 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 22.00, y: 27.00 }, end: { x: 24.00, y: 27.00 }, material: steel }
@@ -655,10 +1489,11 @@ rooms:
       - { id: edge-2, start: { x: 24.00, y: 28.00 }, end: { x: 22.00, y: 28.00 }, material: steel }
       - { id: edge-3, start: { x: 22.00, y: 28.00 }, end: { x: 22.00, y: 27.00 }, material: steel }
   - id: trench-stair-2
-    floor: { c: -0.60 }
-    ceiling: { c: 3.20 }
+    floor: { a: 0.616666666667, c: -28.1666666667 }
+    ceiling: { a: 0.333333333333, c: -12.1333333333 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 42.00, y: 20.00 }, end: { x: 43.00, y: 20.00 }, material: steel }
@@ -666,10 +1501,11 @@ rooms:
       - { id: edge-2, start: { x: 43.00, y: 24.00 }, end: { x: 42.00, y: 24.00 }, material: steel }
       - { id: edge-3, start: { x: 42.00, y: 24.00 }, end: { x: 42.00, y: 20.00 }, material: steel }
   - id: west-trench-stair-2
-    floor: { c: -0.60 }
-    ceiling: { c: 3.10 }
+    floor: { b: 0.583333333333, c: -18.6666666667 }
+    ceiling: { b: 0.333333333333, c: -7.56666666667 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 22.00, y: 28.00 }, end: { x: 24.00, y: 28.00 }, material: steel }
@@ -677,10 +1513,11 @@ rooms:
       - { id: edge-2, start: { x: 24.00, y: 29.00 }, end: { x: 22.00, y: 29.00 }, material: steel }
       - { id: edge-3, start: { x: 22.00, y: 29.00 }, end: { x: 22.00, y: 28.00 }, material: steel }
   - id: trench-stair-3
-    floor: { c: -0.40 }
-    ceiling: { c: 3.20 }
+    floor: { a: 0.616666666667, c: -28.1666666667 }
+    ceiling: { a: 0.333333333333, c: -12.1333333333 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 43.00, y: 20.00 }, end: { x: 44.00, y: 20.00 }, material: steel }
@@ -688,10 +1525,11 @@ rooms:
       - { id: edge-2, start: { x: 44.00, y: 24.00 }, end: { x: 43.00, y: 24.00 }, material: steel }
       - { id: edge-3, start: { x: 43.00, y: 24.00 }, end: { x: 43.00, y: 20.00 }, material: steel }
   - id: west-trench-stair-3
-    floor: { c: -0.40 }
-    ceiling: { c: 3.10 }
+    floor: { b: 0.583333333333, c: -18.6666666667 }
+    ceiling: { b: 0.333333333333, c: -7.56666666667 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 22.00, y: 29.00 }, end: { x: 24.00, y: 29.00 }, material: steel }
@@ -699,10 +1537,11 @@ rooms:
       - { id: edge-2, start: { x: 24.00, y: 30.00 }, end: { x: 22.00, y: 30.00 }, material: steel }
       - { id: edge-3, start: { x: 22.00, y: 30.00 }, end: { x: 22.00, y: 29.00 }, material: steel }
   - id: trench-stair-4
-    floor: { c: -0.20 }
-    ceiling: { c: 3.20 }
+    floor: { a: 0.616666666667, c: -28.1666666667 }
+    ceiling: { a: 0.333333333333, c: -12.1333333333 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 44.00, y: 20.00 }, end: { x: 45.00, y: 20.00 }, material: steel }
@@ -710,10 +1549,11 @@ rooms:
       - { id: edge-2, start: { x: 45.00, y: 24.00 }, end: { x: 44.00, y: 24.00 }, material: steel }
       - { id: edge-3, start: { x: 44.00, y: 24.00 }, end: { x: 44.00, y: 20.00 }, material: steel }
   - id: west-trench-stair-4
-    floor: { c: -0.20 }
-    ceiling: { c: 3.10 }
+    floor: { b: 0.583333333333, c: -18.6666666667 }
+    ceiling: { b: 0.333333333333, c: -7.56666666667 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 22.00, y: 30.00 }, end: { x: 24.00, y: 30.00 }, material: steel }
@@ -721,10 +1561,11 @@ rooms:
       - { id: edge-2, start: { x: 24.00, y: 31.00 }, end: { x: 22.00, y: 31.00 }, material: steel }
       - { id: edge-3, start: { x: 22.00, y: 31.00 }, end: { x: 22.00, y: 30.00 }, material: steel }
   - id: trench-stair-5
-    floor: { c: 0.00 }
-    ceiling: { c: 3.20 }
+    floor: { a: 0.616666666667, c: -28.1666666667 }
+    ceiling: { a: 0.333333333333, c: -12.1333333333 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 45.00, y: 20.00 }, end: { x: 46.00, y: 20.00 }, material: steel }
@@ -732,10 +1573,11 @@ rooms:
       - { id: edge-2, start: { x: 46.00, y: 24.00 }, end: { x: 45.00, y: 24.00 }, material: steel }
       - { id: edge-3, start: { x: 45.00, y: 24.00 }, end: { x: 45.00, y: 20.00 }, material: steel }
   - id: west-trench-stair-5
-    floor: { c: 0.00 }
-    ceiling: { c: 3.10 }
+    floor: { b: 0.583333333333, c: -18.6666666667 }
+    ceiling: { b: 0.333333333333, c: -7.56666666667 }
     floor_material: floor
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 22.00, y: 31.00 }, end: { x: 24.00, y: 31.00 }, material: steel }
@@ -780,6 +1622,7 @@ rooms:
     ceiling: { c: 9.00 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 26.00, y: 24.00 }, end: { x: 30.00, y: 24.00 }, material: steel }
@@ -787,10 +1630,11 @@ rooms:
       - { id: edge-2, start: { x: 36.00, y: 28.00 }, end: { x: 32.00, y: 28.00 }, material: steel }
       - { id: edge-3, start: { x: 32.00, y: 28.00 }, end: { x: 26.00, y: 24.00 }, material: steel }
   - id: zig-west-0
-    floor: { c: -1.20 }
+    floor: { c: -3.50 }
     ceiling: { c: 9.00 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -808,10 +1652,11 @@ rooms:
       - { id: edge-5, start: { x: 24.00, y: 26.00 }, end: { x: 22.00, y: 26.00 }, material: brick }
       - { id: edge-6, start: { x: 22.00, y: 26.00 }, end: { x: 22.00, y: 24.00 }, material: brick }
   - id: zig-east-0
-    floor: { c: -1.20 }
+    floor: { c: -3.50 }
     ceiling: { c: 9.00 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -830,6 +1675,7 @@ rooms:
     ceiling: { c: 9.00 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 32.00, y: 28.00 }, end: { x: 36.00, y: 28.00 }, material: steel }
@@ -837,10 +1683,11 @@ rooms:
       - { id: edge-2, start: { x: 30.00, y: 32.00 }, end: { x: 26.00, y: 32.00 }, material: steel }
       - { id: edge-3, start: { x: 26.00, y: 32.00 }, end: { x: 32.00, y: 28.00 }, material: steel }
   - id: zig-west-1
-    floor: { c: -1.20 }
+    floor: { c: -3.50 }
     ceiling: { c: 9.00 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -858,10 +1705,11 @@ rooms:
       - { id: edge-5, start: { x: 24.00, y: 30.00 }, end: { x: 24.00, y: 29.00 }, material: brick }
       - { id: edge-6, start: { x: 24.00, y: 29.00 }, end: { x: 24.00, y: 28.00 }, material: brick }
   - id: zig-east-1
-    floor: { c: -1.20 }
+    floor: { c: -3.50 }
     ceiling: { c: 9.00 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -880,6 +1728,7 @@ rooms:
     ceiling: { c: 9.00 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 26.00, y: 32.00 }, end: { x: 30.00, y: 32.00 }, material: steel }
@@ -891,6 +1740,7 @@ rooms:
     ceiling: { c: 9.00 }
     floor_material: floor
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -906,10 +1756,11 @@ rooms:
       - { id: edge-3, start: { x: 26.00, y: 34.00 }, end: { x: 22.00, y: 34.00 }, material: ribbed }
       - { id: edge-4, start: { x: 22.00, y: 34.00 }, end: { x: 22.00, y: 32.00 }, material: ribbed }
   - id: zig-east-2
-    floor: { c: -1.20 }
+    floor: { c: -3.50 }
     ceiling: { c: 9.00 }
     floor_material: recess
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -928,6 +1779,7 @@ rooms:
     ceiling: { c: 4.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: -1.00, y: 20.00 }, end: { x: 0.00, y: 20.00 }, material: steel }
@@ -939,6 +1791,7 @@ rooms:
     ceiling: { c: 4.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: -2.00, y: 20.00 }, end: { x: -1.00, y: 20.00 }, material: steel }
@@ -950,6 +1803,7 @@ rooms:
     ceiling: { c: 4.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: -3.00, y: 20.00 }, end: { x: -2.00, y: 20.00 }, material: steel }
@@ -961,6 +1815,7 @@ rooms:
     ceiling: { c: 4.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: -4.00, y: 20.00 }, end: { x: -3.00, y: 20.00 }, material: steel }
@@ -972,6 +1827,7 @@ rooms:
     ceiling: { c: 4.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: -5.00, y: 20.00 }, end: { x: -4.00, y: 20.00 }, material: steel }
@@ -983,6 +1839,7 @@ rooms:
     ceiling: { c: 4.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 2, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: -6.00, y: 20.00 }, end: { x: -5.00, y: 20.00 }, material: steel }
@@ -995,6 +1852,7 @@ rooms:
     ceiling: { c: 7.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -1019,6 +1877,7 @@ rooms:
     ceiling: { c: 7.40 }
     floor_material: steel
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 28.50, y: 15.55 }, end: { x: 33.50, y: 15.55 }, material: steel }
@@ -1030,18 +1889,20 @@ rooms:
     ceiling: { c: 7.40 }
     floor_material: steel
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 34.50, y: 15.55 }, end: { x: 39.50, y: 15.55 }, material: steel }
       - { id: edge-1, start: { x: 39.50, y: 15.55 }, end: { x: 39.50, y: 16.00 }, material: steel }
       - { id: edge-2, start: { x: 39.50, y: 16.00 }, end: { x: 34.50, y: 16.00 }, material: steel }
       - { id: edge-3, start: { x: 34.50, y: 16.00 }, end: { x: 34.50, y: 15.55 }, material: steel }
-  # West approach branches from the reactor tunnel; east approach joins the trench stairs.
+  # West approach branches from the reactor tunnel; east approach joins the trench ramp.
   - id: acid-control-west-access
     floor: { c: 0.20 }
     ceiling: { c: 3.10 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -1061,6 +1922,7 @@ rooms:
     ceiling: { c: 3.20 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     wall_secondary:
       texture: wall-weathering
@@ -1081,6 +1943,7 @@ rooms:
     ceiling: { c: 3.60 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 20.00, y: 12.00 }, end: { x: 20.50, y: 12.00 }, material: steel }
@@ -1092,6 +1955,7 @@ rooms:
     ceiling: { c: 3.60 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 45.62, y: 12.00 }, end: { x: 46.00, y: 12.00 }, material: steel }
@@ -1103,6 +1967,7 @@ rooms:
     ceiling: { c: 3.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 20.50, y: 12.00 }, end: { x: 21.00, y: 12.00 }, material: steel }
@@ -1114,6 +1979,7 @@ rooms:
     ceiling: { c: 3.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 45.25, y: 12.00 }, end: { x: 45.62, y: 12.00 }, material: steel }
@@ -1125,6 +1991,7 @@ rooms:
     ceiling: { c: 4.00 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 21.00, y: 12.00 }, end: { x: 21.50, y: 12.00 }, material: steel }
@@ -1136,6 +2003,7 @@ rooms:
     ceiling: { c: 4.00 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 44.88, y: 12.00 }, end: { x: 45.25, y: 12.00 }, material: steel }
@@ -1147,6 +2015,7 @@ rooms:
     ceiling: { c: 4.20 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 21.50, y: 12.00 }, end: { x: 22.00, y: 12.00 }, material: steel }
@@ -1158,6 +2027,7 @@ rooms:
     ceiling: { c: 4.20 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 44.50, y: 12.00 }, end: { x: 44.88, y: 12.00 }, material: steel }
@@ -1169,6 +2039,7 @@ rooms:
     ceiling: { c: 4.40 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 22.00, y: 12.00 }, end: { x: 22.50, y: 12.00 }, material: steel }
@@ -1180,6 +2051,7 @@ rooms:
     ceiling: { c: 4.40 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 44.12, y: 12.00 }, end: { x: 44.50, y: 12.00 }, material: steel }
@@ -1191,6 +2063,7 @@ rooms:
     ceiling: { c: 4.60 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 22.50, y: 12.00 }, end: { x: 23.00, y: 12.00 }, material: steel }
@@ -1202,6 +2075,7 @@ rooms:
     ceiling: { c: 4.60 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 43.75, y: 12.00 }, end: { x: 44.12, y: 12.00 }, material: steel }
@@ -1213,6 +2087,7 @@ rooms:
     ceiling: { c: 4.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 23.00, y: 12.00 }, end: { x: 23.50, y: 12.00 }, material: steel }
@@ -1224,6 +2099,7 @@ rooms:
     ceiling: { c: 4.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 43.38, y: 12.00 }, end: { x: 43.75, y: 12.00 }, material: steel }
@@ -1235,6 +2111,7 @@ rooms:
     ceiling: { c: 5.00 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 23.50, y: 12.00 }, end: { x: 24.00, y: 12.00 }, material: steel }
@@ -1246,6 +2123,7 @@ rooms:
     ceiling: { c: 5.00 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 43.00, y: 12.00 }, end: { x: 43.38, y: 12.00 }, material: steel }
@@ -1257,6 +2135,7 @@ rooms:
     ceiling: { c: 5.20 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 24.00, y: 12.00 }, end: { x: 24.50, y: 12.00 }, material: steel }
@@ -1268,6 +2147,7 @@ rooms:
     ceiling: { c: 5.20 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 42.62, y: 12.00 }, end: { x: 43.00, y: 12.00 }, material: steel }
@@ -1279,6 +2159,7 @@ rooms:
     ceiling: { c: 5.40 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 24.50, y: 12.00 }, end: { x: 25.00, y: 12.00 }, material: steel }
@@ -1290,6 +2171,7 @@ rooms:
     ceiling: { c: 5.40 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 42.25, y: 12.00 }, end: { x: 42.62, y: 12.00 }, material: steel }
@@ -1301,6 +2183,7 @@ rooms:
     ceiling: { c: 5.60 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 25.00, y: 12.00 }, end: { x: 25.50, y: 12.00 }, material: steel }
@@ -1312,6 +2195,7 @@ rooms:
     ceiling: { c: 5.60 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 41.88, y: 12.00 }, end: { x: 42.25, y: 12.00 }, material: steel }
@@ -1323,6 +2207,7 @@ rooms:
     ceiling: { c: 5.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 25.50, y: 12.00 }, end: { x: 26.00, y: 12.00 }, material: steel }
@@ -1334,6 +2219,7 @@ rooms:
     ceiling: { c: 5.80 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 41.50, y: 12.00 }, end: { x: 41.88, y: 12.00 }, material: steel }
@@ -1345,6 +2231,7 @@ rooms:
     ceiling: { c: 6.00 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 26.00, y: 12.00 }, end: { x: 26.50, y: 12.00 }, material: steel }
@@ -1356,6 +2243,7 @@ rooms:
     ceiling: { c: 6.00 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 41.12, y: 12.00 }, end: { x: 41.50, y: 12.00 }, material: steel }
@@ -1367,6 +2255,7 @@ rooms:
     ceiling: { c: 6.20 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 26.50, y: 12.00 }, end: { x: 27.00, y: 12.00 }, material: steel }
@@ -1378,6 +2267,7 @@ rooms:
     ceiling: { c: 6.20 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 40.75, y: 12.00 }, end: { x: 41.12, y: 12.00 }, material: steel }
@@ -1389,6 +2279,7 @@ rooms:
     ceiling: { c: 6.40 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 27.00, y: 12.00 }, end: { x: 27.50, y: 12.00 }, material: steel }
@@ -1400,6 +2291,7 @@ rooms:
     ceiling: { c: 6.40 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 40.38, y: 12.00 }, end: { x: 40.75, y: 12.00 }, material: steel }
@@ -1411,6 +2303,7 @@ rooms:
     ceiling: { c: 6.60 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 27.50, y: 12.00 }, end: { x: 28.00, y: 12.00 }, material: steel }
@@ -1422,6 +2315,7 @@ rooms:
     ceiling: { c: 6.60 }
     floor_material: grate
     ceiling_material: ceiling
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
       - { id: edge-0, start: { x: 40.00, y: 12.00 }, end: { x: 40.38, y: 12.00 }, material: steel }
@@ -1766,6 +2660,696 @@ connections:
     a: { room: acid-control-east-step-15, edge: edge-3 }
     b: { room: acid-control, edge: edge-2 }
 solids:
+  # BEGIN CEILING FIXTURES
+  - id: ceiling-arrival-key-housing
+    footprint: [{ x: 5.7, y: -1.16 }, { x: 8.3, y: -1.16 }, { x: 8.3, y: -0.84 }, { x: 5.7, y: -0.84 }]
+    bottom: { c: 3.8000000000000003 }
+    top: { c: 3.9000000000000004 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-arrival-key-diffuser
+    footprint: [{ x: 5.83, y: -1.105 }, { x: 8.17, y: -1.105 }, { x: 8.17, y: -0.895 }, { x: 5.83, y: -0.895 }]
+    bottom: { c: 3.7600000000000002 }
+    top: { c: 3.8000000000000003 }
+    side_material: ceiling-strip
+    top_material: ceiling-strip
+    bottom_material: ceiling-strip
+    collision: false
+  - id: ceiling-arrival-key-end-0
+    footprint:
+      [
+        { x: 5.7, y: -1.18 },
+        { x: 5.8, y: -1.18 },
+        { x: 5.8, y: -0.8200000000000001 },
+        { x: 5.7, y: -0.8200000000000001 },
+      ]
+    bottom: { c: 3.745 }
+    top: { c: 3.9200000000000004 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-arrival-key-end-1
+    footprint:
+      [
+        { x: 8.2, y: -1.18 },
+        { x: 8.3, y: -1.18 },
+        { x: 8.3, y: -0.8200000000000001 },
+        { x: 8.2, y: -0.8200000000000001 },
+      ]
+    bottom: { c: 3.745 }
+    top: { c: 3.9200000000000004 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-arrival-key-hanger-0
+    footprint:
+      [
+        { x: 5.994999999999999, y: -1.025 },
+        { x: 6.045, y: -1.025 },
+        { x: 6.045, y: -0.975 },
+        { x: 5.994999999999999, y: -0.975 },
+      ]
+    bottom: { c: 3.9000000000000004 }
+    top: { c: 4.77 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-arrival-key-mount-0
+    footprint:
+      [
+        { x: 5.935, y: -1.085 },
+        { x: 6.1049999999999995, y: -1.085 },
+        { x: 6.1049999999999995, y: -0.915 },
+        { x: 5.935, y: -0.915 },
+      ]
+    bottom: { c: 4.77 }
+    top: { c: 4.8 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-arrival-key-hanger-1
+    footprint: [{ x: 7.955, y: -1.025 }, { x: 8.005, y: -1.025 }, { x: 8.005, y: -0.975 }, { x: 7.955, y: -0.975 }]
+    bottom: { c: 3.9000000000000004 }
+    top: { c: 4.77 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-arrival-key-mount-1
+    footprint:
+      [
+        { x: 7.8950000000000005, y: -1.085 },
+        { x: 8.065000000000001, y: -1.085 },
+        { x: 8.065000000000001, y: -0.915 },
+        { x: 7.8950000000000005, y: -0.915 },
+      ]
+    bottom: { c: 4.77 }
+    top: { c: 4.8 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-ventilation-fill-housing
+    footprint: [{ x: 8.2, y: 6.64 }, { x: 10.8, y: 6.64 }, { x: 10.8, y: 6.96 }, { x: 8.2, y: 6.96 }]
+    bottom: { c: 3.8000000000000003 }
+    top: { c: 3.9000000000000004 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-ventilation-fill-diffuser-left
+    footprint:
+      [{ x: 8.33, y: 6.694999999999999 }, { x: 9.2, y: 6.694999999999999 }, { x: 9.2, y: 6.905 }, { x: 8.33, y: 6.905 }]
+    bottom: { c: 3.7600000000000002 }
+    top: { c: 3.8000000000000003 }
+    side_material: ceiling-strip-broken
+    top_material: ceiling-strip-broken
+    bottom_material: ceiling-strip-broken
+    collision: false
+  - id: ceiling-ventilation-fill-diffuser-right
+    footprint:
+      [
+        { x: 9.74, y: 6.694999999999999 },
+        { x: 10.67, y: 6.694999999999999 },
+        { x: 10.67, y: 6.905 },
+        { x: 9.74, y: 6.905 },
+      ]
+    bottom: { c: 3.745 }
+    top: { c: 3.8000000000000003 }
+    side_material: ceiling-strip-broken
+    top_material: ceiling-strip-broken
+    bottom_material: ceiling-strip-broken
+    collision: false
+  - id: ceiling-ventilation-fill-exposed-channel
+    footprint:
+      [{ x: 9.2, y: 6.694999999999999 }, { x: 9.74, y: 6.694999999999999 }, { x: 9.74, y: 6.905 }, { x: 9.2, y: 6.905 }]
+    bottom: { c: 3.8000000000000003 }
+    top: { c: 3.8200000000000003 }
+    side_material: ribbed
+    top_material: ribbed
+    bottom_material: ribbed
+    collision: false
+  - id: ceiling-ventilation-fill-end-0
+    footprint:
+      [{ x: 8.2, y: 6.62 }, { x: 8.3, y: 6.62 }, { x: 8.3, y: 6.9799999999999995 }, { x: 8.2, y: 6.9799999999999995 }]
+    bottom: { c: 3.745 }
+    top: { c: 3.9200000000000004 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-ventilation-fill-end-1
+    footprint:
+      [
+        { x: 10.7, y: 6.62 },
+        { x: 10.8, y: 6.62 },
+        { x: 10.8, y: 6.9799999999999995 },
+        { x: 10.7, y: 6.9799999999999995 },
+      ]
+    bottom: { c: 3.745 }
+    top: { c: 3.9200000000000004 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-ventilation-fill-hanger-0
+    footprint:
+      [
+        { x: 8.495, y: 6.7749999999999995 },
+        { x: 8.545, y: 6.7749999999999995 },
+        { x: 8.545, y: 6.825 },
+        { x: 8.495, y: 6.825 },
+      ]
+    bottom: { c: 3.9000000000000004 }
+    top: { c: 4.77 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-ventilation-fill-mount-0
+    footprint:
+      [
+        { x: 8.434999999999999, y: 6.715 },
+        { x: 8.605, y: 6.715 },
+        { x: 8.605, y: 6.885 },
+        { x: 8.434999999999999, y: 6.885 },
+      ]
+    bottom: { c: 4.77 }
+    top: { c: 4.8 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-ventilation-fill-hanger-1
+    footprint:
+      [
+        { x: 10.455, y: 6.7749999999999995 },
+        { x: 10.505, y: 6.7749999999999995 },
+        { x: 10.505, y: 6.825 },
+        { x: 10.455, y: 6.825 },
+      ]
+    bottom: { c: 3.9000000000000004 }
+    top: { c: 4.77 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-ventilation-fill-mount-1
+    footprint:
+      [
+        { x: 10.395, y: 6.715 },
+        { x: 10.565000000000001, y: 6.715 },
+        { x: 10.565000000000001, y: 6.885 },
+        { x: 10.395, y: 6.885 },
+      ]
+    bottom: { c: 4.77 }
+    top: { c: 4.8 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-window-key-housing
+    footprint: [{ x: -5.8, y: 2.34 }, { x: -3.2, y: 2.34 }, { x: -3.2, y: 2.66 }, { x: -5.8, y: 2.66 }]
+    bottom: { c: 3.7 }
+    top: { c: 3.8000000000000003 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-window-key-diffuser
+    footprint: [{ x: -5.67, y: 2.395 }, { x: -3.33, y: 2.395 }, { x: -3.33, y: 2.605 }, { x: -5.67, y: 2.605 }]
+    bottom: { c: 3.66 }
+    top: { c: 3.7 }
+    side_material: ceiling-strip
+    top_material: ceiling-strip
+    bottom_material: ceiling-strip
+    collision: false
+  - id: ceiling-window-key-end-0
+    footprint: [{ x: -5.8, y: 2.32 }, { x: -5.7, y: 2.32 }, { x: -5.7, y: 2.68 }, { x: -5.8, y: 2.68 }]
+    bottom: { c: 3.645 }
+    top: { c: 3.8200000000000003 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-window-key-end-1
+    footprint: [{ x: -3.3, y: 2.32 }, { x: -3.2, y: 2.32 }, { x: -3.2, y: 2.68 }, { x: -3.3, y: 2.68 }]
+    bottom: { c: 3.645 }
+    top: { c: 3.8200000000000003 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-window-key-hanger-0
+    footprint:
+      [
+        { x: -5.505000000000001, y: 2.475 },
+        { x: -5.455, y: 2.475 },
+        { x: -5.455, y: 2.525 },
+        { x: -5.505000000000001, y: 2.525 },
+      ]
+    bottom: { c: 3.8000000000000003 }
+    top: { c: 5.569999999999999 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-window-key-mount-0
+    footprint:
+      [
+        { x: -5.565, y: 2.415 },
+        { x: -5.3950000000000005, y: 2.415 },
+        { x: -5.3950000000000005, y: 2.585 },
+        { x: -5.565, y: 2.585 },
+      ]
+    bottom: { c: 5.569999999999999 }
+    top: { c: 5.6 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-window-key-hanger-1
+    footprint: [{ x: -3.545, y: 2.475 }, { x: -3.495, y: 2.475 }, { x: -3.495, y: 2.525 }, { x: -3.545, y: 2.525 }]
+    bottom: { c: 3.8000000000000003 }
+    top: { c: 5.569999999999999 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-window-key-mount-1
+    footprint: [{ x: -3.605, y: 2.415 }, { x: -3.435, y: 2.415 }, { x: -3.435, y: 2.585 }, { x: -3.605, y: 2.585 }]
+    bottom: { c: 5.569999999999999 }
+    top: { c: 5.6 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-reactor-overhead-housing
+    footprint: [{ x: 5.7, y: 18.34 }, { x: 8.3, y: 18.34 }, { x: 8.3, y: 18.66 }, { x: 5.7, y: 18.66 }]
+    bottom: { c: 5.8999999999999995 }
+    top: { c: 6 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-reactor-overhead-diffuser
+    footprint: [{ x: 5.83, y: 18.395 }, { x: 8.17, y: 18.395 }, { x: 8.17, y: 18.605 }, { x: 5.83, y: 18.605 }]
+    bottom: { c: 5.859999999999999 }
+    top: { c: 5.8999999999999995 }
+    side_material: ceiling-strip
+    top_material: ceiling-strip
+    bottom_material: ceiling-strip
+    collision: false
+  - id: ceiling-reactor-overhead-end-0
+    footprint: [{ x: 5.7, y: 18.32 }, { x: 5.8, y: 18.32 }, { x: 5.8, y: 18.68 }, { x: 5.7, y: 18.68 }]
+    bottom: { c: 5.845 }
+    top: { c: 6.02 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-reactor-overhead-end-1
+    footprint: [{ x: 8.2, y: 18.32 }, { x: 8.3, y: 18.32 }, { x: 8.3, y: 18.68 }, { x: 8.2, y: 18.68 }]
+    bottom: { c: 5.845 }
+    top: { c: 6.02 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-reactor-overhead-hanger-0
+    footprint:
+      [
+        { x: 5.994999999999999, y: 18.475 },
+        { x: 6.045, y: 18.475 },
+        { x: 6.045, y: 18.525 },
+        { x: 5.994999999999999, y: 18.525 },
+      ]
+    bottom: { c: 6 }
+    top: { c: 7.17 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-reactor-overhead-mount-0
+    footprint:
+      [
+        { x: 5.935, y: 18.415 },
+        { x: 6.1049999999999995, y: 18.415 },
+        { x: 6.1049999999999995, y: 18.585 },
+        { x: 5.935, y: 18.585 },
+      ]
+    bottom: { c: 7.17 }
+    top: { c: 7.2 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-reactor-overhead-hanger-1
+    footprint: [{ x: 7.955, y: 18.475 }, { x: 8.005, y: 18.475 }, { x: 8.005, y: 18.525 }, { x: 7.955, y: 18.525 }]
+    bottom: { c: 6 }
+    top: { c: 7.17 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-reactor-overhead-mount-1
+    footprint:
+      [
+        { x: 7.8950000000000005, y: 18.415 },
+        { x: 8.065000000000001, y: 18.415 },
+        { x: 8.065000000000001, y: 18.585 },
+        { x: 7.8950000000000005, y: 18.585 },
+      ]
+    bottom: { c: 7.17 }
+    top: { c: 7.2 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-control-fill-housing
+    footprint: [{ x: -11.3, y: 22.34 }, { x: -8.7, y: 22.34 }, { x: -8.7, y: 22.66 }, { x: -11.3, y: 22.66 }]
+    bottom: { c: 4.5 }
+    top: { c: 4.6000000000000005 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-control-fill-diffuser
+    footprint: [{ x: -11.17, y: 22.395 }, { x: -8.83, y: 22.395 }, { x: -8.83, y: 22.605 }, { x: -11.17, y: 22.605 }]
+    bottom: { c: 4.46 }
+    top: { c: 4.5 }
+    side_material: ceiling-strip
+    top_material: ceiling-strip
+    bottom_material: ceiling-strip
+    collision: false
+  - id: ceiling-control-fill-end-0
+    footprint: [{ x: -11.3, y: 22.32 }, { x: -11.2, y: 22.32 }, { x: -11.2, y: 22.68 }, { x: -11.3, y: 22.68 }]
+    bottom: { c: 4.445 }
+    top: { c: 4.62 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-control-fill-end-1
+    footprint: [{ x: -8.8, y: 22.32 }, { x: -8.7, y: 22.32 }, { x: -8.7, y: 22.68 }, { x: -8.8, y: 22.68 }]
+    bottom: { c: 4.445 }
+    top: { c: 4.62 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-control-fill-hanger-0
+    footprint:
+      [{ x: -11.005, y: 22.475 }, { x: -10.955, y: 22.475 }, { x: -10.955, y: 22.525 }, { x: -11.005, y: 22.525 }]
+    bottom: { c: 4.6000000000000005 }
+    top: { c: 5.77 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-control-fill-mount-0
+    footprint:
+      [
+        { x: -11.065000000000001, y: 22.415 },
+        { x: -10.895, y: 22.415 },
+        { x: -10.895, y: 22.585 },
+        { x: -11.065000000000001, y: 22.585 },
+      ]
+    bottom: { c: 5.77 }
+    top: { c: 5.8 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-control-fill-hanger-1
+    footprint: [{ x: -9.045, y: 22.475 }, { x: -8.995, y: 22.475 }, { x: -8.995, y: 22.525 }, { x: -9.045, y: 22.525 }]
+    bottom: { c: 4.6000000000000005 }
+    top: { c: 5.77 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-control-fill-mount-1
+    footprint:
+      [
+        { x: -9.105, y: 22.415 },
+        { x: -8.934999999999999, y: 22.415 },
+        { x: -8.934999999999999, y: 22.585 },
+        { x: -9.105, y: 22.585 },
+      ]
+    bottom: { c: 5.77 }
+    top: { c: 5.8 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-loading-key-housing
+    footprint: [{ x: 25.7, y: 1.84 }, { x: 28.3, y: 1.84 }, { x: 28.3, y: 2.16 }, { x: 25.7, y: 2.16 }]
+    bottom: { c: 4.699999999999999 }
+    top: { c: 4.8 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-loading-key-diffuser
+    footprint: [{ x: 25.83, y: 1.895 }, { x: 28.17, y: 1.895 }, { x: 28.17, y: 2.105 }, { x: 25.83, y: 2.105 }]
+    bottom: { c: 4.659999999999999 }
+    top: { c: 4.699999999999999 }
+    side_material: ceiling-strip
+    top_material: ceiling-strip
+    bottom_material: ceiling-strip
+    collision: false
+  - id: ceiling-loading-key-end-0
+    footprint: [{ x: 25.7, y: 1.82 }, { x: 25.8, y: 1.82 }, { x: 25.8, y: 2.18 }, { x: 25.7, y: 2.18 }]
+    bottom: { c: 4.645 }
+    top: { c: 4.819999999999999 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-loading-key-end-1
+    footprint: [{ x: 28.2, y: 1.82 }, { x: 28.3, y: 1.82 }, { x: 28.3, y: 2.18 }, { x: 28.2, y: 2.18 }]
+    bottom: { c: 4.645 }
+    top: { c: 4.819999999999999 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-loading-key-hanger-0
+    footprint:
+      [
+        { x: 25.995, y: 1.975 },
+        { x: 26.044999999999998, y: 1.975 },
+        { x: 26.044999999999998, y: 2.025 },
+        { x: 25.995, y: 2.025 },
+      ]
+    bottom: { c: 4.8 }
+    top: { c: 6.17 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-loading-key-mount-0
+    footprint: [{ x: 25.935, y: 1.915 }, { x: 26.105, y: 1.915 }, { x: 26.105, y: 2.085 }, { x: 25.935, y: 2.085 }]
+    bottom: { c: 6.17 }
+    top: { c: 6.2 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-loading-key-hanger-1
+    footprint:
+      [
+        { x: 27.955000000000002, y: 1.975 },
+        { x: 28.005, y: 1.975 },
+        { x: 28.005, y: 2.025 },
+        { x: 27.955000000000002, y: 2.025 },
+      ]
+    bottom: { c: 4.8 }
+    top: { c: 6.17 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-loading-key-mount-1
+    footprint: [{ x: 27.895, y: 1.915 }, { x: 28.065, y: 1.915 }, { x: 28.065, y: 2.085 }, { x: 27.895, y: 2.085 }]
+    bottom: { c: 6.17 }
+    top: { c: 6.2 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-extraction-key-housing
+    footprint: [{ x: 27.7, y: 41.84 }, { x: 30.3, y: 41.84 }, { x: 30.3, y: 42.16 }, { x: 27.7, y: 42.16 }]
+    bottom: { c: 4 }
+    top: { c: 4.1 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-extraction-key-diffuser
+    footprint: [{ x: 27.83, y: 41.895 }, { x: 30.17, y: 41.895 }, { x: 30.17, y: 42.105 }, { x: 27.83, y: 42.105 }]
+    bottom: { c: 3.96 }
+    top: { c: 4 }
+    side_material: ceiling-strip
+    top_material: ceiling-strip
+    bottom_material: ceiling-strip
+    collision: false
+  - id: ceiling-extraction-key-end-0
+    footprint: [{ x: 27.7, y: 41.82 }, { x: 27.8, y: 41.82 }, { x: 27.8, y: 42.18 }, { x: 27.7, y: 42.18 }]
+    bottom: { c: 3.945 }
+    top: { c: 4.12 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-extraction-key-end-1
+    footprint: [{ x: 30.2, y: 41.82 }, { x: 30.3, y: 41.82 }, { x: 30.3, y: 42.18 }, { x: 30.2, y: 42.18 }]
+    bottom: { c: 3.945 }
+    top: { c: 4.12 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-extraction-key-hanger-0
+    footprint:
+      [
+        { x: 27.995, y: 41.975 },
+        { x: 28.044999999999998, y: 41.975 },
+        { x: 28.044999999999998, y: 42.025 },
+        { x: 27.995, y: 42.025 },
+      ]
+    bottom: { c: 4.1 }
+    top: { c: 4.77 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-extraction-key-mount-0
+    footprint: [{ x: 27.935, y: 41.915 }, { x: 28.105, y: 41.915 }, { x: 28.105, y: 42.085 }, { x: 27.935, y: 42.085 }]
+    bottom: { c: 4.77 }
+    top: { c: 4.8 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-extraction-key-hanger-1
+    footprint:
+      [
+        { x: 29.955000000000002, y: 41.975 },
+        { x: 30.005, y: 41.975 },
+        { x: 30.005, y: 42.025 },
+        { x: 29.955000000000002, y: 42.025 },
+      ]
+    bottom: { c: 4.1 }
+    top: { c: 4.77 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-extraction-key-mount-1
+    footprint: [{ x: 29.895, y: 41.915 }, { x: 30.065, y: 41.915 }, { x: 30.065, y: 42.085 }, { x: 29.895, y: 42.085 }]
+    bottom: { c: 4.77 }
+    top: { c: 4.8 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-acid-control-key-housing
+    footprint: [{ x: 32.7, y: 12.84 }, { x: 35.3, y: 12.84 }, { x: 35.3, y: 13.16 }, { x: 32.7, y: 13.16 }]
+    bottom: { c: 6.699999999999999 }
+    top: { c: 6.8 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-acid-control-key-diffuser
+    footprint: [{ x: 32.83, y: 12.895 }, { x: 35.17, y: 12.895 }, { x: 35.17, y: 13.105 }, { x: 32.83, y: 13.105 }]
+    bottom: { c: 6.659999999999999 }
+    top: { c: 6.699999999999999 }
+    side_material: ceiling-strip
+    top_material: ceiling-strip
+    bottom_material: ceiling-strip
+    collision: false
+  - id: ceiling-acid-control-key-end-0
+    footprint: [{ x: 32.7, y: 12.82 }, { x: 32.8, y: 12.82 }, { x: 32.8, y: 13.18 }, { x: 32.7, y: 13.18 }]
+    bottom: { c: 6.645 }
+    top: { c: 6.819999999999999 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-acid-control-key-end-1
+    footprint: [{ x: 35.2, y: 12.82 }, { x: 35.3, y: 12.82 }, { x: 35.3, y: 13.18 }, { x: 35.2, y: 13.18 }]
+    bottom: { c: 6.645 }
+    top: { c: 6.819999999999999 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-acid-control-key-hanger-0
+    footprint:
+      [
+        { x: 32.995000000000005, y: 12.975 },
+        { x: 33.045, y: 12.975 },
+        { x: 33.045, y: 13.025 },
+        { x: 32.995000000000005, y: 13.025 },
+      ]
+    bottom: { c: 6.8 }
+    top: { c: 7.77 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-acid-control-key-mount-0
+    footprint:
+      [
+        { x: 32.935, y: 12.915 },
+        { x: 33.105000000000004, y: 12.915 },
+        { x: 33.105000000000004, y: 13.085 },
+        { x: 32.935, y: 13.085 },
+      ]
+    bottom: { c: 7.77 }
+    top: { c: 7.8 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: ceiling-acid-control-key-hanger-1
+    footprint:
+      [
+        { x: 34.955, y: 12.975 },
+        { x: 35.004999999999995, y: 12.975 },
+        { x: 35.004999999999995, y: 13.025 },
+        { x: 34.955, y: 13.025 },
+      ]
+    bottom: { c: 6.8 }
+    top: { c: 7.77 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: ceiling-acid-control-key-mount-1
+    footprint:
+      [
+        { x: 34.894999999999996, y: 12.915 },
+        { x: 35.065, y: 12.915 },
+        { x: 35.065, y: 13.085 },
+        { x: 34.894999999999996, y: 13.085 },
+      ]
+    bottom: { c: 7.77 }
+    top: { c: 7.8 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  # END CEILING FIXTURES
   # A twelve-sided steel drum with two raised hoops and a recessed hot-coal top.
   - id: inspection-burning-barrel
     footprint:
@@ -1785,7 +3369,7 @@ solids:
       ]
     bottom: { c: 0.200 }
     top: { c: 1.040 }
-    side_material: ribbed
+    side_material: barrel-painted
     top_material: barrel-coals
     bottom_material: steel
     collision: true
@@ -1809,139 +3393,309 @@ solids:
       ]
     bottom: { c: 0.270 }
     top: { c: 0.320 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
+  # BEGIN HERO TRIM: inspection-barrel-upper-hoop
   - id: inspection-barrel-upper-hoop
     footprint:
       [
-        { x: 15.2020, y: -1.5500 },
-        { x: 15.1481, y: -1.3490 },
-        { x: 15.0010, y: -1.2019 },
-        { x: 14.8000, y: -1.1480 },
-        { x: 14.5990, y: -1.2019 },
-        { x: 14.4519, y: -1.3490 },
-        { x: 14.3980, y: -1.5500 },
-        { x: 14.4519, y: -1.7510 },
-        { x: 14.5990, y: -1.8981 },
-        { x: 14.8000, y: -1.9520 },
-        { x: 15.0010, y: -1.8981 },
-        { x: 15.1481, y: -1.7510 },
+        { x: 15.193717355557826, y: -1.55 },
+        { x: 15.140927990178234, y: -1.3531416986772198 },
+        { x: 14.99685830132278, y: -1.209072009821765 },
+        { x: 14.8, y: -1.1562826444421737 },
+        { x: 14.60314169867722, y: -1.209072009821765 },
+        { x: 14.459072009821766, y: -1.3531416986772198 },
+        { x: 14.406282644442173, y: -1.55 },
+        { x: 14.459072009821766, y: -1.74685830132278 },
+        { x: 14.60314169867722, y: -1.8909279901782348 },
+        { x: 14.8, y: -1.9437173555578262 },
+        { x: 14.99685830132278, y: -1.8909279901782348 },
+        { x: 15.140927990178234, y: -1.74685830132278 },
       ]
-    bottom: { c: 0.840 }
-    top: { c: 0.890 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    bottom: { c: 0.84 }
+    top: { c: 0.89 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
+  - id: inspection-barrel-upper-hoop-bevel-0
+    footprint:
+      [
+        { x: 15.202, y: -1.55 },
+        { x: 15.1481, y: -1.349 },
+        { x: 15.140927990178234, y: -1.3531416986772198 },
+        { x: 15.193717355557826, y: -1.55 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: -0.9658750965169336, b: -0.259008297026185, c: 15.163770356859839 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-1
+    footprint:
+      [
+        { x: 15.1481, y: -1.349 },
+        { x: 15.001, y: -1.2019 },
+        { x: 14.99685830132278, y: -1.209072009821765 },
+        { x: 15.140927990178234, y: -1.3531416986772198 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: -0.7071067811865475, b: -0.7071067811865475, c: 10.639437184271287 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-2
+    footprint:
+      [
+        { x: 15.001, y: -1.2019 },
+        { x: 14.8, y: -1.148 },
+        { x: 14.8, y: -1.1562826444421737 },
+        { x: 14.99685830132278, y: -1.209072009821765 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: -0.2590082970261846, b: -0.9658750965169335, c: 3.6064981851860924 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-3
+    footprint:
+      [
+        { x: 14.8, y: -1.148 },
+        { x: 14.599, y: -1.2019 },
+        { x: 14.60314169867722, y: -1.209072009821765 },
+        { x: 14.8, y: -1.1562826444421737 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: 0.2590082970261825, b: -0.9658750965169342, c: -4.060147406788941 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-4
+    footprint:
+      [
+        { x: 14.599, y: -1.2019 },
+        { x: 14.4519, y: -1.349 },
+        { x: 14.459072009821766, y: -1.3531416986772198 },
+        { x: 14.60314169867722, y: -1.209072009821765 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: 0.7071067811865475, b: -0.7071067811865475, c: -10.290923538850517 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-5
+    footprint:
+      [
+        { x: 14.4519, y: -1.349 },
+        { x: 14.398, y: -1.55 },
+        { x: 14.406282644442173, y: -1.55 },
+        { x: 14.459072009821766, y: -1.3531416986772198 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: 0.9658750965169336, b: -0.259008297026185, c: -13.426132500041396 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-6
+    footprint:
+      [
+        { x: 14.398, y: -1.55 },
+        { x: 14.4519, y: -1.751 },
+        { x: 14.459072009821766, y: -1.74685830132278 },
+        { x: 14.406282644442173, y: -1.55 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: 0.9658750965169333, b: 0.2590082970261852, c: -12.623206779260217 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-7
+    footprint:
+      [
+        { x: 14.4519, y: -1.751 },
+        { x: 14.599, y: -1.8981 },
+        { x: 14.60314169867722, y: -1.8909279901782348 },
+        { x: 14.459072009821766, y: -1.74685830132278 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: 0.7071067811865475, b: 0.7071067811865475, c: -8.09889251717222 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-8
+    footprint:
+      [
+        { x: 14.599, y: -1.8981 },
+        { x: 14.8, y: -1.952 },
+        { x: 14.8, y: -1.9437173555578262 },
+        { x: 14.60314169867722, y: -1.8909279901782348 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: 0.2590082970261825, b: 0.9658750965169342, c: -1.0659346075864455 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-9
+    footprint:
+      [
+        { x: 14.8, y: -1.952 },
+        { x: 15.001, y: -1.8981 },
+        { x: 14.99685830132278, y: -1.8909279901782348 },
+        { x: 14.8, y: -1.9437173555578262 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: -0.2590082970261846, b: 0.9658750965169335, c: 6.600710984388586 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-10
+    footprint:
+      [
+        { x: 15.001, y: -1.8981 },
+        { x: 15.1481, y: -1.751 },
+        { x: 15.140927990178234, y: -1.74685830132278 },
+        { x: 14.99685830132278, y: -1.8909279901782348 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: -0.7071067811865475, b: 0.7071067811865475, c: 12.831468205949584 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: inspection-barrel-upper-hoop-bevel-11
+    footprint:
+      [
+        { x: 15.1481, y: -1.751 },
+        { x: 15.202, y: -1.55 },
+        { x: 15.193717355557826, y: -1.55 },
+        { x: 15.140927990178234, y: -1.74685830132278 },
+      ]
+    bottom: { c: 0.84 }
+    top: { a: -0.9658750965169333, b: 0.2590082970261852, c: 15.966696077641005 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  # END HERO TRIM: inspection-barrel-upper-hoop
   - id: inspection-barrel-rim-0
     footprint:
       [{ x: 15.2050, y: -1.5500 }, { x: 15.1507, y: -1.3475 }, { x: 15.0771, y: -1.3900 }, { x: 15.1200, y: -1.5500 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-1
     footprint:
       [{ x: 15.1507, y: -1.3475 }, { x: 15.0025, y: -1.1993 }, { x: 14.9600, y: -1.2729 }, { x: 15.0771, y: -1.3900 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-2
     footprint:
       [{ x: 15.0025, y: -1.1993 }, { x: 14.8000, y: -1.1450 }, { x: 14.8000, y: -1.2300 }, { x: 14.9600, y: -1.2729 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-3
     footprint:
       [{ x: 14.8000, y: -1.1450 }, { x: 14.5975, y: -1.1993 }, { x: 14.6400, y: -1.2729 }, { x: 14.8000, y: -1.2300 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-4
     footprint:
       [{ x: 14.5975, y: -1.1993 }, { x: 14.4493, y: -1.3475 }, { x: 14.5229, y: -1.3900 }, { x: 14.6400, y: -1.2729 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-5
     footprint:
       [{ x: 14.4493, y: -1.3475 }, { x: 14.3950, y: -1.5500 }, { x: 14.4800, y: -1.5500 }, { x: 14.5229, y: -1.3900 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-6
     footprint:
       [{ x: 14.3950, y: -1.5500 }, { x: 14.4493, y: -1.7525 }, { x: 14.5229, y: -1.7100 }, { x: 14.4800, y: -1.5500 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-7
     footprint:
       [{ x: 14.4493, y: -1.7525 }, { x: 14.5975, y: -1.9007 }, { x: 14.6400, y: -1.8271 }, { x: 14.5229, y: -1.7100 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-8
     footprint:
       [{ x: 14.5975, y: -1.9007 }, { x: 14.8000, y: -1.9550 }, { x: 14.8000, y: -1.8700 }, { x: 14.6400, y: -1.8271 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-9
     footprint:
       [{ x: 14.8000, y: -1.9550 }, { x: 15.0025, y: -1.9007 }, { x: 14.9600, y: -1.8271 }, { x: 14.8000, y: -1.8700 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-10
     footprint:
       [{ x: 15.0025, y: -1.9007 }, { x: 15.1507, y: -1.7525 }, { x: 15.0771, y: -1.7100 }, { x: 14.9600, y: -1.8271 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: inspection-barrel-rim-11
     footprint:
       [{ x: 15.1507, y: -1.7525 }, { x: 15.2050, y: -1.5500 }, { x: 15.1200, y: -1.5500 }, { x: 15.0771, y: -1.7100 }]
     bottom: { c: 1.040 }
     top: { c: 1.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: false
   - id: frame-arrival-inspection-alcove-edge-4-jamb-0
     footprint: [{ x: 11.910, y: -3.240 }, { x: 12.090, y: -3.240 }, { x: 12.090, y: -3.060 }, { x: 11.910, y: -3.060 }]
@@ -3283,6 +5037,39 @@ solids:
     top_material: steel
     bottom_material: steel
     collision: false
+  # Continuous trim follows the ramp ceilings; no cross-bars between strips.
+  - id: trench-ramp-east-south-cornice
+    footprint: [{ x: 40, y: 19.92 }, { x: 46, y: 19.92 }, { x: 46, y: 20.08 }, { x: 40, y: 20.08 }]
+    bottom: { a: 0.333333333333, c: -12.4133333333 }
+    top: { a: 0.333333333333, c: -12.1333333333 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-ramp-east-north-cornice
+    footprint: [{ x: 40, y: 23.92 }, { x: 46, y: 23.92 }, { x: 46, y: 24.08 }, { x: 40, y: 24.08 }]
+    bottom: { a: 0.333333333333, c: -12.4133333333 }
+    top: { a: 0.333333333333, c: -12.1333333333 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-ramp-west-west-cornice
+    footprint: [{ x: 21.92, y: 26 }, { x: 22.08, y: 26 }, { x: 22.08, y: 32 }, { x: 21.92, y: 32 }]
+    bottom: { b: 0.333333333333, c: -7.84666666667 }
+    top: { b: 0.333333333333, c: -7.56666666667 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
+  - id: trench-ramp-west-east-cornice
+    footprint: [{ x: 23.92, y: 26 }, { x: 24.08, y: 26 }, { x: 24.08, y: 32 }, { x: 23.92, y: 32 }]
+    bottom: { b: 0.333333333333, c: -7.84666666667 }
+    top: { b: 0.333333333333, c: -7.56666666667 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: false
   - id: egress-return-cornice-0
     footprint:
       - { x: 30.0000, y: 34.0800 }
@@ -3327,582 +5114,6 @@ solids:
       - { x: 30.0800, y: 34.0000 }
     bottom: { c: 2.920 }
     top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-0-cornice-0
-    footprint:
-      - { x: 40.0000, y: 20.0800 }
-      - { x: 40.0000, y: 19.9200 }
-      - { x: 41.0000, y: 19.9200 }
-      - { x: 41.0000, y: 20.0800 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-0-cornice-1
-    footprint:
-      - { x: 40.9200, y: 20.0000 }
-      - { x: 41.0800, y: 20.0000 }
-      - { x: 41.0800, y: 24.0000 }
-      - { x: 40.9200, y: 24.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-0-cornice-2
-    footprint:
-      - { x: 41.0000, y: 23.9200 }
-      - { x: 41.0000, y: 24.0800 }
-      - { x: 40.0000, y: 24.0800 }
-      - { x: 40.0000, y: 23.9200 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-0-cornice-3
-    footprint:
-      - { x: 40.0800, y: 24.0000 }
-      - { x: 39.9200, y: 24.0000 }
-      - { x: 39.9200, y: 20.0000 }
-      - { x: 40.0800, y: 20.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-0-cornice-0
-    footprint:
-      - { x: 22.0000, y: 26.0800 }
-      - { x: 22.0000, y: 25.9200 }
-      - { x: 24.0000, y: 25.9200 }
-      - { x: 24.0000, y: 26.0800 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-0-cornice-1
-    footprint:
-      - { x: 23.9200, y: 26.0000 }
-      - { x: 24.0800, y: 26.0000 }
-      - { x: 24.0800, y: 27.0000 }
-      - { x: 23.9200, y: 27.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-0-cornice-2
-    footprint:
-      - { x: 24.0000, y: 26.9200 }
-      - { x: 24.0000, y: 27.0800 }
-      - { x: 22.0000, y: 27.0800 }
-      - { x: 22.0000, y: 26.9200 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-0-cornice-3
-    footprint:
-      - { x: 22.0800, y: 27.0000 }
-      - { x: 21.9200, y: 27.0000 }
-      - { x: 21.9200, y: 26.0000 }
-      - { x: 22.0800, y: 26.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-1-cornice-0
-    footprint:
-      - { x: 41.0000, y: 20.0800 }
-      - { x: 41.0000, y: 19.9200 }
-      - { x: 42.0000, y: 19.9200 }
-      - { x: 42.0000, y: 20.0800 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-1-cornice-1
-    footprint:
-      - { x: 41.9200, y: 20.0000 }
-      - { x: 42.0800, y: 20.0000 }
-      - { x: 42.0800, y: 24.0000 }
-      - { x: 41.9200, y: 24.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-1-cornice-2
-    footprint:
-      - { x: 42.0000, y: 23.9200 }
-      - { x: 42.0000, y: 24.0800 }
-      - { x: 41.0000, y: 24.0800 }
-      - { x: 41.0000, y: 23.9200 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-1-cornice-3
-    footprint:
-      - { x: 41.0800, y: 24.0000 }
-      - { x: 40.9200, y: 24.0000 }
-      - { x: 40.9200, y: 20.0000 }
-      - { x: 41.0800, y: 20.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-1-cornice-0
-    footprint:
-      - { x: 22.0000, y: 27.0800 }
-      - { x: 22.0000, y: 26.9200 }
-      - { x: 24.0000, y: 26.9200 }
-      - { x: 24.0000, y: 27.0800 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-1-cornice-1
-    footprint:
-      - { x: 23.9200, y: 27.0000 }
-      - { x: 24.0800, y: 27.0000 }
-      - { x: 24.0800, y: 28.0000 }
-      - { x: 23.9200, y: 28.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-1-cornice-2
-    footprint:
-      - { x: 24.0000, y: 27.9200 }
-      - { x: 24.0000, y: 28.0800 }
-      - { x: 22.0000, y: 28.0800 }
-      - { x: 22.0000, y: 27.9200 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-1-cornice-3
-    footprint:
-      - { x: 22.0800, y: 28.0000 }
-      - { x: 21.9200, y: 28.0000 }
-      - { x: 21.9200, y: 27.0000 }
-      - { x: 22.0800, y: 27.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-2-cornice-0
-    footprint:
-      - { x: 42.0000, y: 20.0800 }
-      - { x: 42.0000, y: 19.9200 }
-      - { x: 43.0000, y: 19.9200 }
-      - { x: 43.0000, y: 20.0800 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-2-cornice-1
-    footprint:
-      - { x: 42.9200, y: 20.0000 }
-      - { x: 43.0800, y: 20.0000 }
-      - { x: 43.0800, y: 24.0000 }
-      - { x: 42.9200, y: 24.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-2-cornice-2
-    footprint:
-      - { x: 43.0000, y: 23.9200 }
-      - { x: 43.0000, y: 24.0800 }
-      - { x: 42.0000, y: 24.0800 }
-      - { x: 42.0000, y: 23.9200 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-2-cornice-3
-    footprint:
-      - { x: 42.0800, y: 24.0000 }
-      - { x: 41.9200, y: 24.0000 }
-      - { x: 41.9200, y: 20.0000 }
-      - { x: 42.0800, y: 20.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-2-cornice-0
-    footprint:
-      - { x: 22.0000, y: 28.0800 }
-      - { x: 22.0000, y: 27.9200 }
-      - { x: 24.0000, y: 27.9200 }
-      - { x: 24.0000, y: 28.0800 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-2-cornice-1
-    footprint:
-      - { x: 23.9200, y: 28.0000 }
-      - { x: 24.0800, y: 28.0000 }
-      - { x: 24.0800, y: 29.0000 }
-      - { x: 23.9200, y: 29.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-2-cornice-2
-    footprint:
-      - { x: 24.0000, y: 28.9200 }
-      - { x: 24.0000, y: 29.0800 }
-      - { x: 22.0000, y: 29.0800 }
-      - { x: 22.0000, y: 28.9200 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-2-cornice-3
-    footprint:
-      - { x: 22.0800, y: 29.0000 }
-      - { x: 21.9200, y: 29.0000 }
-      - { x: 21.9200, y: 28.0000 }
-      - { x: 22.0800, y: 28.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-3-cornice-0
-    footprint:
-      - { x: 43.0000, y: 20.0800 }
-      - { x: 43.0000, y: 19.9200 }
-      - { x: 44.0000, y: 19.9200 }
-      - { x: 44.0000, y: 20.0800 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-3-cornice-1
-    footprint:
-      - { x: 43.9200, y: 20.0000 }
-      - { x: 44.0800, y: 20.0000 }
-      - { x: 44.0800, y: 24.0000 }
-      - { x: 43.9200, y: 24.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-3-cornice-2
-    footprint:
-      - { x: 44.0000, y: 23.9200 }
-      - { x: 44.0000, y: 24.0800 }
-      - { x: 43.0000, y: 24.0800 }
-      - { x: 43.0000, y: 23.9200 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-3-cornice-3
-    footprint:
-      - { x: 43.0800, y: 24.0000 }
-      - { x: 42.9200, y: 24.0000 }
-      - { x: 42.9200, y: 20.0000 }
-      - { x: 43.0800, y: 20.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-3-cornice-0
-    footprint:
-      - { x: 22.0000, y: 29.0800 }
-      - { x: 22.0000, y: 28.9200 }
-      - { x: 24.0000, y: 28.9200 }
-      - { x: 24.0000, y: 29.0800 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-3-cornice-1
-    footprint:
-      - { x: 23.9200, y: 29.0000 }
-      - { x: 24.0800, y: 29.0000 }
-      - { x: 24.0800, y: 30.0000 }
-      - { x: 23.9200, y: 30.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-3-cornice-2
-    footprint:
-      - { x: 24.0000, y: 29.9200 }
-      - { x: 24.0000, y: 30.0800 }
-      - { x: 22.0000, y: 30.0800 }
-      - { x: 22.0000, y: 29.9200 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-3-cornice-3
-    footprint:
-      - { x: 22.0800, y: 30.0000 }
-      - { x: 21.9200, y: 30.0000 }
-      - { x: 21.9200, y: 29.0000 }
-      - { x: 22.0800, y: 29.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-4-cornice-0
-    footprint:
-      - { x: 44.0000, y: 20.0800 }
-      - { x: 44.0000, y: 19.9200 }
-      - { x: 45.0000, y: 19.9200 }
-      - { x: 45.0000, y: 20.0800 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-4-cornice-1
-    footprint:
-      - { x: 44.9200, y: 20.0000 }
-      - { x: 45.0800, y: 20.0000 }
-      - { x: 45.0800, y: 24.0000 }
-      - { x: 44.9200, y: 24.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-4-cornice-2
-    footprint:
-      - { x: 45.0000, y: 23.9200 }
-      - { x: 45.0000, y: 24.0800 }
-      - { x: 44.0000, y: 24.0800 }
-      - { x: 44.0000, y: 23.9200 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-4-cornice-3
-    footprint:
-      - { x: 44.0800, y: 24.0000 }
-      - { x: 43.9200, y: 24.0000 }
-      - { x: 43.9200, y: 20.0000 }
-      - { x: 44.0800, y: 20.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-4-cornice-0
-    footprint:
-      - { x: 22.0000, y: 30.0800 }
-      - { x: 22.0000, y: 29.9200 }
-      - { x: 24.0000, y: 29.9200 }
-      - { x: 24.0000, y: 30.0800 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-4-cornice-1
-    footprint:
-      - { x: 23.9200, y: 30.0000 }
-      - { x: 24.0800, y: 30.0000 }
-      - { x: 24.0800, y: 31.0000 }
-      - { x: 23.9200, y: 31.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-4-cornice-2
-    footprint:
-      - { x: 24.0000, y: 30.9200 }
-      - { x: 24.0000, y: 31.0800 }
-      - { x: 22.0000, y: 31.0800 }
-      - { x: 22.0000, y: 30.9200 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-4-cornice-3
-    footprint:
-      - { x: 22.0800, y: 31.0000 }
-      - { x: 21.9200, y: 31.0000 }
-      - { x: 21.9200, y: 30.0000 }
-      - { x: 22.0800, y: 30.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-5-cornice-0
-    footprint:
-      - { x: 45.0000, y: 20.0800 }
-      - { x: 45.0000, y: 19.9200 }
-      - { x: 46.0000, y: 19.9200 }
-      - { x: 46.0000, y: 20.0800 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-5-cornice-1
-    footprint:
-      - { x: 45.9200, y: 20.0000 }
-      - { x: 46.0800, y: 20.0000 }
-      - { x: 46.0800, y: 24.0000 }
-      - { x: 45.9200, y: 24.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-5-cornice-2
-    footprint:
-      - { x: 46.0000, y: 23.9200 }
-      - { x: 46.0000, y: 24.0800 }
-      - { x: 45.0000, y: 24.0800 }
-      - { x: 45.0000, y: 23.9200 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: trench-stair-5-cornice-3
-    footprint:
-      - { x: 45.0800, y: 24.0000 }
-      - { x: 44.9200, y: 24.0000 }
-      - { x: 44.9200, y: 20.0000 }
-      - { x: 45.0800, y: 20.0000 }
-    bottom: { c: 2.920 }
-    top: { c: 3.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-5-cornice-0
-    footprint:
-      - { x: 22.0000, y: 31.0800 }
-      - { x: 22.0000, y: 30.9200 }
-      - { x: 24.0000, y: 30.9200 }
-      - { x: 24.0000, y: 31.0800 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-5-cornice-1
-    footprint:
-      - { x: 23.9200, y: 31.0000 }
-      - { x: 24.0800, y: 31.0000 }
-      - { x: 24.0800, y: 32.0000 }
-      - { x: 23.9200, y: 32.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-5-cornice-2
-    footprint:
-      - { x: 24.0000, y: 31.9200 }
-      - { x: 24.0000, y: 32.0800 }
-      - { x: 22.0000, y: 32.0800 }
-      - { x: 22.0000, y: 31.9200 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
-    collision: false
-  - id: west-trench-stair-5-cornice-3
-    footprint:
-      - { x: 22.0800, y: 32.0000 }
-      - { x: 21.9200, y: 32.0000 }
-      - { x: 21.9200, y: 31.0000 }
-      - { x: 22.0800, y: 31.0000 }
-    bottom: { c: 2.820 }
-    top: { c: 3.100 }
     side_material: steel
     top_material: steel
     bottom_material: steel
@@ -3955,14 +5166,6 @@ solids:
     top_material: steel
     bottom_material: steel
     collision: false
-  - id: arrival-freight
-    footprint: [{ x: 9.000, y: -5.000 }, { x: 10.200, y: -5.000 }, { x: 10.200, y: -3.800 }, { x: 9.000, y: -3.800 }]
-    bottom: { c: 0.000 }
-    top: { c: 1.300 }
-    side_material: crate
-    top_material: crate
-    bottom_material: crate
-    collision: true
   # Trim overlaps the opening by 0.02 m so it covers the reveal instead of sharing its plane.
   - id: window-sill-0
     footprint: [{ x: -0.700, y: -4.000 }, { x: 0.040, y: -4.000 }, { x: 0.040, y: -1.000 }, { x: -0.700, y: -1.000 }]
@@ -4093,14 +5296,6 @@ solids:
     top_material: steel
     bottom_material: steel
     collision: false
-  - id: bay-freight
-    footprint: [{ x: -4.000, y: 6.000 }, { x: -2.000, y: 6.000 }, { x: -2.000, y: 8.000 }, { x: -4.000, y: 8.000 }]
-    bottom: { c: 0.000 }
-    top: { c: 1.600 }
-    side_material: crate
-    top_material: crate
-    bottom_material: crate
-    collision: true
   - id: core-foundation
     footprint:
       - { x: 10.8000, y: 24.0000 }
@@ -4177,7 +5372,7 @@ solids:
       - { x: 9.6887, y: 23.0250 }
     bottom: { c: 1.100 }
     top: { c: 5.200 }
-    side_material: ribbed
+    side_material: reactor-ribbed
     top_material: steel
     bottom_material: ribbed
     collision: true
@@ -4201,26 +5396,42 @@ solids:
     top_material: steel
     bottom_material: reactor-lamp
     collision: true
+  # BEGIN HERO TRIM: core-cap
   - id: core-cap
     footprint:
-      - { x: 10.4000, y: 24.0000 }
-      - { x: 10.0785, y: 25.2000 }
-      - { x: 9.2000, y: 26.0785 }
-      - { x: 8.0000, y: 26.4000 }
-      - { x: 6.8000, y: 26.0785 }
-      - { x: 5.9215, y: 25.2000 }
-      - { x: 5.6000, y: 24.0000 }
-      - { x: 5.9215, y: 22.8000 }
-      - { x: 6.8000, y: 21.9215 }
-      - { x: 8.0000, y: 21.6000 }
-      - { x: 9.2000, y: 21.9215 }
-      - { x: 10.0785, y: 22.8000 }
-    bottom: { c: 5.500 }
-    top: { c: 5.850 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+      [
+        { x: 10.38835446206716, y: 23.95653298438753 },
+        { x: 10.38835446206716, y: 24.04346701561247 },
+        { x: 10.090145537932841, y: 25.15653298438753 },
+        { x: 10.046680194846605, y: 25.231819805153393 },
+        { x: 9.231819805153394, y: 26.046680194846605 },
+        { x: 9.156532984387528, y: 26.09014553793284 },
+        { x: 8.043467015612471, y: 26.388354462067156 },
+        { x: 7.95653298438753, y: 26.388354462067156 },
+        { x: 6.84346701561247, y: 26.09014553793284 },
+        { x: 6.768180194846606, y: 26.046680194846605 },
+        { x: 5.953319805153394, y: 25.231819805153393 },
+        { x: 5.909854462067159, y: 25.15653298438753 },
+        { x: 5.611645537932841, y: 24.04346701561247 },
+        { x: 5.611645537932841, y: 23.95653298438753 },
+        { x: 5.909854462067159, y: 22.84346701561247 },
+        { x: 5.953319805153394, y: 22.768180194846607 },
+        { x: 6.768180194846606, y: 21.953319805153395 },
+        { x: 6.84346701561247, y: 21.90985446206716 },
+        { x: 7.95653298438753, y: 21.611645537932844 },
+        { x: 8.043467015612471, y: 21.611645537932844 },
+        { x: 9.156532984387528, y: 21.90985446206716 },
+        { x: 9.231819805153394, y: 21.953319805153395 },
+        { x: 10.046680194846605, y: 22.768180194846607 },
+        { x: 10.090145537932841, y: 22.84346701561247 },
+      ]
+    bottom: { c: 5.5 }
+    top: { c: 5.85 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: true
+  # END HERO TRIM: core-cap
   - id: core-exhaust
     footprint:
       - { x: 8.7500, y: 24.0000 }
@@ -4478,7 +5689,7 @@ solids:
     collision: true
   - id: trench-column-0-0
     footprint: [{ x: 22.200, y: 18.750 }, { x: 22.800, y: 18.750 }, { x: 22.800, y: 19.500 }, { x: 22.200, y: 19.500 }]
-    bottom: { c: -1.200 }
+    bottom: { c: -3.500 }
     top: { c: 9.000 }
     side_material: ribbed
     top_material: steel
@@ -4486,7 +5697,7 @@ solids:
     collision: true
   - id: trench-column-0-1
     footprint: [{ x: 39.200, y: 18.750 }, { x: 39.800, y: 18.750 }, { x: 39.800, y: 19.500 }, { x: 39.200, y: 19.500 }]
-    bottom: { c: -1.200 }
+    bottom: { c: -3.500 }
     top: { c: 9.000 }
     side_material: ribbed
     top_material: steel
@@ -4502,7 +5713,7 @@ solids:
     collision: false
   - id: trench-column-1-0
     footprint: [{ x: 22.200, y: 24.750 }, { x: 22.800, y: 24.750 }, { x: 22.800, y: 25.500 }, { x: 22.200, y: 25.500 }]
-    bottom: { c: -1.200 }
+    bottom: { c: -3.500 }
     top: { c: 9.000 }
     side_material: ribbed
     top_material: steel
@@ -4510,7 +5721,7 @@ solids:
     collision: true
   - id: trench-column-1-1
     footprint: [{ x: 39.200, y: 24.750 }, { x: 39.800, y: 24.750 }, { x: 39.800, y: 25.500 }, { x: 39.200, y: 25.500 }]
-    bottom: { c: -1.200 }
+    bottom: { c: -3.500 }
     top: { c: 9.000 }
     side_material: ribbed
     top_material: steel
@@ -4526,7 +5737,7 @@ solids:
     collision: false
   - id: trench-column-2-1
     footprint: [{ x: 39.200, y: 30.750 }, { x: 39.800, y: 30.750 }, { x: 39.800, y: 31.500 }, { x: 39.200, y: 31.500 }]
-    bottom: { c: -1.200 }
+    bottom: { c: -3.500 }
     top: { c: 9.000 }
     side_material: ribbed
     top_material: steel
@@ -4534,7 +5745,7 @@ solids:
     collision: true
   - id: trench-duct-0
     footprint: [{ x: 37.000, y: 18.500 }, { x: 39.000, y: 18.500 }, { x: 39.000, y: 19.900 }, { x: 37.000, y: 19.900 }]
-    bottom: { c: -1.200 }
+    bottom: { c: -3.500 }
     top: { c: 0.200 }
     side_material: ribbed
     top_material: steel
@@ -4542,7 +5753,7 @@ solids:
     collision: true
   - id: trench-duct-1
     footprint: [{ x: 37.000, y: 26.000 }, { x: 39.000, y: 26.000 }, { x: 39.000, y: 27.400 }, { x: 37.000, y: 27.400 }]
-    bottom: { c: -1.200 }
+    bottom: { c: -3.500 }
     top: { c: 0.200 }
     side_material: ribbed
     top_material: steel
@@ -4550,7 +5761,7 @@ solids:
     collision: true
   - id: trench-duct-2
     footprint: [{ x: 37.000, y: 31.000 }, { x: 39.000, y: 31.000 }, { x: 39.000, y: 32.400 }, { x: 37.000, y: 32.400 }]
-    bottom: { c: -1.200 }
+    bottom: { c: -3.500 }
     top: { c: 0.200 }
     side_material: ribbed
     top_material: steel
@@ -4668,30 +5879,6 @@ solids:
     top_material: steel
     bottom_material: steel
     collision: true
-  - id: loading-freight-0
-    footprint: [{ x: 26.000, y: 7.000 }, { x: 27.600, y: 7.000 }, { x: 27.600, y: 8.600 }, { x: 26.000, y: 8.600 }]
-    bottom: { c: 0.000 }
-    top: { c: 1.600 }
-    side_material: crate
-    top_material: crate
-    bottom_material: crate
-    collision: true
-  - id: loading-freight-1
-    footprint: [{ x: 28.100, y: 7.000 }, { x: 29.700, y: 7.000 }, { x: 29.700, y: 8.600 }, { x: 28.100, y: 8.600 }]
-    bottom: { c: 0.000 }
-    top: { c: 1.600 }
-    side_material: crate
-    top_material: crate
-    bottom_material: crate
-    collision: true
-  - id: loading-freight-2
-    footprint: [{ x: 30.200, y: 7.000 }, { x: 31.800, y: 7.000 }, { x: 31.800, y: 8.600 }, { x: 30.200, y: 8.600 }]
-    bottom: { c: 0.000 }
-    top: { c: 1.600 }
-    side_material: crate
-    top_material: crate
-    bottom_material: crate
-    collision: true
   - id: extraction-platform
     footprint: [{ x: 27.000, y: 44.400 }, { x: 32.000, y: 44.400 }, { x: 32.000, y: 45.900 }, { x: 27.000, y: 45.900 }]
     bottom: { c: 0.000 }
@@ -4700,11 +5887,13 @@ solids:
     top_material: grate
     bottom_material: hazard
     collision: true
-  # Fill both trench sides; the ±0.045 waves stay below the lowest -1.00 stair.
-  # All basin bottoms are -1.20; tops range from -1.145 to -1.055.
+  # A 2.4-metre pool fills both trench sides below the unchanged surface.
+  # Basin bottoms are -3.50; animated tops range from -1.145 to -1.055.
+  # Entry slabs extend through the ramp passages; sector floors clip the liquid
+  # at each sloped shoreline rather than leaving an empty ramp entrance.
   - id: acid-south-west
     footprint: [{ x: 22, y: 16 }, { x: 30, y: 16 }, { x: 30, y: 20 }, { x: 22, y: 20 }]
-    bottom: { c: -1.20 }
+    bottom: { c: -3.50 }
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
@@ -4712,15 +5901,15 @@ solids:
     collision: false
   - id: acid-south-east
     footprint: [{ x: 30, y: 16 }, { x: 40, y: 16 }, { x: 40, y: 20 }, { x: 30, y: 20 }]
-    bottom: { c: -1.20 }
+    bottom: { c: -3.50 }
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
     bottom_material: acid-boundary
     collision: false
   - id: acid-west-0-entry
-    footprint: [{ x: 22, y: 24 }, { x: 24, y: 24 }, { x: 24, y: 26 }, { x: 22, y: 26 }]
-    bottom: { c: -1.20 }
+    footprint: [{ x: 22, y: 24 }, { x: 24, y: 24 }, { x: 24, y: 32 }, { x: 22, y: 32 }]
+    bottom: { c: -3.50 }
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
@@ -4728,7 +5917,7 @@ solids:
     collision: false
   - id: acid-west-0-bend
     footprint: [{ x: 24, y: 24 }, { x: 26, y: 24 }, { x: 32, y: 28 }, { x: 24, y: 28 }]
-    bottom: { c: -1.20 }
+    bottom: { c: -3.50 }
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
@@ -4736,15 +5925,15 @@ solids:
     collision: false
   - id: acid-west-1
     footprint: [{ x: 24, y: 28 }, { x: 32, y: 28 }, { x: 26, y: 32 }, { x: 24, y: 32 }]
-    bottom: { c: -1.20 }
+    bottom: { c: -3.50 }
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
     bottom_material: acid-boundary
     collision: false
   - id: acid-east-entry
-    footprint: [{ x: 30, y: 20 }, { x: 40, y: 20 }, { x: 40, y: 24 }, { x: 30, y: 24 }]
-    bottom: { c: -1.20 }
+    footprint: [{ x: 30, y: 20 }, { x: 46, y: 20 }, { x: 46, y: 24 }, { x: 30, y: 24 }]
+    bottom: { c: -3.50 }
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
@@ -4752,7 +5941,7 @@ solids:
     collision: false
   - id: acid-east-0
     footprint: [{ x: 30, y: 24 }, { x: 40, y: 24 }, { x: 40, y: 28 }, { x: 36, y: 28 }]
-    bottom: { c: -1.20 }
+    bottom: { c: -3.50 }
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
@@ -4760,7 +5949,7 @@ solids:
     collision: false
   - id: acid-east-1
     footprint: [{ x: 36, y: 28 }, { x: 40, y: 28 }, { x: 40, y: 32 }, { x: 30, y: 32 }]
-    bottom: { c: -1.20 }
+    bottom: { c: -3.50 }
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
@@ -4768,7 +5957,7 @@ solids:
     collision: false
   - id: acid-east-2
     footprint: [{ x: 30, y: 32 }, { x: 40, y: 32 }, { x: 40, y: 34 }, { x: 30, y: 34 }]
-    bottom: { c: -1.20 }
+    bottom: { c: -3.50 }
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
@@ -4920,7 +6109,1596 @@ solids:
     top_material: screen
     bottom_material: steel
     collision: true
+# Runtime crates use one reusable visual box and one dynamic box collider.
 prefabs:
+  - id: cargo-crate
+    renderable: true
+    solids:
+      - id: shell
+        footprint: [{ x: -0.5, y: -0.5 }, { x: 0.5, y: -0.5 }, { x: 0.5, y: 0.5 }, { x: -0.5, y: 0.5 }]
+        bottom: { c: -0.5 }
+        top: { c: 0.5 }
+        side_material: crate
+        top_material: crate
+        bottom_material: crate
+  # BEGIN PARTICLE LAB EFFECTS: prefabs
+  - id: industrial-acid
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 3109
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 3163
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.17
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 3181
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 0.39
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 3191
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 0.61
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 3221
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 0.89
+  - id: industrial-discharge
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: charge
+        preset: industrial-electric-charge
+        position:
+          x: 0
+          "y": 0
+          z: 0.3
+        seed: 51031
+        playback:
+          mode: cycle
+          period_seconds: 3.2
+      - id: contact
+        preset: industrial-electric-contact
+        position:
+          x: 0
+          "y": 0
+          z: 0.3
+        seed: 51043
+        playback:
+          mode: cycle
+          period_seconds: 3.2
+      - id: channels
+        preset: industrial-electric-segments
+        position:
+          x: 0
+          "y": 0
+          z: 0.3
+        seed: 51047
+        playback:
+          mode: cycle
+          period_seconds: 3.2
+      - id: left-branches
+        preset: industrial-electric-branches
+        position:
+          x: -0.17
+          "y": 0
+          z: 0.2
+        seed: 51059
+        playback:
+          mode: cycle
+          period_seconds: 3.2
+      - id: right-branches
+        preset: industrial-electric-branches
+        position:
+          x: 0.17
+          "y": 0
+          z: 0.38
+        seed: 51071
+        playback:
+          mode: cycle
+          period_seconds: 3.2
+      - id: fallout
+        preset: industrial-electric-fallout
+        position:
+          x: 0
+          "y": 0
+          z: 0.3
+        seed: 51073
+        playback:
+          mode: cycle
+          period_seconds: 3.2
+      - id: echo
+        preset: industrial-electric-echo
+        position:
+          x: 0
+          "y": 0
+          z: 0.35
+        seed: 51089
+        playback:
+          mode: cycle
+          period_seconds: 3.2
+  - id: brackeys-fire-combined
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: brackeys-fire-combined-flamesmoke-01
+        preset: hangar-barrel-flamesmoke
+        position:
+          x: 0
+          "y": 0
+          z: 0
+        seed: 1923196973
+        playback:
+          mode: cycle
+          period_seconds: 2.5
+      - id: brackeys-fire-combined-embers-02
+        preset: brackeys-fire-combined-embers-02
+        position:
+          x: 0
+          "y": 0
+          z: 0
+        seed: 2655656500
+        playback:
+          mode: cycle
+          period_seconds: 3
+      - id: shaped-tongues
+        preset: hangar-barrel-tongues
+        position:
+          x: 0.035
+          "y": 0
+          z: 0.1
+        seed: 3917141
+        playback:
+          mode: cycle
+          period_seconds: 1.19
+          delay_seconds: 0.067
+  - id: hangar-acid-south-middle
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 3246
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.071
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 3300
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.241
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 3318
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 0.461
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 3328
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 0.6809999999999999
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 3358
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 0.961
+  - id: hangar-acid-south-west-bank
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 3383
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.142
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 3437
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.312
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 3455
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 0.532
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 3465
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 0.752
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 3495
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.032
+  - id: hangar-acid-south-east
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 3520
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.213
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 3574
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.383
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 3592
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 0.603
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 3602
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 0.823
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 3632
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.103
+  - id: hangar-acid-south-east-bank
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 3657
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.284
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 3711
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.45399999999999996
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 3729
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 0.6739999999999999
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 3739
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 0.8939999999999999
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 3769
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.174
+  - id: hangar-acid-south-east-mid
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 3794
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.355
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 3848
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.525
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 3866
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 0.745
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 3876
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 0.965
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 3906
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.245
+  - id: hangar-acid-south-seam
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 3931
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.426
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 3985
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.596
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 4003
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 0.8160000000000001
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 4013
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.036
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 4043
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.316
+  - id: hangar-acid-west-bend
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 4068
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.497
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 4122
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.667
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 4140
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 0.887
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 4150
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.107
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 4180
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.387
+  - id: hangar-acid-west-bend-east
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 4205
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.568
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 4259
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.738
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 4277
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 0.958
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 4287
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.178
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 4317
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.458
+  - id: hangar-acid-west
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 4342
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.639
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 4396
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.809
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 4414
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.029
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 4424
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.249
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 4454
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.529
+  - id: hangar-acid-west-upper-east
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 4479
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.71
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 4533
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.88
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 4551
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.1
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 4561
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.3199999999999998
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 4591
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.6
+  - id: hangar-acid-entry
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 4616
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.781
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 4670
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 0.9510000000000001
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 4688
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.171
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 4698
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.391
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 4728
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.671
+  - id: hangar-acid-entry-west
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 4753
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.852
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 4807
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.022
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 4825
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.242
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 4835
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.462
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 4865
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.742
+  - id: hangar-acid-entry-east
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 4890
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.923
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 4944
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.093
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 4962
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.3130000000000002
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 4972
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.533
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 5002
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.8130000000000002
+  - id: hangar-acid-entry-south
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 5027
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 0.994
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 5081
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.164
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 5099
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.384
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 5109
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.604
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 5139
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.884
+  - id: hangar-acid-east-bend
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 5164
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 1.065
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 5218
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.2349999999999999
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 5236
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.455
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 5246
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.6749999999999998
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 5276
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 1.955
+  - id: hangar-acid-east-lower-west
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 5301
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 1.136
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 5355
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.3059999999999998
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 5373
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.5259999999999998
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 5383
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.746
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 5413
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 2.026
+  - id: hangar-acid-east-lower-bank
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 5438
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 1.207
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 5492
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.377
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 5510
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.597
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 5520
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.8170000000000002
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 5550
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 2.097
+  - id: hangar-acid-east
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 5575
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 1.278
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 5629
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.448
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 5647
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.6680000000000001
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 5657
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.888
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 5687
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 2.168
+  - id: hangar-acid-east-upper-west
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 5712
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 1.349
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 5766
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.519
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 5784
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.7389999999999999
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 5794
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 1.959
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 5824
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 2.239
+  - id: hangar-acid-north-centre
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 5849
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 1.42
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 5903
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.5899999999999999
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 5921
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.81
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 5931
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 2.03
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 5961
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 2.31
+  - id: hangar-acid-north-east
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 5986
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 1.491
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 6040
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.661
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 6058
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.8810000000000002
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 6068
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 2.101
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 6098
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 2.3810000000000002
+  - id: hangar-acid-north-west
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 6123
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 1.562
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 6177
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.732
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 6195
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 1.952
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 6205
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 2.172
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 6235
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 2.452
+  - id: hangar-acid-north-middle
+    rooms: []
+    instances: []
+    connections: []
+    ports: []
+    particle_emitters:
+      - id: micro-shells
+        preset: acid-micro-shells
+        position:
+          x: 0
+          "y": 0
+          z: 0.12
+        seed: 6260
+        playback:
+          mode: cycle
+          period_seconds: 1.43
+          delay_seconds: 1.633
+      - id: pocket-bubbles
+        preset: acid-pocket-bubbles
+        position:
+          x: -0.08
+          "y": 0.04
+          z: 0.13
+        seed: 6314
+        playback:
+          mode: cycle
+          period_seconds: 1.79
+          delay_seconds: 1.803
+      - id: ballistic-droplets
+        preset: acid-ballistic-droplets
+        position:
+          x: 0
+          "y": 0
+          z: 0.18
+        seed: 6332
+        playback:
+          mode: cycle
+          period_seconds: 1.93
+          delay_seconds: 2.023
+      - id: thin-vapor
+        preset: acid-thin-vapor
+        position:
+          x: 0.06
+          "y": -0.03
+          z: 0.32
+        seed: 6342
+        playback:
+          mode: cycle
+          period_seconds: 2.17
+          delay_seconds: 2.243
+      - id: surface-pops
+        preset: acid-surface-pops
+        position:
+          x: 0
+          "y": 0
+          z: 0.075
+        seed: 6372
+        playback:
+          mode: cycle
+          period_seconds: 2.63
+          delay_seconds: 2.523
+  # END PARTICLE LAB EFFECTS: prefabs
   - id: ventilation-case
     solids:
       - id: left
@@ -5180,6 +7958,268 @@ prefabs:
         bottom_material: steel
         collision: false
 instances:
+  # BEGIN PARTICLE LAB EFFECTS: instances
+  - id: barrel-effects
+    prefab: brackeys-fire-combined
+    transform:
+      translation:
+        x: 14.8
+        "y": -1.55
+        z: 1.1
+      yaw_degrees: 0
+      scale: 0.75
+    materials: []
+  - id: reactor-discharge
+    prefab: industrial-discharge
+    transform:
+      translation:
+        x: 6.3
+        "y": 23.05
+        z: 3.7
+      yaw_degrees: 0
+      scale: 0.7
+    materials: []
+  - id: acid-south-effects
+    prefab: industrial-acid
+    transform:
+      translation:
+        x: 24.4
+        "y": 17
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.1
+    materials: []
+  - id: acid-south-middle-effects
+    prefab: hangar-acid-south-middle
+    transform:
+      translation:
+        x: 29.2
+        "y": 19.4
+        z: -0.93
+      yaw_degrees: 0
+      scale: 0.8
+    materials: []
+  - id: acid-south-west-bank-effects
+    prefab: hangar-acid-south-west-bank
+    transform:
+      translation:
+        x: 23
+        "y": 18
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  - id: acid-south-east-effects
+    prefab: hangar-acid-south-east
+    transform:
+      translation:
+        x: 35.6
+        "y": 19
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.1
+    materials: []
+  - id: acid-south-east-bank-effects
+    prefab: hangar-acid-south-east-bank
+    transform:
+      translation:
+        x: 39
+        "y": 17.6
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  - id: acid-south-east-mid-effects
+    prefab: hangar-acid-south-east-mid
+    transform:
+      translation:
+        x: 33.8
+        "y": 19.4
+        z: -0.93
+      yaw_degrees: 0
+      scale: 0.8
+    materials: []
+  - id: acid-south-seam-effects
+    prefab: hangar-acid-south-seam
+    transform:
+      translation:
+        x: 30.8
+        "y": 18.8
+        z: -0.93
+      yaw_degrees: 0
+      scale: 0.8
+    materials: []
+  - id: acid-west-bend-effects
+    prefab: hangar-acid-west-bend
+    transform:
+      translation:
+        x: 26.4
+        "y": 26
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.1
+    materials: []
+  - id: acid-west-bend-east-effects
+    prefab: hangar-acid-west-bend-east
+    transform:
+      translation:
+        x: 29.4
+        "y": 27.4
+        z: -0.93
+      yaw_degrees: 0
+      scale: 0.8
+    materials: []
+  - id: acid-west-effects
+    prefab: hangar-acid-west
+    transform:
+      translation:
+        x: 26.4
+        "y": 30
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.1
+    materials: []
+  - id: acid-west-upper-east-effects
+    prefab: hangar-acid-west-upper-east
+    transform:
+      translation:
+        x: 28.2
+        "y": 29
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  - id: acid-entry-effects
+    prefab: hangar-acid-entry
+    transform:
+      translation:
+        x: 35
+        "y": 22
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.1
+    materials: []
+  - id: acid-entry-west-effects
+    prefab: hangar-acid-entry-west
+    transform:
+      translation:
+        x: 31
+        "y": 23.2
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  - id: acid-entry-east-effects
+    prefab: hangar-acid-entry-east
+    transform:
+      translation:
+        x: 39
+        "y": 23.2
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  - id: acid-entry-south-effects
+    prefab: hangar-acid-entry-south
+    transform:
+      translation:
+        x: 37.6
+        "y": 20.8
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  - id: acid-east-bend-effects
+    prefab: hangar-acid-east-bend
+    transform:
+      translation:
+        x: 36
+        "y": 26
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  - id: acid-east-lower-west-effects
+    prefab: hangar-acid-east-lower-west
+    transform:
+      translation:
+        x: 33.4
+        "y": 24.8
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  - id: acid-east-lower-bank-effects
+    prefab: hangar-acid-east-lower-bank
+    transform:
+      translation:
+        x: 38
+        "y": 25.2
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.1
+    materials: []
+  - id: acid-east-effects
+    prefab: hangar-acid-east
+    transform:
+      translation:
+        x: 36.4
+        "y": 30
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.1
+    materials: []
+  - id: acid-east-upper-west-effects
+    prefab: hangar-acid-east-upper-west
+    transform:
+      translation:
+        x: 32.6
+        "y": 31.4
+        z: -0.93
+      yaw_degrees: 0
+      scale: 0.8
+    materials: []
+  - id: acid-north-centre-effects
+    prefab: hangar-acid-north-centre
+    transform:
+      translation:
+        x: 35
+        "y": 33
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.1
+    materials: []
+  - id: acid-north-east-effects
+    prefab: hangar-acid-north-east
+    transform:
+      translation:
+        x: 39
+        "y": 33.2
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  - id: acid-north-west-effects
+    prefab: hangar-acid-north-west
+    transform:
+      translation:
+        x: 31
+        "y": 33.2
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  - id: acid-north-middle-effects
+    prefab: hangar-acid-north-middle
+    transform:
+      translation:
+        x: 37
+        "y": 33.2
+        z: -0.93
+      yaw_degrees: 0
+      scale: 1.05
+    materials: []
+  # END PARTICLE LAB EFFECTS: instances
   - { id: arrival-vent, prefab: ventilation-case, transform: { translation: { x: 9.5, y: 9.55, z: 3.2 } } }
   - { id: control-vent, prefab: ventilation-case, transform: { translation: { x: -9.7, y: 27.55, z: 4.3 } } }
   - { id: loading-vent, prefab: ventilation-case, transform: { translation: { x: 29.0, y: 9.55, z: 3.6 } } }
@@ -5363,7 +8403,7 @@ lighting:
   version: 1
   actors: true
   ambient: { x: 0.035, y: 0.040, z: 0.037 }
-  # Control lamps remain local; the offline recipe keeps its eight-source budget.
+  # Steady wayfinding lamps bake offline; emission-linked effects remain live.
   lights:
     - {
         id: barrel-fire-light,
@@ -5371,25 +8411,21 @@ lighting:
         color: { x: 1, y: 0.34, z: 0.055 },
         radius: 3.2,
       }
-    - { id: ventilation-fill, position: { x: 9.5, y: 6.8, z: 3.1 }, color: { x: 0.28, y: 0.32, z: 0.27 }, radius: 4.0 }
+    # The damaged arrival fixture is unpowered; retain its position for trim generation.
+    - { id: ventilation-fill, position: { x: 9.5, y: 6.8, z: 3.7 }, color: { x: 0, y: 0, z: 0 }, radius: 4.0 }
     - { id: arrival-key, position: { x: 7.00, y: -1.00, z: 3.70 }, color: { x: 0.95, y: 0.78, z: 0.50 }, radius: 9.00 }
     - { id: window-key, position: { x: -4.50, y: 2.50, z: 3.60 }, color: { x: 0.72, y: 0.85, z: 0.72 }, radius: 8.00 }
     - {
         id: reactor-overhead,
         position: { x: 7.00, y: 18.50, z: 5.80 },
-        color: { x: 0.75, y: 0.80, z: 0.88 },
-        radius: 10.00,
+        color: { x: 0.60, y: 0.68, z: 0.78 },
+        radius: 7.50,
       }
-    - { id: core-west, position: { x: 5.40, y: 24.00, z: 3.50 }, color: { x: 0.40, y: 0.52, z: 0.68 }, radius: 10.50 }
-    - { id: core-east, position: { x: 10.60, y: 24.00, z: 3.50 }, color: { x: 0.40, y: 0.52, z: 0.68 }, radius: 10.50 }
-    - { id: core-front, position: { x: 8.00, y: 20.80, z: 3.00 }, color: { x: 0.44, y: 0.52, z: 0.66 }, radius: 10.00 }
+    - { id: core-west, position: { x: 5.40, y: 24.00, z: 3.50 }, color: { x: 0.30, y: 0.42, z: 0.55 }, radius: 7.00 }
+    - { id: core-east, position: { x: 10.60, y: 24.00, z: 3.50 }, color: { x: 0.30, y: 0.42, z: 0.55 }, radius: 7.00 }
+    - { id: core-front, position: { x: 8.00, y: 20.80, z: 3.00 }, color: { x: 0.28, y: 0.37, z: 0.49 }, radius: 6.50 }
     # Steady cool source for the two-bounce bake; local linked lights pulse above it.
-    - {
-        id: reactor-base,
-        position: { x: 8.00, y: 20.30, z: 3.60 },
-        color: { x: 0.22, y: 0.30, z: 0.40 },
-        radius: 12.00,
-      }
+    - { id: reactor-base, position: { x: 8.00, y: 20.30, z: 3.60 }, color: { x: 0.22, y: 0.30, z: 0.40 }, radius: 7.50 }
     - { id: reactor-red, position: { x: 14.00, y: 28.00, z: 3.00 }, color: { x: 0.50, y: 0.17, z: 0.06 }, radius: 3.50 }
     - {
         id: control-fill,
@@ -5426,6 +8462,32 @@ lighting:
       }
     - { id: zig-key, position: { x: 30.50, y: 25.80, z: 4.10 }, color: { x: 0.95, y: 0.67, z: 0.34 }, radius: 9.00 }
     - { id: zig-far, position: { x: 28.00, y: 31.00, z: 4.40 }, color: { x: 0.38, y: 0.62, z: 0.70 }, radius: 7.00 }
+    # Local console pools preserve the control deck silhouette with the torch off.
+    - {
+        id: control-console-south,
+        position: { x: -12.5, y: 19.5, z: 3.7 },
+        color: { x: 0.24, y: 0.48, z: 0.34 },
+        radius: 4.2,
+      }
+    - {
+        id: control-console-north,
+        position: { x: -12.5, y: 24, z: 3.7 },
+        color: { x: 0.24, y: 0.48, z: 0.34 },
+        radius: 4.2,
+      }
+    # Warmer near-machine and entrance pools guide the eye through the loading hall.
+    - {
+        id: loading-machinery-fill,
+        position: { x: 28, y: 0.9, z: 3 },
+        color: { x: 0.50, y: 0.37, z: 0.23 },
+        radius: 5.2,
+      }
+    - {
+        id: loading-entrance-guide,
+        position: { x: 21, y: 5, z: 2.5 },
+        color: { x: 0.42, y: 0.31, z: 0.19 },
+        radius: 4.5,
+      }
     - { id: loading-key, position: { x: 27.00, y: 2.00, z: 4.60 }, color: { x: 0.93, y: 0.72, z: 0.44 }, radius: 10.00 }
     - {
         id: extraction-key,
@@ -5454,13 +8516,13 @@ lighting:
       }
     - {
         id: west-stair-guide,
-        position: { x: 23.00, y: 29.00, z: 2.70 },
+        position: { x: 23.00, y: 29.00, z: 1.80 },
         color: { x: 0.32, y: 0.38, z: 0.34 },
         radius: 4.80,
       }
     - {
         id: east-stair-guide,
-        position: { x: 44.50, y: 22.00, z: 2.70 },
+        position: { x: 44.50, y: 22.00, z: 2.30 },
         color: { x: 0.34, y: 0.38, z: 0.31 },
         radius: 5.80,
       }

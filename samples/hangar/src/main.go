@@ -17,6 +17,9 @@ type Game struct {
 	request        engine.LevelRequestID
 	panel          *engine.UI
 	fps            *FPSController
+	crates         [len(freightStacks)]*engine.EntityWorldSolid
+	audio          hangarAudio
+	audioPending   bool
 	keys           [256]bool
 	view           int
 	status         string
@@ -38,7 +41,9 @@ func (game *Game) Hooks() engine.Hooks {
 				return
 			}
 			game.level = event.Handle
+			game.createCrates()
 			game.visit(0)
+			game.audioPending = true
 		},
 		OnLevelFailed: func(event engine.LevelFailed) {
 			game.status = "Level failed: " + event.Diagnostic
@@ -126,6 +131,12 @@ func (game *Game) visit(index int) {
 		ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
 	})
 	game.camera.SetLayer(-10)
+	// Keep the walking controller's floor and stair proposals; the body lets
+	// accepted steps push the movable freight through the host's box solver.
+	game.SetPhysicsBox(game.camera, engine.PhysicsBox{
+		HalfExtents: engine.NewVec3D(.3, .3, .85), Offset: engine.NewVec3D(0, 0, -.85),
+		Mass: 80, Friction: .5, LockRotation: true,
+	})
 	game.torch = game.NewSpotLight(game.level, engine.NewVec3D(p.x, p.y, p.z), engine.NewVec3D(3, 2.7, 2.16), 18, .25, .50)
 	// Camera-local axes are right, forward and up: hold the torch low on the right.
 	game.torch.AttachToCamera(game.camera, engine.NewVec3D(.35, .20, -.30))
@@ -180,12 +191,24 @@ func (game *Game) key(key engine.Key, down bool) {
 func (game *Game) update(frame engine.Frame) {
 	game.fps.Update(frame)
 	game.updateTorch(frame.Number)
+	if game.audioPending {
+		game.createAudio()
+		game.audioPending = false
+	}
+	game.updateAudio(frame.Number)
 	// game.bolt.update() // Point-light demo paused.
 }
 
 func (game *Game) stop() {
+	game.stopAudio()
 	game.fps.Close()
 	game.clearLights()
+	for _, crate := range game.crates {
+		if crate != nil {
+			crate.Destroy()
+		}
+	}
+	clear(game.crates[:])
 	if game.camera != nil {
 		game.camera.Destroy()
 	}

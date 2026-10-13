@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	worldMaterialAssetProcessor = "world-material-asset@2"
+	worldMaterialAssetProcessor = "world-material-asset@3"
 	materialTileLengthBytes     = 4
 	materialTileHeaderBytes     = 2 * materialTileLengthBytes
 )
@@ -203,6 +203,21 @@ func generateMaterialTile(ctx context.Context, manifest sdk.Manifest, source Sou
 		for _, name := range []string{"metallic", "smoothness"} {
 			if err := mergeMaterialMap(ctx, directory, name, reflectance); err != nil {
 				return Processed{}, err
+			}
+		}
+
+		// The pinned tool adds specular evidence after multiplying its detector
+		// by metallic_scale. Honor an explicit nonmetal classification even if
+		// that evidence leaves residual metallic pixels. Keep smoothness intact.
+		if options.MetallicScale != nil && *options.MetallicScale == 0 {
+			for row := range bounds.Dy() {
+				if err := ctx.Err(); err != nil {
+					return Processed{}, err
+				}
+
+				for column := range bounds.Dx() {
+					reflectance.Pix[reflectance.PixOffset(column, row)] = 0
+				}
 			}
 		}
 	}

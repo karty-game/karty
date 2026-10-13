@@ -9,6 +9,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/worldsource"
 	"github.com/karty-game/karty/internal/worldbuild/geometry"
 	"github.com/karty-game/karty/internal/worldbuild/source"
+	"github.com/pelletier/go-toml/v2"
 )
 
 func TestAnimationCompileResolvesEveryFrameAndOwnsBindings(t *testing.T) {
@@ -65,69 +66,31 @@ func TestHangarAnimationExampleCompiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	names := []string{
-		"olive",
-		"ribbed",
-		"brick",
-		"floor",
-		"grate",
-		"ceiling",
-		"concrete",
-		"hazard",
-		"steel",
-		"crate",
-		"recess",
-		"toxic",
-		"lamp", "reactor-lamp",
-		"screen",
-		"arrival-sign",
-		"reactor-sign",
-		"exit-sign",
-		"screen-glitch-1",
-		"screen-glitch-2",
-		"screen-glitch-3",
-		"fan-rotor-detailed",
-		"piston",
-		"wall-weathering",
-		"rust-drips",
-		"barrel-coals",
-	}
-
-	materials := map[string]uint32{}
-	for i, n := range names {
-		materials[n] = uint32(i + 1)
-
-		sourceName := n + ".png"
-		if n == "reactor-lamp" {
-			sourceName = "lamp.png"
-		}
-
-		if _, err := os.Stat(filepath.Join(root, sourceName)); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	materials["acid-boundary"] = uint32(len(materials) + 1)
+	// Use the level's complete texture catalog, including the reused smoke
+	// animation frames, rather than an older handwritten material list.
+	materials := hangarAnimationMaterials(t, root)
 
 	compiled, err := geometry.Compile(expanded, materials)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(compiled.Animations.Presets) != 5 || len(compiled.Animations.Materials) != 3 {
+	if len(compiled.Animations.Presets) != len(expanded.Animations.Presets) || len(compiled.Animations.Materials) != 3 {
 		t.Fatal("missing Hangar preset catalog")
 	}
 
-	animated := 0
+	animated := map[string]int{}
 
 	for _, c := range compiled.Contents {
 		if c.Actor != nil && c.Actor.Animation != nil {
-			animated++
+			animated[c.Actor.Animation.Preset]++
 		}
 	}
 
-	if animated != 13 {
-		t.Fatalf("animated Hangar actors=%d", animated)
+	for preset, count := range map[string]int{"terminal-glitch": 7, "ventilation-fan": 3, "service-piston": 3} {
+		if animated[preset] != count {
+			t.Fatalf("Hangar %s actors=%d, want %d", preset, animated[preset], count)
+		}
 	}
 
 	ids := world.MaterialIDs(&compiled)
@@ -144,4 +107,32 @@ func TestHangarAnimationExampleCompiles(t *testing.T) {
 	if seen[materials["fan-rotor-detailed"]] {
 		t.Fatal("sprite-only rotor entered atlas")
 	}
+}
+
+func hangarAnimationMaterials(t *testing.T, root string) map[string]uint32 {
+	t.Helper()
+
+	data, err := os.ReadFile(filepath.Join(root, "level.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var manifest struct {
+		Textures []struct{ Name, Source string }
+	}
+
+	if err := toml.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+
+	materials := make(map[string]uint32, len(manifest.Textures))
+	for index, texture := range manifest.Textures {
+		if _, err := os.Stat(filepath.Join(root, texture.Source)); err != nil {
+			t.Fatal(err)
+		}
+
+		materials[texture.Name] = uint32(index + 1)
+	}
+
+	return materials
 }

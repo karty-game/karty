@@ -9,13 +9,23 @@ import (
 )
 
 func worldSolidsFeatures(assets *assetBuild, document world.Document) ([]string, error) {
+	var features []string
+
+	if document.SolidRenderers != nil {
+		if assets == nil || !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldSolidRenderersV1) {
+			return nil, fmt.Errorf("requires an SDK advertising %s: %w", asset.CapabilityWorldSolidRenderersV1, ErrManifest)
+		}
+
+		features = append(features, world.FeatureSolidRenderers)
+	}
+
 	if document.StaticSolids == nil {
-		return nil, nil
+		return features, nil
 	}
 
 	if assets == nil || !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldStaticSolidsV1) {
 		return nil, fmt.Errorf("requires an SDK advertising %s: %w", asset.CapabilityWorldStaticSolidsV1, ErrManifest)
 	}
 
-	return []string{world.FeatureStaticSolids}, nil
+	return append(features, world.FeatureStaticSolids), nil
 }

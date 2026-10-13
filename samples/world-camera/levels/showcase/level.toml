@@ -11,6 +11,11 @@ name = "wall-top"
 source = "wall-top.png"
 profile = "environment"
 
+# Masked brick trim uses the same surface recipe as the main wall.
+[textures.materialize]
+preset = "brick"
+metallic_scale = 0
+
 [textures.material_strengths]
 normal = 1.0
 height = 1.4
@@ -21,6 +26,11 @@ rim = 0.0
 name = "wall-bottom"
 source = "wall-bottom.png"
 profile = "environment"
+
+# Masked brick trim uses the same surface recipe as the main wall.
+[textures.materialize]
+preset = "brick"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 1.0
@@ -33,6 +43,11 @@ name = "floor"
 source = "floor.png"
 profile = "environment"
 
+# Jointed concrete gallery floor tiles.
+[textures.materialize]
+preset = "concrete"
+metallic_scale = 0
+
 [textures.material_strengths]
 normal = 0.9
 height = 0.8
@@ -44,6 +59,11 @@ name = "ceiling"
 source = "ceiling.png"
 profile = "environment"
 
+# Painted plaster gallery ceiling panels.
+[textures.materialize]
+preset = "plaster"
+metallic_scale = 0
+
 [textures.material_strengths]
 normal = 0.8
 height = 0.5
@@ -54,6 +74,11 @@ rim = 0.4
 name = "wall"
 source = "wall.png"
 profile = "environment"
+
+# Rough gallery brick courses.
+[textures.materialize]
+preset = "brick"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 1.0
@@ -86,6 +111,10 @@ name = "z-court-marble"
 source = "z-court-marble.jpg"
 profile = "environment"
 
+[textures.materialize]
+preset = "marble"
+metallic_scale = 0.0
+
 [textures.material_strengths]
 normal = 0.25
 height = 0.03
@@ -96,6 +125,10 @@ rim = 0.15
 name = "z-court-mosaic"
 source = "z-court-mosaic.png"
 profile = "environment"
+
+[textures.materialize]
+preset = "marble"
+metallic_scale = 0.0
 
 [textures.material_strengths]
 normal = 0.4
@@ -108,6 +141,10 @@ name = "z-court-paving"
 source = "z-court-paving.png"
 profile = "environment"
 
+[textures.materialize]
+preset = "stone"
+metallic_scale = 0.0
+
 [textures.material_strengths]
 normal = 0.65
 height = 0.0
@@ -118,6 +155,11 @@ rim = 0.2
 name = "z-court-plaster"
 source = "z-court-plaster.png"
 profile = "environment"
+
+# Legacy name: the artwork depicts bevelled limestone blocks, not plaster.
+[textures.materialize]
+preset = "stone"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 0.6
@@ -130,6 +172,11 @@ name = "z-court-coffer"
 source = "z-court-coffer.png"
 profile = "environment"
 
+# Carved stone ceiling coffers.
+[textures.materialize]
+preset = "stone"
+metallic_scale = 0
+
 [textures.material_strengths]
 normal = 0.65
 height = 0.45
@@ -140,6 +187,14 @@ rim = 0.25
 name = "z-court-sky"
 source = "z-court-sky.png"
 profile = "environment"
+
+# Flat sky illustration on a world ceiling; neutral generated relief.
+[textures.materialize]
+preset = "default"
+metallic_scale = 0
+normal_strength = 0
+height_contrast = 0
+ao_depth_scale = 0
 
 [textures.material_strengths]
 normal = 0.0
@@ -152,12 +207,83 @@ name = "z-court-water"
 source = "z-court-water.png"
 profile = "environment"
 
+[textures.materialize]
+preset = "water"
+metallic_scale = 0.0
+
 [textures.material_strengths]
 normal = 0.75
 height = 0.1
 ao = 0.0
 rim = 0.25
 
+
+# Colour-only layer: no normal/height generation is needed for this material.
+[[textures]]
+name = "z-detail-grain"
+source = "z-detail-grain.png"
+profile = "environment"
+
+[[textures]]
+name = "z-water-boundary"
+source = "z-court-water.png"
+profile = "environment"
+
+# Invisible side/bottom faces of the same water slab.
+[textures.materialize]
+preset = "water"
+metallic_scale = 0
+
+# Static bronze bowls and iron chains; coals illuminate their own surface.
+[[textures]]
+name = "z-hanging-bronze"
+source = "z-hanging-bronze.png"
+profile = "environment"
+[textures.materialize]
+preset = "metal"
+metallic_scale = 0.75
+[textures.material_strengths]
+normal = 0.25
+height = 0.05
+ao = 0.4
+rim = 0.1
+
+[[textures]]
+name = "z-hanging-iron"
+source = "z-hanging-iron.png"
+profile = "environment"
+[textures.materialize]
+preset = "metal"
+metallic_scale = 0.65
+[textures.material_strengths]
+normal = 0.3
+height = 0.02
+ao = 0.4
+rim = 0.1
+
+[[textures]]
+name = "z-hanging-coals"
+source = "z-hanging-coals.png"
+profile = "environment"
+
+# Rough nonmetallic charcoal; glow comes from emission, not the lava preset.
+[textures.materialize]
+preset = "stone"
+metallic_scale = 0
+[textures.emission]
+intensity = 0.8
+
+[[textures]]
+name = "z-hanging-fire-1"
+source = "z-hanging-fire-1.png"
+
+[[textures]]
+name = "z-hanging-fire-2"
+source = "z-hanging-fire-2.png"
+
+[[textures]]
+name = "z-hanging-fire-3"
+source = "z-hanging-fire-3.png"
 
 [lightmap]
 enabled = true
@@ -166,7 +292,30 @@ page_size = 1024
 padding = 4
 max_pages = 1
 max_texels = 1048576
-lights = ["court-daylight", "west-brazier", "east-brazier", "north-cool-fill", "hall-fill", "gallery-fill"]
+lights = [
+  "brazier-west",
+  "brazier-center",
+  "brazier-east",
+  "court-daylight-0",
+  "court-daylight-1",
+  "court-daylight-2",
+  "court-daylight-3",
+  "court-lamp-0",
+  "court-lamp-1",
+  "court-lamp-2",
+  "court-lamp-3",
+  "court-lamp-4",
+  "court-lamp-5",
+  "court-lamp-6",
+  "court-lamp-7",
+  "gallery-lamp-0",
+  "gallery-lamp-1",
+  "gallery-lamp-2",
+  "gallery-lamp-3",
+  "gallery-lamp-4",
+  "gallery-lamp-5",
+  "gallery-lamp-6",
+]
 shadow_size = 512
 offline = true
 bake_samples = 4
@@ -175,6 +324,8 @@ bake_denoise = "medium"
 
 [chunks]
 enabled = true
+# Retain the complete court and its detailed hanging chains in one mesh.
+max_mesh_bytes = 8388608
 areas = [
   { name = "courtyard", instances = [
     "roman-court",

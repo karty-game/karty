@@ -24,17 +24,65 @@ rim = 0.1
 
 [[textures]]
 name = "ribbed"
-source = "ribbed.png"
+source = "ribbed-quiet.png"
 profile = "environment"
 
 [textures.materialize]
 preset = "metal"
 
 [textures.material_strengths]
+normal = 0.55
+height = 0.05
+ao = 0.55
+rim = 0.1
+
+[[textures]]
+name = "reactor-ribbed"
+source = "ribbed.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "metal"
+metallic_scale = 0
+
+[textures.material_strengths]
 normal = 0.80
 height = 0.10
 ao = 0.80
 rim = 0.1
+
+[[textures]]
+name = "barrel-painted"
+source = "ribbed-quiet.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "metal"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.28
+height = 0.025
+ao = 0.35
+rim = 0.0
+
+[[textures]]
+name = "hero-steel"
+source = "hero-steel.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "metal"
+metallic_scale = 0.85
+normal_strength = 0.3
+height_contrast = 0.25
+ao_depth_scale = 0.3
+
+[textures.material_strengths]
+normal = 0.18
+height = 0.01
+ao = 0.25
+rim = 0.0
 
 [[textures]]
 name = "brick"
@@ -52,7 +100,7 @@ rim = 0.1
 
 [[textures]]
 name = "floor"
-source = "floor.png"
+source = "floor-quiet.png"
 profile = "environment"
 
 [textures.materialize]
@@ -60,37 +108,37 @@ profile = "environment"
 preset = "metal"
 
 [textures.material_strengths]
-normal = 0.80
-height = 0.10
-ao = 0.80
+normal = 0.35
+height = 0.03
+ao = 0.45
 rim = 0.1
 
 [[textures]]
 name = "grate"
-source = "grate.png"
+source = "grate-quiet.png"
 profile = "environment"
 
 [textures.materialize]
 preset = "metal"
 
 [textures.material_strengths]
-normal = 0.80
-height = 0.10
-ao = 0.80
+normal = 0.45
+height = 0.04
+ao = 0.50
 rim = 0.1
 
 [[textures]]
 name = "ceiling"
-source = "ceiling.png"
+source = "ceiling-quiet.png"
 profile = "environment"
 
 [textures.materialize]
 preset = "metal"
 
 [textures.material_strengths]
-normal = 0.80
-height = 0.10
-ao = 0.80
+normal = 0.25
+height = 0.02
+ao = 0.35
 rim = 0.1
 
 [[textures]]
@@ -198,6 +246,31 @@ ao = 0.00
 rim = 0.1
 
 [[textures]]
+name = "ceiling-strip"
+source = "strip-light.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.0
+height = 0.0
+ao = 0.0
+rim = 0.0
+
+[textures.emission]
+intensity = 1.35
+
+[[textures]]
+name = "ceiling-strip-broken"
+source = "strip-light-broken.png"
+profile = "environment"
+
+[textures.material_strengths]
+normal = 0.0
+height = 0.0
+ao = 0.0
+rim = 0.0
+
+[[textures]]
 name = "reactor-lamp"
 source = "lamp.png"
 profile = "environment"
@@ -287,33 +360,6 @@ name = "rust-drips"
 source = "rust-drips.png"
 profile = "environment"
 
-# Original procedural white masks; GPU color curves provide their final hues.
-# Regenerate with samples/hangar/generate-particle-assets.go from the CLI root.
-[[textures]]
-name = "acid-sparkle"
-source = "acid-sparkle.png"
-profile = "environment"
-
-[[textures]]
-name = "barrel-flame-1"
-source = "barrel-flame-1.png"
-profile = "environment"
-
-[[textures]]
-name = "barrel-flame-2"
-source = "barrel-flame-2.png"
-profile = "environment"
-
-[[textures]]
-name = "barrel-flame-3"
-source = "barrel-flame-3.png"
-profile = "environment"
-
-[[textures]]
-name = "barrel-ember"
-source = "barrel-ember.png"
-profile = "environment"
-
 [[textures]]
 name = "barrel-coals"
 source = "barrel-coals.png"
@@ -346,3 +392,61 @@ offline = true
 bake_samples = 32
 bake_bounces = 2
 bake_denoise = "medium"
+
+# BEGIN PARTICLE LAB EFFECTS: textures
+
+[[textures]]
+name = "brackeys-circle-02-a"
+source = "textures/effects/brackeys-circle-02-a.png"
+profile = "sprite"
+
+[[textures]]
+name = "brackeys-circle-04-a"
+source = "textures/effects/brackeys-circle-04-a.png"
+profile = "sprite"
+
+[[textures]]
+name = "brackeys-smoke-07-a"
+source = "textures/effects/brackeys-smoke-07-a.png"
+profile = "sprite"
+
+[[textures]]
+name = "brackeys-smoke-07-strong-a"
+source = "textures/effects/brackeys-smoke-07-strong-a.png"
+profile = "sprite"
+
+[[textures]]
+name = "brackeys-spotlight-01-a"
+source = "textures/effects/brackeys-spotlight-01-a.png"
+profile = "sprite"
+
+[[textures]]
+name = "brackeys-trace-01-a"
+source = "textures/effects/brackeys-trace-01-a.png"
+profile = "sprite"
+
+[[textures]]
+name = "lab-fire-tongue"
+source = "textures/effects/lab-fire-tongue.png"
+profile = "sprite"
+
+[[textures]]
+name = "lab-flash"
+source = "textures/effects/lab-flash.png"
+profile = "sprite"
+
+[[textures]]
+name = "lab-fleck"
+source = "textures/effects/lab-fleck.png"
+profile = "sprite"
+
+[[textures]]
+name = "lab-ring"
+source = "textures/effects/lab-ring.png"
+profile = "sprite"
+
+[[textures]]
+name = "lab-streak"
+source = "textures/effects/lab-streak.png"
+profile = "sprite"
+# END PARTICLE LAB EFFECTS: textures

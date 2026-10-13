@@ -1,0 +1,54 @@
+# Native passive captures use the same nine poses as src/main.go.
+[[views]]
+position = [-4.6, -6.2, 2.4]
+yaw = -23.62937773
+pitch = -6.8755
+output = "dist/screenshots/01-fire.png"
+
+[[views]]
+position = [1, -5.5, 2.1]
+yaw = -21.80140949
+pitch = -6.8755
+output = "dist/screenshots/02-welding.png"
+
+[[views]]
+position = [7, -5.5, 2.1]
+yaw = -21.80140949
+pitch = -6.8755
+output = "dist/screenshots/03-acid.png"
+
+[[views]]
+position = [-4.6, 0.8, 3.3]
+yaw = -23.62937773
+pitch = -1.7189
+output = "dist/screenshots/04-reactor.png"
+
+[[views]]
+position = [1.4, 0.8, 2.4]
+yaw = -23.62937773
+pitch = -6.8755
+output = "dist/screenshots/05-discharge.png"
+
+[[views]]
+position = [7.4, 0.8, 2.4]
+yaw = -23.62937773
+pitch = -6.8755
+output = "dist/screenshots/06-discharge-once.png"
+
+[[views]]
+position = [0, -10, 6.5]
+yaw = 0
+pitch = -24.0642
+output = "dist/screenshots/07-room-overview.png"
+
+[[views]]
+position = [-9.2, -4.4, 2.2]
+yaw = 66.37062227
+pitch = -6.8755
+output = "dist/screenshots/08-fire-side.png"
+
+[[views]]
+position = [-5.2, -4.9, 1.85]
+yaw = -22.83365418
+pitch = -6.8755
+output = "dist/screenshots/09-fire-near.png"

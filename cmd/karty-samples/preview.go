@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 
 	"github.com/karty-game/karty/internal/guide"
+	"github.com/karty-game/karty/internal/release"
 )
 
 // previewSamples refreshes reading pages and screenshots without rebuilding games.
+// Local candidate demos use a complete snapshot of their existing web build.
 func previewSamples(directory string) error {
 	root, err := filepath.Abs(directory)
 	if err != nil {
@@ -36,7 +38,21 @@ func previewSamples(directory string) error {
 	}
 	defer output.Close()
 
-	for _, name := range names {
+	project, err := os.OpenRoot(root)
+	if err != nil {
+		return err
+	}
+	defer project.Close()
+
+	for index, name := range names {
+		if release.SampleSDKVersion(name) != release.SDKVersion() {
+			if err := previewLocalSample(project, output, name, cards[index]); err != nil {
+				return err
+			}
+
+			continue
+		}
+
 		if err := output.Mkdir(name, 0o755); err != nil && !os.IsExist(err) {
 			return err
 		}

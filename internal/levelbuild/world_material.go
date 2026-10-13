@@ -144,6 +144,13 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 
 	data = append(data, particleEntries...)
 
+	skyEntries, skyFeatures, err := compileWorldSky(directory, definition, assets)
+	if err != nil {
+		return worldMaterialBuild{}, fmt.Errorf("level %q sky: %w", definition.Level.Name, err)
+	}
+
+	data = append(data, skyEntries...)
+
 	animations, err := worldAnimationFeatures(assets, compiled)
 	if err != nil {
 		return worldMaterialBuild{}, err
@@ -217,6 +224,7 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 	}
 
 	atlas.features = append(atlas.features, particleFeatures...)
+	atlas.features = append(atlas.features, skyFeatures...)
 	atlas.features = append(atlas.features, animations...)
 	atlas.features = append(atlas.features, environment...)
 	atlas.features = append(atlas.features, lighting...)

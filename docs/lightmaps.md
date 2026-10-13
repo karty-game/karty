@@ -271,3 +271,77 @@ an available prebake use the current host's live lighting.
 
 When building the CLI from source with Go 1.27, use the pinned root mise tasks
 (they enable `GOEXPERIMENT=simd`) or set that experiment for direct Go commands.
+
+## Bake time and weather variants
+
+Candidate SDK 0.0.12 supports static sun/sky diffuse variants through
+`world/lightmaps-environment-variants@1`. Configure the world level:
+
+```toml
+[lightmap]
+enabled = true
+offline = true
+density = 24
+page_size = 512
+padding = 2
+bake_samples = 4
+bake_bounces = 1
+bake_denoise = "medium"
+
+[lightmap.environment]
+times = [0, 9, 12, 17]
+default_time = 12
+weather_variants = false
+
+[chunks]
+enabled = true
+```
+
+Run the normal native or web build. It bakes one clear image for each authored
+clock into content-addressed passive resources before the game runs. Every chunk
+retains one shared chart layout and embeds the default clear
+map. Later builds reuse matching validated pixel caches; changed geometry,
+opacity, original albedo or bake settings produce new identities. There is no
+runtime ray tracing or bake step. Editor previews without a completed geometry
+cache retain the existing mesh-only live-lighting path and do not bake rays.
+
+Times must be unique ascending hours in `[0,24)`, at most 32 clocks. The default
+must belong to that list; its omission selects 15:00. Unknown environment options
+are rejected. Environment recipes require chunks and enabled offline lightmaps,
+and cannot also select point lights, import a whole-world prebake or truncate
+sky rays with `bake_max_ray_distance`. Point lights and authored ambient remain
+runtime contributions. Sun and sky visibility use actual opaque geometry;
+translucent liquid materials, including static glass, transmit light in this
+initial producer. Refraction, tint absorption and moving-object shadows are not
+baked. Higher final sample counts can reduce residual sky/bounce noise.
+
+`weather_variants` defaults to false. Cloud coverage changes a cheap brightness
+multiplier while retaining the selected state's shadows and direction; it does
+not fetch another map or start a bake. Set `weather_variants=true` explicitly
+to produce clear/overcast pairs instead, with a maximum 16 clocks (32 images).
+Existing paired catalogs remain supported and blend decoded linear RNM
+coefficients for weather changes.
+
+The existing environment selector chooses the nearest baked clock. A
+matching host fetches condition resources when selected and uploads one active
+map per chunk. The complete visible scene uses current live lighting until all
+required maps are ready, suppressing old baked shadows during the transition.
+Failed conditions retain that live fallback.
+The image cache does not imply retaining all decoded conditions. A 1024 map
+costs 12 MiB decoded; transitions need an explicitly bounded endpoint pair and
+output scratch. Compressed bytes and build time grow with the number of clocks,
+while the steady GPU texture count remains one RNM map per resident chunk.
+
+The environment sample uses 24 texels per world unit and six receiver chunks,
+with adaptive 512px or 1024px pages. Ordinary connected receiver cells preserve
+the visible ground and courtyard; thin sections form the inaccessible
+upper-storey architecture.
+The opt-in solid ownership policy spreads decorative parts across eligible
+sectors, while chart rotation and complete receiver-group compaction improve
+page use. All selected sectors must share one full ordinary physical component;
+transformed-only and disconnected groups remain invalid. Packing preserves the
+authored density and respects the configured 1024px page limit. See
+[environment lightmap variants v1](decisions/environment-lightmap-variants-v1.md).
+Its four states are Night (0), Morning (9), Noon (12, default), and Evening (17).
+They produce four atlases per chunk, 24 image resources total, rather than
+additional weather states.

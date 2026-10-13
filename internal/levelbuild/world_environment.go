@@ -17,5 +17,15 @@ func worldEnvironmentFeatures(assets *assetBuild, document world.Document) ([]st
 		return nil, fmt.Errorf("requires an SDK advertising %s: %w", asset.CapabilityWorldEnvironmentV1, ErrManifest)
 	}
 
-	return []string{world.FeatureEnvironment}, nil
+	features := []string{world.FeatureEnvironment}
+
+	if document.Environment.Backdrop != "" {
+		if !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldEnvironmentBackdropV1) {
+			return nil, fmt.Errorf("requires an SDK advertising %s: %w", asset.CapabilityWorldEnvironmentBackdropV1, ErrManifest)
+		}
+
+		features = append(features, world.FeatureEnvironmentBackdrop)
+	}
+
+	return features, nil
 }

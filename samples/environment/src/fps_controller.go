@@ -151,7 +151,7 @@ func (controller *FPSController) Help() string {
 	if controller.touchMode {
 		return "Left stick walk · Right stick look"
 	}
-	return "WASD / mouse · Shift run · V view · P style · H hide"
+	return "WASD / mouse · Shift run · V view · H controls"
 }
 
 func (controller *FPSController) showSticks() {
@@ -161,7 +161,7 @@ func (controller *FPSController) showSticks() {
 		base.SetFill(engine.RGBA(20, 30, 34, 160))
 		base.SetStroke(engine.RGBA(217, 183, 113, 200), 2)
 		base.SetLayer(20)
-		thumb := controller.game.NewVector2D(engine.Circle(23), engine.NewVec2D(stick.X, stick.Y))
+		thumb := controller.game.NewVector2D(engine.Circle(32), engine.NewVec2D(stick.X, stick.Y))
 		thumb.SetFill(engine.RGBA(217, 183, 113, 220))
 		thumb.SetLayer(21)
 		controller.sticks[index] = stickOverlay{base, thumb}

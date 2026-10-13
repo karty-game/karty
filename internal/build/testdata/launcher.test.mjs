@@ -7,6 +7,9 @@ import { runInNewContext } from "node:vm";
 import { createHash } from "node:crypto";
 
 const mock = process.argv[2] === "--mock";
+const delayedPresentation = process.env.KARTY_TEST_PRESENTATION_DELAY === "1";
+let presentationFrame = 0,
+  presentationCallback;
 const directory = mock ? null : process.argv[2];
 const source = (await readFile(mock ? process.argv[3] : join(directory, "karty.js"), "utf8")).replace(
   "@@HOST_SOURCE@@",
@@ -135,6 +138,7 @@ function commands(frame) {
 }
 
 const context = {
+  setTimeout,
   document: {
     documentElement: { dataset: {} },
     getElementById: (id) => elements.get(id),
@@ -290,7 +294,7 @@ const context = {
   },
   Go: class {
     importObject = { hostTest: true };
-    run() {
+    async run() {
       try {
         if (mock) {
           if (soundSections === "present")
@@ -311,6 +315,19 @@ const context = {
         context.kartyHostLog = () => {};
         context.kartyHostPlaySound = () => {};
         context.kartyHostPlaySFXFrom = () => {};
+        const emitterCalls = [];
+        context.kartyHostSetSoundEmitter = (...args) => emitterCalls.push(args);
+        context.kartyHostStopSoundEmitter = (id) => emitterCalls.push([id]);
+        const emitterArgs = [17, 2, 3, 4, 1.25, -2.5, 3.75, 0.6, 1, 30, 3];
+        imports.karty.set_sound_emitter(...emitterArgs);
+        imports.karty.set_sound_emitter(...emitterArgs.slice(0, -1), 4);
+        imports.karty.stop_sound_emitter(17);
+        assert.deepEqual(emitterCalls, [emitterArgs, [17]], "emitter ABI and unknown flag rejection");
+        delete context.kartyHostSetSoundEmitter;
+        delete context.kartyHostStopSoundEmitter;
+        imports.karty.set_sound_emitter(...emitterArgs);
+        imports.karty.stop_sound_emitter(17);
+
         context.kartyHostSetAudioReceiver = () => {};
         context.kartyHostClearAudioReceiver = () => {};
         context.kartyHostPlayMusic = () => {};
@@ -321,6 +338,12 @@ const context = {
         context.kartyHostStopSound = () => {};
         context.kartyHostAction = () => {};
         context.kartyHostSubmitCommands = (bytes) => submissions.push(Uint8Array.from(bytes));
+        if (delayedPresentation) {
+          context.requestAnimationFrame = (callback) => {
+            presentationCallback = callback;
+          };
+          context.kartyWorldRenderer = { stats: () => ({ cameras: [{ device: { frames: presentationFrame } }] }) };
+        }
         context.kartyClientInitialize();
         const initial = commands(0n);
         if (!mock) for (const tag of [1, 8, 10]) assert.ok(initial.includes(tag), `missing create tag ${tag}`);
@@ -356,6 +379,13 @@ const context = {
               frame === 2n ? 2 : 0,
               "views must only be recreated on memory growth",
             );
+          if (delayedPresentation && frame === 1n) {
+            assert.equal(elements.get("loading").hidden, false, "first guest update is not a completed map");
+            presentationCallback();
+            assert.equal(elements.get("loading").hidden, false, "pending GPU map retains loading feedback");
+            presentationFrame = 1;
+            await new Promise((resolve) => setTimeout(resolve, 120));
+          }
           assert.equal(elements.get("loading").hidden, true);
           assert.equal(elements.get("loading").attributes["aria-busy"], "false");
           assert.equal(elements.get("fullscreen").hidden, false);

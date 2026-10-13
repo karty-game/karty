@@ -1,4 +1,7 @@
-# Game-making guide
+# Game guide generation
+
+Read the [published game authoring guide](https://karty-game.github.io/karty/main/guide/)
+to make a game. This page covers contributor editing, generation and local review.
 
 Review the guide locally from the CLI repository root:
 
@@ -14,6 +17,17 @@ stop it; restart after editing the guide. For another port, run
 The gallery and guide use the same handwritten theme in `internal/sitetheme/`.
 Existing sample builds work at the same address. For playable sample links,
 build them once with `mise run build-samples -- --cdn`.
+
+Open `http://127.0.0.1:8081/` for the sample gallery. Local docs also include
+[pushable-crate Hangar](../samples/hangar/README.md),
+[Physics lab: crate room](../samples/crate-room/README.md),
+[Environment](../samples/environment/README.md) and
+[Particle lab](../samples/particle-lab/README.md), with their screenshots.
+If their `dist/web` folders have complete builds, the task copies each whole
+game into the site so its card opens a playable room. Otherwise it shows setup
+instructions. This local preview does not download an unreleased SDK.
+Run `mise run preview-docs` to refresh the guide and gallery while the server is
+already running.
 
 To generate files without starting a server:
 

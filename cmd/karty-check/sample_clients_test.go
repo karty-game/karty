@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -36,7 +37,7 @@ func checkSampleUISources(t *testing.T, name string) {
 	t.Helper()
 
 	directory, config, views := sampleUISources(t, name)
-	if config.SDK.Version != release.SDKVersion() {
+	if config.SDK.Version != release.SampleSDKVersion(name) {
 		t.Fatal("sample is not pinned to current SDK")
 	}
 
@@ -71,24 +72,31 @@ func checkSampleUISources(t *testing.T, name string) {
 	}
 }
 
-// Type-check every actual client against the current SDK and exercise the UI
+// Type-check actual clients against their pinned SDK and exercise the UI
 // demo through generated callbacks with crafted input events, without resources.
 func TestSampleClients(t *testing.T) {
 	t.Parallel()
 
-	manifest, err := sdk.Resolve(release.SDKVersion())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	bindings, err := sdk.ClientFiles(manifest, "tinygo")
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	for _, name := range currentSamples() {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			version := release.SampleSDKVersion(name)
+
+			manifest, err := sdk.Resolve(version)
+			if errors.Is(err, os.ErrNotExist) && version != release.SDKVersion() {
+				t.Skip("install candidate SDK " + version + " to qualify this sample client; public checks never download it")
+			}
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			bindings, err := sdk.ClientFiles(manifest, "tinygo")
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			directory := prepareSampleClient(t, name, manifest, bindings)
 
 			packages := []string{"./src"}
@@ -198,6 +206,11 @@ import "example.com/media-lab/.karty/engine"
 const (SoundEffectsClick engine.SoundID=1; SoundEffectsMachineGun engine.SoundID=2; MusicLabLoop engine.MusicID=1;VideoDemoPattern engine.VideoID=1)
 `))
 	case "hangar":
+		writeComponentFixture(t, directory, ".karty/assets/sounds.go", []byte(`package assets
+import "example.com/hangar/.karty/engine"
+const (SoundReactorHum engine.SoundID=1; SoundComputerIdle engine.SoundID=2; SoundCrateScrape engine.SoundID=3; SoundFireAmbience engine.SoundID=4; SoundAcidAmbience engine.SoundID=5)
+`))
+
 		files, err := filepath.Glob(filepath.Join(source, "internal/fps/*.go"))
 		if err != nil {
 			t.Fatal(err)
@@ -208,6 +221,7 @@ const (SoundEffectsClick engine.SoundID=1; SoundEffectsMachineGun engine.SoundID
 		}
 
 		copyComponentFixture(t, "testdata/hangar-lights_test.go.tmpl", directory, "src/lights_test.go")
+		copyComponentFixture(t, "testdata/hangar-audio_test.go.tmpl", directory, "src/audio_test.go")
 
 		prepareHangarLightControls(t, directory, views)
 	}

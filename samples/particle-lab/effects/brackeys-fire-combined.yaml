@@ -1,0 +1,157 @@
+version: 11
+particles:
+    version: 2
+    presets:
+        - name: brackeys-fire-combined-flamesmoke-01
+          capacity: 64
+          emission:
+            rate: 25.6
+            duration_seconds: 2.5
+          lifetime_seconds:
+            min: 2
+            max: 2.5
+          spawn:
+            shape: point
+          velocity_min:
+            x: -0.0522934456485949
+            "y": -0.0522934456485949
+            z: 0.2988584094275236
+          velocity_max:
+            x: 0.0522934456485949
+            "y": 0.0522934456485949
+            z: 0.6
+          sprite:
+            frames:
+                - brackeys-smoke-07-strong-a
+            playback: cycle
+            facing: camera-facing
+            blend: premultiplied
+          size_over_life:
+            - age: 0
+              value: 0.233146
+            - age: 0.2109375
+              value: 0.24377946719980237
+            - age: 0.75
+              value: 0.311358671875
+            - age: 1
+              value: 0.3258425
+          color_over_life:
+            - age: 0
+              rgba:
+                - 0
+                - 0
+                - 0
+                - 0
+            - age: 0.097306915
+              rgba:
+                - 0.6894937189099749
+                - 0.22890075795232
+                - 0
+                - 0.07058824
+            - age: 0.3360861
+              rgba:
+                - 0.006544149226787025
+                - 0.006544151362263504
+                - 0.006544147803136
+                - 0.3019608
+            - age: 1
+              rgba:
+                - 0
+                - 0
+                - 0
+                - 0
+          rotation_degrees:
+            min: 1.07288e-05
+            max: 360
+          rotation_speed_degrees:
+            min: -30
+            max: 30
+        - name: brackeys-fire-combined-embers-02
+          capacity: 18
+          emission:
+            rate: 7.499999999999999
+            duration_seconds: 2.4000000000000004
+          lifetime_seconds:
+            min: 0.5999999999999999
+            max: 3
+          spawn:
+            shape: box
+            half_extent:
+                x: 0.07
+                "y": 0.07
+                z: 0.07
+          velocity_min:
+            x: -0.1368080573302675
+            "y": -0.1368080573302675
+            z: 0.1879385241571817
+          velocity_max:
+            x: 0.1368080573302675
+            "y": 0.1368080573302675
+            z: 0.4
+          sprite:
+            frames:
+                - brackeys-spotlight-01-a
+            playback: cycle
+            facing: camera-facing
+            blend: alpha
+          size_over_life:
+            - age: 0
+              value: 0.0125
+            - age: 0.25
+              value: 0.011161341796875002
+            - age: 0.7890625
+              value: 0.004915378649675847
+            - age: 1
+              value: 0.0039325875
+          color_over_life:
+            - age: 0
+              rgba:
+                - 1
+                - 0.72281
+                - 0.345682
+                - 0
+            - age: 0.239496
+              rgba:
+                - 1
+                - 0.72281
+                - 0.345682
+                - 1
+            - age: 0.703125
+              rgba:
+                - 1
+                - 0.72281
+                - 0.345682
+                - 0.9858633785459454
+            - age: 1
+              rgba:
+                - 1
+                - 0.72281
+                - 0.345682
+                - 0
+prefabs:
+    - id: brackeys-fire-combined
+      rooms: []
+      instances: []
+      connections: []
+      ports: []
+      particle_emitters:
+        - id: brackeys-fire-combined-flamesmoke-01
+          preset: brackeys-fire-combined-flamesmoke-01
+          position:
+            x: 0
+            "y": 0
+            z: 0
+          seed: 1923196973
+          playback:
+            mode: cycle
+            period_seconds: 2.5
+        - id: brackeys-fire-combined-embers-02
+          preset: brackeys-fire-combined-embers-02
+          position:
+            x: 0
+            "y": 0
+            z: 0
+          seed: 2655656500
+          playback:
+            mode: cycle
+            period_seconds: 3

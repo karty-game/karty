@@ -1,0 +1,40 @@
+# One static tongue mask supplements the imported Combined fire.
+# The source is retained under sources/pixi/ with its MIT notice.
+version: 11
+particles:
+  version: 2
+  presets:
+    - name: lab-fire-shaped-tongues
+      capacity: 32
+      emission: { rate: 24, duration_seconds: 1.19 }
+      lifetime_seconds: { min: 0.48, max: 0.78 }
+      spawn: { shape: box, half_extent: { x: 0.055, y: 0.025, z: 0.015 } }
+      velocity_min: { x: -0.07, y: -0.035, z: 0.48 }
+      velocity_max: { x: 0.11, y: 0.035, z: 0.85 }
+      acceleration: { x: 0.045, z: 0.06 }
+      drag: 0.3
+      sprite:
+        frames: [lab-fire-tongue]
+        playback: cycle
+        facing: upright
+        blend: premultiplied
+      size_over_life:
+        - { age: 0, value: 0.04 }
+        - { age: 0.18, value: 0.13 }
+        - { age: 0.55, value: 0.10 }
+        - { age: 1, value: 0.012 }
+      color_over_life:
+        - { age: 0, rgba: [0, 0, 0, 0] }
+        - { age: 0.18, rgba: [0.38, 0.18, 0.013, 0.018] }
+        - { age: 0.55, rgba: [0.23, 0.059, 0.001, 0.006] }
+        - { age: 1, rgba: [0, 0, 0, 0] }
+      rotation_degrees: { min: 72, max: 108 }
+      rotation_speed_degrees: { min: -24, max: 30 }
+prefabs:
+  - id: lab-fire-tongues
+    particle_emitters:
+      - id: shaped-tongues
+        preset: lab-fire-shaped-tongues
+        position: { x: 0.035, z: 0.10 }
+        seed: 3917141
+        playback: { mode: cycle, period_seconds: 1.19, delay_seconds: 0.067 }

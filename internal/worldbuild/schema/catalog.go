@@ -112,8 +112,9 @@ func scopeCatalog(materials, prefabs, presets *jsonschema.Schema) map[string]*js
 	content := &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
 		"actor": {
 			Properties: map[string]*jsonschema.Schema{
-				"sprite":    {Properties: map[string]*jsonschema.Schema{"texture": materials}},
-				"animation": {Properties: map[string]*jsonschema.Schema{"preset": presets}},
+				"solid_renderer": prefabs,
+				"sprite":         {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+				"animation":      {Properties: map[string]*jsonschema.Schema{"preset": presets}},
 			},
 		},
 	}}

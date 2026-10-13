@@ -1,6 +1,7 @@
 # Complete static lighting bake, version 1
 
-Status: candidate SDK 0.0.11, 2026-10-11. Released SDK contracts remain immutable.
+Status: implemented for SDK 0.0.11. Owners: public SDK formats/baker and CLI packaging.
+Decision date: 2026-10-11. Current reference: [lightmaps](../lightmaps.md).
 
 An enabled `[lightmap]` with `offline = true` and no `light` or `lights` selector
 selects every fixed authored point source without a nonzero linked material

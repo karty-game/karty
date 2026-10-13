@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"time"
 
 	"github.com/karty-game/karty/internal/guide"
@@ -16,6 +18,15 @@ import (
 )
 
 const noticeTimeout = 60 * time.Second
+
+func samplePriority(name string) int {
+	sampleOrder := [...]string{"hangar", "crate-room", "environment", "world-camera", "ui-demo", "media-lab", "particle-lab"}
+	if index := slices.Index(sampleOrder[:], name); index >= 0 {
+		return index
+	}
+
+	return len(sampleOrder)
+}
 
 func sampleNames(root string) ([]string, error) {
 	directory := filepath.Join(root, "samples")
@@ -28,8 +39,7 @@ func sampleNames(root string) ([]string, error) {
 	var names []string
 
 	for _, entry := range entries {
-		// Environment is still under development and is not a published demo.
-		if !entry.IsDir() || entry.Name() == "environment" {
+		if !entry.IsDir() {
 			continue
 		}
 
@@ -52,6 +62,14 @@ func sampleNames(root string) ([]string, error) {
 	if len(names) == 0 {
 		return nil, fmt.Errorf("no sample projects found: %w", os.ErrInvalid)
 	}
+
+	slices.SortFunc(names, func(a, b string) int {
+		if priority := cmp.Compare(samplePriority(a), samplePriority(b)); priority != 0 {
+			return priority
+		}
+
+		return cmp.Compare(a, b)
+	})
 
 	return names, nil
 }
@@ -154,6 +172,20 @@ func buildSample(directory, cli, cdnURL string) error {
 }
 
 func buildSampleWithRunner(directory, cli, cdnURL string, run func(string, string, ...string) error) error {
+	// Source masks are shared; regenerate each level's confined copies when
+	// packaging a fresh checkout instead of committing those duplicate files.
+	if name := filepath.Base(directory); name == "particle-lab" || name == "hangar" {
+		task := "generate-" + name
+		if name == "hangar" {
+			task += "-effects"
+		}
+
+		root := filepath.Dir(filepath.Dir(directory))
+		if err := run(root, "mise", "run", task); err != nil {
+			return err
+		}
+	}
+
 	levels, err := sampleBakeLevels(directory)
 	if err != nil {
 		return err

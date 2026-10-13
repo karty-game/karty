@@ -14,26 +14,30 @@ import (
 )
 
 type lightmapBuildSettings struct {
-	Enabled            bool     `toml:"enabled"`
-	Density            *float64 `toml:"density"`
-	PageSize           *int     `toml:"page_size"`
-	Padding            *int     `toml:"padding"`
-	MaxPages           *int     `toml:"max_pages"`
-	MaxTexels          *int     `toml:"max_texels"`
-	Light              *string  `toml:"light"`
-	Lights             []string `toml:"lights"`
-	ShadowSize         *int     `toml:"shadow_size"`
-	Prebake            *string  `toml:"prebake"`
-	PrebakeImage       *string  `toml:"prebake_image"`
-	Offline            bool     `toml:"offline"`
-	BakeSamples        *int     `toml:"bake_samples"`
-	BakeBounces        *int     `toml:"bake_bounces"`
-	BakeDenoise        *string  `toml:"bake_denoise"`
-	BakeMaxRayDistance *float64 `toml:"bake_max_ray_distance"`
+	Enabled            bool                         `toml:"enabled"`
+	Density            *float64                     `toml:"density"`
+	PageSize           *int                         `toml:"page_size"`
+	Padding            *int                         `toml:"padding"`
+	MaxPages           *int                         `toml:"max_pages"`
+	MaxTexels          *int                         `toml:"max_texels"`
+	Light              *string                      `toml:"light"`
+	Lights             []string                     `toml:"lights"`
+	ShadowSize         *int                         `toml:"shadow_size"`
+	Prebake            *string                      `toml:"prebake"`
+	PrebakeImage       *string                      `toml:"prebake_image"`
+	Offline            bool                         `toml:"offline"`
+	BakeSamples        *int                         `toml:"bake_samples"`
+	BakeBounces        *int                         `toml:"bake_bounces"`
+	BakeDenoise        *string                      `toml:"bake_denoise"`
+	BakeMaxRayDistance *float64                     `toml:"bake_max_ray_distance"`
+	Environment        *environmentLightmapSettings `toml:"environment"`
 }
 
 func (s lightmapBuildSettings) options() (worldlightmap.Options, error) {
-	options := worldlightmap.Options{Lights: slices.Clone(s.Lights), AllStatic: s.Offline && s.Light == nil && s.Lights == nil}
+	options := worldlightmap.Options{
+		Lights:    slices.Clone(s.Lights),
+		AllStatic: s.Environment == nil && s.Offline && s.Light == nil && s.Lights == nil,
+	}
 	if err := s.validatePrebake(); err != nil {
 		return options, err
 	}
@@ -102,6 +106,10 @@ func (s lightmapBuildSettings) maxRayDistance() float64 {
 }
 
 func (s lightmapBuildSettings) validatePrebake() error {
+	if err := s.validateEnvironmentPrebake(); err != nil {
+		return err
+	}
+
 	if s.BakeMaxRayDistance != nil && (math.IsNaN(*s.BakeMaxRayDistance) || math.IsInf(*s.BakeMaxRayDistance, 0) ||
 		*s.BakeMaxRayDistance <= 0 || *s.BakeMaxRayDistance > world.MaxCoordinate) {
 		return fmt.Errorf("bake_max_ray_distance must be finite and positive, at most %g: %w", float64(world.MaxCoordinate), ErrManifest)
@@ -132,8 +140,32 @@ func (s lightmapBuildSettings) validatePrebake() error {
 	return nil
 }
 
+func (s lightmapBuildSettings) validateEnvironmentPrebake() error {
+	if s.Environment != nil {
+		if !s.Enabled || !s.Offline || s.Light != nil || s.Lights != nil || s.Prebake != nil || s.PrebakeImage != nil ||
+			s.BakeMaxRayDistance != nil {
+			return fmt.Errorf(
+				"environment variants require enabled offline lightmaps without point-light, imported or ray-distance settings: %w",
+				ErrManifest,
+			)
+		}
+
+		if err := s.Environment.validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func validateLightmapSettings(definition manifest, assets *assetBuild) error {
 	settings := definition.Lightmap
+	if settings != nil && settings.Environment != nil {
+		if err := settings.validatePrebake(); err != nil {
+			return err
+		}
+	}
+
 	if settings == nil || !settings.Enabled {
 		return nil
 	}
@@ -143,7 +175,16 @@ func validateLightmapSettings(definition manifest, assets *assetBuild) error {
 		return fmt.Errorf("lightmap requires a world and SDK advertising %s: %w", worldlightmap.Feature, ErrManifest)
 	}
 
-	if (settings.Prebake != nil || settings.Offline) &&
+	if settings.Environment != nil && (definition.Chunks == nil || !definition.Chunks.Enabled ||
+		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsEnvironmentVariantsV1)) {
+		return fmt.Errorf(
+			"environment variants require chunks and SDK advertising %s: %w",
+			worldlightmap.EnvironmentVariantsFeature,
+			ErrManifest,
+		)
+	}
+
+	if settings.Environment == nil && (settings.Prebake != nil || settings.Offline) &&
 		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsPrebakedV1) {
 		return fmt.Errorf("prebake requires SDK advertising %s: %w", worldlightmap.PrebakeFeature, ErrManifest)
 	}

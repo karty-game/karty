@@ -129,7 +129,7 @@ func TestSampleDiscoveryIncludesNewProjects(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
-	for _, name := range []string{"first-demo", "new-demo", "environment"} {
+	for _, name := range []string{"first-demo", "new-demo", "environment", "particle-lab", "crate-room", "hangar"} {
 		writeFixture(t, filepath.Join(root, "samples", name, "karty.toml"), "[sdk]\nversion = '1.0.0'\n")
 	}
 
@@ -141,7 +141,7 @@ func TestSampleDiscoveryIncludesNewProjects(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !slices.Equal(names, []string{"first-demo", "new-demo"}) {
+	if !slices.Equal(names, []string{"hangar", "crate-room", "environment", "particle-lab", "first-demo", "new-demo"}) {
 		t.Fatalf("unexpected sample projects: %v", names)
 	}
 }

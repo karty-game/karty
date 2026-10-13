@@ -6,6 +6,7 @@ func (g *grammar) environmentConstraints() {
 	environment := g.definitions["Environment"]
 	environment.Properties["preset"] = choice("daylight", "space", "cartoon", "fantasy")
 	environment.Properties["palette"] = choice("", "default", "violet", "twilight")
+	environment.Properties["backdrop"] = choice("", "none", "mountains", "city")
 	environment.Properties["time_of_day"] = &jsonschema.Schema{Type: "number", Minimum: new(float64(0)), ExclusiveMaximum: new(float64(24))}
 	environment.Properties["cloud_amount"] = number(0, 1)
 	environment.AllOf = append(environment.AllOf, &jsonschema.Schema{
@@ -17,6 +18,30 @@ func (g *grammar) environmentConstraints() {
 	// Optional fields must be omitted, not explicitly null.
 	g.definitions["Document"].Properties["environment"] = g.definitions["Document"].Properties["environment"].Then
 	environment.Properties["sun"] = environment.Properties["sun"].Then
+	environment.Properties["sky"] = environment.Properties["sky"].Then
+	skySettings := g.definitions["SkySettings"]
+	g.definitions["Sky"].Properties["settings"] = g.definitions["Sky"].Properties["settings"].Then
+
+	for name, setting := range skySettings.Properties {
+		skySettings.Properties[name] = setting.Then
+	}
+
+	skySettings.Properties["cloud_uv_scale"].Items = &jsonschema.Schema{
+		Type:             "number",
+		ExclusiveMinimum: new(float64(0)),
+		Maximum:          new(float64(4)),
+	}
+	skySettings.Properties["cloud_dense_scroll_scale"] = number(0, 4)
+	skySettings.Properties["cloud_dense_offset"].Items = number(-1, 1)
+	skySettings.Properties["cloud_parallax"].Items = number(-.01, .01)
+	skySettings.Properties["horizon_parallax"] = number(0, .01)
+	skySettings.Properties["horizon_uv_scale"] = &jsonschema.Schema{
+		Type:             "number",
+		ExclusiveMinimum: new(float64(0)),
+		Maximum:          new(float64(4)),
+	}
+	skySettings.Properties["horizon_haze"] = number(0, 1)
+	skySettings.Properties["horizon_emission"].Items = number(0, 1)
 	sky := &jsonschema.Schema{Required: []string{"sky"}, Properties: map[string]*jsonschema.Schema{"sky": {Enum: []any{true}}}}
 	rooms := &jsonschema.Schema{
 		Required:   []string{"rooms"},

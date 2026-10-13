@@ -18,7 +18,7 @@ import (
 
 // This is a private build cache revision, not a new cartridge format. Bump it
 // when changing production without changing the SDK's public schema/version.
-const chunkCacheRevision = "karty-cli-chunk-cache@2"
+const chunkCacheRevision = "karty-cli-chunk-cache@4"
 
 type worldChunkCache struct {
 	key     string
@@ -232,6 +232,12 @@ func prepareWorldChunkCache(
 		return definition, worldChunkCache{}, false, err
 	}
 
+	if definition.Lightmap != nil && definition.Lightmap.Environment != nil && !assets.development {
+		// Variant modules have their own dependency-keyed pixel cache. Rebuild the
+		// small catalogs so every staged condition child remains accounted for.
+		return definition, worldChunkCache{}, false, nil
+	}
+
 	key, err := worldChunkCacheKey(ctx, directory, definition, document, assets)
 	if err != nil {
 		return definition, worldChunkCache{}, false, err
@@ -288,8 +294,10 @@ func finishWorldChunks(ctx context.Context, directory string, definition manifes
 		return worldMaterialBuild{}, err
 	}
 
-	if err := writeWorldChunkCache(ctx, assets.projectRoot, directory, cache.key, result); err != nil {
-		return worldMaterialBuild{}, fmt.Errorf("write chunk cache: %w", err)
+	if definition.Lightmap == nil || definition.Lightmap.Environment == nil {
+		if err := writeWorldChunkCache(ctx, assets.projectRoot, directory, cache.key, result); err != nil {
+			return worldMaterialBuild{}, fmt.Errorf("write chunk cache: %w", err)
+		}
 	}
 
 	if pixels != nil {

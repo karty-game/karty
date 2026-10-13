@@ -22,8 +22,12 @@ func TestEnvironmentCapabilityAndPackagedWASM(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	manifest = withoutRuntimeCapabilities(geometrySDK(manifest), asset.CapabilityWorldEnvironmentV1)
-	input := "version: 9\nenvironment: {preset: fantasy, palette: violet, time_of_day: 0, cloud_amount: 0.45}\n" + strings.Replace(
+	manifest = withoutRuntimeCapabilities(
+		geometrySDK(manifest),
+		asset.CapabilityWorldEnvironmentV1,
+		asset.CapabilityWorldEnvironmentBackdropV1,
+	)
+	input := "version: 11\nenvironment: {preset: fantasy, palette: violet, backdrop: mountains, time_of_day: 0, cloud_amount: 0.45}\n" + strings.Replace(
 		lightingRoomYAML,
 		"    floor:",
 		"    sky: true\n    floor:",
@@ -36,6 +40,11 @@ func TestEnvironmentCapabilityAndPackagedWASM(t *testing.T) {
 	}
 
 	manifest.Assets.Capabilities.Runtime = append(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldEnvironmentV1)
+	if artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
+		t.Fatalf("backdrop SDK gate lost: %v %+v", err, artifacts)
+	}
+
+	manifest.Assets.Capabilities.Runtime = append(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldEnvironmentBackdropV1)
 
 	first, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
 	if err != nil {
@@ -47,13 +56,15 @@ func TestEnvironmentCapabilityAndPackagedWASM(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(first) != 1 || !slices.Contains(first[0].Features, world.FeatureEnvironment) || !bytes.Equal(first[0].Bytes, second[0].Bytes) {
+	if len(first) != 1 || !slices.Contains(first[0].Features, world.FeatureEnvironment) ||
+		!slices.Contains(first[0].Features, world.FeatureEnvironmentBackdrop) || !bytes.Equal(first[0].Bytes, second[0].Bytes) {
 		t.Fatal("environment packaging is not deterministic or lost feature")
 	}
 
 	document := executePackagedLightingWorld(t, first[0].Bytes)
 	if document.Environment == nil || document.Environment.Preset != world.EnvironmentFantasy ||
 		document.Environment.Palette != world.EnvironmentPaletteViolet ||
+		document.Environment.Backdrop != world.EnvironmentBackdropMountains ||
 		document.Environment.TimeOfDay == nil || *document.Environment.TimeOfDay != 0 ||
 		document.Environment.CloudAmount == nil || *document.Environment.CloudAmount != .45 ||
 		!document.Sectors[0].Sky {
