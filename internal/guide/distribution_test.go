@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/toolchain"
 	"go.yaml.in/yaml/v3"
 )
@@ -70,11 +71,18 @@ func TestGuideWorkflowBuildsAndUploadsMatchingDistributions(t *testing.T) {
 	}
 
 	for _, required := range []string{
-		"go install github.com/karty-game/karty/cmd/karty@", "karty sdk install 0.0.11",
+		"go install github.com/karty-game/karty/cmd/karty@", "karty sdk install " + release.SDKVersion(),
 		"karty build --target web", "karty build --target native --platform windows-arm64", "RUNTIME_LICENSE.md", "SDK_LICENSE.md",
 	} {
 		if !strings.Contains(commands.String(), required) {
 			t.Fatalf("workflow omits %q", required)
+		}
+	}
+
+	for _, notice := range []string{"RUNTIME_LICENSE.md", "SDK_LICENSE.md"} {
+		url := "https://github.com/karty-game/karty-sdk/releases/download/sdk-v" + release.SDKVersion() + "/" + notice
+		if !strings.Contains(string(chapter), url) {
+			t.Fatalf("distribution guide must link the selected SDK license %q", url)
 		}
 	}
 

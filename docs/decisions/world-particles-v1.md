@@ -1,8 +1,8 @@
 # World particles version 1
 
-Status: implemented in SDK 0.0.11. Owners: public SDK format, CLI authoring and engine rendering.
+Status: introduced in SDK 0.0.11 and supported in SDK 0.0.12. Owners: public SDK format, CLI authoring and engine rendering.
 Current reference: [particles](../particles.md).
-[Version 2](world-particles-v2.md) extends this contract for candidate SDK 0.0.12;
+[Version 2](world-particles-v2.md) extends this contract in SDK 0.0.12;
 version 1 remains supported.
 
 World source version 10 introduces a version-1 particle block and optional

@@ -1,7 +1,7 @@
 # Environments
 
-SDK 0.0.11 supports `world/environment@1` with source-v9 worlds. SDK 0.0.12
-candidate adds a project-authored textured sky dome with separate cloud and scenic backdrop layers.
+SDK 0.0.12 supports `world/environment@1` with source-v9 worlds and
+authored source-v12 skies. It supplies a project-authored textured sky dome with separate cloud and scenic backdrop layers.
 One preset supplies sky, directional sun and coordinated fill colors. Time of day
 and cloud coverage can be authored or changed on a mounted level through the
 public game API.
@@ -51,7 +51,7 @@ layer. A stationary camera sees stationary clouds.
 Optional `backdrop` retains the legacy `mountains`, `city`, or `none` metadata.
 An authored `sky.horizon` draws independently of these names; omit its path to
 leave out the scenic layer. Explicit backdrop selection
-requires source v11 and SDK 0.0.12 candidate advertising
+requires source v11 and SDK 0.0.12 advertising
 `world/environment-backdrop@1`. These scenic layers have no collision and do not
 replace the level's walkable ground, terrain, or buildings.
 

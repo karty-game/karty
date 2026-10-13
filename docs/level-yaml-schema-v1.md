@@ -38,7 +38,7 @@ are allowed when declared as a material override's `from`. Override targets at
 the root must be level textures; nested targets can be declared placeholders.
 The compiler still checks final material resolution after nested expansion.
 
-Candidate SDK 0.0.11 permits up to 4,096 authored `lighting.lights` entries.
+SDK 0.0.12 permits up to 4,096 authored `lighting.lights` entries.
 The live renderer retains a separate 50-light bound. Levels above that live
 bound need a matching completed offline bake; moving and pulsing sources remain
 live. See [lightmap selection and packaging](lightmaps.md).
@@ -69,13 +69,13 @@ inside sky rooms. See [environments](environments.md).
 
 Source v11 adds optional `environment.backdrop`: `none`, `mountains`, or `city`.
 Omission selects the preset's default. Older source versions reject explicit
-backdrop presence, including empty strings or null. SDK 0.0.12 candidate must
+backdrop presence, including empty strings or null. SDK 0.0.12 must
 advertise `world/environment-backdrop@1` to package an explicit selection.
 
 Source v12 adds optional `environment.sky` project PNG paths and presentation
 settings. Older source versions reject its presence, including null; optional
 paths/settings reject null. Images remain confined to the level directory.
-SDK 0.0.12 candidate must advertise `world/sky@1`; only referenced images are
+SDK 0.0.12 must advertise `world/sky@1`; only referenced images are
 compiled into the versioned `@world/sky.bin` sidecar. See [environments](environments.md).
 
 Without a `levels` directory, `karty schema` emits just the base file. This is

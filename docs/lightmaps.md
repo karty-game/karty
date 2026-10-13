@@ -39,7 +39,7 @@ lights = ["brazier-north", "brazier-south"]
 ```
 
 This selects the explicitly versioned `direct-rnm3@1` encoding. `light` and
-`lights` are mutually exclusive. Candidate SDK 0.0.11 accepts up to 4,096
+`lights` are mutually exclusive. SDK 0.0.12 accepts up to 4,096
 unique authored IDs, preserves selection order, and rejects an explicitly empty list. `lights = []` and
 `light = ""` are invalid. Every selected light must exist and be inside a sector
 volume. The complete list is validated before publishing any level artifact.
@@ -158,7 +158,7 @@ bake_bounces = 1
 ```
 
 `offline` is mutually exclusive with explicit `prebake`/`prebake_image` paths
-and the legacy single `light` visibility recipe. With candidate SDK 0.0.11,
+and the legacy single `light` visibility recipe. With SDK 0.0.12,
 omitting `lights` automatically selects every fixed source without a nonzero
 linked emission pulse, in authored order. Moving and pulsing sources remain
 live. An explicit `lights` list remains available for a partial bake; no light
@@ -274,7 +274,7 @@ When building the CLI from source with Go 1.27, use the pinned root mise tasks
 
 ## Bake time and weather variants
 
-Candidate SDK 0.0.12 supports static sun/sky diffuse variants through
+SDK 0.0.12 supports static sun/sky diffuse variants through
 `world/lightmaps-environment-variants@1`. Configure the world level:
 
 ```toml

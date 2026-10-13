@@ -1,6 +1,6 @@
 # Project-authored sky assets, version 1
 
-SDK 0.0.12 candidate adds source-v12 `environment.sky` and the `world/sky@1`
+SDK 0.0.12 adds source-v12 `environment.sky` and the `world/sky@1`
 runtime capability. Released source/environment contracts remain unchanged.
 The host keeps dome geometry, compositing, lighting, sun rendering and bounded
 GPU resources; each project owns sky PNGs and appearance settings.

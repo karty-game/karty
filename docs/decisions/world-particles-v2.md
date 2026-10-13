@@ -1,6 +1,6 @@
 # World particles version 2: GPU alpha and premultiplied materials
 
-Status: accepted for unreleased SDK 0.0.12.
+Status: implemented in published SDK 0.0.12.
 
 Live smoke needs smooth opacity that darkens the scene while its particles rise,
 expand and fade. Version 1 offers additive and cutout blending. Animated actor

@@ -86,7 +86,7 @@ whole-world prebakes cannot be split. Chunk builds require `offline = true` when
 lightmaps are enabled and include the complete prebake pair; they never fall back
 to a runtime bake. `karty bake` directs chunked levels to `karty build`; the
 whole-world bake cache is not consumed by chunk builds. Mesh-only chunk levels
-need no lightmap section. Candidate SDK 0.0.11 catalogs record the union of
+need no lightmap section. SDK 0.0.12 catalogs record the union of
 completed baked source indices, so static sources are removed from the runtime
 point-light table before loading a child. Each child recipe must match its
 physical component's catalog selection. Moving and pulsing sources remain live.

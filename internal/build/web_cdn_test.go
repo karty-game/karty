@@ -10,13 +10,14 @@ import (
 	"testing"
 
 	"github.com/karty-game/karty/internal/assetpipeline"
+	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
 func TestCDNURLValidationAndTargetFailBeforeProjectIO(t *testing.T) {
 	t.Parallel()
 
-	for _, value := range []string{"https://cdn.example/host.wasm", "../runtime/0.0.11/host.wasm", "runtime/host.wasm", "/runtime/host.wasm"} {
+	for _, value := range []string{"https://cdn.example/host.wasm", "../runtime/" + release.SDKVersion() + "/host.wasm", "runtime/host.wasm", "/runtime/host.wasm"} {
 		if err := validateCDNURL(value); err != nil {
 			t.Errorf("valid mirror %q rejected: %v", value, err)
 		}
@@ -25,7 +26,7 @@ func TestCDNURLValidationAndTargetFailBeforeProjectIO(t *testing.T) {
 	for _, value := range []string{
 		"http://cdn.example/host.wasm", "//cdn.example/host.wasm", "javascript:alert(1)", "https://user@cdn.example/host.wasm", "host.wasm#fragment",
 		"../../host.wasm", "foo/../host.wasm", "../%2e%2e/host.wasm", "runtime%2fhost.wasm", "host\\file.wasm", "host\n.wasm",
-		"https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.11/karty-host-web.wasm",
+		"https://github.com/karty-game/karty-sdk/releases/download/sdk-v" + release.SDKVersion() + "/karty-host-web.wasm",
 		"https://api.github.com/repos/karty-game/karty-sdk/releases/assets/1",
 		"https://release-assets.githubusercontent.com/expiring-host.wasm?token=temporary",
 	} {
@@ -49,14 +50,14 @@ func TestCDNRequiresReleasePinAndRejectsDifferentHostOverride(t *testing.T) {
 
 	contents := []byte("release host fixture")
 	digest := sha256.Sum256(contents)
-	manifest := sdk.Manifest{Version: "0.0.11"}
+	manifest := sdk.Manifest{Version: release.SDKVersion()}
 	manifest.Host.Version = manifest.Version
 	manifest.Artifacts.Host.Web = sdk.ToolArtifact{
-		URL:    "https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.11/karty-host-web.wasm",
+		URL:    "https://github.com/karty-game/karty-sdk/releases/download/sdk-v" + release.SDKVersion() + "/karty-host-web.wasm",
 		SHA256: hex.EncodeToString(digest[:]),
 	}
 	manifest.Artifacts.Host.WebRuntime = sdk.ToolArtifact{
-		URL:    "https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.11/wasm_exec.js",
+		URL:    "https://github.com/karty-game/karty-sdk/releases/download/sdk-v" + release.SDKVersion() + "/wasm_exec.js",
 		SHA256: strings.Repeat("a", 64),
 	}
 
@@ -122,7 +123,7 @@ func TestCDNStagesLocalRuntimeAndExcludesBundledHostFromSummary(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cdn := &cdnHost{URL: "../runtime/0.0.11/host.wasm", SHA256: strings.Repeat("a", 64)}
+	cdn := &cdnHost{URL: "../runtime/" + release.SDKVersion() + "/host.wasm", SHA256: strings.Repeat("a", 64)}
 	if err := stageTargetWithCDN(
 		filepath.Join(root, "dist"),
 		raw,
@@ -154,7 +155,7 @@ func TestCDNStagesLocalRuntimeAndExcludesBundledHostFromSummary(t *testing.T) {
 		t.Fatalf("CDN host source missing from generated launcher:\n%s", launcher)
 	}
 
-	report, err := summarizeBuild(root, "test", "0.0.11", nil, assetpipeline.Report{}, Options{Target: "web", cdnHost: cdn})
+	report, err := summarizeBuild(root, "test", release.SDKVersion(), nil, assetpipeline.Report{}, Options{Target: "web", cdnHost: cdn})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +172,14 @@ func TestCDNLauncherVerifiesBytesBeforeActualWASMCompilation(t *testing.T) {
 		t.Skip("Node unavailable; required by mise run check-web")
 	}
 
-	command := exec.CommandContext(t.Context(), "node", "testdata/launcher-cdn.test.mjs", "templates/launcher.js.tmpl")
+	command := exec.CommandContext(
+		t.Context(),
+		"node",
+		"testdata/launcher-cdn.test.mjs",
+		"templates/launcher.js.tmpl",
+	)
+
+	command.Env = append(os.Environ(), "KARTY_TEST_SDK_VERSION="+release.SDKVersion())
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("CDN loader: %v\n%s", err, output)
 	}

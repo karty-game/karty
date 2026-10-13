@@ -2,7 +2,7 @@
 
 Hangar reuses the reviewed industrial recipes from
 [Particle Lab's library](../particle-lab/effects/library.yaml). World source v11,
-`particles.version: 2` and the sample's candidate SDK 0.0.12 support these
+`particles.version: 2` and the sample's published SDK 0.0.12 support these
 GPU particle presets. Smoke and acid vapour use the GPU particle alpha path.
 Version 2 preserves the KWP1 binary layout and adds no guest API commands.
 The reference fire remains a visual prototype awaiting appearance acceptance;

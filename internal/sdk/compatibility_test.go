@@ -68,6 +68,7 @@ func TestCandidateBundleRequiresStrictTOMLMetadata(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
+			// SDK 0.0.11 is the first release requiring strict TOML metadata.
 			_, err := readCompatibility(test.files, "0.0.11")
 			if (err == nil) != test.valid {
 				t.Fatalf("unexpected metadata acceptance: %v", err)

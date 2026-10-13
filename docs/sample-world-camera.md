@@ -17,7 +17,7 @@ images or lighting. See [world YAML schemas](level-yaml-schema-v1.md).
 
 ## Artwork and lighting
 
-The level uses source v8 with SDK 0.0.11: wall bands, independently mapped secondary colour, static solids, reflectance and liquid animation. Ordinary
+The level uses source v8 with SDK 0.0.12: wall bands, independently mapped secondary colour, static solids, reflectance and liquid animation. Ordinary
 `wall-top.png` and `wall-bottom.png` textures are declared in `level.toml`.
 The 128×32 strips cover 2×0.5 metres, matching the main wall's texel density and
 brick proportions. Alpha removes whole inner-edge bricks to reveal the main wall.

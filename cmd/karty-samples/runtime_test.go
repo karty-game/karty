@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/karty-game/karty/internal/release"
 )
 
 func runtimeFixture(t *testing.T) (string, string) {
@@ -25,15 +27,15 @@ func TestSharedRuntimeIsCopiedOnceAndAssembled(t *testing.T) {
 	state, source := sampleFixture(t)
 	host, checksum := runtimeFixture(t)
 
-	wantURL := "../runtime/0.0.11/" + checksum + ".wasm"
+	wantURL := "../runtime/" + release.SDKVersion() + "/" + checksum + ".wasm"
 	for range 2 {
-		url, err := copyRuntimeHost(source, "0.0.11", checksum, host)
+		url, err := copyRuntimeHost(source, release.SDKVersion(), checksum, host)
 		if err != nil || url != wantURL {
 			t.Fatalf("shared host: %q, %v", url, err)
 		}
 	}
 
-	files, err := os.ReadDir(filepath.Join(source, "runtime", "0.0.11"))
+	files, err := os.ReadDir(filepath.Join(source, "runtime", release.SDKVersion()))
 	if err != nil || len(files) != 1 {
 		t.Fatalf("duplicate host copies: %v, %v", files, err)
 	}
@@ -42,7 +44,7 @@ func TestSharedRuntimeIsCopiedOnceAndAssembled(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = requireFile(filepath.Join(state, "pr", "5", "runtime", "0.0.11", checksum+".wasm")); err != nil {
+	if err = requireFile(filepath.Join(state, "pr", "5", "runtime", release.SDKVersion(), checksum+".wasm")); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -55,7 +57,7 @@ func TestSharedRuntimeRejectsChangedOrEscapingArtifacts(t *testing.T) {
 			t.Parallel()
 			site := t.TempDir()
 			host, checksum := runtimeFixture(t)
-			version := "0.0.11"
+			version := release.SDKVersion()
 
 			switch scenario {
 			case "version":
@@ -124,11 +126,11 @@ func TestPublisherRejectsInvalidSharedRuntimeBeforeReplacingPreview(t *testing.T
 			}
 
 			host, checksum := runtimeFixture(t)
-			if _, err := copyRuntimeHost(source, "0.0.11", checksum, host); err != nil {
+			if _, err := copyRuntimeHost(source, release.SDKVersion(), checksum, host); err != nil {
 				t.Fatal(err)
 			}
 
-			path := filepath.Join(source, "runtime", "0.0.11", checksum+".wasm")
+			path := filepath.Join(source, "runtime", release.SDKVersion(), checksum+".wasm")
 
 			switch scenario {
 			case "missing":
@@ -171,7 +173,7 @@ func TestSharedRuntimeAloneIsNotASampleSite(t *testing.T) {
 	writeFixture(t, filepath.Join(site, "index.html"), "index")
 
 	host, checksum := runtimeFixture(t)
-	if _, err := copyRuntimeHost(site, "0.0.11", checksum, host); err != nil {
+	if _, err := copyRuntimeHost(site, release.SDKVersion(), checksum, host); err != nil {
 		t.Fatal(err)
 	}
 

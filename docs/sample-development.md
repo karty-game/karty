@@ -17,9 +17,8 @@ mise run check-world-camera-hooks
 ```
 
 `check-sample-clients` compiles actual sample clients against their pinned SDK
-bindings and all `.kui` components/layouts. Candidate client checks require that
-SDK to be installed locally; public checks skip unavailable candidates and never
-download an unreleased SDK. A small flight fixture dispatches
+bindings and all `.kui` components/layouts. All managed samples select the current
+published SDK, which must be installed before these checks. A small flight fixture dispatches
 generated widget callbacks and checks gameplay effects, preferences,
 pause/remount and idle frames that emit no commands. World-camera component
 fixtures cover movement, accepted host poses and UI refresh.
@@ -74,7 +73,7 @@ Manual graphics, keyboard navigation and touch review remain separate.
 `mise run docs` refreshes the guide and gallery, then serves them on
 `http://127.0.0.1:8081/`. The local gallery includes Hangar, Physics lab, Environment, World camera, UI,
 Media and Particle lab, in that order, with screenshots and uses complete snapshots of their `dist/web` builds when available.
-Build candidate samples with their pinned SDK and matching host before opening
+Build samples with their pinned public SDK and matching host before opening
 their playable cards. A checkout without these builds shows setup instructions instead;
 docs generation needs no private engine checkout or unreleased SDK download.
 `mise run preview-docs` refreshes the files without starting another server.

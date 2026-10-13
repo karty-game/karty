@@ -22,8 +22,8 @@ source/defaults because analysis is now confined to each asset.
 An omitted table remains valid. Controls require a world, an atlas-capable SDK
 and a used surface texture. Runtime `material_strengths` remain independent and
 do not invalidate generated maps. No runtime capability or atlas schema changes
-are introduced. The initial implementation packaged normal/height/AO. Candidate SDK 0.0.11
-subsequently adds optional `world/material-reflectance@1` metallic/smoothness
+are introduced. The initial implementation packaged normal/height/AO. SDK 0.0.12
+also includes optional `world/material-reflectance@1` metallic/smoothness
 companions; matching hosts use `metallic_scale` through direct specular shading.
 
 ## Tradeoffs

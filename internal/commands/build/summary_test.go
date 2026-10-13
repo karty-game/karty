@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	buildservice "github.com/karty-game/karty/internal/build"
+	"github.com/karty-game/karty/internal/release"
 )
 
 func TestSummaryShowsOutputAndTargetNextSteps(t *testing.T) {
@@ -34,7 +35,7 @@ func TestSummaryShowsOutputAndTargetNextSteps(t *testing.T) {
 
 			report := buildservice.Summary{
 				Project:        "starter",
-				SDK:            "0.0.11",
+				SDK:            release.SDKVersion(),
 				Target:         example.target,
 				Platform:       example.platform,
 				Directory:      filepath.FromSlash(example.directory),
@@ -51,7 +52,7 @@ func TestSummaryShowsOutputAndTargetNextSteps(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			for _, expected := range append(example.want, "using SDK 0.0.11", "Levels: 2 | Chunks: 7", "Textures: 4 | Sounds: 1 | Audio streams: 2", "12 files, 2.0 KiB", "Game cartridge: 512 B") {
+			for _, expected := range append(example.want, "using SDK "+release.SDKVersion(), "Levels: 2 | Chunks: 7", "Textures: 4 | Sounds: 1 | Audio streams: 2", "12 files, 2.0 KiB", "Game cartridge: 512 B") {
 				if !strings.Contains(output.String(), expected) {
 					t.Errorf("summary missing %q:\n%s", expected, &output)
 				}
@@ -75,10 +76,10 @@ func TestCDNSummaryReportsRemoteDependencyAndRelativePreviewRoot(t *testing.T) {
 
 	report := buildservice.Summary{
 		Project:   "starter",
-		SDK:       "0.0.11",
+		SDK:       release.SDKVersion(),
 		Target:    "web",
 		Directory: "dist/web",
-		HostURL:   "../runtime/0.0.11/release.wasm",
+		HostURL:   "../runtime/" + release.SDKVersion() + "/release.wasm",
 		Files:     4,
 		Bytes:     2048,
 	}
@@ -86,7 +87,7 @@ func TestCDNSummaryReportsRemoteDependencyAndRelativePreviewRoot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, expected := range []string{"4 files, 2.0 KiB", "Remote host: ../runtime/0.0.11/release.wasm", "verified against SDK 0.0.11", "Next: karty serve 'dist'", "http://127.0.0.1:8080/web/", "mirror alongside the game"} {
+	for _, expected := range []string{"4 files, 2.0 KiB", "Remote host: ../runtime/" + release.SDKVersion() + "/release.wasm", "verified against SDK " + release.SDKVersion(), "Next: karty serve 'dist'", "http://127.0.0.1:8080/web/", "mirror alongside the game"} {
 		if !strings.Contains(output.String(), expected) {
 			t.Errorf("CDN summary missing %q:\n%s", expected, &output)
 		}

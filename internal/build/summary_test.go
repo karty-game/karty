@@ -10,6 +10,7 @@ import (
 
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/levelbuild"
+	"github.com/karty-game/karty/internal/release"
 )
 
 func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
@@ -89,7 +90,7 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 		Sounds: []assetpipeline.Sound{{}}, AudioStreams: []assetpipeline.AudioStream{{}, {}},
 	}
 
-	report, err := summarizeBuild(root, "test", "0.0.11", levels, assets, Options{Target: "native", Platform: "darwin-arm64"})
+	report, err := summarizeBuild(root, "test", release.SDKVersion(), levels, assets, Options{Target: "native", Platform: "darwin-arm64"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +136,7 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 
 	writeSummaryFixture(t, filepath.Join(notes, "README"), []byte("notes"))
 
-	defaultReport, err := summarizeBuild(root, "test", "0.0.11", levels, assets, Options{Host: hostPath})
+	defaultReport, err := summarizeBuild(root, "test", release.SDKVersion(), levels, assets, Options{Host: hostPath})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +179,14 @@ func TestSummaryRejectsEscapingOutputAndNonRegularEntries(t *testing.T) {
 				}
 			}
 
-			if _, err := summarizeBuild(root, "test", "0.0.11", nil, assetpipeline.Report{}, Options{Target: "web"}); err == nil {
+			if _, err := summarizeBuild(
+				root,
+				"test",
+				release.SDKVersion(),
+				nil,
+				assetpipeline.Report{},
+				Options{Target: "web"},
+			); err == nil {
 				t.Fatal("summary accepted an escaping output symlink")
 			}
 		})

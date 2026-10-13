@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/karty-game/karty/internal/release"
 )
 
 func previewProject(t *testing.T) string {
@@ -12,7 +14,7 @@ func previewProject(t *testing.T) string {
 
 	root := t.TempDir()
 	project := filepath.Join(root, "samples", "demo")
-	writeFixture(t, filepath.Join(project, "karty.toml"), "[sdk]\nversion = '0.0.11'\n")
+	writeFixture(t, filepath.Join(project, "karty.toml"), "[sdk]\nversion = '"+release.SDKVersion()+"'\n")
 	previewFixture(t, project)
 
 	return root

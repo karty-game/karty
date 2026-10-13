@@ -128,7 +128,7 @@ shadows.
 
 ## Run it
 
-This sample currently requires candidate **SDK 0.0.12** and a matching host
+This sample requires published **SDK 0.0.12** and its matching host
 for the box physics and solid-renderer APIs. After [setting up the tools](../README.md#make-it-yours)
 and [installing that SDK](../../docs/sdk-bundles.md#install-and-trust), run from the
 CLI repository root:

@@ -59,8 +59,8 @@ its reflection code into even small clients. Source-only profiling with the same
 TinyGo 0.42 toolchain measured a warm empty client at about 0.9 seconds on SDK
 0.0.8 and 9.2 seconds on SDK 0.0.9; adding the metadata decoder alone to the
 0.0.8 fixture reproduced the overhead. This excludes assets, lighting and browsers.
-SDK 0.0.11 replaces shipped metadata and resource documents with
-bounded binary codecs. Generated identity readers and runtime resources do not
+SDK 0.0.11 introduced bounded binary codecs for shipped metadata and resource
+documents; SDK 0.0.12 retains them. Generated identity readers and runtime resources do not
 parse JSON or use reflection; projects obtain the new formats with its matching
 bundle and host.
 Published 0.0.9 bindings remain immutable.

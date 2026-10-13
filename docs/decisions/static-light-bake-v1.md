@@ -1,6 +1,6 @@
 # Complete static lighting bake, version 1
 
-Status: implemented for SDK 0.0.11. Owners: public SDK formats/baker and CLI packaging.
+Status: introduced in SDK 0.0.11 and supported in SDK 0.0.12. Owners: public SDK formats/baker and CLI packaging.
 Decision date: 2026-10-11. Current reference: [lightmaps](../lightmaps.md).
 
 An enabled `[lightmap]` with `offline = true` and no `light` or `lights` selector

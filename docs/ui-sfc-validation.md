@@ -1,7 +1,7 @@
 # SFC-only UI validation
 
-This records the earlier SDK 0.0.9 candidate checks. Current public SDK 0.0.11
-release evidence is recorded in [CLI releases](releases.md#v002-preparation).
+This records the earlier SDK 0.0.9 candidate checks. Current public SDK 0.0.12
+release evidence is recorded in [CLI releases](releases.md#v002-release-checks--2026-10-13).
 
 Current authoring uses `.kui` SFCs and indented styles. Samples, current references,
 snippets and candidate starters put the template before the script. Released SDK

@@ -1,8 +1,8 @@
 # Environment lightmap variants v1
 
-Status: implemented candidate. Owners: public SDK formats/baker, CLI offline
+Status: implemented. Owners: public SDK formats/baker, CLI offline
 building, engine resource loading and rendering. Date: 2026-10-13. Target:
-candidate SDK 0.0.12 only; released manifests and protocol commands are unchanged.
+SDK 0.0.12; earlier manifests and protocol commands are unchanged.
 
 ## Decision
 
@@ -57,7 +57,7 @@ ordinary-component confinement, complete ownership and all existing allocation,
 mesh, texel and encoded bounds remain in force. The CLI enables this only for
 environment variant builds; it never changes geometry or reduces density.
 
-Candidate 0.0.12 adds a geometric post-pass within that opt-in owner policy.
+SDK 0.0.12 adds a geometric post-pass within that opt-in owner policy.
 Narrow grounded solids prefer the first overlapping sector whose exact receiver
 layout fits, while every other balanced owner is retained. Longest XY extent
 must be at least 2 units and four times the shortest; shortest extent is at most
@@ -79,7 +79,7 @@ checks. It preserves authored grouping, complete ownership and physical
 component confinement; it never increases total decoded map bytes. Default
 planning, shelf packing and point-light golden layouts remain unchanged.
 
-Candidate 0.0.12 widens mesh/catalog receiver membership to permit nonadjacent
+SDK 0.0.12 widens mesh/catalog receiver membership to permit nonadjacent
 selected sectors within one complete ordinary component. Validators traverse
 that component using buffers bounded by the validated sector count and reject
 every selected sector outside it, including transformed-only connections and

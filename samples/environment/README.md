@@ -42,7 +42,7 @@ generation and vegetation tests. This sample does not generate terrain or plants
 Thirty-six connected grass cells preserve that uninterrupted rectangle and its
 world-anchored texture while bounding each floor's baked-lightmap page footprint.
 
-From the CLI repository root, with SDK 0.0.12 candidate installed:
+From the CLI repository root, with published SDK 0.0.12 installed:
 
 ```sh
 mise run build
@@ -58,8 +58,8 @@ After building the web target, run `mise run docs` to open the Environment card
 in the local sample gallery. Without a build, the card shows setup instructions.
 
 The first build bakes chunk lightmaps offline; later builds reuse matching cached
-results. See [SDK bundles](../../docs/sdk-bundles.md) for installing a local candidate
-archive and [environments](../../docs/environments.md) for authoring.
+results. See [SDK bundles](../../docs/sdk-bundles.md) for installation
+and [environments](../../docs/environments.md) for authoring.
 Use the geometry preview for normal layout iteration:
 
 ```sh

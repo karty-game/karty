@@ -7,7 +7,7 @@ import { runInNewContext } from "node:vm";
 const template = await readFile(process.argv[2], "utf8");
 const bytes = Uint8Array.from([0, 97, 115, 109, 1, 0, 0, 0]);
 const checksum = createHash("sha256").update(bytes).digest("hex");
-const url = "../runtime/0.0.11/release.wasm";
+const url = "../runtime/" + process.env.KARTY_TEST_SDK_VERSION + "/release.wasm";
 const start = template.indexOf("  const fetchDownload =");
 const end = template.indexOf("  const loadClientWasm =");
 assert.ok(start > 0 && end > start);

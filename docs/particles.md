@@ -1,7 +1,7 @@
 # Authored GPU sprite particles
 
-Candidate SDK 0.0.11 supports world source version 10 with `particles.version: 1`.
-Candidate SDK 0.0.12 adds source version 11 with `particles.version: 2` and
+SDK 0.0.12 supports world source version 10 with `particles.version: 1`,
+as well as source version 11 with `particles.version: 2` and
 smooth `sprite.blend: alpha` and hybrid `sprite.blend: premultiplied`. Source v10 and particle version 1 retain their
 existing additive/cutout semantics. The selected SDK must advertise the exact
 particle capability used by the level.

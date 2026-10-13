@@ -56,7 +56,7 @@ Web builds include their runtime by default. To share one runtime across games,
 host the project's pinned release `karty-host-web.wasm` at an HTTPS URL:
 
 ```sh
-karty build --target web --cdn https://games.example/runtime/0.0.11/host.wasm
+karty build --target web --cdn https://games.example/runtime/0.0.12/host.wasm
 ```
 
 The launcher checks the signed SDK release checksum before running the host.

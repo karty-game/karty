@@ -8,7 +8,7 @@ No SDK or wire format changes.
 to load the host from a shared mirror instead:
 
 ```sh
-karty build --target web --cdn https://games.example/runtime/0.0.11/host.wasm
+karty build --target web --cdn https://games.example/runtime/0.0.12/host.wasm
 ```
 
 The mirror must serve the exact `karty-host-web.wasm` from the project's pinned

@@ -10,8 +10,8 @@ colour and fading create the detail over time. Effects use no animated sprite
 actors or flipbook animation resources.
 
 The sample requires **SDK 0.0.12**, source world version 11 and
-`world/particles@2`. SDK 0.0.12 is a release candidate; use its matching local
-bundle and host.
+`world/particles@2`. Normal builds install its published bundle and matching
+host automatically.
 
 ## Controls and review rooms
 

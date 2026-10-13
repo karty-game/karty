@@ -107,7 +107,7 @@ even though the material atlas stores an upscaled 256px tile. Hangar uses the
 standard 128 sprite maximum and opts its three sign textures out.
 
 Decision (2026-10-08): the CLI defaults to a 128 texels/unit sprite cap,
-documented with the SDK 0.0.11 candidate. Previously uncapped sprites may be
+introduced for SDK 0.0.11. Previously uncapped sprites may be
 downsized on rebuild; explicit zero opt-outs retain their previous processing.
 The policy resolves to the existing QOI transform recipe, with no
 runtime API, world source schema, wire or packaged-format revision. It limits
@@ -423,7 +423,7 @@ lighting:
 ```
 
 Ambient and light colors are linear RGB intensities in [0,1]. Released SDK 0.0.8
-accepts at most 50 authored lights. Candidate SDK 0.0.11 accepts up to 4,096
+accepts at most 50 authored lights. SDK 0.0.12 accepts up to 4,096
 authored sources while retaining a separate 50-light live limit; completed
 offline bakes remove their static sources from that live table. Lights require
 unique nonempty IDs and finite radii of at least 0.001.
@@ -460,7 +460,7 @@ Moving shadows and transformed-portal light transport remain unsupported.
 
 Optional `ambient_cube` supplies six linear RGB colors for positive/negative
 X/Y/Z directions; `actors: true` lights world sprites with geometric normals
-in Full output. Actors use live direct light and ambient. Candidate SDK 0.0.11
+in Full output. Actors use live direct light and ambient. SDK 0.0.12
 also approximates their static irradiance from nearby baked floor/ceiling
 receiver coefficients, with fixed sampling cost independent of source count.
 This does not add actor shadows or a volumetric probe bake. Ordinary 2D content
@@ -509,7 +509,7 @@ ffmpeg -i input.mp4 -vf 'scale=640:-2' -r 25 -c:v mpeg1video -q:v 5 \
   -c:a mp2 -ar 48000 -ac 2 -f mpeg output.mpg
 ```
 
-## Reusable animation presets (SDK 0.0.11)
+## Reusable animation presets (SDK 0.0.12)
 
 World source v8 introduces a level-wide library of named presets, with the
 `world/animations@1` runtime capability. Define and tune presets in `world.yaml`,
@@ -573,7 +573,7 @@ stationary ripples have visible depth.
 
 ## Emission
 
-Candidate SDK 0.0.11 adds `world/emission@1`. An environment texture can emit its existing
+SDK 0.0.12 supports `world/emission@1`. An environment texture can emit its existing
 albedo color with a scalar intensity; no extra texture is authored or generated.
 Declare these settings under the corresponding `[[textures]]` in `level.toml`:
 

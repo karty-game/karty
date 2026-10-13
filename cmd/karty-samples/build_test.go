@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"slices"
 	"testing"
+
+	"github.com/karty-game/karty/internal/release"
 )
 
 func TestSampleBakeLevelsSelectConfiguredOfflineRecipes(t *testing.T) {
@@ -53,7 +55,7 @@ func TestSampleBuildBakesBeforeWebPackaging(t *testing.T) {
 	}{
 		{name: "offline", levels: []string{"a", "z"}, want: [][]string{{"bake", "--level", "a"}, {"bake", "--level", "z"}, {"build", "--target", "web"}}},
 		{name: "no bake", want: [][]string{{"build", "--target", "web"}}},
-		{name: "CDN", cdnURL: "../runtime/0.0.11/host.wasm", levels: []string{"a"}, want: [][]string{{"bake", "--level", "a"}, {"build", "--target", "web", "--cdn", "../runtime/0.0.11/host.wasm"}}},
+		{name: "CDN", cdnURL: "../runtime/" + release.SDKVersion() + "/host.wasm", levels: []string{"a"}, want: [][]string{{"bake", "--level", "a"}, {"build", "--target", "web", "--cdn", "../runtime/" + release.SDKVersion() + "/host.wasm"}}},
 		{name: "failed bake", levels: []string{"broken", "z"}, want: [][]string{{"bake", "--level", "broken"}}, failure: []string{"bake", "--level", "broken"}},
 		{name: "failed build", levels: []string{"a"}, want: [][]string{{"bake", "--level", "a"}, {"build", "--target", "web"}}, failure: []string{"build", "--target", "web"}},
 	} {
