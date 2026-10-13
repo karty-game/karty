@@ -17,7 +17,7 @@ import (
 )
 
 func currentSamples() []string {
-	return []string{"ui-demo", "media-lab", "world-camera", "hangar", "environment"}
+	return []string{"ui-demo", "media-lab", "world-camera", "hangar", "environment", "crate-room"}
 }
 
 // Read source and metadata only; never build a sample's assets or run its baker.
@@ -186,6 +186,8 @@ func prepareSampleClient(t *testing.T, name string, manifest sdk.Manifest, bindi
 	writeComponentFixture(t, directory, ".karty/assets/textures.go", textureSource)
 
 	switch name {
+	case "crate-room":
+		copyComponentFixture(t, "testdata/crate-room-layout_test.go.tmpl", directory, "src/layout_test.go")
 	case "environment":
 		files, err := filepath.Glob(filepath.Join(source, "internal/fps/*.go"))
 		if err != nil {

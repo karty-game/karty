@@ -209,3 +209,98 @@ complete rerun passed. Logs: `/tmp/karty-cli-sdk-reference-audit-check.log` and
 and test inputs, with no new runtime or wire contract. Actual browser/device checks
 were not repeated after the reference changes; the preceding customer-suite
 results and their limits remain recorded above. No commit or publication occurred.
+
+## Materialize cold-start CI correction — 2026-10-13
+
+[Checks on b68093f](https://github.com/karty-game/karty/actions/runs/38456363515)
+passed the ordinary test job but failed the separate `materialize-software` job.
+`TestWorldMaterialReleaseAtlas` exceeded its nine-second deadline while waiting
+for the software OpenGL fallback subprocess. The old fixture performed released
+tool installation and first-use driver setup inside that same deadline. Ordinary
+`mise run check` does not invoke this explicit graphics task.
+
+The pinned `check-materialize-software` task now runs its owning shell script.
+It prepares the signed current SDK, checksum-verified managed Materialize and
+native graphics through the production material pipeline before the timed test.
+The temporary preparation atlas cache is discarded; the regression retains its
+own fresh project cache, one real generation followed by reuse, five PNG output
+checks, packed QOI pairs and reflectance/mip equality assertions. It consumes the
+selected SDK's published tool pins rather than duplicating checksums. The test
+deadline remains nine seconds, and the workflow deadlines are unchanged.
+
+Local commands used `GOWORK=off`, the warmed
+`GOCACHE=/tmp/karty-engine-go-cache`, and ordinary public proxy/checksum settings.
+Graphics checks retained automatic Mesa software OpenGL/surfaceless EGL fallback,
+with no explicit backend override or Xvfb. Exact outcomes:
+
+- The original task with a fresh tool home and
+  `XDG_CACHE_HOME=/tmp/karty-cli-materialize-cold-xdg` passed in 2.28 seconds;
+  the hosted timeout was not reproduced locally. Log:
+  `/tmp/karty-cli-ci-materialize-cold.log`.
+- Corrected `mise run check-materialize-software` with initially empty
+  `KARTY_HOME=/tmp/karty-cli-ci-materialize-clean-home` and
+  `XDG_CACHE_HOME=/tmp/karty-cli-ci-materialize-clean-xdg`: PASS, timed fixture
+  0.50 seconds. Log: `/tmp/karty-cli-ci-materialize-fixed-cold.log`.
+- The same pinned task under `taskset -c 0,1`, with initially empty
+  `/tmp/karty-cli-ci-materialize-2cpu-home` and
+  `/tmp/karty-cli-ci-materialize-2cpu-xdg`: PASS, fixture 1.17 seconds.
+  Final corrected-source rerun with those caches passed in 1.28 seconds.
+  Logs: `/tmp/karty-cli-ci-materialize-fixed-2cpu.log` and
+  `/tmp/karty-cli-ci-materialize-fixed-2cpu-final.log`.
+- `env -u KARTY_HOME -u XDG_CACHE_HOME mise run check-materialize-software`
+  with the same Go/public-module environment: PASS, fixture 0.50 seconds,
+  using the task's default ignored `dist/validation/materialize/` caches.
+  Log: `/tmp/karty-cli-ci-materialize-fixed-default.log`.
+- Full `mise run check` using the public-dependency environment above: PASS
+  formatting, lint, complete tests (13.47 seconds) and CLI build. Initial helper
+  lint findings were corrected before the complete rerun. Logs:
+  `/tmp/karty-cli-ci-materialize-fix-check.log` and
+  `/tmp/karty-cli-ci-materialize-fix-check-final.log`.
+
+Commit `a450747743e0fff3ed2fa21e96b6d36e20b8b643` contains the implementation
+validated here.
+[Replacement CI](https://github.com/karty-game/karty/actions/runs/38458086544)
+completed successfully: both `test` and `materialize-software` passed. The actual
+hosted atlas fixture passed in 0.49 seconds (package 0.498 seconds). Logs:
+`/tmp/karty-cli-ci-38456363515-failed.log` and
+`/tmp/karty-cli-ci-materialize-hosted-pass.log`.
+
+This qualifies the small 256-by-256 native material generation/cache fixture,
+not browser gameplay, physical-device graphics or hardware FPS. No hosted job
+was dispatched or rerun by the agent; no commit or publication was performed by
+the agent. This validation note was added after the passing implementation run.
+
+## Sample viewport and loading fixes — 2026-10-13
+
+Physics lab now uses generated project resolution/camera constants instead of a
+960-by-540 viewport inside its configured 1280-by-720 canvas. Sample-client checks
+include a non-default-resolution crate-room regression. Roman court's loading
+screen now waits for completed active cameras; hidden cameras, including one
+with no rendered frames, do not block startup. Level/chunk request barriers and
+first-presentation validation remain intact. The owning launcher template was
+updated and the physics sample was regenerated through its normal public-SDK
+build. No new SDK/host release is required.
+
+Using the published-dependency/cache environment above, `mise run check` passed
+formatting, lint, full tests (24.99 seconds) and build; `check-integration` passed
+actual native verification, WASM bridge/browser/UI lifecycle, guest allocations
+and dev rebuilds. `build-crate-room-web` and the engine's explicit
+`check-crate-room-web` passed actual desktop/mobile physics interactions and
+logical viewport checks. A browser-local launcher interception opened the
+published Roman court with the same host/cartridge that remained behind loading
+before the fix. It did not deploy changes to the public site.
+
+`build-world-camera-web` then passed against the published SDK/host (5.921 seconds).
+The complete rebuilt Roman court entered `running` and switched to its isometric
+camera in an actual local WASM/WebGL check, with no browser errors and no launcher
+interception. Manifest: `/tmp/karty-roman-fixed-web-artifacts.json`; results:
+`/tmp/karty-roman-local-fixed-check.json`. Engine `mise run test` and `mise run build`
+also passed for the maintained physics browser checker change.
+
+The explicit graphics checks used Chromium/SwiftShader and synthesized touch,
+without physical-device or hardware-FPS qualification. Their local artifact
+manifest is `/tmp/karty-crate-room-full-canvas-artifacts.json` and Roman before/after
+report is `/tmp/karty-roman-readiness-check.json`.
+Local gate log: `/tmp/karty-samples-viewport-readiness-check-complete.log`;
+customer suite: `/tmp/karty-samples-loader-fix-integration.log`. Samples must be
+rebuilt and published to deploy the fixes; the agent did not commit or publish.

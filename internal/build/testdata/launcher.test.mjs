@@ -8,6 +8,7 @@ import { createHash } from "node:crypto";
 
 const mock = process.argv[2] === "--mock";
 const delayedPresentation = process.env.KARTY_TEST_PRESENTATION_DELAY === "1";
+const inactiveCamera = process.env.KARTY_TEST_INACTIVE_CAMERA === "1";
 let presentationFrame = 0,
   presentationCallback;
 const directory = mock ? null : process.argv[2];
@@ -342,7 +343,17 @@ const context = {
           context.requestAnimationFrame = (callback) => {
             presentationCallback = callback;
           };
-          context.kartyWorldRenderer = { stats: () => ({ cameras: [{ device: { frames: presentationFrame } }] }) };
+          context.kartyWorldRenderer = {
+            stats: () => ({
+              cameras: inactiveCamera
+                ? [
+                    { active: presentationFrame > 0, device: { frames: presentationFrame } },
+                    { active: false, device: { frames: 0 } },
+                    { active: false, device: { frames: 12 } },
+                  ]
+                : [{ device: { frames: presentationFrame } }],
+            }),
+          };
         }
         context.kartyClientInitialize();
         const initial = commands(0n);

@@ -385,7 +385,7 @@ func TestJourneyGoExamplesTypeCheckAgainstSelectedSDK(t *testing.T) {
 	}
 
 	examples := codeBlocks(markdown, "go")
-	if len(examples) != 17 {
+	if len(examples) != 21 {
 		t.Fatalf("expected viewer, interaction, media and UI examples: %d", len(examples))
 	}
 
@@ -394,11 +394,22 @@ func TestJourneyGoExamplesTypeCheckAgainstSelectedSDK(t *testing.T) {
 	interaction = strings.Replace(interaction, "engine.Run(engine.Hooks{", "engine.Run(engine.Hooks{\nOnKeyDown: game.onKeyDown,", 1)
 	interaction = strings.Replace(interaction, "game.camera.SetLayer(-1)", "game.camera.SetLayer(-1)\ngame.subscribeGoal()", 1)
 	interaction += "\nfunc (game *Game) subscribeGoal() {\n" + examples[2] + "\n}\n" + examples[3]
-	media := strings.Replace(viewer, `import "example.com/my-game/.karty/engine"`,
-		"import (\"example.com/my-game/.karty/engine\"; \"example.com/my-game/.karty/assets\")", 1) + "\n" + examples[4]
+
+	mediaMarkdown, err := source.ReadFile("chapters/07-media.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mediaExamples := codeBlocks(string(mediaMarkdown), "go")
+	media := strings.Replace(
+		viewer,
+		`import "example.com/my-game/.karty/engine"`,
+		"import (\"math\"; \"example.com/my-game/.karty/engine\"; \"example.com/my-game/.karty/assets\")",
+		1,
+	) + "\n" + strings.Join(mediaExamples, "\n")
 	menu := strings.Replace(viewer, `import "example.com/my-game/.karty/engine"`,
 		"import (\"example.com/my-game/.karty/engine\"; \"example.com/my-game/.karty/ui\")", 1)
-	menu = strings.Replace(menu, "type Game struct {", "type Game struct {\nscreen *engine.UI", 1) + "\n" + examples[5]
+	menu = strings.Replace(menu, "type Game struct {", "type Game struct {\nscreen *engine.UI", 1) + "\n" + examples[4+len(mediaExamples)]
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
@@ -424,6 +435,9 @@ func TestJourneyGoExamplesTypeCheckAgainstSelectedSDK(t *testing.T) {
 		map[string][]byte{"media.go": []byte(`package assets
 import "example.com/my-game/.karty/engine"
 const SoundUiClick engine.SoundID = 1
+const SoundDoorOpen engine.SoundID = 2
+const SoundReactorHum engine.SoundID = 3
+const SoundCrateScrape engine.SoundID = 4
 const MusicTheme engine.MusicID = 1
 const VideoIntro engine.VideoID = 1
 const TexturePlayer engine.TextureID = "player"

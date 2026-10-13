@@ -9,6 +9,7 @@ Choose a path below. Repository guides describe current CLI behavior; a project'
 - [Game authoring guide](https://karty-game.github.io/karty/main/guide/): choose 2D, first-person or isometric; UI, media and distribution apply to every path.
 - [Samples](../samples/README.md): source examples and playable previews.
 - [Assets](assets.md): images, audio, video, generated world materials, mapping and authored lights.
+- [Spatial sound](assets.md#spatialize-sounds): listener direction, positioned effects and looping emitters.
 - [Static solids](static-solids.md): source-v6 geometry and room-free detail prefabs.
 - [Environments](environments.md): procedural skies, directional sunlight and sky boundaries.
 - [GPU sprite particles](particles.md): YAML emission, lifecycle, movement and sample effects.

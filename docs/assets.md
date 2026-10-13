@@ -133,7 +133,7 @@ per dimension, 16 million pixels, and 64 MiB decoded RGBA. The host limits all
 textures to 256 MiB decoded memory. Sounds are limited to 30 seconds and 6 MiB
 of decoded PCM, with a 64 MiB decoded catalog limit. Music/environment stream
 metadata allows up to four hours; the 64 MiB WAV source limit still applies.
-Seeking and level-scoped audio remain outside the pipeline.
+Seeking and automatic level-scoped music/environment lifetimes remain unsupported.
 
 ## Play a sound
 
@@ -150,6 +150,127 @@ func (game *Game) openMenu() {
 Use the generated spelling rather than guessing how punctuation is converted.
 IDs are local to one build and must not be stored in save data. Missing IDs are
 ignored safely by the host. One-shots are limited to 32 simultaneous voices.
+
+## Spatialize sounds
+
+Choose playback according to the source:
+
+| API                            | Use                                         | Spatial behavior                                      |
+| ------------------------------ | ------------------------------------------- | ----------------------------------------------------- |
+| `PlaySound`                    | Interface clicks and centered feedback      | No source position                                    |
+| `PlaySFXFrom`                  | A short effect following an entity          | XY distance and stereo panning                        |
+| `NewSoundEmitter`              | A loop or one-shot at a mounted level point | XYZ distance, stereo panning and optional obstruction |
+| `NewAttachedSoundEmitter`      | A loop or one-shot following an entity      | Same emitter behavior, with a world-axis offset       |
+| `PlayMusic`, `PlayEnvironment` | Soundtrack and broad ambience               | Streaming lanes without a source position             |
+
+Persistent emitters require SDK **0.0.12 or newer** and its matching host.
+`PlaySFXFrom` and streaming lanes are available from SDK 0.0.5. Check `[sdk]`
+in `karty.toml` and the project's `.karty/docs/` before using an API.
+
+### Prepare a mono effect
+
+Use a short WAV under `assets/sounds/` for both one-shots and emitter loops.
+Explicitly downmix stereo recordings when spatializing them:
+
+```toml
+[[assets.sound]]
+name = "reactor.hum"
+source = "assets/sounds/reactor/hum.wav"
+profile = "effect"
+
+[assets.sound.transform]
+channels = "mono"
+```
+
+Rebuild to generate `assets.SoundReactorHum`. Emitters play decoded sound
+catalog entries, rather than music/environment sidecars. Each sound is limited
+to 30 seconds and 6 MiB of decoded PCM. Author a seamless loop when using
+`Loop: true`; the host repeats the clip.
+
+### Set an audio receiver
+
+Set the camera as receiver after creation, and update its right direction when
+it turns. With `math` imported and a live `*engine.EntityCamera3D` named `camera`:
+
+```go
+yaw := float64(camera.Settings.Yaw)
+game.SetAudioReceiver(camera, engine.AudioReceiverOptions{
+    Right: engine.NewVec2D(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
+})
+```
+
+Call this from the existing update hook after camera movement/turning and when
+replacing the camera. A yaw of zero faces positive Y, with right `(1, 0)`.
+The host follows the camera's authoritative world position but does not derive
+`Right` from yaw. Camera output placement on screen does not move the listener;
+pitch does not affect the horizontal right vector. For 2D playback, set the
+player entity as receiver with `engine.NewVec2D(1, 0)` to pan along canvas X.
+`ClearAudioReceiver()` silences spatial output until a receiver is set again.
+
+### Play an entity effect
+
+For a sound named `door.open`, call this once when a live door opens. `door`
+can be an existing generated entity or a resolved `engine.WorldActorRef`:
+
+```go
+game.PlaySFXFrom(assets.SoundDoorOpen, door, engine.SFXOptions{
+    Volume: 0.8, NearDistance: 1, FarDistance: 12,
+})
+```
+
+The voice follows the source until the clip ends. Near distance is the range
+with no distance attenuation; volume smoothly falls to silence at far distance.
+Distances use entity coordinate units: world units for cameras/world entities
+and canvas units for 2D drawables. Set volume explicitly; the zero value is silent.
+Use finite values, volume in `[0, 4]`, near distance at least zero and far distance
+greater than near. `PlaySFXFrom` measures XY distance: Z height, occlusion and
+reverb do not affect it. Use a non-looping emitter for XYZ or obstruction.
+
+### Create and control an emitter
+
+Create a point emitter once after the level is mounted, using the handle from
+`OnLevelReady`:
+
+```go
+emitter := game.NewSoundEmitter(event.Handle, assets.SoundReactorHum,
+    engine.NewVec3D(6, 6, 1.5), engine.SoundEmitterOptions{
+        Volume: 0.6, NearDistance: 2, FarDistance: 16,
+        Loop: true, Occlusion: true,
+    })
+```
+
+Retain the handle in game state. `SetPosition` moves a point emitter;
+`SetOptions` changes volume, distances and obstruction without restarting it.
+Include all options when updating: `Loop` is fixed at creation, and an update
+that changes it is rejected. `Stop()` is terminal, nil-safe and idempotent.
+Create another emitter to restart playback. Invalid arguments return nil;
+host admission can still reject a non-nil handle for a stale level or full budget.
+
+Use `NewAttachedSoundEmitter(level, sound, source, offset, options)` for a moving
+source in the same mounted level. The offset uses world axes, rather than the
+source's rotation. `AttachTo` makes an existing emitter follow a source and
+interprets its configured position as that offset; `Detach` returns it to the
+configured level point. Level unloading or attached-source destruction stops
+playback. Do not create a new emitter each frame or serialize handles into saves.
+
+Emitters measure XYZ distance, including height, and gently reduce volume for
+sources behind the receiver. The emitter and receiver must belong to the same
+mounted level to be audible. `Occlusion` muffles the direct path through loaded
+collision geometry. Collidable walls and doors participate; non-collidable
+decoration does not. Place sound points outside solid geometry. There is no
+room reverb, diffraction around corners or acoustic portal transformation.
+At most 16 persistent emitters share the existing 32-voice budget with one-shots.
+
+Browser audio needs player interaction. To check spatial playback, walk toward
+and away from a source, turn to compare left/right balance, then put a collidable
+wall between the receiver and an occluded emitter. If playback is silent, check
+the receiver, sound ID, mounted level, volume and far distance; inspect host
+diagnostics for admission failures.
+
+See the [public media guide](https://karty-game.github.io/karty/main/guide/media.html)
+for complete methods and the [Hangar audio source](../samples/hangar/src/audio.go)
+for point ambience and movement-driven attached loops. The pinned emitter API
+reference lives in `.karty/docs/audio-emitters.md` for SDK 0.0.12.
 
 ## Stream music and environment audio
 
@@ -178,6 +299,10 @@ game.PlayMusic(assets.MusicBattle, engine.StreamOptions{Loop: true, CrossfadeMS:
 game.PlayEnvironment(engine.EnvironmentLane0, assets.EnvironmentRain,
     engine.StreamOptions{Loop: true, CrossfadeMS: 500})
 ```
+
+These streams have no source position and do not attenuate with listener distance.
+Call `StopMusic(fadeMS)` or `StopEnvironment(lane, fadeMS)` when leaving their
+screen or level. Use a sound emitter for a localized looping source.
 
 ## Cache and build output
 

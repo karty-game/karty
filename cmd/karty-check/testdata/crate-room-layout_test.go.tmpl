@@ -1,0 +1,31 @@
+package main
+
+import (
+	"testing"
+
+	"example.com/crate-room/.karty/config"
+	"example.com/crate-room/.karty/engine"
+)
+
+func TestCameraAndControlsUseConfiguredCanvas(t *testing.T) {
+	engine.FixtureBegin()
+	game := &Game{}
+	game.start()
+	game.ready(engine.LevelReady{Handle: 9})
+
+	if width != float32(config.ResolutionWidth) || height != float32(config.ResolutionHeight) {
+		t.Fatalf("control canvas %gx%g differs from configured %dx%d", width, height,
+			config.ResolutionWidth, config.ResolutionHeight)
+	}
+
+	settings := game.camera.Settings
+	if settings.ViewportWidth != config.ResolutionWidth || settings.ViewportHeight != config.ResolutionHeight {
+		t.Fatalf("camera viewport %dx%d differs from configured %dx%d", settings.ViewportWidth, settings.ViewportHeight,
+			config.ResolutionWidth, config.ResolutionHeight)
+	}
+
+	if settings.FOVY != config.CameraFOVY || settings.OrthoHeight != config.CameraOrthoHeight ||
+		settings.Near != config.CameraNear || settings.Far != config.CameraFar {
+		t.Fatalf("camera ignores authored project settings: %+v", settings)
+	}
+}

@@ -4,10 +4,11 @@ import (
 	"math"
 	"strconv"
 
+	"example.com/crate-room/.karty/config"
 	"example.com/crate-room/.karty/engine"
 )
 
-const width, height = float32(960), float32(540)
+const width, height = float32(config.ResolutionWidth), float32(config.ResolutionHeight)
 const crateCount = 80
 
 type Game struct {
@@ -93,12 +94,12 @@ func (game *Game) ready(event engine.LevelReady) {
 			Projection:     engine.CameraProjectionPerspective,
 			Output:         engine.CameraOutputFull,
 			Position:       engine.NewVec3D(.2, -10, 1.67),
-			FOVY:           68 * math.Pi / 180,
-			OrthoHeight:    24,
-			Near:           .05,
-			Far:            80,
-			ViewportWidth:  960,
-			ViewportHeight: 540,
+			FOVY:           config.CameraFOVY,
+			OrthoHeight:    config.CameraOrthoHeight,
+			Near:           config.CameraNear,
+			Far:            config.CameraFar,
+			ViewportWidth:  config.ResolutionWidth,
+			ViewportHeight: config.ResolutionHeight,
 		},
 	)
 	game.SetPhysicsBox(game.camera, playerBox())
