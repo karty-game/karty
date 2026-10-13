@@ -173,3 +173,39 @@ headless fixtures. Linux ARM64 customer execution and Windows ARM64 packaged-gam
 startup remain release-workflow gates; cross-compilation does not qualify those
 devices. Sample-site rebuilding, physical audio, manual gameplay and hardware
 FPS were not rerun. Nothing was committed, tagged or published by this check.
+
+## Current SDK reference audit — 2026-10-13
+
+Updated current feature references, sample setup instructions, CDN examples and
+the embedded sharing guide to published SDK 0.0.12. The guide's install command,
+license links and CI download paths now agree with that release. Removed current
+instructions requiring an unreleased 0.0.12 bundle or local host override.
+General summary, runtime, preview and CDN fixtures use `release.SDKVersion()`;
+guide coverage checks require the selected SDK install and license links.
+
+Remaining 0.0.11 references describe feature introductions, minimum supported
+versions, the first strict TOML metadata release, dated validation, or immutable
+screenshot provenance. They are retained as evidence and compatibility coverage.
+All managed sample manifests and `CurrentSDK` remain 0.0.12; the separate public
+format-module dependency remains v0.0.14.
+
+Using the public-dependency environment above, `mise run check` passed formatting,
+lint (zero Go issues), full tests (13.26 seconds with warmed caches) and CLI build.
+Log: `/tmp/karty-cli-sdk-reference-audit-check-complete.log`.
+`GOCACHE=/tmp/karty-engine-go-cache GOWORK=off GOPROXY=https://proxy.golang.org
+GOSUMDB=sum.golang.org GONOSUMDB= GONOPROXY= mise run generate-guide` passed;
+the regenerated `dist/guide/guide.md` contains no 0.0.11 reference.
+Log: `/tmp/karty-cli-sdk-reference-audit-guide.log`.
+
+The four pinned `build-cli-linux-amd64`, `build-cli-linux-arm64`,
+`build-cli-darwin-arm64` and `build-cli-windows-amd64` tasks also passed, refreshing
+all distributed CLI binaries with the updated embedded guide. Logs:
+`/tmp/karty-cli-sdk-reference-audit-PLATFORM.log`. These are compilation results.
+
+Earlier audit attempts caught lint issues in passing the selected version to the
+Node CDN fixture; the fixture now receives it through its environment and the
+complete rerun passed. Logs: `/tmp/karty-cli-sdk-reference-audit-check.log` and
+`/tmp/karty-cli-sdk-reference-audit-check-final.log`. This update changes references
+and test inputs, with no new runtime or wire contract. Actual browser/device checks
+were not repeated after the reference changes; the preceding customer-suite
+results and their limits remain recorded above. No commit or publication occurred.
