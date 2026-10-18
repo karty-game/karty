@@ -1,130 +1,167 @@
 # Make a first-person game
 
-Choose this view for walking through rooms and interacting with objects at eye
-height. Start with [one room](levels.html), then add these controls to its viewer.
-Keep the loading and failure hooks from that page.
+The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.
 
-![The Hangar sample uses a first-person camera to explore its industrial rooms.](assets/hangar.jpg)
+Create the SDK 0.0.13 starter:
 
-## Set the camera height
+```sh
+karty new --yes --sdk 0.0.13 --template fps my-game
+cd my-game
+karty dev
+```
 
-Use these settings in `game.NewCamera3D(event.Handle, settings)`. X/Y are floor
-coordinates; Z is height. A yaw of zero faces positive Y. Angles use radians.
+The starter includes controllers 0.1.0 in `packages/controllers/` and declares
+that folder in `karty.toml`. Keep it in Git. If extending an existing project,
+import the package as described in [reusable packages](../design/packages.html).
+Use the room and material files from [one room](levels.html); the isometric
+starter also supplies its `player` solid prefab in `world.yaml`.
+
+![The Hangar sample uses the first-person preset to explore industrial rooms.](assets/hangar.jpg)
+
+## Connect the first-person preset
+
+The complete `src/main.go` below is the starter's SDK adapter. Change its module
+imports if your project has a different name. Keep the viewport and project
+resolution at 960 by 540. Constructors validate their options; `Reset` clears
+held controls when focus changes.
 
 ```go
-settings := engine.CameraSettings{
-    Projection: engine.CameraProjectionPerspective,
-    Output: engine.CameraOutputFull,
-    Position: engine.NewVec3D(2, 2, 1.7),
-    Yaw: 0, Pitch: 0, FOVY: 1.05,
-    Near: 0.05, Far: 100, OrthoHeight: 10,
-    ViewportWidth: 960, ViewportHeight: 540,
+package main
+
+import (
+	"github.com/karty-game/controllers"
+
+	"example.com/my-game/.karty/engine"
+)
+
+type Game struct {
+	engine.Game
+	request                        engine.RequestID
+	camera                         *engine.EntityCamera3D
+	label                          *engine.EntityText2D
+	controller *controllers.FirstPerson
+	fpsReady bool
 }
-```
 
-Keep `game.camera.SetLayer(-1)` so the loading label and later HUD appear above
-the world. Match the viewport to the resolution in `karty.toml`.
+//go:wasmexport karty_register
+func main() {
+	options := controllers.DefaultFirstPersonOptions()
+	options.Width, options.Height = 960, 540
+	options.Speed, options.KeyYawSpeed = 2.4, 1.5
+	controller, err := controllers.NewFirstPerson(options)
+	if err != nil { panic(err) }
+	game := &Game{controller: controller}
+	engine.Run(engine.Hooks{
+		OnUpdate:     func(engine.Frame) { game.updateFPS() },
+		OnKeyDown:    func(key engine.Key) { game.keyFPS(key, true) },
+		OnKeyUp:      func(key engine.Key) { game.keyFPS(key, false) },
+		OnInputReset: game.resetFPS,
+		OnPointer: game.pointerFPS,
 
-## Add walking controls
+		OnStart: func() {
+			game.label = game.NewText2D("Loading room...", engine.NewVec2(24, 24))
+			game.request = game.RequestLevel("levels.room")
+		},
+		OnLevelReady: func(event engine.LevelReady) {
+			if event.RequestID != game.request {
+				return
+			}
+			game.camera = game.NewCamera3D(event.Handle, engine.CameraSettings{
+				Projection: engine.CameraProjectionPerspective,
+				Output:     engine.CameraOutputFull,
+				Position:   engine.NewVec3(2, 2, 1.7),
+				Yaw:        0, Pitch: 0, FOVY: 1.05,
+				Near: 0.05, Far: 100, OrthoHeight: 10,
+				ViewportWidth: 960, ViewportHeight: 540,
+			})
+			game.camera.SetLayer(-1)
 
-W/S move forward and back. A/D strafe. Q/E turn. Add `math` to the imports, and
-add these fields inside `Game`:
+			game.fpsReady = true
 
-```go
-forward, backward, left, right bool
-turnLeft, turnRight bool
-fpsReady bool
-```
-
-After creating the camera and setting its layer, register accepted transforms.
-Put this before `game.label.SetText("")` in `OnLevelReady`:
-
-```go
-if _, err := game.WatchTransform(game.camera, nil); err != nil {
-    game.label.SetText(err.Error())
-    return
+			game.label.SetText("WASD: walk | Q/E: turn | click: mouse look | touch: dual sticks")
+		},
+		OnLevelFailed: func(event engine.LevelFailed) {
+			if event.RequestID == game.request {
+				game.label.SetText(event.Diagnostic)
+			}
+		},
+	})
 }
-game.fpsReady = true
-```
 
-`WatchTransform` updates `camera.Settings` with the pose the host accepted. The
-next frame starts there, including any collision stop or portal change. The
-`nil` callback is enough for movement. Add an interaction callback to this same
-registration when you need one.
 
-Add these entries to the existing `engine.Hooks`:
-
-```go
-OnUpdate: func(engine.Frame) { game.updateFPS() },
-OnKeyDown: func(key engine.Key) { game.keyFPS(key, true) },
-OnKeyUp: func(key engine.Key) { game.keyFPS(key, false) },
-OnInputReset: game.resetFPS,
-```
-
-Add these methods after `main`. Karty updates at 60 Hz, so a step of `0.04`
-moves 2.4 metres per second. Normalizing the input keeps diagonal movement at
-the same speed.
-
-```go
 func (game *Game) keyFPS(key engine.Key, down bool) {
-    switch key {
-    case engine.KeyW: game.forward = down
-    case engine.KeyS: game.backward = down
-    case engine.KeyA: game.left = down
-    case engine.KeyD: game.right = down
-    case engine.KeyQ: game.turnLeft = down
-    case engine.KeyE: game.turnRight = down
-    }
+	if key == engine.KeyEscape && down { game.resetFPS(); return }
+	if control, ok := movementKey(key); ok { game.controller.Key(control, down); return }
+	switch key {
+	case engine.KeyQ: game.controller.Key(controllers.LookLeft, down)
+	case engine.KeyE: game.controller.Key(controllers.LookRight, down)
+	}
 }
 
 func (game *Game) resetFPS() {
-    game.forward, game.backward, game.left, game.right = false, false, false, false
-    game.turnLeft, game.turnRight = false, false
+	game.controller.Reset()
+	game.SetCursorCaptured(false)
 }
 
-func fpsAxis(positive, negative bool) float32 {
-    var value float32
-    if positive { value++ }
-    if negative { value-- }
-    return value
+func (game *Game) pointerFPS(pointer engine.PointerInput) {
+	if game.camera == nil || !game.fpsReady { return }
+	if pointer.Kind != engine.PointerMouse && pointer.Kind != engine.PointerTouch { return }
+	var phase controllers.PointerPhase
+	switch pointer.Phase {
+	case engine.PointerDown: phase = controllers.PointerDown
+	case engine.PointerMove: phase = controllers.PointerMove
+	case engine.PointerUp: phase = controllers.PointerUp
+	case engine.PointerCancel: phase = controllers.PointerCancel
+	default: return
+	}
+	result := game.controller.Pointer(controllers.Pointer{
+		Phase: phase, Touch: pointer.Kind == engine.PointerTouch, ID: pointer.ID,
+		X: pointer.X, Y: pointer.Y, DeltaX: pointer.DeltaX, DeltaY: pointer.DeltaY,
+		Primary: pointer.Buttons&1 != 0, Captured: pointer.Captured,
+	}, pointer.X >= 0 && pointer.X <= 960 && pointer.Y >= 0 && pointer.Y <= 540)
+	if result.Capture { game.SetCursorCaptured(true) }
+	if result.Release { game.SetCursorCaptured(false) }
 }
 
 func (game *Game) updateFPS() {
-    if game.camera == nil || !game.fpsReady { return }
-    forward := fpsAxis(game.forward, game.backward)
-    strafe := fpsAxis(game.right, game.left)
-    turn := fpsAxis(game.turnRight, game.turnLeft)
-    if forward == 0 && strafe == 0 && turn == 0 { return }
+	if game.camera == nil || !game.fpsReady { return }
+	// Settings contains the last host-accepted pose automatically.
+	settings := game.camera.Settings
+	motion := game.controller.Step(settings.Yaw, settings.Pitch)
+	if motion.X == 0 && motion.Y == 0 && motion.Yaw == settings.Yaw && motion.Pitch == settings.Pitch { return }
+	settings.Yaw, settings.Pitch = motion.Yaw, motion.Pitch
+	settings.Position.X += motion.X
+	settings.Position.Y += motion.Y
+	game.camera.SetSettings(settings)
+}
 
-    if length := math.Hypot(float64(forward), float64(strafe)); length > 1 {
-        forward /= float32(length)
-        strafe /= float32(length)
-    }
-    settings := game.camera.Settings
-    settings.Yaw += turn * 0.025
-    sine := float32(math.Sin(float64(settings.Yaw)))
-    cosine := float32(math.Cos(float64(settings.Yaw)))
-    settings.Position.X += (forward*sine + strafe*cosine) * 0.04
-    settings.Position.Y += (forward*cosine - strafe*sine) * 0.04
-    game.camera.SetSettings(settings)
+func movementKey(key engine.Key) (controllers.Control, bool) {
+	switch key {
+	case engine.KeyW: return controllers.Forward, true
+	case engine.KeyS: return controllers.Backward, true
+	case engine.KeyA: return controllers.Left, true
+	case engine.KeyD: return controllers.Right, true
+	case engine.KeyArrowUp: return controllers.ForwardAlt, true
+	case engine.KeyArrowDown: return controllers.BackwardAlt, true
+	case engine.KeyLeft: return controllers.LeftAlt, true
+	case engine.KeyRight: return controllers.RightAlt, true
+	case engine.KeyShiftLeft: return controllers.RunLeft, true
+	case engine.KeyShiftRight: return controllers.RunRight, true
+	}
+	return 0, false
 }
 ```
 
-Run `karty dev`, click the game, and walk toward a wall. Movement stops while
-you can still turn. Switch away from the preview and back; `OnInputReset` clears
-held keys so walking does not continue after focus changes.
+WASD/arrows walk, Shift runs, and Q/E turn. Click to capture mouse look;
+Escape releases it. Touch the lower-left side to walk and lower-right to look.
+The minimal starter supplies gestures without drawing stick overlays. Route UI
+hit tests before accepting new scene gestures when adding menus.
 
-The camera is a point. This controller does not change Z directly or add
-gravity, jumping, or automatic stair climbing. Start with a flat room before
-adapting the Hangar controller for stairs or touch input.
+Read `packages/controllers/docs/presets-v1.md` in the generated project for
+the complete contract, including picking and pointer targets. Extend the game
+with [textures](textures.html), [prefabs](prefabs.html),
+[lighting](lighting.html) and [interactions](interactions.html), then
+[share a build](share.html).
 
-## Give the room a purpose
-
-Add [textures](textures.html) and [prefabs](prefabs.html) before expanding the
-map. Use [lighting](lighting.html) to make the route visible. Then add a nearby
-object and an [interaction](interactions.html).
-
-The interaction example uses E. Move turning to another key or use F for the
-interaction, and call both handlers from your existing input hook. Use
-[KartUI](ui.html) for prompts, [media](media.html) for feedback, and
-[share a build](share.html) once the first room is playable.
+The interaction guide uses E by default. Use F for interactions here, or
+remap this starter's Q/E controls before wiring the interaction hook.

@@ -1,24 +1,54 @@
 # Why Karty?
 
-I started Karty to make the engine and framework I wanted to use myself.
+I started Karty to make the engine and framework I wanted to use myself:
+write game rules in Go, build a room from simple shapes, and try it quickly.
+
+![Concept illustration of a room taking shape from outlines, reusable crates and material swatches. This is artwork, not an editor screenshot.](assets/design-room.png)
+
+## Make a room and try it
 
 Unity and Unreal feel too big, too slow, and too general-purpose for my games.
 I miss the directness of Doom and Half-Life level editors. Making a room and
 trying it felt simple.
 
-I want to model and texture my game directly in the editor, make a change,
-and see it immediately. Move a wall, swap a material, or place an object
-without waiting for a full rebuild.
+Karty is aimed at small games and prototypes, including retro first-person
+games, isometric adventures and 2D games. For worlds, I want to work with
+floor plans, heights, materials and reusable objects. That should be enough
+to make a space worth exploring without first learning a full 3D modeling tool.
 
-I want to supply one albedo image and let the tools generate normal and
-smoothness maps that make the material look good. I don't want to spend hours
-tuning every map by hand.
+## Let the tools do the routine work
 
-I don't want to spend my time tuning LODs, mipmaps, or lightmaps. I want to
-place things where I want them and let the editor handle those details.
+I want to supply an albedo image and let the tools generate the material maps.
+I want to place lights and objects without spending hours tuning mipmaps or
+packing lightmaps. Those jobs belong in the [asset pipeline](../design/asset-pipeline.html).
 
-I don't want to reinvent particle systems or UI for every game. I want a
-library of effects and components I can reuse whenever I need them.
+Karty already processes assets during builds, generates world materials and
+supports offline light baking. The project keeps the original files; derived
+files can be rebuilt.
 
-I'm building Karty toward that workflow. The goal is to make games and
-prototypes that look good, with as little setup and extra work as possible.
+I also want to reuse behavior, effects and UI across games.
+[Packages](../design/packages.html) already share Go code, static prefabs, PNG materials
+and KartUI components. A broader library of effects and components is still a goal.
+
+## Keep the feedback loop short
+
+Today, levels are authored in files and `karty dev` watches for changes.
+Compatible lighting, material and global UI updates can reach the running
+preview without resetting the game. Code and structural changes reload it.
+
+The editor I want goes further: move a wall, swap a material or place an object
+and see the result immediately. That graphical editing workflow is a direction
+for Karty, rather than a feature available today.
+
+## Choose a focused framework
+
+Karty makes choices about world geometry, asset processing and the
+[host and client boundary](../design/architecture.html). Those choices reduce setup for
+the games it targets, while limiting how much of the renderer or runtime a game
+can replace. A game that needs an arbitrary mesh workflow or a custom rendering
+pipeline may fit another engine better.
+
+I'm building toward a workflow where making a small game that looks good takes
+less preparation and leaves more time for the game itself.
+
+Continue with [Architecture](../design/architecture.html), or [make your first game](../guide/index.html).

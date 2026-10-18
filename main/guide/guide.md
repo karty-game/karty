@@ -2,31 +2,6 @@
 
 Create a project, choose a 2D or 3D scene, and add an interaction you can play.
 
-## Why Karty?
-
-I started Karty to make the engine and framework I wanted to use myself.
-
-Unity and Unreal feel too big, too slow, and too general-purpose for my games.
-I miss the directness of Doom and Half-Life level editors. Making a room and
-trying it felt simple.
-
-I want to model and texture my game directly in the editor, make a change,
-and see it immediately. Move a wall, swap a material, or place an object
-without waiting for a full rebuild.
-
-I want to supply one albedo image and let the tools generate normal and
-smoothness maps that make the material look good. I don't want to spend hours
-tuning every map by hand.
-
-I don't want to spend my time tuning LODs, mipmaps, or lightmaps. I want to
-place things where I want them and let the editor handle those details.
-
-I don't want to reinvent particle systems or UI for every game. I want a
-library of effects and components I can reuse whenever I need them.
-
-I'm building Karty toward that workflow. The goal is to make games and
-prototypes that look good, with as little setup and extra work as possible.
-
 ## Start with a playable game
 
 Install the [Karty CLI](https://github.com/karty-game/karty/releases/latest), then run:
@@ -36,6 +11,16 @@ karty new my-game
 cd my-game
 karty dev
 ```
+
+The terminal wizard offers `blank`, `2d`, `fps`, `isometric`, and `ui`, plus optional
+Git initialization and GitHub Actions. Use `--yes --template 2d` for scripts.
+Use `--no-template` for just the base folders and an empty entry point.
+Current starters use SDK 0.0.13, which the CLI installs when needed.
+
+The SDK 0.0.13 2D, first-person and isometric starters use one reusable
+controllers package with different presets. They include its source under
+`packages/controllers/` so generated projects work without a published module.
+Keep that folder in Git. Blank and UI projects add controls only when needed.
 
 Open the address printed by the preview. Change a color or a movement speed in
 `src/main.go`, save, and try it again. The first setup downloads tools; later
@@ -54,8 +39,9 @@ Keep `karty.toml`, your Go source, and source assets in Git. The CLI recreates
 reference for API names and supported features.
 
 Make one small game rule work before adding more art: collect an item, reach a
-goal, or restart after losing. For a 3D game, use the camera and loading code
-from [Roman court & galleries](../world-camera/) as your starting point.
+goal, or restart after losing. For a 3D game, choose the first-person or isometric starter, then extend its
+room using the matching guide path. [Roman court & galleries](../world-camera/)
+shows how those camera views work in a larger world.
 
 ## Build one room
 
@@ -80,21 +66,19 @@ Save this as `world.yaml`. X/Y describe the floor plan; Z is height. These
 coordinates make an eight-metre square room with a three-metre ceiling.
 
 ```yaml
-version: 6
+version: 19
 rooms:
   - id: room
+    rect: {width: 8, depth: 8, material: surface}
     floor: {c: 0}
     ceiling: {c: 3}
     floor_material: surface
     ceiling_material: surface
-    boundary:
-      - {id: south, start: {x: 0, y: 0}, end: {x: 8, y: 0}, material: surface}
-      - {id: east, start: {x: 8, y: 0}, end: {x: 8, y: 8}, material: surface}
-      - {id: north, start: {x: 8, y: 8}, end: {x: 0, y: 8}, material: surface}
-      - {id: west, start: {x: 0, y: 8}, end: {x: 0, y: 0}, material: surface}
 ```
 
-Walk the boundary counterclockwise and keep each edge joined to the next.
+The build expands `rect` into four counterclockwise edges named `south`, `east`,
+`north` and `west`. Use those names for connections. For an irregular room or
+individual wall settings, use an explicit `boundary` instead of `rect`.
 Run `karty schema` for editor suggestions, or `karty schema --check` to check
 the world before processing assets.
 
@@ -109,7 +93,7 @@ import "example.com/my-game/.karty/engine"
 
 type Game struct {
     engine.Game
-    request engine.LevelRequestID
+    request engine.RequestID
     camera *engine.EntityCamera3D
     label *engine.EntityText2D
 }
@@ -119,14 +103,14 @@ func main() {
     game := &Game{}
     engine.Run(engine.Hooks{
         OnStart: func() {
-            game.label = game.NewText2D("Loading room...", engine.NewVec2D(24, 24))
+            game.label = game.NewText2D("Loading room...", engine.NewVec2(24, 24))
             game.request = game.RequestLevel("levels.room")
         },
         OnLevelReady: func(event engine.LevelReady) {
             if event.RequestID != game.request { return }
             game.camera = game.NewCamera3D(event.Handle, engine.CameraSettings{
                 Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-                Position: engine.NewVec3D(2, 2, 1.7), FOVY: 1.05,
+                Position: engine.NewVec3(2, 2, 1.7), FOVY: 1.05,
                 Near: 0.05, Far: 100, OrthoHeight: 10,
                 ViewportWidth: 960, ViewportHeight: 540,
             })
@@ -212,8 +196,8 @@ Presets change generated maps. They do not add liquid motion or light emission.
 Start with their defaults. Use `normal_strength`, `height_contrast`,
 `metallic_scale`, or `ao_depth_scale` only when the result needs adjustment.
 The separate `textures.material_strengths` settings control how strongly the
-game displays those maps. See the [material reference](https://github.com/karty-game/karty/blob/main/docs/assets.md)
-for overrides and limits.
+game displays those maps. Your generated `.karty/docs/assets.md` lists the
+overrides and limits for your SDK.
 
 Check the result at player height. A material that looks good close up may
 repeat too obviously across a large wall. [The Hangar](../hangar/) shows wall
@@ -325,12 +309,12 @@ After creating the camera, check its starting position and subscribe to later
 accepted poses. Registration alone does not call the callback.
 
 ```go
-updateGoal := func(position engine.Vec3D) {
+updateGoal := func(position engine.Vec3) {
     dx, dy := position.X-6, position.Y-6
     game.nearGoal = dx*dx+dy*dy < 1
 }
 updateGoal(game.camera.Settings.Position)
-_, err := game.WatchTransform(game.camera, func(pose engine.Transform3D) {
+_, err := game.WatchTransform(game.camera.Ref(), func(pose engine.Transform3D) {
     // The host has applied collision and portal movement.
     updateGoal(pose.Position)
 })
@@ -339,7 +323,7 @@ if err != nil {
 }
 ```
 
-Propose movement from `camera.Settings`, which the hook keeps synchronized
+Propose movement from `camera.Settings`, which the SDK keeps synchronized automatically
 with the accepted pose. Do not accumulate a separate guessed player position.
 
 The position check defines a one-metre trigger around `(6, 6)`. Call this method
@@ -448,8 +432,8 @@ and this method to the room viewer:
 func (game *Game) updateAudioReceiver() {
     if game.camera == nil { return }
     yaw := float64(game.camera.Settings.Yaw)
-    game.SetAudioReceiver(game.camera, engine.AudioReceiverOptions{
-        Right: engine.NewVec2D(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
+    game.SetAudioReceiver(game.camera.Ref(), engine.AudioReceiverOptions{
+        Right: engine.NewVec2(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
     })
 }
 ```
@@ -469,11 +453,11 @@ playback until another receiver is set.
 
 ### Play a positioned one-shot
 
-Pass the existing door entity or resolved `engine.WorldActorRef` when the door
+Pass the existing door entity or resolved `engine.EntityRef` when the door
 opens. It must be a live audio entity:
 
 ```go
-func (game *Game) playDoorSound(door engine.AudioEntity) {
+func (game *Game) playDoorSound(door engine.EntityRef) {
     game.PlaySFXFrom(assets.SoundDoorOpen, door, engine.SFXOptions{
         Volume: 0.8, NearDistance: 1, FarDistance: 12,
     })
@@ -494,14 +478,14 @@ distance or collision obstruction.
 
 ### Place a looping sound in the world
 
-The emitter API requires SDK **0.0.12 or newer** and its matching host. Check
-your project's `[sdk]` version and `.karty/docs/audio-emitters.md`. Create this
+Check `.karty/docs/audio-emitters.md` for emitter support in your project's
+selected SDK and matching host. Create this
 emitter once from `OnLevelReady`, using `event.Handle` for the mounted level:
 
 ```go
 func (game *Game) startReactorSound(level engine.LevelHandle) *engine.SoundEmitter {
     return game.NewSoundEmitter(level, assets.SoundReactorHum,
-        engine.NewVec3D(6, 6, 1.5), engine.SoundEmitterOptions{
+        engine.NewVec3(6, 6, 1.5), engine.SoundEmitterOptions{
             Volume: 0.6, NearDistance: 2, FarDistance: 16,
             Loop: true, Occlusion: true,
         })
@@ -520,12 +504,12 @@ do not. Place the source outside solid geometry. Sound does not travel around
 corners, and there is no room reverb or acoustic portal transformation.
 
 For a moving object, attach the sound at creation. Pass a live crate entity or
-a resolved `engine.WorldActorRef` belonging to the same mounted level:
+a resolved `engine.EntityRef` belonging to the same mounted level:
 
 ```go
-func (game *Game) startCrateSound(level engine.LevelHandle, crate engine.AudioEntity) *engine.SoundEmitter {
+func (game *Game) startCrateSound(level engine.LevelHandle, crate engine.EntityRef) *engine.SoundEmitter {
     return game.NewAttachedSoundEmitter(level, assets.SoundCrateScrape, crate,
-        engine.NewVec3D(0, 0, 0.3), engine.SoundEmitterOptions{
+        engine.NewVec3(0, 0, 0.3), engine.SoundEmitterOptions{
             Volume: 0.5, NearDistance: 0.5, FarDistance: 9,
             Loop: true, Occlusion: true,
         })
@@ -647,6 +631,11 @@ skip game movement in `OnUpdate` until Resume sets it true. A modal panel
 captures input; your Go code decides whether the game simulation pauses.
 
 Layouts share structure and styles. Component callbacks change game state.
+Packages can also export `.kui` components/layouts, images, fonts and theme
+defaults through `karty-package.toml`. Import a folder or `.kpkg` with
+`karty package import`; compose its exported components with the same typed
+props and callbacks. The consuming game retains its own root, state and theme
+overrides. Use prefixed component/props names to avoid shared Go-scope collisions.
 Call `Invalidate()` after changing data used by dynamic UI bindings. Test your
 layout at a narrow viewport before adding more screens. [Orbital flight
 deck](../ui-demo/) shows menus, loading, inventory, gameplay, and pause screens.
@@ -656,7 +645,7 @@ deck](../ui-demo/) shows menus, loading, inventory, gameplay, and pause screens.
 ## Build and share
 
 Use `--target web` for browsers and `--target native` for desktop games.
-SDK 0.0.12 provides these runtimes:
+The supported game runtimes are:
 
 | Game platform       | `--platform`    | Build on this machine             |
 | ------------------- | --------------- | --------------------------------- |
@@ -710,10 +699,32 @@ Explicit platforms use separate folders, such as
 folder and run `.\karty-host.exe --cartridge game.kart`.
 
 Share the whole selected folder, including its `content/` files.
-Include [RUNTIME_LICENSE.md](https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/RUNTIME_LICENSE.md)
-and [SDK_LICENSE.md](https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/SDK_LICENSE.md)
-from your SDK release, plus notices required by your own assets and dependencies.
+Include `RUNTIME_LICENSE.md` and `SDK_LICENSE.md`
+from your project's selected [SDK release](https://github.com/karty-game/karty-sdk/releases), plus notices required by your own assets and dependencies.
 Browser and desktop use the same source. Test each platform you ship.
+
+### Share reusable code, prefabs and UI
+
+For a package folder containing `karty-package.toml`, export a local archive:
+
+```sh
+karty package export --output placeholder-kit-0.1.0.kpkg ../placeholder-kit
+```
+
+From a consuming game, import the archive using the name in its package manifest:
+
+```sh
+karty package import placeholder-kit-0.1.0.kpkg
+```
+
+Commit the referenced archive and updated `karty.toml`/`go.mod`; the CLI restores
+its checked contents under ignored `.karty/packages/`. To edit the package live,
+use `karty package import --replace ../placeholder-kit` instead.
+`karty dev` watches that working folder, including outside the game. The current
+local-package CLI supports Go behavior, static/nested prefabs, PNG world
+materials and KartUI components/layouts with images, fonts and theme defaults;
+use a CLI build containing that feature. UI exports compile against the consuming
+game's SDK and keep normal typed props/callbacks. The game owns state and lifecycle.
 
 ### Build in CI
 
@@ -721,11 +732,9 @@ Commit `karty.toml`, `go.mod`, source code, and source assets. Include `go.sum`
 when your dependencies create it.
 The runner recreates `.karty/` and `dist/`; do not commit those folders.
 
-Save this as `.github/workflows/game.yml` in a game project pinned to SDK
-0.0.12. It builds a browser game and a Windows ARM64 distribution on Linux,
+Save this as `.github/workflows/game.yml` in your game project. It builds a browser game and a Windows ARM64 distribution on Linux,
 then uploads each folder for review. It pins a public CLI source revision
-because the current [CLI binary release, v0.0.1](https://github.com/karty-game/karty/releases/tag/v0.0.1),
-predates `--platform`.
+so the workflow and CLI behavior stay reproducible.
 No private engine checkout or credentials are needed.
 
 ```yaml
@@ -753,7 +762,9 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Install SDK and software material generation
         run: |
-          karty sdk install 0.0.12
+          SDK_VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("karty.toml", "rb"))["sdk"]["version"])')
+          echo "SDK_VERSION=$SDK_VERSION" >> "$GITHUB_ENV"
+          karty sdk install "$SDK_VERSION"
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
       - name: Build distributions
@@ -761,7 +772,7 @@ jobs:
           karty build --target web
           karty build --target native --platform windows-arm64
           for notice in RUNTIME_LICENSE.md SDK_LICENSE.md; do
-            curl -fsSL "https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/$notice" -o "$RUNNER_TEMP/$notice"
+            curl -fsSL "https://github.com/karty-game/karty-sdk/releases/download/sdk-v$SDK_VERSION/$notice" -o "$RUNNER_TEMP/$notice"
             cp "$RUNNER_TEMP/$notice" dist/web/
             cp "$RUNNER_TEMP/$notice" dist/native/windows-arm64/
           done
@@ -798,6 +809,15 @@ Use sprites for image artwork, vectors for shapes, and text for instructions
 and scores. This example draws all three and lets you collect a circle with
 keyboard movement.
 
+Start with the SDK 0.0.13 `2d` starter, which includes controllers 0.1.0:
+
+```sh
+karty new --yes --sdk 0.0.13 --template 2d my-game
+```
+
+Keep `packages/controllers/` in Git. For an existing project, import the package
+using the [reusable packages guide](../design/packages.html) first.
+
 ### Add a sprite
 
 Create a project from the [guide home](index.html). Download
@@ -814,66 +834,66 @@ scene. Change the imports if your project has a different name.
 package main
 
 import (
+    "github.com/karty-game/controllers"
     "example.com/my-game/.karty/assets"
     "example.com/my-game/.karty/engine"
 )
 
-const speed = float32(3)
+const speed = 180 // logical pixels per second
 
 type Game struct {
     engine.Game
     player *engine.EntitySprite2D
     goal *engine.EntityVector2D
     label *engine.EntityText2D
-    keys [engine.KeyMeta + 1]bool
+    controller *controllers.Planar
     won bool
 }
 
 //go:wasmexport karty_register
 func main() {
-    game := &Game{}
+    options := controllers.DefaultTopDown2DOptions()
+    options.Speed, options.RunSpeed = speed, speed
+    controller, err := controllers.NewTopDown2D(options)
+    if err != nil { panic(err) }
+    game := &Game{controller: controller}
     engine.Run(engine.Hooks{
         OnStart: game.start,
         OnUpdate: game.update,
         OnKeyDown: func(key engine.Key) { game.key(key, true) },
         OnKeyUp: func(key engine.Key) { game.key(key, false) },
-        OnInputReset: func() { clear(game.keys[:]) },
+        OnInputReset: game.controller.Reset,
     })
 }
 
 func (game *Game) start() {
     // Draw the background behind the sprite, goal, and text.
-    background := game.NewVector2D(engine.Rectangle(960, 540), engine.NewVec2D(0, 0))
+    background := game.NewVector2D(engine.Rectangle(960, 540), engine.NewVec2(0, 0))
     background.SetFill(engine.RGBA(12, 21, 35, 255))
     background.SetLayer(-1)
-    game.player = game.NewSprite2D(assets.TexturePlayer, engine.NewVec2D(160, 280))
-    game.goal = game.NewVector2D(engine.Circle(18), engine.NewVec2D(760, 350))
+    game.player = game.NewSprite2D(assets.TexturePlayer, engine.NewVec2(160, 280))
+    game.goal = game.NewVector2D(engine.Circle(18), engine.NewVec2(760, 350))
     game.goal.SetFill(engine.RGBA(255, 200, 99, 255))
-    game.label = game.NewText2D("WASD / arrows: collect the gold circle", engine.NewVec2D(32, 24))
+    game.label = game.NewText2D("WASD / arrows: collect the gold circle", engine.NewVec2(32, 24))
     game.label.SetSize(20)
     game.label.SetLayer(1)
 }
 
 func (game *Game) key(key engine.Key, down bool) {
     if key == engine.KeyR && down {
-        clear(game.keys[:])
+        game.controller.Reset()
         game.won = false
         game.player.Translate(160-game.player.Position.X, 280-game.player.Position.Y)
         game.goal.SetAlpha(1)
         game.label.SetText("WASD / arrows: collect the gold circle")
     }
-    if int(key) < len(game.keys) { game.keys[key] = down }
+    if control, ok := movementKey(key); ok { game.controller.Key(control, down) }
 }
 
 func (game *Game) update(engine.Frame) {
     if game.won { return }
-    var dx, dy float32
-    if game.keys[engine.KeyA] || game.keys[engine.KeyLeft] { dx -= speed }
-    if game.keys[engine.KeyD] || game.keys[engine.KeyRight] { dx += speed }
-    if game.keys[engine.KeyW] || game.keys[engine.KeyArrowUp] { dy -= speed }
-    if game.keys[engine.KeyS] || game.keys[engine.KeyArrowDown] { dy += speed }
-    // Keep diagonal movement as fast as movement along one axis.
-    if dx != 0 && dy != 0 { dx *= 0.7071068; dy *= 0.7071068 }
+    delta := game.controller.Step(controllers.Vec2{X: float64(game.player.Position.X), Y: float64(game.player.Position.Y)})
+    dx, dy := float32(delta.X), float32(delta.Y)
     if dx != 0 || dy != 0 {
         x := min(max(game.player.Position.X+dx, 16), 944)
         y := min(max(game.player.Position.Y+dy, 80), 524)
@@ -888,11 +908,29 @@ func (game *Game) update(engine.Frame) {
         game.label.SetText("Collected! Press R to restart")
     }
 }
+func movementKey(key engine.Key) (controllers.Control, bool) {
+	switch key {
+	case engine.KeyW: return controllers.Forward, true
+	case engine.KeyS: return controllers.Backward, true
+	case engine.KeyA: return controllers.Left, true
+	case engine.KeyD: return controllers.Right, true
+	case engine.KeyArrowUp: return controllers.ForwardAlt, true
+	case engine.KeyArrowDown: return controllers.BackwardAlt, true
+	case engine.KeyLeft: return controllers.LeftAlt, true
+	case engine.KeyRight: return controllers.RightAlt, true
+	case engine.KeyShiftLeft: return controllers.RunLeft, true
+	case engine.KeyShiftRight: return controllers.RunRight, true
+	}
+	return 0, false
+}
+
 ```
 
 Run `karty dev`. Move with WASD or the arrow keys, reach the circle, then press
 R to try again. `OnInputReset` clears held keys when the game loses focus.
-Karty updates at 60 Hz, so a speed of three moves 180 pixels per second.
+The preset normalizes diagonal input and converts `speed = 180` pixels per
+second into three pixels per fixed 60 Hz update. Camera following, pointer
+targets and zoom are available on the same preset when your game needs them.
 
 ### Change the drawing
 
@@ -920,252 +958,353 @@ Its components work with both 2D and 3D games.
 
 ## Make a first-person game
 
-Choose this view for walking through rooms and interacting with objects at eye
-height. Start with [one room](levels.html), then add these controls to its viewer.
-Keep the loading and failure hooks from that page.
+The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.
 
-![The Hangar sample uses a first-person camera to explore its industrial rooms.](assets/hangar.jpg)
+Create the SDK 0.0.13 starter:
 
-### Set the camera height
+```sh
+karty new --yes --sdk 0.0.13 --template fps my-game
+cd my-game
+karty dev
+```
 
-Use these settings in `game.NewCamera3D(event.Handle, settings)`. X/Y are floor
-coordinates; Z is height. A yaw of zero faces positive Y. Angles use radians.
+The starter includes controllers 0.1.0 in `packages/controllers/` and declares
+that folder in `karty.toml`. Keep it in Git. If extending an existing project,
+import the package as described in [reusable packages](../design/packages.html).
+Use the room and material files from [one room](levels.html); the isometric
+starter also supplies its `player` solid prefab in `world.yaml`.
+
+![The Hangar sample uses the first-person preset to explore industrial rooms.](assets/hangar.jpg)
+
+### Connect the first-person preset
+
+The complete `src/main.go` below is the starter's SDK adapter. Change its module
+imports if your project has a different name. Keep the viewport and project
+resolution at 960 by 540. Constructors validate their options; `Reset` clears
+held controls when focus changes.
 
 ```go
-settings := engine.CameraSettings{
-    Projection: engine.CameraProjectionPerspective,
-    Output: engine.CameraOutputFull,
-    Position: engine.NewVec3D(2, 2, 1.7),
-    Yaw: 0, Pitch: 0, FOVY: 1.05,
-    Near: 0.05, Far: 100, OrthoHeight: 10,
-    ViewportWidth: 960, ViewportHeight: 540,
+package main
+
+import (
+	"github.com/karty-game/controllers"
+
+	"example.com/my-game/.karty/engine"
+)
+
+type Game struct {
+	engine.Game
+	request                        engine.RequestID
+	camera                         *engine.EntityCamera3D
+	label                          *engine.EntityText2D
+	controller *controllers.FirstPerson
+	fpsReady bool
 }
-```
 
-Keep `game.camera.SetLayer(-1)` so the loading label and later HUD appear above
-the world. Match the viewport to the resolution in `karty.toml`.
+//go:wasmexport karty_register
+func main() {
+	options := controllers.DefaultFirstPersonOptions()
+	options.Width, options.Height = 960, 540
+	options.Speed, options.KeyYawSpeed = 2.4, 1.5
+	controller, err := controllers.NewFirstPerson(options)
+	if err != nil { panic(err) }
+	game := &Game{controller: controller}
+	engine.Run(engine.Hooks{
+		OnUpdate:     func(engine.Frame) { game.updateFPS() },
+		OnKeyDown:    func(key engine.Key) { game.keyFPS(key, true) },
+		OnKeyUp:      func(key engine.Key) { game.keyFPS(key, false) },
+		OnInputReset: game.resetFPS,
+		OnPointer: game.pointerFPS,
 
-### Add walking controls
+		OnStart: func() {
+			game.label = game.NewText2D("Loading room...", engine.NewVec2(24, 24))
+			game.request = game.RequestLevel("levels.room")
+		},
+		OnLevelReady: func(event engine.LevelReady) {
+			if event.RequestID != game.request {
+				return
+			}
+			game.camera = game.NewCamera3D(event.Handle, engine.CameraSettings{
+				Projection: engine.CameraProjectionPerspective,
+				Output:     engine.CameraOutputFull,
+				Position:   engine.NewVec3(2, 2, 1.7),
+				Yaw:        0, Pitch: 0, FOVY: 1.05,
+				Near: 0.05, Far: 100, OrthoHeight: 10,
+				ViewportWidth: 960, ViewportHeight: 540,
+			})
+			game.camera.SetLayer(-1)
 
-W/S move forward and back. A/D strafe. Q/E turn. Add `math` to the imports, and
-add these fields inside `Game`:
+			game.fpsReady = true
 
-```go
-forward, backward, left, right bool
-turnLeft, turnRight bool
-fpsReady bool
-```
-
-After creating the camera and setting its layer, register accepted transforms.
-Put this before `game.label.SetText("")` in `OnLevelReady`:
-
-```go
-if _, err := game.WatchTransform(game.camera, nil); err != nil {
-    game.label.SetText(err.Error())
-    return
+			game.label.SetText("WASD: walk | Q/E: turn | click: mouse look | touch: dual sticks")
+		},
+		OnLevelFailed: func(event engine.LevelFailed) {
+			if event.RequestID == game.request {
+				game.label.SetText(event.Diagnostic)
+			}
+		},
+	})
 }
-game.fpsReady = true
-```
 
-`WatchTransform` updates `camera.Settings` with the pose the host accepted. The
-next frame starts there, including any collision stop or portal change. The
-`nil` callback is enough for movement. Add an interaction callback to this same
-registration when you need one.
 
-Add these entries to the existing `engine.Hooks`:
-
-```go
-OnUpdate: func(engine.Frame) { game.updateFPS() },
-OnKeyDown: func(key engine.Key) { game.keyFPS(key, true) },
-OnKeyUp: func(key engine.Key) { game.keyFPS(key, false) },
-OnInputReset: game.resetFPS,
-```
-
-Add these methods after `main`. Karty updates at 60 Hz, so a step of `0.04`
-moves 2.4 metres per second. Normalizing the input keeps diagonal movement at
-the same speed.
-
-```go
 func (game *Game) keyFPS(key engine.Key, down bool) {
-    switch key {
-    case engine.KeyW: game.forward = down
-    case engine.KeyS: game.backward = down
-    case engine.KeyA: game.left = down
-    case engine.KeyD: game.right = down
-    case engine.KeyQ: game.turnLeft = down
-    case engine.KeyE: game.turnRight = down
-    }
+	if key == engine.KeyEscape && down { game.resetFPS(); return }
+	if control, ok := movementKey(key); ok { game.controller.Key(control, down); return }
+	switch key {
+	case engine.KeyQ: game.controller.Key(controllers.LookLeft, down)
+	case engine.KeyE: game.controller.Key(controllers.LookRight, down)
+	}
 }
 
 func (game *Game) resetFPS() {
-    game.forward, game.backward, game.left, game.right = false, false, false, false
-    game.turnLeft, game.turnRight = false, false
+	game.controller.Reset()
+	game.SetCursorCaptured(false)
 }
 
-func fpsAxis(positive, negative bool) float32 {
-    var value float32
-    if positive { value++ }
-    if negative { value-- }
-    return value
+func (game *Game) pointerFPS(pointer engine.PointerInput) {
+	if game.camera == nil || !game.fpsReady { return }
+	if pointer.Kind != engine.PointerMouse && pointer.Kind != engine.PointerTouch { return }
+	var phase controllers.PointerPhase
+	switch pointer.Phase {
+	case engine.PointerDown: phase = controllers.PointerDown
+	case engine.PointerMove: phase = controllers.PointerMove
+	case engine.PointerUp: phase = controllers.PointerUp
+	case engine.PointerCancel: phase = controllers.PointerCancel
+	default: return
+	}
+	result := game.controller.Pointer(controllers.Pointer{
+		Phase: phase, Touch: pointer.Kind == engine.PointerTouch, ID: pointer.ID,
+		X: pointer.X, Y: pointer.Y, DeltaX: pointer.DeltaX, DeltaY: pointer.DeltaY,
+		Primary: pointer.Buttons&1 != 0, Captured: pointer.Captured,
+	}, pointer.X >= 0 && pointer.X <= 960 && pointer.Y >= 0 && pointer.Y <= 540)
+	if result.Capture { game.SetCursorCaptured(true) }
+	if result.Release { game.SetCursorCaptured(false) }
 }
 
 func (game *Game) updateFPS() {
-    if game.camera == nil || !game.fpsReady { return }
-    forward := fpsAxis(game.forward, game.backward)
-    strafe := fpsAxis(game.right, game.left)
-    turn := fpsAxis(game.turnRight, game.turnLeft)
-    if forward == 0 && strafe == 0 && turn == 0 { return }
+	if game.camera == nil || !game.fpsReady { return }
+	// Settings contains the last host-accepted pose automatically.
+	settings := game.camera.Settings
+	motion := game.controller.Step(settings.Yaw, settings.Pitch)
+	if motion.X == 0 && motion.Y == 0 && motion.Yaw == settings.Yaw && motion.Pitch == settings.Pitch { return }
+	settings.Yaw, settings.Pitch = motion.Yaw, motion.Pitch
+	settings.Position.X += motion.X
+	settings.Position.Y += motion.Y
+	game.camera.SetSettings(settings)
+}
 
-    if length := math.Hypot(float64(forward), float64(strafe)); length > 1 {
-        forward /= float32(length)
-        strafe /= float32(length)
-    }
-    settings := game.camera.Settings
-    settings.Yaw += turn * 0.025
-    sine := float32(math.Sin(float64(settings.Yaw)))
-    cosine := float32(math.Cos(float64(settings.Yaw)))
-    settings.Position.X += (forward*sine + strafe*cosine) * 0.04
-    settings.Position.Y += (forward*cosine - strafe*sine) * 0.04
-    game.camera.SetSettings(settings)
+func movementKey(key engine.Key) (controllers.Control, bool) {
+	switch key {
+	case engine.KeyW: return controllers.Forward, true
+	case engine.KeyS: return controllers.Backward, true
+	case engine.KeyA: return controllers.Left, true
+	case engine.KeyD: return controllers.Right, true
+	case engine.KeyArrowUp: return controllers.ForwardAlt, true
+	case engine.KeyArrowDown: return controllers.BackwardAlt, true
+	case engine.KeyLeft: return controllers.LeftAlt, true
+	case engine.KeyRight: return controllers.RightAlt, true
+	case engine.KeyShiftLeft: return controllers.RunLeft, true
+	case engine.KeyShiftRight: return controllers.RunRight, true
+	}
+	return 0, false
 }
 ```
 
-Run `karty dev`, click the game, and walk toward a wall. Movement stops while
-you can still turn. Switch away from the preview and back; `OnInputReset` clears
-held keys so walking does not continue after focus changes.
+WASD/arrows walk, Shift runs, and Q/E turn. Click to capture mouse look;
+Escape releases it. Touch the lower-left side to walk and lower-right to look.
+The minimal starter supplies gestures without drawing stick overlays. Route UI
+hit tests before accepting new scene gestures when adding menus.
 
-The camera is a point. This controller does not change Z directly or add
-gravity, jumping, or automatic stair climbing. Start with a flat room before
-adapting the Hangar controller for stairs or touch input.
+Read `packages/controllers/docs/presets-v1.md` in the generated project for
+the complete contract, including picking and pointer targets. Extend the game
+with [textures](textures.html), [prefabs](prefabs.html),
+[lighting](lighting.html) and [interactions](interactions.html), then
+[share a build](share.html).
 
-### Give the room a purpose
-
-Add [textures](textures.html) and [prefabs](prefabs.html) before expanding the
-map. Use [lighting](lighting.html) to make the route visible. Then add a nearby
-object and an [interaction](interactions.html).
-
-The interaction example uses E. Move turning to another key or use F for the
-interaction, and call both handlers from your existing input hook. Use
-[KartUI](ui.html) for prompts, [media](media.html) for feedback, and
-[share a build](share.html) once the first room is playable.
+The interaction guide uses E by default. Use F for interactions here, or
+remap this starter's Q/E controls before wiring the interaction hook.
 
 ## Make an isometric game
 
-Choose this view when players need to see several rooms or plan around objects.
-Start with [one room](levels.html), then replace its fixed viewpoint with an
-orbiting camera. Keep the loading and failure hooks from that page.
+The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.
 
-![The Roman court sample viewed from above with its isometric camera.](assets/isometric.jpg)
+Create the SDK 0.0.13 starter:
 
-Try the camera switch in [Roman court & galleries](../world-camera/) to compare
-its walking and overhead views.
+```sh
+karty new --yes --sdk 0.0.13 --template isometric my-game
+cd my-game
+karty dev
+```
 
-### Frame the room
+The starter includes controllers 0.1.0 in `packages/controllers/` and declares
+that folder in `karty.toml`. Keep it in Git. If extending an existing project,
+import the package as described in [reusable packages](../design/packages.html).
+Use the room and material files from [one room](levels.html); the isometric
+starter also supplies its `player` solid prefab in `world.yaml`.
 
-Use these settings in `game.NewCamera3D(event.Handle, settings)`. It looks down
-toward the centre of the eight-metre room. The diagonal yaw and downward pitch
-give the isometric angle. Angles use radians.
+![A diagonal isometric view over the Roman court sample.](assets/isometric.jpg)
+
+### Connect the isometric preset
+
+The complete `src/main.go` below is the starter's SDK adapter. Change its module
+imports if your project has a different name. Keep the viewport and project
+resolution at 960 by 540. Constructors validate their options; `Reset` clears
+held controls when focus changes.
 
 ```go
-settings := engine.CameraSettings{
-    Projection: engine.CameraProjectionIsometric,
-    Output: engine.CameraOutputFull,
-    Position: engine.NewVec3D(-7.313708, -7.313708, 11.313708),
-    Yaw: 0.7853982, Pitch: -0.6154797,
-    FOVY: 1.05, OrthoHeight: 12,
-    Near: 0.05, Far: 100,
-    ViewportWidth: 960, ViewportHeight: 540,
+package main
+
+import (
+	"github.com/karty-game/controllers"
+
+	"example.com/my-game/.karty/engine"
+)
+
+type Game struct {
+	engine.Game
+	request    engine.RequestID
+	camera     *engine.EntityCamera3D
+	label      *engine.EntityText2D
+	controller *controllers.Planar
+	player     *engine.EntityWorldSolid
+	focus      controllers.Vec2
+	isoReady   bool
+}
+
+//go:wasmexport karty_register
+func main() {
+	controller, err := controllers.NewIsometric(controllers.DefaultIsometricOptions())
+	if err != nil {
+		panic(err)
+	}
+	game := &Game{controller: controller, focus: controllers.Vec2{X: 4, Y: 4}}
+	engine.Run(engine.Hooks{
+		OnUpdate:     func(engine.Frame) { game.updateIsometric() },
+		OnKeyDown:    func(key engine.Key) { game.keyIsometric(key, true) },
+		OnKeyUp:      func(key engine.Key) { game.keyIsometric(key, false) },
+		OnInputReset: game.resetIsometric,
+
+		OnStart: func() {
+			game.label = game.NewText2D("Loading room...", engine.NewVec2(24, 24))
+			game.request = game.RequestLevel("levels.room")
+		},
+		OnLevelReady: func(event engine.LevelReady) {
+			if event.RequestID != game.request {
+				return
+			}
+			options := game.controller.Options()
+			position := game.controller.CameraPosition(game.focus)
+			game.camera = game.NewCamera3D(event.Handle, engine.CameraSettings{
+				Projection: engine.CameraProjectionIsometric,
+				Output:     engine.CameraOutputFull,
+				Position:   engine.NewVec3(float32(position.X), float32(position.Y), float32(position.Z)),
+				Yaw:        float32(options.Yaw), Pitch: float32(options.Pitch),
+				FOVY: 1.05, OrthoHeight: float32(options.Zoom),
+				Near: 0.05, Far: 100,
+				ViewportWidth: 960, ViewportHeight: 540,
+			})
+			game.camera.SetLayer(-1)
+
+			game.player = game.NewWorldSolid(event.Handle, engine.NewTransform3D(engine.NewVec3(4, 4, 0)), engine.SolidRenderer{Prefab: "player"})
+
+			game.isoReady = true
+
+			game.label.SetText("WASD / arrows: move | Shift: run | Q/E: zoom")
+		},
+		OnLevelFailed: func(event engine.LevelFailed) {
+			if event.RequestID == game.request {
+				game.label.SetText(event.Diagnostic)
+			}
+		},
+	})
+}
+
+func (game *Game) keyIsometric(key engine.Key, down bool) {
+	if control, ok := movementKey(key); ok {
+		game.controller.Key(control, down)
+		return
+	}
+	if !down || game.camera == nil {
+		return
+	}
+	factor := 1.0
+	if key == engine.KeyQ {
+		factor = 1.1
+	}
+	if key == engine.KeyE {
+		factor = 1 / 1.1
+	}
+	if factor != 1 {
+		settings := game.camera.Settings
+		settings.OrthoHeight = float32(game.controller.ZoomBy(factor))
+		game.camera.SetSettings(settings)
+	}
+}
+
+func (game *Game) resetIsometric() { game.controller.Reset() }
+
+func (game *Game) updateIsometric() {
+	if game.camera == nil || !game.isoReady {
+		return
+	}
+	// Follow only the host-accepted actor position, never an unaccepted proposal.
+	pose := game.player.Transform3D
+	accepted := controllers.Vec2{X: float64(pose.Position.X), Y: float64(pose.Position.Y)}
+	delta := game.controller.Step(accepted)
+	// This starter owns an empty 8m room; replace its bounds with navigation
+	// or a physics body when adding obstacles, stairs or uneven terrain.
+	x := max(.3, min(7.7, accepted.X+delta.X))
+	y := max(.3, min(7.7, accepted.Y+delta.Y))
+	if x != accepted.X || y != accepted.Y {
+		pose.Position.X, pose.Position.Y = float32(x), float32(y)
+		if err := game.player.Ref().SetPose(pose); err != nil { panic(err) }
+	}
+	game.focus = game.controller.Follow(game.focus, accepted, false)
+	position := game.controller.CameraPosition(game.focus)
+	settings := game.camera.Settings
+	settings.Position = engine.NewVec3(float32(position.X), float32(position.Y), float32(position.Z))
+	game.camera.SetSettings(settings)
+}
+
+func movementKey(key engine.Key) (controllers.Control, bool) {
+	switch key {
+	case engine.KeyW:
+		return controllers.Forward, true
+	case engine.KeyS:
+		return controllers.Backward, true
+	case engine.KeyA:
+		return controllers.Left, true
+	case engine.KeyD:
+		return controllers.Right, true
+	case engine.KeyArrowUp:
+		return controllers.ForwardAlt, true
+	case engine.KeyArrowDown:
+		return controllers.BackwardAlt, true
+	case engine.KeyLeft:
+		return controllers.LeftAlt, true
+	case engine.KeyRight:
+		return controllers.RightAlt, true
+	case engine.KeyShiftLeft:
+		return controllers.RunLeft, true
+	case engine.KeyShiftRight:
+		return controllers.RunRight, true
+	}
+	return 0, false
 }
 ```
 
-`OrthoHeight` is the visible height in world units. Increase it to show more of
-the map. Parallel projection keeps distant objects the same size. This camera
-can sit outside the world. Downward-facing ceilings disappear when viewed
-from above.
+`Step` proposes movement from the accepted player position. Apply your game
+constraints; the SDK refreshes the accepted pose automatically before the next
+update. `WatchTransform` adds an optional notification. `Follow` takes that
+accepted position. The fixed diagonal camera keeps
+its angle as the player moves; `ZoomBy` clamps the visible world height.
 
-Keep `game.camera.SetLayer(-1)` and match the viewport to `karty.toml`.
+Read `packages/controllers/docs/presets-v1.md` in the generated project for
+the complete contract, including picking and pointer targets. Extend the game
+with [textures](textures.html), [prefabs](prefabs.html),
+[lighting](lighting.html) and [interactions](interactions.html), then
+[share a build](share.html).
 
-### Orbit without moving a player
-
-Q/E rotate the view around `(4, 4)`. The camera keeps its distance, height, and
-pitch. These controls move the view only; they do not move a player or actor.
-Add `math` to the imports and these fields inside `Game`:
-
-```go
-orbitLeft, orbitRight bool
-isoReady bool
-```
-
-After camera creation and the layer setting, put this before clearing the
-loading label:
-
-```go
-if _, err := game.WatchTransform(game.camera, nil); err != nil {
-    game.label.SetText(err.Error())
-    return
-}
-game.isoReady = true
-```
-
-`WatchTransform` keeps `camera.Settings` synchronized with the accepted pose.
-Start each proposal from those settings. Add these entries to the existing
-`engine.Hooks`:
-
-```go
-OnUpdate: func(engine.Frame) { game.updateOrbit() },
-OnKeyDown: func(key engine.Key) { game.keyOrbit(key, true) },
-OnKeyUp: func(key engine.Key) { game.keyOrbit(key, false) },
-OnInputReset: game.resetOrbit,
-```
-
-Add these methods after `main`. The orbit is centred on the room's floor, with
-a radius of 16 metres. Change the centre when your level grows.
-
-```go
-func (game *Game) keyOrbit(key engine.Key, down bool) {
-    switch key {
-    case engine.KeyQ: game.orbitLeft = down
-    case engine.KeyE: game.orbitRight = down
-    }
-}
-
-func (game *Game) resetOrbit() {
-    game.orbitLeft, game.orbitRight = false, false
-}
-
-func (game *Game) updateOrbit() {
-    if game.camera == nil || !game.isoReady { return }
-    var direction float32
-    if game.orbitLeft { direction-- }
-    if game.orbitRight { direction++ }
-    if direction == 0 { return }
-
-    settings := game.camera.Settings
-    settings.Yaw += direction * 0.015
-    // Wrap the angle so a long orbit stays precise.
-    settings.Yaw = float32(math.Mod(float64(settings.Yaw)+2*math.Pi, 2*math.Pi))
-    settings.Position.X = 4 - float32(math.Sin(float64(settings.Yaw))) * 16
-    settings.Position.Y = 4 - float32(math.Cos(float64(settings.Yaw))) * 16
-    game.camera.SetSettings(settings)
-}
-```
-
-Run `karty dev`, click the game, and hold Q or E. The view should turn around
-the room without changing its scale. Switch away and back to check that
-`OnInputReset` stops the orbit.
-
-### Build around the view
-
-Use [textures](textures.html) that read at this distance and
-[prefabs](prefabs.html) for objects with distinct shapes. Check
-[lighting](lighting.html) while orbiting so important objects stay visible.
-
-An orbiting camera's position is outside the room. Base player proximity
-checks on a player actor or separate walking controller. The
-[interaction guide](interactions.html) explains accepted poses and explicit
-input hooks; its camera trigger applies to a walking camera.
-
-Add [KartUI](ui.html) for selection and status, [media](media.html) for feedback,
-then [share a build](share.html). The Roman court sample shows a separate
-walking controller and an isometric camera over the same world.
+The interaction guide uses E by default. Use F for interactions here, or
+remap this starter's Q/E controls before wiring the interaction hook.
 

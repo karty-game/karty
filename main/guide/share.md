@@ -1,7 +1,7 @@
 # Build and share
 
 Use `--target web` for browsers and `--target native` for desktop games.
-SDK 0.0.12 provides these runtimes:
+The supported game runtimes are:
 
 | Game platform       | `--platform`    | Build on this machine             |
 | ------------------- | --------------- | --------------------------------- |
@@ -55,10 +55,32 @@ Explicit platforms use separate folders, such as
 folder and run `.\karty-host.exe --cartridge game.kart`.
 
 Share the whole selected folder, including its `content/` files.
-Include [RUNTIME_LICENSE.md](https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/RUNTIME_LICENSE.md)
-and [SDK_LICENSE.md](https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/SDK_LICENSE.md)
-from your SDK release, plus notices required by your own assets and dependencies.
+Include `RUNTIME_LICENSE.md` and `SDK_LICENSE.md`
+from your project's selected [SDK release](https://github.com/karty-game/karty-sdk/releases), plus notices required by your own assets and dependencies.
 Browser and desktop use the same source. Test each platform you ship.
+
+## Share reusable code, prefabs and UI
+
+For a package folder containing `karty-package.toml`, export a local archive:
+
+```sh
+karty package export --output placeholder-kit-0.1.0.kpkg ../placeholder-kit
+```
+
+From a consuming game, import the archive using the name in its package manifest:
+
+```sh
+karty package import placeholder-kit-0.1.0.kpkg
+```
+
+Commit the referenced archive and updated `karty.toml`/`go.mod`; the CLI restores
+its checked contents under ignored `.karty/packages/`. To edit the package live,
+use `karty package import --replace ../placeholder-kit` instead.
+`karty dev` watches that working folder, including outside the game. The current
+local-package CLI supports Go behavior, static/nested prefabs, PNG world
+materials and KartUI components/layouts with images, fonts and theme defaults;
+use a CLI build containing that feature. UI exports compile against the consuming
+game's SDK and keep normal typed props/callbacks. The game owns state and lifecycle.
 
 ## Build in CI
 
@@ -66,11 +88,9 @@ Commit `karty.toml`, `go.mod`, source code, and source assets. Include `go.sum`
 when your dependencies create it.
 The runner recreates `.karty/` and `dist/`; do not commit those folders.
 
-Save this as `.github/workflows/game.yml` in a game project pinned to SDK
-0.0.12. It builds a browser game and a Windows ARM64 distribution on Linux,
+Save this as `.github/workflows/game.yml` in your game project. It builds a browser game and a Windows ARM64 distribution on Linux,
 then uploads each folder for review. It pins a public CLI source revision
-because the current [CLI binary release, v0.0.1](https://github.com/karty-game/karty/releases/tag/v0.0.1),
-predates `--platform`.
+so the workflow and CLI behavior stay reproducible.
 No private engine checkout or credentials are needed.
 
 ```yaml
@@ -98,7 +118,9 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Install SDK and software material generation
         run: |
-          karty sdk install 0.0.12
+          SDK_VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("karty.toml", "rb"))["sdk"]["version"])')
+          echo "SDK_VERSION=$SDK_VERSION" >> "$GITHUB_ENV"
+          karty sdk install "$SDK_VERSION"
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
       - name: Build distributions
@@ -106,7 +128,7 @@ jobs:
           karty build --target web
           karty build --target native --platform windows-arm64
           for notice in RUNTIME_LICENSE.md SDK_LICENSE.md; do
-            curl -fsSL "https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.12/$notice" -o "$RUNNER_TEMP/$notice"
+            curl -fsSL "https://github.com/karty-game/karty-sdk/releases/download/sdk-v$SDK_VERSION/$notice" -o "$RUNNER_TEMP/$notice"
             cp "$RUNNER_TEMP/$notice" dist/web/
             cp "$RUNNER_TEMP/$notice" dist/native/windows-arm64/
           done

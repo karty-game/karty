@@ -82,6 +82,11 @@ skip game movement in `OnUpdate` until Resume sets it true. A modal panel
 captures input; your Go code decides whether the game simulation pauses.
 
 Layouts share structure and styles. Component callbacks change game state.
+Packages can also export `.kui` components/layouts, images, fonts and theme
+defaults through `karty-package.toml`. Import a folder or `.kpkg` with
+`karty package import`; compose its exported components with the same typed
+props and callbacks. The consuming game retains its own root, state and theme
+overrides. Use prefixed component/props names to avoid shared Go-scope collisions.
 Call `Invalidate()` after changing data used by dynamic UI bindings. Test your
 layout at a narrow viewport before adding more screens. [Orbital flight
 deck](../ui-demo/) shows menus, loading, inventory, gameplay, and pause screens.

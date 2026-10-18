@@ -1,6 +1,6 @@
 # Choose your game
 
-[Why Karty?](why.html)
+[Why Karty?](../design/why.html) · [How Karty works](../design/)
 
 Create a project and open its browser preview:
 

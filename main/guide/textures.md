@@ -59,8 +59,8 @@ Presets change generated maps. They do not add liquid motion or light emission.
 Start with their defaults. Use `normal_strength`, `height_contrast`,
 `metallic_scale`, or `ao_depth_scale` only when the result needs adjustment.
 The separate `textures.material_strengths` settings control how strongly the
-game displays those maps. See the [material reference](https://github.com/karty-game/karty/blob/main/docs/assets.md)
-for overrides and limits.
+game displays those maps. Your generated `.karty/docs/assets.md` lists the
+overrides and limits for your SDK.
 
 Check the result at player height. A material that looks good close up may
 repeat too obviously across a large wall. [The Hangar](../hangar/) shows wall

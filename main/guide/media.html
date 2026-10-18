@@ -9,6 +9,7 @@
       content="Choose a 2D, first-person, or isometric Karty game guide. Learn the CLI, levels, materials, lighting, interactions, media, UI, and sharing."
     />
     <title>Add sound and video / Karty</title>
+    
     <style>
       :root {
   color-scheme: dark;
@@ -322,6 +323,11 @@ pre code {
   font-size: 0.82rem;
   line-height: 1.5;
 }
+.technical-page .desktop-toc {
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 .guide-nav p {
   margin: 1.8rem 0.75rem 0.6rem;
   color: var(--muted);
@@ -443,6 +449,11 @@ pre code {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
+}
+.design-page .guide-body img[src$=".svg"],
+.technical-page .guide-body img[src$=".svg"] {
+  max-width: 32rem;
+  margin-inline: auto;
 }
 .guide-body figcaption {
   margin: 0.7rem 0 0;
@@ -752,6 +763,34 @@ pre code {
     color: var(--muted);
     font-size: 0.75rem;
   }
+  .technical-page .table-hint {
+    display: none;
+  }
+  .technical-page .table-wrap table {
+    min-width: 0;
+  }
+  .technical-page .table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .technical-page .table-wrap tbody,
+  .technical-page .table-wrap tr,
+  .technical-page .table-wrap td {
+    display: block;
+  }
+  .technical-page .table-wrap tr + tr {
+    border-top: 1px solid var(--line);
+  }
+  .technical-page .table-wrap td {
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .technical-page .table-wrap td + td {
+    padding-top: 0;
+  }
   .header-inner {
     padding: 0.85rem 1.25rem;
     gap: 1rem;
@@ -802,6 +841,11 @@ pre code {
   .mobile-links .on-page {
     grid-column: 1 / -1;
   }
+  .technical-page .mobile-links > ul {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .mobile-links > p {
     margin: 1rem 0.75rem 0.3rem;
   }
@@ -845,6 +889,10 @@ pre code {
   }
 }
 @media (max-width: 560px) {
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
   .brand {
     font-size: 1.15rem;
     gap: 0.45rem;
@@ -854,11 +902,18 @@ pre code {
     height: 26px;
   }
   .site-nav {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
     gap: 0.1rem;
+  }
+  .site-nav a {
+    padding-inline: 0.35rem;
+    font-size: 0.75rem;
   }
   .site-nav .github {
     margin-left: 0;
-    padding-left: 0.5rem;
+    padding-left: 0.35rem;
   }
   .github .external-icon {
     display: none;
@@ -918,14 +973,16 @@ pre code {
     row-gap: 0.65rem;
   }
   .site-nav {
-    width: 100%;
-    justify-content: space-between;
+    flex-wrap: nowrap;
   }
   .site-nav a {
     flex: 1;
+    padding-inline: 0.15rem;
+    font-size: 0.75rem;
     text-align: center;
   }
   .site-nav .github {
+    padding-left: 0.15rem;
     justify-content: center;
   }
   .gallery-hero h1 {
@@ -1017,7 +1074,7 @@ pre code {
     </style>
   </head>
   <body class="guide-page">
-    <a class="skip" href="#guide">Skip to guide</a>
+    <a class="skip" href="#guide">Skip to content</a>
     <header class="site-header">
       <div class="header-inner">
         <a class="brand" href="../" aria-label="Karty samples">
@@ -1033,8 +1090,22 @@ pre code {
           <span>Karty</span>
         </a>
         <nav class="site-nav" aria-label="Main navigation">
-          <a href="index.html" aria-current="page">Guide</a>
           <a href="../">Samples</a>
+          <a
+            href="index.html"
+            
+            aria-current="page"
+            
+            >Guides</a
+          >
+          <a
+            href="../technical/"
+            
+            >API</a
+          >
+          <a href="../design/" 
+            >Design</a
+          >
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1050,8 +1121,12 @@ pre code {
     </header>
     <div class="guide-layout">
       
-      <nav class="guide-nav" aria-label="Guide chapters">
+      <nav
+        class="guide-nav"
+        aria-label="Guide chapters"
+      >
         <div class="desktop-toc">
+          
           <a class="nav-home" href="index.html" aria-current="false"
             ><svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1072,7 +1147,7 @@ pre code {
             <li><a href="isometric.html" aria-current="false">3D isometric</a></li>
             
           </ul>
-          
+           
           <p>On this page</p>
           <ol class="on-page">
             
@@ -1087,11 +1162,9 @@ pre code {
             <li><a href="#check-playback-and-package-media">Check playback and package media</a></li>
             
           </ol>
-           
+            
           <p>For every game</p>
           <ul aria-label="Shared topics">
-            
-            <li><a href="why.html" aria-current="false">Why Karty?</a></li>
             
             <li><a href="ui.html" aria-current="false">Menus and layouts</a></li>
             
@@ -1100,10 +1173,12 @@ pre code {
             <li><a href="share.html" aria-current="false">Build and share</a></li>
             
           </ul>
+          
         </div>
         <details class="mobile-toc">
-          <summary>Browse the guide</summary>
+          <summary>Browse the guides</summary>
           <div class="mobile-links">
+            
             <a class="nav-home" href="index.html" aria-current="false"
               >Start here</a
             >
@@ -1117,11 +1192,9 @@ pre code {
               <li><a href="isometric.html" aria-current="false">3D isometric</a></li>
               
             </ul>
-            
+              
             <p>For every game</p>
             <ul aria-label="Shared topics">
-              
-              <li><a href="why.html" aria-current="false">Why Karty?</a></li>
               
               <li><a href="ui.html" aria-current="false">Menus and layouts</a></li>
               
@@ -1130,7 +1203,7 @@ pre code {
               <li><a href="share.html" aria-current="false">Build and share</a></li>
               
             </ul>
-            
+             
             <p>On this page</p>
             <ol class="on-page">
               
@@ -1151,7 +1224,9 @@ pre code {
       </nav>
       <main class="guide-main" id="guide">
         <div class="page-tools">
-          <span class="eyebrow">Game authoring guide</span>
+          <span class="eyebrow"
+            >Game authoring guide</span
+          >
           <a class="text-link" href="media.md" download
             >Download Markdown<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1163,6 +1238,7 @@ pre code {
               /></svg
           ></a>
         </div>
+        
         <div class="guide-body"><h1 id="add-sound-and-video">Add sound and video</h1>
 <p>Put a short WAV effect in <code>assets/sounds/</code>. The CLI converts it to QOA and generates a typed sound ID. Declare music and video in <code>karty.toml</code>:</p>
 <pre><code class="language-toml">[[assets.sound]]
@@ -1220,16 +1296,16 @@ func (game *Game) stopMedia() {
 <pre><code class="language-go">func (game *Game) updateAudioReceiver() {
     if game.camera == nil { return }
     yaw := float64(game.camera.Settings.Yaw)
-    game.SetAudioReceiver(game.camera, engine.AudioReceiverOptions{
-        Right: engine.NewVec2D(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
+    game.SetAudioReceiver(game.camera.Ref(), engine.AudioReceiverOptions{
+        Right: engine.NewVec2(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
     })
 }
 </code></pre>
 <p>Call <code>game.updateAudioReceiver()</code> after camera creation in <code>OnLevelReady</code>, and from your existing <code>OnUpdate</code> after movement and turning. Set it again when replacing the camera. The receiver follows the camera&#39;s world position; its output rectangle on screen does not change where the player hears from.</p>
 <p><code>Right</code> is the world direction of the right speaker. A yaw of zero faces positive Y, so the right direction is <code>(1, 0)</code>. The host does not derive this vector from camera yaw: update it as the player turns, or panning will keep the old direction. Camera pitch does not change this horizontal listener basis. For a 2D game, use the player entity as receiver and <code>(1, 0)</code> when positive X should always sound to the right. <code>ClearAudioReceiver()</code> silences spatial playback until another receiver is set.</p>
 <h2 id="play-a-positioned-one-shot">Play a positioned one-shot</h2>
-<p>Pass the existing door entity or resolved <code>engine.WorldActorRef</code> when the door opens. It must be a live audio entity:</p>
-<pre><code class="language-go">func (game *Game) playDoorSound(door engine.AudioEntity) {
+<p>Pass the existing door entity or resolved <code>engine.EntityRef</code> when the door opens. It must be a live audio entity:</p>
+<pre><code class="language-go">func (game *Game) playDoorSound(door engine.EntityRef) {
     game.PlaySFXFrom(assets.SoundDoorOpen, door, engine.SFXOptions{
         Volume: 0.8, NearDistance: 1, FarDistance: 12,
     })
@@ -1238,10 +1314,10 @@ func (game *Game) stopMedia() {
 <p>Call this once per opening, rather than every update. The voice follows the door until the clip ends. <code>NearDistance</code> is the range with no distance reduction; volume fades between near and far, and reaches silence at <code>FarDistance</code>. Use the same units as the entity positions: metres for the world guides, canvas coordinates for 2D entities. Set volume explicitly; zero is silent. Use finite values, volume in <code>[0, 4]</code>, a nonnegative near distance, and a far distance greater than near.</p>
 <p><code>PlaySFXFrom</code> uses XY distance. Z height, walls and doors do not obstruct this one-shot API. Use an emitter with <code>Loop: false</code> when a short effect needs XYZ distance or collision obstruction.</p>
 <h2 id="place-a-looping-sound-in-the-world">Place a looping sound in the world</h2>
-<p>The emitter API requires SDK **0.0.12 or newer** and its matching host. Check your project&#39;s <code>[sdk]</code> version and <code>.karty/docs/audio-emitters.md</code>. Create this emitter once from <code>OnLevelReady</code>, using <code>event.Handle</code> for the mounted level:</p>
+<p>Check <code>.karty/docs/audio-emitters.md</code> for emitter support in your project&#39;s selected SDK and matching host. Create this emitter once from <code>OnLevelReady</code>, using <code>event.Handle</code> for the mounted level:</p>
 <pre><code class="language-go">func (game *Game) startReactorSound(level engine.LevelHandle) *engine.SoundEmitter {
     return game.NewSoundEmitter(level, assets.SoundReactorHum,
-        engine.NewVec3D(6, 6, 1.5), engine.SoundEmitterOptions{
+        engine.NewVec3(6, 6, 1.5), engine.SoundEmitterOptions{
             Volume: 0.6, NearDistance: 2, FarDistance: 16,
             Loop: true, Occlusion: true,
         })
@@ -1249,10 +1325,10 @@ func (game *Game) stopMedia() {
 </code></pre>
 <p>Keep the returned handle in <code>Game</code> so you can call <code>SetPosition</code>, <code>SetOptions</code> or <code>Stop</code>. Create it once; creating it every frame starts overlapping voices. Emitters measure XYZ distance, so a source on another floor becomes quieter. They also provide a gentle volume reduction behind the listener. The receiver and emitter must belong to the same mounted level to be audible.</p>
 <p><code>Occlusion: true</code> makes loaded collision geometry muffle the direct path to the listener. Walls and doors need collision to block sound; non-collidable props do not. Place the source outside solid geometry. Sound does not travel around corners, and there is no room reverb or acoustic portal transformation.</p>
-<p>For a moving object, attach the sound at creation. Pass a live crate entity or a resolved <code>engine.WorldActorRef</code> belonging to the same mounted level:</p>
-<pre><code class="language-go">func (game *Game) startCrateSound(level engine.LevelHandle, crate engine.AudioEntity) *engine.SoundEmitter {
+<p>For a moving object, attach the sound at creation. Pass a live crate entity or a resolved <code>engine.EntityRef</code> belonging to the same mounted level:</p>
+<pre><code class="language-go">func (game *Game) startCrateSound(level engine.LevelHandle, crate engine.EntityRef) *engine.SoundEmitter {
     return game.NewAttachedSoundEmitter(level, assets.SoundCrateScrape, crate,
-        engine.NewVec3D(0, 0, 0.3), engine.SoundEmitterOptions{
+        engine.NewVec3(0, 0, 0.3), engine.SoundEmitterOptions{
             Volume: 0.5, NearDistance: 0.5, FarDistance: 9,
             Loop: true, Occlusion: true,
         })
@@ -1276,10 +1352,14 @@ func (game *Game) stopMedia() {
         <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
+        
         <a href="complete.html">Read all guides</a>
         <a href="guide.md" download>All guides as Markdown</a>
+        
         <a href="../">Explore samples</a>
       </div>
     </footer>
   </body>
 </html>
+
+

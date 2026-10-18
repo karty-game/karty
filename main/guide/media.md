@@ -82,8 +82,8 @@ and this method to the room viewer:
 func (game *Game) updateAudioReceiver() {
     if game.camera == nil { return }
     yaw := float64(game.camera.Settings.Yaw)
-    game.SetAudioReceiver(game.camera, engine.AudioReceiverOptions{
-        Right: engine.NewVec2D(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
+    game.SetAudioReceiver(game.camera.Ref(), engine.AudioReceiverOptions{
+        Right: engine.NewVec2(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
     })
 }
 ```
@@ -103,11 +103,11 @@ playback until another receiver is set.
 
 ## Play a positioned one-shot
 
-Pass the existing door entity or resolved `engine.WorldActorRef` when the door
+Pass the existing door entity or resolved `engine.EntityRef` when the door
 opens. It must be a live audio entity:
 
 ```go
-func (game *Game) playDoorSound(door engine.AudioEntity) {
+func (game *Game) playDoorSound(door engine.EntityRef) {
     game.PlaySFXFrom(assets.SoundDoorOpen, door, engine.SFXOptions{
         Volume: 0.8, NearDistance: 1, FarDistance: 12,
     })
@@ -128,14 +128,14 @@ distance or collision obstruction.
 
 ## Place a looping sound in the world
 
-The emitter API requires SDK **0.0.12 or newer** and its matching host. Check
-your project's `[sdk]` version and `.karty/docs/audio-emitters.md`. Create this
+Check `.karty/docs/audio-emitters.md` for emitter support in your project's
+selected SDK and matching host. Create this
 emitter once from `OnLevelReady`, using `event.Handle` for the mounted level:
 
 ```go
 func (game *Game) startReactorSound(level engine.LevelHandle) *engine.SoundEmitter {
     return game.NewSoundEmitter(level, assets.SoundReactorHum,
-        engine.NewVec3D(6, 6, 1.5), engine.SoundEmitterOptions{
+        engine.NewVec3(6, 6, 1.5), engine.SoundEmitterOptions{
             Volume: 0.6, NearDistance: 2, FarDistance: 16,
             Loop: true, Occlusion: true,
         })
@@ -154,12 +154,12 @@ do not. Place the source outside solid geometry. Sound does not travel around
 corners, and there is no room reverb or acoustic portal transformation.
 
 For a moving object, attach the sound at creation. Pass a live crate entity or
-a resolved `engine.WorldActorRef` belonging to the same mounted level:
+a resolved `engine.EntityRef` belonging to the same mounted level:
 
 ```go
-func (game *Game) startCrateSound(level engine.LevelHandle, crate engine.AudioEntity) *engine.SoundEmitter {
+func (game *Game) startCrateSound(level engine.LevelHandle, crate engine.EntityRef) *engine.SoundEmitter {
     return game.NewAttachedSoundEmitter(level, assets.SoundCrateScrape, crate,
-        engine.NewVec3D(0, 0, 0.3), engine.SoundEmitterOptions{
+        engine.NewVec3(0, 0, 0.3), engine.SoundEmitterOptions{
             Volume: 0.5, NearDistance: 0.5, FarDistance: 9,
             Loop: true, Occlusion: true,
         })

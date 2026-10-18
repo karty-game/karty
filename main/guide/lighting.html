@@ -9,6 +9,7 @@
       content="Choose a 2D, first-person, or isometric Karty game guide. Learn the CLI, levels, materials, lighting, interactions, media, UI, and sharing."
     />
     <title>Light the scene, then bake / Karty</title>
+    
     <style>
       :root {
   color-scheme: dark;
@@ -322,6 +323,11 @@ pre code {
   font-size: 0.82rem;
   line-height: 1.5;
 }
+.technical-page .desktop-toc {
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 .guide-nav p {
   margin: 1.8rem 0.75rem 0.6rem;
   color: var(--muted);
@@ -443,6 +449,11 @@ pre code {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
+}
+.design-page .guide-body img[src$=".svg"],
+.technical-page .guide-body img[src$=".svg"] {
+  max-width: 32rem;
+  margin-inline: auto;
 }
 .guide-body figcaption {
   margin: 0.7rem 0 0;
@@ -752,6 +763,34 @@ pre code {
     color: var(--muted);
     font-size: 0.75rem;
   }
+  .technical-page .table-hint {
+    display: none;
+  }
+  .technical-page .table-wrap table {
+    min-width: 0;
+  }
+  .technical-page .table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .technical-page .table-wrap tbody,
+  .technical-page .table-wrap tr,
+  .technical-page .table-wrap td {
+    display: block;
+  }
+  .technical-page .table-wrap tr + tr {
+    border-top: 1px solid var(--line);
+  }
+  .technical-page .table-wrap td {
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .technical-page .table-wrap td + td {
+    padding-top: 0;
+  }
   .header-inner {
     padding: 0.85rem 1.25rem;
     gap: 1rem;
@@ -802,6 +841,11 @@ pre code {
   .mobile-links .on-page {
     grid-column: 1 / -1;
   }
+  .technical-page .mobile-links > ul {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .mobile-links > p {
     margin: 1rem 0.75rem 0.3rem;
   }
@@ -845,6 +889,10 @@ pre code {
   }
 }
 @media (max-width: 560px) {
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
   .brand {
     font-size: 1.15rem;
     gap: 0.45rem;
@@ -854,11 +902,18 @@ pre code {
     height: 26px;
   }
   .site-nav {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
     gap: 0.1rem;
+  }
+  .site-nav a {
+    padding-inline: 0.35rem;
+    font-size: 0.75rem;
   }
   .site-nav .github {
     margin-left: 0;
-    padding-left: 0.5rem;
+    padding-left: 0.35rem;
   }
   .github .external-icon {
     display: none;
@@ -918,14 +973,16 @@ pre code {
     row-gap: 0.65rem;
   }
   .site-nav {
-    width: 100%;
-    justify-content: space-between;
+    flex-wrap: nowrap;
   }
   .site-nav a {
     flex: 1;
+    padding-inline: 0.15rem;
+    font-size: 0.75rem;
     text-align: center;
   }
   .site-nav .github {
+    padding-left: 0.15rem;
     justify-content: center;
   }
   .gallery-hero h1 {
@@ -1017,7 +1074,7 @@ pre code {
     </style>
   </head>
   <body class="guide-page">
-    <a class="skip" href="#guide">Skip to guide</a>
+    <a class="skip" href="#guide">Skip to content</a>
     <header class="site-header">
       <div class="header-inner">
         <a class="brand" href="../" aria-label="Karty samples">
@@ -1033,8 +1090,22 @@ pre code {
           <span>Karty</span>
         </a>
         <nav class="site-nav" aria-label="Main navigation">
-          <a href="index.html" aria-current="page">Guide</a>
           <a href="../">Samples</a>
+          <a
+            href="index.html"
+            
+            aria-current="page"
+            
+            >Guides</a
+          >
+          <a
+            href="../technical/"
+            
+            >API</a
+          >
+          <a href="../design/" 
+            >Design</a
+          >
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1050,8 +1121,12 @@ pre code {
     </header>
     <div class="guide-layout">
       
-      <nav class="guide-nav" aria-label="Guide chapters">
+      <nav
+        class="guide-nav"
+        aria-label="Guide chapters"
+      >
         <div class="desktop-toc">
+          
           <a class="nav-home" href="index.html" aria-current="false"
             ><svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1072,7 +1147,7 @@ pre code {
             <li><a href="isometric.html" aria-current="false">3D isometric</a></li>
             
           </ul>
-           
+            
           <p>3D topics</p>
           <ul aria-label="3D topics">
             
@@ -1087,11 +1162,9 @@ pre code {
             <li><a href="interactions.html" aria-current="false">Interactions</a></li>
             
           </ul>
-          
+           
           <p>For every game</p>
           <ul aria-label="Shared topics">
-            
-            <li><a href="why.html" aria-current="false">Why Karty?</a></li>
             
             <li><a href="ui.html" aria-current="false">Menus and layouts</a></li>
             
@@ -1100,10 +1173,12 @@ pre code {
             <li><a href="share.html" aria-current="false">Build and share</a></li>
             
           </ul>
+          
         </div>
         <details class="mobile-toc">
-          <summary>Browse the guide</summary>
+          <summary>Browse the guides</summary>
           <div class="mobile-links">
+            
             <a class="nav-home" href="index.html" aria-current="false"
               >Start here</a
             >
@@ -1117,7 +1192,7 @@ pre code {
               <li><a href="isometric.html" aria-current="false">3D isometric</a></li>
               
             </ul>
-            
+             
             <ul aria-label="3D topics">
               
               <li><a href="levels.html" aria-current="false">One room</a></li>
@@ -1131,11 +1206,9 @@ pre code {
               <li><a href="interactions.html" aria-current="false">Interactions</a></li>
               
             </ul>
-            
+             
             <p>For every game</p>
             <ul aria-label="Shared topics">
-              
-              <li><a href="why.html" aria-current="false">Why Karty?</a></li>
               
               <li><a href="ui.html" aria-current="false">Menus and layouts</a></li>
               
@@ -1144,13 +1217,15 @@ pre code {
               <li><a href="share.html" aria-current="false">Build and share</a></li>
               
             </ul>
-            
+             
           </div>
         </details>
       </nav>
       <main class="guide-main" id="guide">
         <div class="page-tools">
-          <span class="eyebrow">Game authoring guide</span>
+          <span class="eyebrow"
+            >Game authoring guide</span
+          >
           <a class="text-link" href="lighting.md" download
             >Download Markdown<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1162,6 +1237,7 @@ pre code {
               /></svg
           ></a>
         </div>
+        
         <div class="guide-body"><h1 id="light-the-scene-then-bake">Light the scene, then bake</h1>
 <p>Add a warm lamp at the top level of <code>world.yaml</code>:</p>
 <pre><code class="language-yaml">lighting:
@@ -1198,10 +1274,14 @@ bake_bounces = 1
         <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
+        
         <a href="complete.html">Read all guides</a>
         <a href="guide.md" download>All guides as Markdown</a>
+        
         <a href="../">Explore samples</a>
       </div>
     </footer>
   </body>
 </html>
+
+
