@@ -41,8 +41,10 @@ description = "Capture sample gallery thumbnails from staged browser games"
 run = "node website/scripts/capture-samples.mjs"
 
 [build-samples]
+description = "Build the full gallery with the pinned Yarn compiler SDK for Last Train"
 depends = ["build"]
-run = "go run ./website/cmd/samples build"
+# Last Train selects the official C# Yarn compiler; resolve its exact SDK before baking.
+run = "mise exec dotnet@9.0.203 -- go run ./website/cmd/samples build"
 
 [assemble-samples]
 description = "Assemble validated static sample previews for Pages CI"

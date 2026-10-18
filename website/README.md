@@ -49,8 +49,11 @@ Use `KARTY_DOCS_PORT=8091 mise run docs` for another port.
 section uses the existing `technical/` URL.
 
 For a complete site with playable samples, run
-`mise run build-samples -- --cdn`. The Pages assembly task validates its input
-before replacing a published preview.
+`mise run build-samples -- --cdn`. This task selects .NET SDK 9.0.203 before
+building because Last Train compiles its dialogue with the official Yarn Spinner
+compiler. It is an authoring dependency of that sample; the CLI and packaged
+games use Go. Ordinary documentation previews reuse existing game builds.
+The Pages assembly task validates its input before replacing a published preview.
 
 ## Edit content
 
