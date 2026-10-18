@@ -56,7 +56,7 @@
       "SE"
     ],
     "kind": "dual-grid",
-    "source": "art/dual-grid-grass-path.png",
+    "source": "scripts/willowbrook/assets/dual-grid-grass-path.png",
     "sourceSha256": "7506c1a0099d227499309853ac67af78702c50b0d369b4fc3c961ac73444cf26"
   },
   "textures": {
