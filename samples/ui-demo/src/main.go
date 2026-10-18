@@ -11,7 +11,7 @@ type Game struct {
 	ui               *engine.UI
 	level            string
 	handle           engine.LevelHandle
-	request, release engine.LevelRequestID
+	request, release engine.RequestID
 	quantity         int
 	playing          bool
 	shape            *engine.EntityVector2D
@@ -78,7 +78,7 @@ func (game *Game) levelReady(event engine.LevelReady) {
 	}
 	game.request = 0
 	game.handle = event.Handle
-	game.shape = game.NewVector2D(engine.Rectangle(64, 32), engine.NewVec2D(96, 168))
+	game.shape = game.NewVector2D(engine.Rectangle(64, 32), engine.NewVec2(96, 168))
 	game.configureShip()
 	game.resume()
 }

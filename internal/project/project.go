@@ -44,8 +44,12 @@ const DefaultEnvironmentProfile = "environment"
 // Config is the supported subset of karty.toml.
 type Config struct {
 	Project struct {
-		Name       string `koanf:"name"`
-		Compiler   string `koanf:"compiler"`
+		StorageID string `koanf:"storage_id"`
+		Name      string `koanf:"name"`
+		Compiler  string `koanf:"compiler"`
+		Web       struct {
+			RuntimeURL string `koanf:"runtime_url"`
+		} `koanf:"web"`
 		Resolution struct {
 			Width  int `koanf:"width"`
 			Height int `koanf:"height"`

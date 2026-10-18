@@ -1,0 +1,17 @@
+[[views]]
+position = [44.4, 22, 1.8]
+yaw = -90
+pitch = -27.5
+output = 'dist/screenshots/liquids-foam-east-ramp.png'
+
+[[views]]
+position = [37, 23.2, -1.8]
+yaw = -90
+pitch = -3
+output = 'dist/screenshots/liquids-underwater.png'
+
+[[views]]
+position = [37, 23.2, -1.8]
+yaw = -90
+pitch = 46
+output = 'dist/screenshots/liquids-underwater-up.png'

@@ -1,38 +1,40 @@
-# 🏭 The Hangar
+# Hangar
 
-**Follow the light into the reactor.**
+Walk through service tunnels, climb to the control deck and cross a zigzag
+above a recessed trench. This industrial 3D sample combines baked lighting,
+box physics, animated machinery, particles and spatial audio.
 
-Look through the service windows, climb to the control deck and cross a zigzag
-above a recessed trench. Warm lamps, cool reactor light and deep shadows shape
-an original Doom-inspired industrial world. Every passage is open for exploration.
+[Play the demo](https://karty-game.github.io/karty/main/hangar/) · [All samples](../README.md)
 
-The acid pool is 2.4 metres deep, with its bed at -3.5 and its animated surface
-at -1.1. Both trench exits use continuous ramps and sloping ceilings; their steel
-trim follows the ceiling without bars across the passage. The acid surface fills
-the low end of each passage up to its intersection with the slope. The east ramp rises to
-the 0.2-metre service floor and the west ramp to the ground-level return gallery.
-Water movement, underwater rendering and water physics remain future work; the
-current player box follows gravity and can walk back up either ramp.
-`mise run capture-hangar-pool` captures both ramps, their waterlines and a basin overview.
+![Green-lit reactor machinery inside the Hangar.](preview.jpg)
 
-The acid chamber has a nine-metre ceiling. An elevated control room on its south
-wall, opposite extraction, overlooks the basin and zigzag through two five-metre
-windows. Reach it by branching south from the reactor-to-acid tunnel, or from the
-eastern trench stairs and their service tunnel. Both approaches climb in
-0.2-metre steps to the 3.4-metre control floor. The Camera menu includes
-**Acid control**; the screenshot batch includes the overlook, windows and entrances.
-`mise run capture-hangar-control` captures those views plus both stairways and the
-consoles. The lightmap uses four texels per metre to fit the taller chamber and
-new passages into the existing single-page budget; the control lamps stay local.
-The pillars reach the ceiling, and the beam nearest the windows is removed to
-keep the view open. The sample controller anticipates these risers with the full player-box footprint
-and keeps the higher window sills impassable. Its generated floor/portal support
-in `internal/fps/walk_world.generated.go` comes from the same compiled authored
-world rather than a second handwritten stair map.
+## Run it
 
-[More demos](../README.md)
+The sample's [karty.toml](karty.toml) selects its SDK. Its liquid volumes, box
+physics and solid renderers use that SDK's matching public host.
+After [sample setup](../README.md#run-a-sample), run from the CLI repository root
+to build a browser preview:
 
-## Take a look around
+```sh
+mise run check-hangar-schema
+mise run bake-hangar
+mise run build-hangar-web
+mise exec -- ./dist/karty serve samples/hangar/dist/web --addr 127.0.0.1:8080
+```
+
+Open `http://127.0.0.1:8080/`. To build and run the native version instead:
+
+```sh
+mise run build-hangar-native
+mise exec -- ./samples/hangar/dist/native/karty-host --cartridge samples/hangar/dist/native/game.kart
+```
+
+Engine contributors can select local hosts with
+`KARTY_HOST_NATIVE=/path/to/karty-host` and
+`KARTY_HOST_WEB=/path/to/karty-host.wasm`; keep its matching `wasm_exec.js`
+beside the web host. The selected SDK, host and cartridge must agree.
+
+## Controls
 
 **WASD** walks; click the scene to look with the **mouse**, and press **Esc** to
 release it. Hold **Shift** to run; arrow keys also look. On a smartphone, use the
@@ -41,12 +43,57 @@ touch. Open **Camera** at the top right to choose a landmark; the panel starts
 collapsed and closes after a selection. **V** jumps to the next landmark, and
 **H** hides the interface.
 
+**F** toggles the torch; its on-screen button also works on touch devices.
+Walk into crates to push them, or board the observation-room elevator to ride it.
+
+## Authoring
+
+[Layout and liquids](#layout-and-liquids) · [Crates](#crates) · [Audio](#spatial-audio) ·
+[Step support](#step-support) · [Torch](#torch) · [Materials](#world-and-materials) ·
+[Animation](#machine-and-surface-animation) · [Effects](#reused-industrial-effects)
+
+### Layout and liquids
+
+The acid pool is 2.4 metres deep, with its bed at -3.5 and its animated surface
+at -1.1. Both trench exits use continuous ramps and sloping ceilings; their steel
+trim follows the ceiling without bars across the passage. The acid surface fills
+the low end of each passage up to its intersection with the slope. The east ramp rises to
+the 0.2-metre service floor and the west ramp to the ground-level return gallery.
+Shoreline foam and crate buoyancy make the pool interactive. Push the freight
+box beside the east ramp into acid to see it float. Walking down into the pool
+adds green distance fog and animated world distortion; the UI stays clear. Four
+smaller crates float around the basin. The acid density is 25, so the demo crate
+rests about 60% submerged; fog density is 0.45 and distortion is 0.006. The
+player follows gravity and can walk back up either ramp. Choose **Camera + →
+Under acid** for a submerged view, or **Float demo** to start beside the freight.
+Swimming, acid damage, wakes and dynamic crate-contact foam remain deferred.
+`mise run capture-hangar-pool` captures both ramps, their waterlines and a basin overview.
+
+The acid chamber has a nine-metre ceiling. An elevated control room on its south
+wall, opposite extraction, overlooks the basin and zigzag through two five-metre
+windows. Reach it by branching south from the reactor-to-acid tunnel, or from the
+eastern trench stairs and their service tunnel. The east approach climbs in
+0.2-metre steps to the 3.4-metre control floor. The Camera menu includes
+**Acid control**; the screenshot batch includes the overlook, windows and entrances.
+`mise run capture-hangar-control` captures those views plus the west elevator and east stairway and the
+consoles. The lightmap uses four texels per metre to fit the taller chamber and
+new passages into the existing single-page budget; the control lamps stay local.
+The pillars reach the ceiling, and the beam nearest the windows is removed to
+keep the view open. The sample controller anticipates these risers with the full player-box footprint
+and keeps the higher window sills impassable. Its generated floor/portal support
+in `internal/fps/walk_world.generated.go` comes from the same compiled authored
+world rather than a second handwritten stair map.
+
+### Crates
+
 Walk into the freight boxes to push them. The original five crates now use
 dynamic box colliders. In the loading room beside arrival, each of the three
 large crates supports a 0.8-metre crate and a 0.5-metre crate. Push a base to
 shift or topple the smaller stack. The host owns gravity and collisions; keyboard
 and touch walking use the same bodies. Changing landmarks keeps the crates where
 you left them; reloading the game restores the stacks.
+
+### Spatial audio
 
 The reactor, lower control-deck computers, upper acid-control computers, burning
 barrel and acid pool have positional ambience. The upper console bank uses the
@@ -77,7 +124,9 @@ Source credits and licenses live in `assets/sounds/README.md`. Regenerate with
 from the CLI root. Playback setup and lifetime live in `src/audio.go`; no engine
 source is needed to build the sample.
 
-Walking uses `MovePhysicsBody` for horizontal velocity, including zero velocity
+### Step support
+
+Walking uses `Body.SetHorizontalVelocity` for horizontal velocity, including zero velocity
 when input stops, while the host retains vertical momentum, gravity and crate
 contacts. Ordinary movement and descent do not teleport the camera box. Only a
 grounded upward riser of at most 0.25 metre receives a lift at the current X/Y,
@@ -113,6 +162,8 @@ including slopes. The host resolves continuous ramp motion without positional
 step assistance; collision-solid clearance still requires flat caps. Transformed portals are ineligible for local step
 assistance. Runtime support queries allocate no memory.
 
+### Torch
+
 **F** toggles a warm camera-mounted torch; its **Torch on/off** button also works
 on touch devices. The torch sits 0.35 world units to the camera's right, 0.20
 forward and 0.30 below it, giving its beam and shadows a handheld perspective.
@@ -126,44 +177,7 @@ These affect the torch's contribution while the baked room lighting remains
 visible. Transparent acid, sprite artwork and animated parts do not cast torch
 shadows.
 
-## Run it
-
-This sample requires published **SDK 0.0.12** and its matching host
-for the box physics and solid-renderer APIs. After [setting up the tools](../README.md#make-it-yours)
-and [installing that SDK](../../docs/sdk-bundles.md#install-and-trust), run from the
-CLI repository root:
-
-```sh
-mise run check-hangar-schema
-mise run bake-hangar
-mise run build-hangar-native
-mise exec -- ./samples/hangar/dist/native/karty-host --cartridge samples/hangar/dist/native/game.kart
-```
-
-For a browser preview, from the same root:
-
-```sh
-mise run build-hangar-web
-mise exec -- ./dist/karty serve samples/hangar/dist/web --addr 127.0.0.1:8080
-```
-
-Open `http://127.0.0.1:8080/`. Local candidate builds can select hosts with
-`KARTY_HOST_NATIVE=/path/to/karty-host` and
-`KARTY_HOST_WEB=/path/to/karty-host.wasm`; keep its matching `wasm_exec.js`
-beside the web host. The selected SDK, host and cartridge must agree.
-
-## Capture the views
-
-From the sample's folder, capture the included viewpoints in one native session:
-
-```sh
-../../dist/karty screenshot hangar --batch screenshots.toml
-```
-
-Each capture prints its image path. See [camera options](../../docs/screenshot.md)
-to choose your own angle.
-
-## Make it yours
+### World and materials
 
 Change the rooms and lights in [world.yaml](levels/hangar/world.yaml), materials
 in [level.toml](levels/hangar/level.toml), or the nearby texture PNGs. Rebuild to
@@ -173,7 +187,7 @@ Tune `[textures.emission]` intensity and `[textures.emission.pulse]` in
 contributes cool white/blue reactor light, while `acid-base`, `acid-east-base` and
 `acid-south-base` contribute green acid light across both banks, the right wall and
 the south wall opposite extraction, with spill onto the ceiling.
-The offline bake carries those colors onto surrounding surfaces through two diffuse
+The offline bake carries those colors onto surrounding surfaces through three diffuse
 bounces. The three local reactor lights and two acid fill lights add
 illumination that follows the corresponding emission pulse. The reactor dims to
 20% of peak over a 3.2-second cycle; its lower emission intensity avoids a
@@ -254,14 +268,14 @@ viewpoints in one native session for visual review; set `KARTY_HOST_NATIVE` to
 select a local matching host.
 
 The checked-in sample keeps unbounded lighting transport. When opting into
-[chunk builds](../../docs/chunk-levels.md), an explicit
+chunk builds, an explicit
 `bake_max_ray_distance = 16` in `[lightmap]` enables local pixel-cache reuse;
 it also deliberately limits each transport segment to 16 world units. Restore
 the project `.karty/bakes/` directory in CI to retain historical pixel entries.
 
 ### Machine and surface animation
 
-The sample selects SDK 0.0.12 and world source v11. Its reusable animation library
+The reusable animation library
 in `levels/hangar/world.yaml` gives terminal screens a short pre-authored glitch
 burst every three seconds, ripples the stationary green acid surface,
 spins compact fans inside recessed steel cases in arrival, control and loading,
@@ -332,3 +346,36 @@ the live animation review. See [particle authoring](particle-authoring.md) for
 placements, resource budgets, source ownership and current rendering limits.
 Keyboard and touch checks use synthesized browser input. Physical-phone frame
 rate and real touch-device behavior remain separate qualification work.
+
+### Observation-room elevator
+
+The west stair flight is now one hazard-striped sector floor,
+`acid-control-west-lift#0`, between the reactor-side service tunnel and the
+observation room above the acid. It rises from 0.20 to 3.40 metres, pauses for
+three seconds at each landing, and eases through each four-second trip. Walk
+aboard while it is at your landing; host physics carries you. The east stairs
+remain available. The shaft walls and ceiling stay fixed.
+
+`src/elevator.go` sends `World.SetFloorZ` and updates the local step-support map
+from the same Z. The mesh and collider translate without rebuilding. This needs
+the project's selected SDK and a host with sector-Z support. The moving floor
+uses live lighting; the room's baked lighting and static shadow proxies retain
+their authored state.
+
+## Capture the views
+
+From the sample's folder, capture the included viewpoints in one native session:
+
+```sh
+../../dist/karty screenshot hangar --batch screenshots.toml
+```
+
+Each capture prints its image path. Use `karty screenshot --help` to choose
+your own angle.
+
+## Reusable controller
+
+This sample uses the [first-person preset](../../packages/controllers/README.md)
+from the shared `controllers` package. Input state and camera calculations are
+portable; this game owns its SDK adapter, entities and gameplay. Normal builds
+restore the declared package automatically.

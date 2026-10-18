@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,13 +10,14 @@ import (
 
 	"github.com/karty-game/karty-ui/codegen"
 	uicompiler "github.com/karty-game/karty-ui/compiler"
+	localpackages "github.com/karty-game/karty/internal/packages"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
 func currentSamples() []string {
-	return []string{"ui-demo", "media-lab", "world-camera", "hangar", "environment", "crate-room"}
+	return []string{"ui-demo", "media-lab", "world-camera", "hangar", "environment", "crate-room", "vigil"}
 }
 
 // Read source and metadata only; never build a sample's assets or run its baker.
@@ -37,7 +37,7 @@ func checkSampleUISources(t *testing.T, name string) {
 	t.Helper()
 
 	directory, config, views := sampleUISources(t, name)
-	if config.SDK.Version != release.SampleSDKVersion(name) {
+	if config.SDK.Version != release.SDKVersion() {
 		t.Fatal("sample is not pinned to current SDK")
 	}
 
@@ -81,13 +81,9 @@ func TestSampleClients(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			version := release.SampleSDKVersion(name)
+			version := release.SDKVersion()
 
 			manifest, err := sdk.Resolve(version)
-			if errors.Is(err, os.ErrNotExist) && version != release.SDKVersion() {
-				t.Skip("install candidate SDK " + version + " to qualify this sample client; public checks never download it")
-			}
-
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -139,7 +135,8 @@ func prepareSampleClient(t *testing.T, name string, manifest sdk.Manifest, bindi
 		writeComponentFixture(t, directory, filepath.Join(".karty", file), native)
 	}
 
-	writeComponentFixture(t, directory, "go.mod", []byte("module "+module+"\n\ngo 1.27.0\n"))
+	writeSampleModule(t, source, directory, module)
+
 	writeComponentFixture(
 		t,
 		directory,
@@ -186,9 +183,25 @@ func prepareSampleClient(t *testing.T, name string, manifest sdk.Manifest, bindi
 	writeComponentFixture(t, directory, ".karty/assets/textures.go", textureSource)
 
 	switch name {
+	case "vigil":
+		writeComponentFixture(t, directory, ".karty/assets/sounds.go", []byte(`package assets
+import "example.com/vigil/.karty/engine"
+const (SoundEmberCrackle engine.SoundID=1; SoundFireballCast engine.SoundID=2; SoundFireballImpact engine.SoundID=3; SoundShrineChime engine.SoundID=4; SoundStoneFootstep engine.SoundID=5; MusicChurchAmbience engine.MusicID=1)
+`))
+
+		files, err := filepath.Glob(filepath.Join(source, "internal/dungeon/*.go"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, file := range files {
+			copyComponentFixture(t, file, directory, filepath.Join("internal/dungeon", filepath.Base(file)))
+		}
 	case "crate-room":
 		copyComponentFixture(t, "testdata/crate-room-layout_test.go.tmpl", directory, "src/layout_test.go")
 	case "environment":
+		copyComponentFixture(t, "testdata/environment-movement_test.go.tmpl", directory, "src/movement_test.go")
+
 		files, err := filepath.Glob(filepath.Join(source, "internal/fps/*.go"))
 		if err != nil {
 			t.Fatal(err)
@@ -229,6 +242,38 @@ const (SoundReactorHum engine.SoundID=1; SoundComputerIdle engine.SoundID=2; Sou
 	}
 
 	return directory
+}
+
+// Copy the portable package into isolated fixture modules instead of resolving
+// an unpublished module version or depending on a game's generated cache.
+func writeSampleModule(t *testing.T, source, directory, module string) {
+	t.Helper()
+
+	moduleSource := "module " + module + "\n\ngo 1.27.0\n"
+
+	sources, _, err := localpackages.LoadSources(t.Context(), source)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, usesControllers := sources["controllers"]; usesControllers {
+		moduleSource += "\nrequire github.com/karty-game/controllers v0.1.0\nreplace github.com/karty-game/controllers => ./controllers\n"
+
+		packageSource := filepath.Join("..", "..", "packages", "controllers")
+
+		entries, err := os.ReadDir(packageSource)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, entry := range entries {
+			if entry.Name() == "go.mod" || strings.HasSuffix(entry.Name(), ".go") {
+				copyComponentFixture(t, filepath.Join(packageSource, entry.Name()), directory, filepath.Join("controllers", entry.Name()))
+			}
+		}
+	}
+
+	writeComponentFixture(t, directory, "go.mod", []byte(moduleSource))
 }
 
 func sampleUISources(t *testing.T, name string) (string, project.Config, []uicompiler.Component) {

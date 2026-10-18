@@ -15,12 +15,12 @@ func Command() *cli.Command {
 		Name:  "schema",
 		Usage: "refresh world YAML editor schemas with level materials, textures and prefabs",
 		Flags: []cli.Flag{&cli.BoolFlag{Name: "check", Usage: "also validate world YAML without processing assets or compiling code"}},
-		Action: func(_ context.Context, command *cli.Command) error {
+		Action: func(ctx context.Context, command *cli.Command) error {
 			if command.NArg() != 0 {
 				return fmt.Errorf("schema takes no arguments: %w", cli.Exit("run karty schema from the project root", 1))
 			}
 
-			count, err := levelbuild.GenerateSchemas(".", command.Bool("check"))
+			count, err := levelbuild.GenerateSchemasContext(ctx, ".", command.Bool("check"))
 			if err != nil {
 				return err
 			}

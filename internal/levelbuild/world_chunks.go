@@ -125,7 +125,7 @@ func validateChunkSettings(definition manifest, assets *assetBuild) error {
 }
 
 func buildWorldChunks(ctx context.Context, directory string, definition manifest, document world.Document,
-	result worldMaterialBuild, pixelCaches ...*chunkPixelCache) (worldMaterialBuild, error) {
+	result worldMaterialBuild, cache *chunkPixelCache) (worldMaterialBuild, error) {
 	// Keep the shared root intact if complete module sizes require a smaller
 	// partition after baking. Planner estimates cannot predict QOI byte lengths.
 	shared := result
@@ -176,8 +176,12 @@ func buildWorldChunks(ctx context.Context, directory string, definition manifest
 
 	catalog := worldchunk.Catalog{Schema: worldchunk.Schema, GeometrySHA256: digest,
 		SectorChunks: plan.SectorChunks, Candidates: plan.Candidates}
+
 	bakeOptions := chunkBakeOptions(definition.Lightmap)
 	baked := make(map[string]bool)
+
+	cache, releaseBaker := prepareChunkBaker(cache, document, materials, !options.NoLightmap)
+	defer releaseBaker()
 
 	for _, chunk := range plan.Chunks {
 		if err := ctx.Err(); err != nil {
@@ -191,7 +195,7 @@ func buildWorldChunks(ctx context.Context, directory string, definition manifest
 		)
 		if definition.Lightmap != nil && definition.Lightmap.Environment != nil {
 			artifact, descriptor, variants, err = encodeEnvironmentWorldChunk(ctx, document, definition.Level.Name, chunk,
-				materials, bakeOptions, *definition.Lightmap.Environment, pixelCaches...)
+				materials, bakeOptions, *definition.Lightmap.Environment, cache)
 		} else {
 			artifact, descriptor, err = encodeWorldChunk(
 				ctx,
@@ -201,7 +205,7 @@ func buildWorldChunks(ctx context.Context, directory string, definition manifest
 				materials,
 				bakeOptions,
 				options.NoLightmap,
-				pixelCaches...,
+				cache,
 			)
 		}
 
@@ -216,7 +220,7 @@ func buildWorldChunks(ctx context.Context, directory string, definition manifest
 				settings.MaxSectors = &limit
 				definition.Chunks = &settings
 
-				return buildWorldChunks(ctx, directory, definition, document, shared, pixelCaches...)
+				return buildWorldChunks(ctx, directory, definition, document, shared, cache)
 			}
 
 			return worldMaterialBuild{}, fmt.Errorf("chunk %d sectors %v needs %d encoded bytes, budget %d: %w",
@@ -331,7 +335,7 @@ func chunkBakeOptions(settings *lightmapBuildSettings) worldlightmapbake.Options
 func encodeWorldChunk(
 	ctx context.Context, document world.Document, name string, chunk worldchunk.PlannedChunk,
 	materials []worldlightmapbake.Material, options worldlightmapbake.Options, noLightmap bool,
-	pixelCaches ...*chunkPixelCache,
+	cache *chunkPixelCache,
 ) (ChunkArtifact, worldchunk.Chunk, error) {
 	mesh, err := worldchunk.EncodeMesh(chunk.Mesh, &document)
 	if err != nil {
@@ -348,7 +352,7 @@ func encodeWorldChunk(
 	var lightmapBytes uint64
 
 	if !noLightmap {
-		lightmaps, decodedBytes, err := bakeWorldChunkLightmap(ctx, document, chunk.Layout, materials, options, pixelCaches...)
+		lightmaps, decodedBytes, err := bakeWorldChunkLightmap(ctx, document, chunk.Layout, materials, options, cache)
 		if err != nil {
 			return ChunkArtifact{}, worldchunk.Chunk{}, fmt.Errorf("chunk %d bake: %w", chunk.ID, err)
 		}
@@ -382,16 +386,11 @@ func encodeWorldChunk(
 func bakeWorldChunkLightmap(
 	ctx context.Context, document world.Document, layout worldlightmap.Layout,
 	materials []worldlightmapbake.Material, options worldlightmapbake.Options,
-	pixelCaches ...*chunkPixelCache,
+	cache *chunkPixelCache,
 ) ([]level.SourceEntry, uint64, error) {
 	encodedLayout, err := worldlightmap.Encode(layout, &document)
 	if err != nil {
 		return nil, 0, err
-	}
-
-	var cache *chunkPixelCache
-	if len(pixelCaches) != 0 {
-		cache = pixelCaches[0]
 	}
 
 	producer, err := worldlightmap.OfflineProducer(options.Denoise, options.MaxRayDistance)
@@ -411,7 +410,7 @@ func bakeWorldChunkLightmap(
 		hit         bool
 	)
 
-	if cache != nil {
+	if cache.enabled() {
 		key, err = worldlightmapbake.BakeInputDigest(document, layout, materials, options)
 		if err != nil {
 			return nil, 0, err
@@ -501,7 +500,16 @@ func resolveChunkLightmapPixels(
 		return image, reflectance, rgbmRange, nil
 	}
 
-	baked, bakeErr := worldlightmapbake.Bake(ctx, document, layout, materials, options)
+	var (
+		baked   worldlightmapbake.Result
+		bakeErr error
+	)
+	if cache != nil && cache.baker != nil {
+		baked, bakeErr = cache.baker.Bake(ctx, layout, options)
+	} else {
+		baked, bakeErr = worldlightmapbake.Bake(ctx, document, layout, materials, options)
+	}
+
 	if bakeErr != nil {
 		return nil, "", 0, bakeErr
 	}

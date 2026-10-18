@@ -318,8 +318,8 @@ lights = [
 ]
 shadow_size = 512
 offline = true
-bake_samples = 4
-bake_bounces = 1
+bake_samples = 32
+bake_bounces = 3
 bake_denoise = "medium"
 
 [chunks]

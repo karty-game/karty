@@ -14,6 +14,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/karty-game/karty/internal/sampleformat"
@@ -74,17 +75,21 @@ func authoredRooms() []room {
 			result = append(result, rectangle(id, "stone", xedges[column], span[0], xedges[column+1], span[1], 0, 12, true))
 		}
 	}
-	// One unchanged open grass rectangle, partitioned for bounded high-density
-	// floor charts. World-space UVs and ordinary portals hide every grid seam.
+	// Keep the same rectangular field cells and vegetation candidate budgets.
+	// Affine floor planes form broad continuous rolls without triangulation.
 	groundEdges := append([]float64{-24}, xedges...)
 	groundEdges = append(groundEdges, 24)
 	for row := range 4 {
 		for column := range len(groundEdges) - 1 {
+			material := "ground"
+			if column == 4 {
+				material = "path"
+			}
 			result = append(
 				result,
 				rectangle(
 					fmt.Sprintf("test-ground-%d-%d", column, row),
-					"ground",
+					material,
 					groundEdges[column],
 					24+float64(row)*10,
 					groundEdges[column+1],
@@ -97,6 +102,38 @@ func authoredRooms() []room {
 		}
 	}
 	return result
+}
+
+// The trail and its thinner shoulders follow existing room boundaries. Trees
+// add one seeded candidate in each selected 50-square-metre sector; all root
+// placement remains procedural on the GPU.
+func writeFieldLayers(data *bytes.Buffer, column, row int) {
+	if column == 4 {
+		data.WriteString("    floor_uv: {mode: triplanar, scale: {x: 3, y: 3}}\n")
+		return
+	}
+	data.WriteString("    floor_uv: {mode: triplanar, scale: {x: 12, y: 12}}\n")
+	grassDensity := []float64{3.5, 3, 2.5, 2}[row]
+	bushDensity := []float64{0.045, 0.075, 0.12, 0.18}[row]
+	if column == 0 || column == 8 {
+		grassDensity *= .75
+		bushDensity *= 1.5
+	}
+	if column == 3 || column == 5 {
+		grassDensity *= .25
+		bushDensity *= .1
+	}
+	fmt.Fprintf(
+		data,
+		"    vegetation_layers:\n      - {preset: field-grass, density: %g, seed: %d, surface: floor}\n      - {preset: field-bush, density: %g, seed: %d, surface: floor}\n",
+		grassDensity,
+		731+row*31+column,
+		bushDensity,
+		1931+row*31+column,
+	)
+	if (column == 2 || column == 6) && row > 0 {
+		fmt.Fprintf(data, "      - {preset: field-tree, density: 0.04, seed: %d, surface: floor}\n", 6101+row*31+column)
+	}
 }
 
 func authoredLinks() []link {
@@ -131,26 +168,48 @@ func main() {
 }
 
 func generate() error {
-	materials := []string{"stone", "tile", "wall", "ceiling", "ground", "wood", "wood-edge", "metal", "furniture-steel", "slate", "glass"}
+	materials := []string{
+		"stone",
+		"tile",
+		"wall",
+		"ceiling",
+		"ground",
+		"path",
+		"wood",
+		"wood-edge",
+		"metal",
+		"furniture-steel",
+		"slate",
+		"glass",
+	}
 	images := map[string][]byte{}
 	for _, name := range materials {
 		var data bytes.Buffer
-		pixels := texture(name)
-		if err := png.Encode(&data, pixels); err != nil {
-			return err
-		}
+		var pixels image.Image
 		if name == "ground" {
-			directory := filepath.Join("samples", "environment", "material-sources")
-			if err := os.MkdirAll(directory, 0o755); err != nil {
+			// Retain the procedural comparison source; the shipped material now
+			// uses low ground cover that continues between the upright plants.
+			if err := png.Encode(&data, groundTexture()); err != nil {
 				return err
 			}
-			if err := os.WriteFile(filepath.Join(directory, "grass-soil-2048.png"), data.Bytes(), 0o644); err != nil {
+			if err := os.WriteFile(
+				filepath.Join("samples", "environment", "material-sources", "grass-soil-2048.png"),
+				data.Bytes(),
+				0o644,
+			); err != nil {
 				return err
 			}
 			data.Reset()
-			if err := png.Encode(&data, groundAtlasInput(pixels)); err != nil {
+			master, err := vegetationMaster("forest-floor.png")
+			if err != nil {
 				return err
 			}
+			pixels = groundAtlasInput(master)
+		} else {
+			pixels = texture(name)
+		}
+		if err := png.Encode(&data, pixels); err != nil {
+			return err
 		}
 		images[name] = data.Bytes()
 	}
@@ -163,15 +222,17 @@ func generate() error {
 		fmt.Fprintf(&manifest, "[level]\nname = \"levels.%s\"\nkind = \"world\"\n\n[world]\nsource = \"world.yaml\"\n", preset)
 		// Static lighting endpoints are baked offline into streamed chunk pages.
 		// Time controls select four pages; cloud cover dims them without rebaking.
+		// Covered passages use three reflections and thirty-two hemisphere samples
+		// to find daylight paths through their limited openings.
 		manifest.WriteString(
-			"\n[lightmap]\nenabled = true\noffline = true\ndensity = 24\npage_size = 1024\npadding = 2\nbake_samples = 16\nbake_bounces = 1\nbake_denoise = \"medium\"\n\n[lightmap.environment]\ntimes = [0, 9, 12, 17]\ndefault_time = 12\nweather_variants = false\n\n[chunks]\nenabled = true\n",
+			"\n[lightmap]\nenabled = true\noffline = true\ndensity = 16\npage_size = 1024\npadding = 2\nbake_samples = 32\nbake_bounces = 3\nbake_denoise = \"medium\"\n\n[lightmap.environment]\ntimes = [0, 9, 12, 17]\ndefault_time = 12\nweather_variants = false\n\n[chunks]\nenabled = true\n",
 		)
 		for _, name := range materials {
 			fmt.Fprintf(&manifest, "\n[[textures]]\nname = %q\nsource = %q\nprofile = \"environment\"\n", name, name+".png")
 			// Material classes, not room roles: the field is grass/soil, the wall
 			// has brick courses, and the tile/ceiling are rough concrete.
-			// Keep this recipe aligned with docs/sample-materials.md.
-			preset := map[string]string{"stone": "stone", "tile": "concrete", "wall": "brick", "ceiling": "concrete", "ground": "foliage", "wood": "wood", "wood-edge": "wood", "metal": "metal", "furniture-steel": "metal", "slate": "stone", "glass": "water"}[name]
+			// Keep this recipe aligned with the sample material sources.
+			preset := map[string]string{"stone": "stone", "tile": "concrete", "wall": "brick", "ceiling": "concrete", "ground": "foliage", "path": "stone", "wood": "wood", "wood-edge": "wood", "metal": "metal", "furniture-steel": "metal", "slate": "stone", "glass": "water"}[name]
 			metallic := 0.0
 			normal, height, ao := .35, .05, .5
 			if name == "metal" {
@@ -185,6 +246,9 @@ func generate() error {
 			}
 			if name == "ground" {
 				normal, height, ao = .22, .015, .35
+			}
+			if name == "path" {
+				normal, height, ao = .18, .015, .35
 			}
 			neutral := ""
 			if name == "glass" {
@@ -207,6 +271,25 @@ func generate() error {
 				return err
 			}
 		}
+		for _, name := range []string{"grass-tuft", "small-bush"} {
+			pixels, err := vegetationTexture(name)
+			if err != nil {
+				return err
+			}
+			for _, variant := range []struct {
+				name   string
+				pixels *image.NRGBA
+			}{{name, pixels}, {name + "-normal", vegetationNormalTexture(pixels, name == "small-bush")}} {
+				fmt.Fprintf(&manifest, "\n[[textures]]\nname = %q\nsource = %q\nprofile = \"sprite\"\n", variant.name, variant.name+".png")
+				var data bytes.Buffer
+				if err := png.Encode(&data, variant.pixels); err != nil {
+					return err
+				}
+				if err := os.WriteFile(filepath.Join(directory, variant.name+".png"), data.Bytes(), 0o644); err != nil {
+					return err
+				}
+			}
+		}
 		if err := os.WriteFile(filepath.Join(directory, "level.toml"), manifest.Bytes(), 0o644); err != nil {
 			return err
 		}
@@ -223,19 +306,16 @@ func generate() error {
 
 func worldYAML(preset string) []byte {
 	var data bytes.Buffer
-	backdrop := "mountains"
 	fmt.Fprintf(
 		&data,
-		"# $schema: ../../.karty/schemas/levels/%s.schema.json\n# Generated by scripts/environment-assets.go; edit that tracked generator.\nversion: 12\nenvironment:\n  preset: %s\n  backdrop: %s\n  time_of_day: 12\n",
+		"# $schema: ../../.karty/schemas/levels/%s.schema.json\n# Generated by scripts/environment-assets.go; edit that tracked generator.\nversion: 18\nenvironment:\n  time_of_day: 12\n  lighting:\n    sun_color: {x: 1, y: 0.94, z: 0.82}\n    sun_intensity: 0.72\n    ambient: {x: 0.4, y: 0.52, z: 0.72}\n",
 		preset,
-		preset,
-		backdrop,
 	)
 	data.WriteString(
 		"  sky:\n    cloud_sparse: sky/clouds-sparse.png\n    cloud_dense: sky/clouds-dense.png\n    horizon: sky/mountains.png\n    settings:\n      cloud_uv_scale: [1, 0.95]\n      cloud_dense_scroll_scale: 0.55\n      cloud_dense_offset: [0.19, 0]\n      cloud_parallax: [0.000015, 0.000003]\n      horizon_parallax: 0.0015625\n      horizon_uv_scale: 1.5\n      horizon_haze: 0.35\n      horizon_emission: [0, 0, 0]\n",
 	)
 	data.WriteString(
-		"uv: {mode: triplanar, scale: {x: 2, y: 2}}\nlighting:\n  version: 1\n  actors: true\n  ambient: {x: 0.055, y: 0.065, z: 0.075}\n  lights:\n    - {id: observation-fill, position: {x: 0, y: -8, z: 3}, color: {x: 0.20, y: 0.17, z: 0.12}, radius: 7.5}\n    - {id: passage-fill, position: {x: 14, y: -3, z: 3}, color: {x: 0.16, y: 0.20, z: 0.22}, radius: 5.5}\nrooms:\n",
+		"vegetation:\n  version: 4\n  presets:\n    - {name: field-grass, texture: grass-tuft, normal_texture: grass-tuft-normal, width: {min: 0.85, max: 1.35}, height: {min: 0.65, max: 1}, wind_amplitude: 0.18, wind_frequency: 0.9, draw_distance: 64}\n    - {name: field-bush, geometry: shrub, texture: small-bush, normal_texture: small-bush-normal, width: {min: 1.6, max: 2.6}, height: {min: 0.8, max: 1.5}, wind_amplitude: 0.035, wind_frequency: 0.45, draw_distance: 64}\n    - {name: field-tree, geometry: tree, texture: small-bush, normal_texture: small-bush-normal, width: {min: 8, max: 11}, height: {min: 6.5, max: 8.5}, wind_amplitude: 0.12, wind_frequency: 0.35, draw_distance: 96}\nuv: {mode: triplanar, scale: {x: 2, y: 2}}\nlighting:\n  version: 1\n  actors: true\n  ambient: {x: 0.055, y: 0.065, z: 0.075}\n  lights:\n    - {id: observation-fill, position: {x: 0, y: -8, z: 3}, color: {x: 0.20, y: 0.17, z: 0.12}, radius: 7.5}\n    - {id: passage-fill, position: {x: 14, y: -3, z: 3}, color: {x: 0.16, y: 0.20, z: 0.22}, radius: 5.5}\nrooms:\n",
 	)
 	for _, r := range rooms {
 		fmt.Fprintf(&data, "  - id: %s\n", r.id)
@@ -243,12 +323,19 @@ func worldYAML(preset string) []byte {
 			data.WriteString("    sky: true\n")
 		}
 		if strings.HasPrefix(r.id, "test-ground-") {
-			data.WriteString("    floor_uv: {mode: triplanar, scale: {x: 12, y: 12}}\n")
+			var column, row int
+			fmt.Sscanf(r.id, "test-ground-%d-%d", &column, &row)
+			writeFieldLayers(&data, column, row)
+		}
+		floor := fmt.Sprintf("{c: %g}", r.floor)
+		if strings.HasPrefix(r.id, "test-ground-") {
+			plane := terrainPlaneAt((r.points[0].x+r.points[2].x)/2, (r.points[0].y+r.points[2].y)/2)
+			floor = plane.yaml()
 		}
 		fmt.Fprintf(
 			&data,
-			"    floor: {c: %g}\n    ceiling: {c: %g}\n    floor_material: %s\n    ceiling_material: ceiling\n    boundary:\n",
-			r.floor,
+			"    floor: %s\n    ceiling: {c: %g}\n    floor_material: %s\n    ceiling_material: ceiling\n    boundary:\n",
+			floor,
 			r.ceiling,
 			r.floorMaterial,
 		)
@@ -339,27 +426,83 @@ func boundaryWalls(data *bytes.Buffer) {
 			start, end = span.x0, span.x1
 		}
 		count := int(math.Ceil((end - start) / 8))
-		heights := make([]float64, count+1)
-		for node := range heights {
-			heights[node] = .88
+		topProfile := make([]point, count+1)
+		cuts := make([]float64, 0, count+6)
+		for node := range topProfile {
+			topProfile[node] = point{start + (end-start)*float64(node)/float64(count), .88}
 			if node > 1 && node < count-1 {
-				heights[node] += .04 * math.Sin(float64(node)*2.3+float64(len(span.id)))
+				topProfile[node].y += .04 * math.Sin(float64(node)*2.3+float64(len(span.id)))
+			}
+			cuts = append(cuts, topProfile[node].x)
+		}
+		terrainProfile := terrainYProfile
+		if span.alongX {
+			terrainProfile = terrainXProfile
+		}
+		for _, knot := range terrainProfile {
+			if knot.x > start && knot.x < end {
+				cuts = append(cuts, knot.x)
 			}
 		}
-		for index := range count {
-			a := start + (end-start)*float64(index)/float64(count)
-			b := start + (end-start)*float64(index+1)/float64(count)
-			slope := (heights[index+1] - heights[index]) / (b - a)
-			axis := "b"
+		sort.Float64s(cuts)
+		cuts = uniqueCuts(cuts)
+		for index := range len(cuts) - 1 {
+			a, b := cuts[index], cuts[index+1]
 			x0, y0, x1, y1 := span.x0, a, span.x1, b
 			if span.alongX {
-				axis = "a"
 				x0, y0, x1, y1 = a, span.y0, b, span.y1
 			}
-			solid(data, fmt.Sprintf("boundary-%s-%d", span.id, index), x0, y0, x1, y1,
-				"{c: -0.08}", fmt.Sprintf("{%s: %g, c: %g}", axis, slope, heights[index]-slope*a), "stone")
+			floor := terrainPlaneAt((x0+x1)/2, (y0+y1)/2)
+			bottom, top := floor, floor
+			bottom.c -= .08
+			slope, intercept := profileLineAt((a+b)/2, topProfile)
+			if span.alongX {
+				top.a += slope
+			} else {
+				top.b += slope
+			}
+			top.c += intercept
+			solid(data, fmt.Sprintf("boundary-%s-%d", span.id, index), x0, y0, x1, y1, bottom.yaml(), top.yaml(), "stone")
 		}
 	}
+}
+
+// Separable profiles give every rectangle a single exact plane. The central
+// courtyard opening stays at height zero; only the outer shoulders rise in X.
+var terrainXProfile = []point{{-24, .18}, {-12, 0}, {12, 0}, {24, .18}}
+var terrainYProfile = []point{{24, 0}, {34, 1.8}, {44, .5}, {54, 1.3}, {64, 0}}
+
+type terrainPlane struct{ a, b, c float64 }
+
+func (plane terrainPlane) yaml() string {
+	return fmt.Sprintf("{a: %g, b: %g, c: %g}", plane.a, plane.b, plane.c)
+}
+func terrainPlaneAt(x, y float64) terrainPlane {
+	if y < 24 {
+		return terrainPlane{}
+	}
+	a, xIntercept := profileLineAt(x, terrainXProfile)
+	b, yIntercept := profileLineAt(y, terrainYProfile)
+	return terrainPlane{a, b, xIntercept + yIntercept}
+}
+func profileLineAt(value float64, profile []point) (float64, float64) {
+	for index := range len(profile) - 1 {
+		low, high := profile[index], profile[index+1]
+		if value <= high.x {
+			slope := (high.y - low.y) / (high.x - low.x)
+			return slope, low.y - slope*low.x
+		}
+	}
+	return 0, profile[len(profile)-1].y
+}
+func uniqueCuts(cuts []float64) []float64 {
+	result := cuts[:0]
+	for _, cut := range cuts {
+		if len(result) == 0 || math.Abs(cut-result[len(result)-1]) > 1e-9 {
+			result = append(result, cut)
+		}
+	}
+	return result
 }
 
 func building(data *bytes.Buffer) {
@@ -711,6 +854,9 @@ func texture(name string) image.Image {
 	if name == "ground" {
 		return groundTexture()
 	}
+	if name == "path" {
+		return pathTexture()
+	}
 	const size = 128
 	out := image.NewNRGBA(image.Rect(0, 0, size, size))
 	// Warm masonry and oak sit above quieter cool paving. Charcoal metal and
@@ -822,8 +968,7 @@ func groundAtlasInput(source image.Image) image.Image {
 	out := image.NewNRGBA(image.Rect(0, 0, size, size))
 	for y := range size {
 		for x := range size {
-			pixel := color.NRGBAModel.Convert(source.At(x*source.Bounds().Dx()/size, y*source.Bounds().Dy()/size)).(color.NRGBA)
-			out.SetNRGBA(x, y, pixel)
+			out.SetNRGBA(x, y, leafSprayPixel(source, x, y, size))
 		}
 	}
 	return out
@@ -852,4 +997,182 @@ func groundHash(x, y, seed int) float64 {
 func smoothGround(lower, upper, value float64) float64 {
 	value = max(0, min(1, (value-lower)/(upper-lower)))
 	return value * value * (3 - 2*value)
+}
+
+// vegetationTexture creates the grass cutout and packs the shrub's leaf spray
+// above its bark material. Grass roots touch the lower edge for anchored bending.
+func vegetationTexture(name string) (*image.NRGBA, error) {
+	if name == "small-bush" {
+		return shrubMaterialTexture()
+	}
+	grass, err := vegetationMaster("grass-strip.png")
+	if err != nil {
+		return nil, err
+	}
+	// Remove low-alpha generation artifacts; the alpha-tested foliage keeps all
+	// visible blade detail. Crop transparent padding below the roots only.
+	clean := image.NewNRGBA(grass.Bounds())
+	rootBottom := clean.Bounds().Min.Y
+	for row := clean.Bounds().Min.Y; row < clean.Bounds().Max.Y; row++ {
+		for column := clean.Bounds().Min.X; column < clean.Bounds().Max.X; column++ {
+			pixel := color.NRGBAModel.Convert(grass.At(column, row)).(color.NRGBA)
+			if pixel.A < 64 {
+				pixel = color.NRGBA{}
+			}
+			if pixel.A >= 128 {
+				rootBottom = max(rootBottom, row+1)
+			}
+			clean.SetNRGBA(column, row, pixel)
+		}
+	}
+	if rootBottom == clean.Bounds().Min.Y {
+		return nil, fmt.Errorf("grass master contains no alpha-tested blades")
+	}
+	cropped := clean.SubImage(image.Rect(clean.Bounds().Min.X, clean.Bounds().Min.Y, clean.Bounds().Max.X, rootBottom))
+	const size = 512
+	img := image.NewNRGBA(image.Rect(0, 0, size, size))
+	for row := range size {
+		for column := range size {
+			img.SetNRGBA(column, row, leafSprayPixel(cropped, column, row, size))
+		}
+	}
+	return img, nil
+}
+
+// Leaf planes use the entire upper square at v=0..0.5 with a small UV inset;
+// branches sample the opaque bark below it at v=.625..875.
+func shrubMaterialTexture() (*image.NRGBA, error) {
+	leaf, err := vegetationMaster("shrub-leaf-spray.png")
+	if err != nil {
+		return nil, err
+	}
+	const size = 512
+	img := image.NewNRGBA(image.Rect(0, 0, size, size*2))
+	for y := range size {
+		for x := range size {
+			img.SetNRGBA(x, y, leafSprayPixel(leaf, x, y, size))
+		}
+	}
+	for y := size; y < size*2; y++ {
+		for x := range size {
+			u, v := float64(x)/size, float64(y-size)/size
+			patch := groundNoise(u, v, 8, 715)*.7 + groundNoise(u, v, 23, 716)*.3
+			bark := .5 + .5*math.Sin(u*140+groundNoise(u, v, 9, 718)*4)
+			shade := color.NRGBA{uint8(66 + patch*27 + bark*10), uint8(49 + patch*21 + bark*7), uint8(31 + patch*14 + bark*5), 255}
+			img.SetNRGBA(x, y, shade)
+		}
+	}
+	return img, nil
+}
+
+// Average premultiplied source pixels to preserve leaf edges and their alpha
+// without introducing dark outlines when reducing the tracked master offline.
+func leafSprayPixel(source image.Image, x, y, size int) color.NRGBA {
+	bounds := source.Bounds()
+	x0, x1 := bounds.Min.X+x*bounds.Dx()/size, bounds.Min.X+(x+1)*bounds.Dx()/size
+	y0, y1 := bounds.Min.Y+y*bounds.Dy()/size, bounds.Min.Y+(y+1)*bounds.Dy()/size
+	var red, green, blue, alpha uint64
+	for row := y0; row < y1; row++ {
+		for column := x0; column < x1; column++ {
+			r, g, b, a := source.At(column, row).RGBA()
+			red += uint64(r)
+			green += uint64(g)
+			blue += uint64(b)
+			alpha += uint64(a)
+		}
+	}
+	if alpha == 0 {
+		return color.NRGBA{}
+	}
+	count := uint64((x1 - x0) * (y1 - y0))
+	return color.NRGBA{uint8(red * 255 / alpha), uint8(green * 255 / alpha), uint8(blue * 255 / alpha), uint8(alpha / count >> 8)}
+}
+
+// Masters stay in Git; only packed derivatives ship with the level.
+func vegetationMaster(name string) (image.Image, error) {
+	path := filepath.Join("samples", "environment", "material-sources", name)
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("open vegetation master %s: %w", name, err)
+	}
+	pixels, decodeErr := png.Decode(file)
+	closeErr := file.Close()
+	if decodeErr != nil {
+		return nil, fmt.Errorf("decode vegetation master %s: %w", name, decodeErr)
+	}
+	if closeErr != nil {
+		return nil, closeErr
+	}
+	if pixels.Bounds().Dx() != pixels.Bounds().Dy() || pixels.Bounds().Dx() < 512 {
+		return nil, fmt.Errorf("vegetation master %s must be square and at least 512px: %v", name, pixels.Bounds())
+	}
+	return pixels, nil
+}
+
+// These are estimated relief maps, not measured surface normals. Smoothed
+// alpha gives blade/leaf edges curvature; subtle luminance adds vein detail.
+// Normal textures are opaque data. Background and bark remain neutral +Z.
+func vegetationNormalTexture(albedo *image.NRGBA, shrub bool) *image.NRGBA {
+	bounds := albedo.Bounds()
+	normals := image.NewNRGBA(bounds)
+	height := make([]float64, bounds.Dx()*bounds.Dy())
+	leafBottom := bounds.Max.Y
+	if shrub {
+		leafBottom = bounds.Min.Y + bounds.Dy()/2
+	}
+	for row := bounds.Min.Y; row < leafBottom; row++ {
+		for column := bounds.Min.X; column < bounds.Max.X; column++ {
+			pixel := albedo.NRGBAAt(column, row)
+			var coverage float64
+			for dy := -2; dy <= 2; dy++ {
+				for dx := -2; dx <= 2; dx++ {
+					if row+dy < leafBottom {
+						coverage += float64(albedo.NRGBAAt(column+dx, row+dy).A) / 255
+					}
+				}
+			}
+			luminance := (float64(pixel.R)*.2126 + float64(pixel.G)*.7152 + float64(pixel.B)*.0722) / 255
+			height[(row-bounds.Min.Y)*bounds.Dx()+column-bounds.Min.X] = .55*coverage/25 + .15*luminance*float64(pixel.A)/255
+		}
+	}
+	sample := func(column, row int) float64 {
+		if column < bounds.Min.X || column >= bounds.Max.X || row < bounds.Min.Y || row >= leafBottom {
+			return 0
+		}
+		return height[(row-bounds.Min.Y)*bounds.Dx()+column-bounds.Min.X]
+	}
+	for row := bounds.Min.Y; row < bounds.Max.Y; row++ {
+		for column := bounds.Min.X; column < bounds.Max.X; column++ {
+			normal := color.NRGBA{128, 128, 255, 255}
+			if row < leafBottom && albedo.NRGBAAt(column, row).A >= 64 {
+				nx := -(sample(column+1, row) - sample(column-1, row)) * 2.5
+				ny := -(sample(column, row+1) - sample(column, row-1)) * 2.5
+				inverseLength := 1 / math.Sqrt(nx*nx+ny*ny+1)
+				encode := func(value float64) uint8 { return uint8(math.Round((value + 1) * 127.5)) }
+				normal = color.NRGBA{encode(nx * inverseLength), encode(ny * inverseLength), encode(inverseLength), 255}
+			}
+			normals.SetNRGBA(column, row, normal)
+		}
+	}
+	return normals
+}
+
+// A compacted soil tile has broad earthy variation and sparse small pebbles,
+// without masonry seams or a painted repeating trail edge.
+func pathTexture() *image.NRGBA {
+	const size = 256
+	pixels := image.NewNRGBA(image.Rect(0, 0, size, size))
+	for row := range size {
+		for column := range size {
+			u, v := float64(column)/size, float64(row)/size
+			patch := groundNoise(u, v, 4, 821)*.6 + groundNoise(u, v, 17, 823)*.4
+			grain := (groundHash(column, row, 827) - .5) * 9
+			shade := color.NRGBA{uint8(88 + patch*35 + grain), uint8(65 + patch*27 + grain), uint8(43 + patch*18 + grain), 255}
+			if groundHash(column/4, row/4, 829) > .988 && math.Pow(float64(column%4)-1.5, 2)+math.Pow(float64(row%4)-1.5, 2) < 2.5 {
+				shade = color.NRGBA{uint8(112 + patch*17 + grain), uint8(104 + patch*14 + grain), uint8(83 + patch*11 + grain), 255}
+			}
+			pixels.SetNRGBA(column, row, shade)
+		}
+	}
+	return pixels
 }

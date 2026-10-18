@@ -26,7 +26,7 @@ output = 'dist/screenshots/acid-control-east-access.png'
 position = [20.3, 13.8, 2.1]
 yaw = 90
 pitch = 12
-output = 'dist/screenshots/acid-control-west-stairs.png'
+output = 'dist/screenshots/acid-control-west-elevator.png'
 
 [[views]]
 position = [45.7, 13.8, 2.1]

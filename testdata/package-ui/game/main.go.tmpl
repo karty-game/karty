@@ -1,0 +1,25 @@
+package main
+
+import (
+    "strconv"
+    "{{MODULE}}/.karty/engine"
+    ui "{{MODULE}}/.karty/ui"
+)
+
+// The game owns state, callbacks and the root screen. The package supplies a child.
+//go:wasmexport karty_register
+func main() {
+    var screen *engine.UI
+    count := {{START}}
+    engine.Run(engine.Hooks{
+        OnStart: func() {
+            screen = ui.GameScreen("{{TITLE}}", func() string {
+                return "Value " + strconv.Itoa(count)
+            }, func() {
+                count += {{STEP}}
+                screen.Invalidate()
+            })
+        },
+        OnStop: func() { if screen != nil { screen.Close() } },
+    })
+}

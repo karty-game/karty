@@ -14,7 +14,7 @@ import (
 const declarationsSource = `package main
 import game "example.com/game/.karty/engine"
 //karty:action door.open
-func OpenDoor(ctx game.ActionContext, target game.WorldActorRef, speed float32) error { return nil }
+func OpenDoor(ctx game.ActionContext, target game.EntityRef, speed float32) error { return nil }
 //karty:condition door.unlocked
 func Unlocked(ctx game.ActionContext, key bool) (bool,error) { return key,nil }
 `
@@ -99,6 +99,24 @@ func TestCatalogSchemaAndTypedInvocation(t *testing.T) {
 	}
 	if err = toml.Unmarshal(result.Catalog, &catalog); err != nil || len(catalog.Actions) != 2 {
 		t.Fatal(catalog, err)
+	}
+}
+
+func TestRetiredActorReferenceRejected(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "src"), 0750); err != nil {
+		t.Fatal(err)
+	}
+
+	source := strings.ReplaceAll(declarationsSource, "EntityRef", "WorldActorRef")
+	if err := os.WriteFile(filepath.Join(root, "src", "main.go"), []byte(source), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := Discover(root, "example.com/game"); err == nil {
+		t.Fatal("retired entity type was accepted")
 	}
 }
 func TestInvalidAuthoredArgumentsFailBeforeCompilation(t *testing.T) {

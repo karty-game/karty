@@ -163,7 +163,8 @@ func TestRunBuildsAndStagesLevelCartridges(t *testing.T) {
 }
 
 func createTexturedGame(directory string, manifest sdk.Manifest) error {
-	if err := scaffold.CreateGame(directory, "test-game", manifest); err != nil {
+	// Asset-only fixtures keep their authored dependency graph explicit.
+	if err := scaffold.CreateTemplateContext(context.Background(), directory, "test-game", manifest, "blank"); err != nil {
 		return err
 	}
 
@@ -373,29 +374,10 @@ func TestRunStagesWebTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if strings.Contains(string(index), "KARTY_AIR_BASE_PATH_PATCHED") ||
-		strings.Contains(string(index), "@@AIR_PROXY_BOOTSTRAP@@") {
-		t.Fatal("production web shell contains the Air proxy bootstrap or an unreplaced placeholder")
-	}
-
-	err = build.RunWithOptions(context.Background(), directory, build.Options{
-		TinyGo: tinyGo, WasmTools: wasmTools, Host: host, Target: "web", AirProxy: true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	index, err = os.ReadFile(indexPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !strings.Contains(string(index), "KARTY_AIR_BASE_PATH_PATCHED") ||
-		!strings.Contains(string(index), "Object.defineProperty(window, \"SharedWorker\"") ||
-		!strings.Contains(string(index), "new Proxy(window.EventSource") ||
-		!strings.Contains(string(index), "new URL(\".\" + value, window.location.href)") ||
-		strings.Contains(string(index), "@@AIR_PROXY_BOOTSTRAP@@") {
-		t.Fatal("development web shell does not preserve Air URLs under a path-based proxy")
+	if strings.Contains(string(index), "karty-dev-status") ||
+		strings.Contains(string(index), "kartyDevelopmentConfig") ||
+		strings.Contains(string(index), "__karty_dev/") {
+		t.Fatal("ordinary web build contains development server bootstrap")
 	}
 
 	for _, path := range []string{"dist/client.wasm", "dist/web/client.wasm"} {
@@ -585,12 +567,12 @@ func buildTools(t *testing.T) (string, string) {
 	t.Helper()
 	directory := t.TempDir()
 	extension := ""
-	tinyGoScript := "#!/bin/sh\nif [ \"$1\" != \"build\" ]; then exit 2; fi\nshift\nwhile [ \"$#\" -gt 0 ]; do if [ \"$1\" = \"-o\" ]; then printf '\\000asm\\001\\000\\000\\000' > \"$2\"; exit 0; fi; shift; done\nexit 1\n"
+	tinyGoScript := "#!/bin/sh\nif [ \"$1\" = \"list\" ]; then echo example.com/client; exit 0; fi\nif [ \"$1\" != \"build\" ]; then exit 2; fi\nshift\nwhile [ \"$#\" -gt 0 ]; do if [ \"$1\" = \"-o\" ]; then printf '\\000asm\\001\\000\\000\\000' > \"$2\"; exit 0; fi; shift; done\nexit 1\n"
 	wasmToolsScript := "#!/bin/sh\nexit 0\n"
 
 	if runtime.GOOS == "windows" {
 		extension = ".bat"
-		tinyGoScript = "@echo off\r\nif not \"%~1\"==\"build\" exit /b 2\r\nshift\r\n:next\r\nif \"%~1\"==\"-o\" (echo asm> %~2 & exit /b 0)\r\nshift\r\nif not \"%~1\"==\"\" goto next\r\nexit /b 1\r\n"
+		tinyGoScript = "@echo off\r\nif \"%~1\"==\"list\" (echo example.com/client & exit /b 0)\r\nif not \"%~1\"==\"build\" exit /b 2\r\nshift\r\n:next\r\nif \"%~1\"==\"-o\" (echo asm> %~2 & exit /b 0)\r\nshift\r\nif not \"%~1\"==\"\" goto next\r\nexit /b 1\r\n"
 		wasmToolsScript = "@echo off\r\nexit /b 0\r\n"
 	}
 

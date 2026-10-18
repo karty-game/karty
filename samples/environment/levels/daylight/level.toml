@@ -8,11 +8,11 @@ source = "world.yaml"
 [lightmap]
 enabled = true
 offline = true
-density = 24
+density = 16
 page_size = 1024
 padding = 2
-bake_samples = 16
-bake_bounces = 1
+bake_samples = 32
+bake_bounces = 3
 bake_denoise = "medium"
 
 [lightmap.environment]
@@ -94,6 +94,21 @@ metallic_scale = 0
 
 [textures.material_strengths]
 normal = 0.22
+height = 0.015
+ao = 0.35
+rim = 0.0
+
+[[textures]]
+name = "path"
+source = "path.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "stone"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.18
 height = 0.015
 ao = 0.35
 rim = 0.0
@@ -190,3 +205,23 @@ normal = 0
 height = 0
 ao = 0
 rim = 0.0
+
+[[textures]]
+name = "grass-tuft"
+source = "grass-tuft.png"
+profile = "sprite"
+
+[[textures]]
+name = "grass-tuft-normal"
+source = "grass-tuft-normal.png"
+profile = "sprite"
+
+[[textures]]
+name = "small-bush"
+source = "small-bush.png"
+profile = "sprite"
+
+[[textures]]
+name = "small-bush-normal"
+source = "small-bush-normal.png"
+profile = "sprite"

@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/karty-game/karty/internal/contextio"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -70,7 +71,7 @@ func downloadPublishedSDK(ctx context.Context, url string) ([]byte, error) {
 		return nil, fmt.Errorf("%w: %s", errPublishedSDKDownload, response.Status)
 	}
 
-	contents, err := io.ReadAll(io.LimitReader(response.Body, 1024*1024))
+	contents, err := contextio.ReadAll(ctx, io.LimitReader(response.Body, 1024*1024))
 	if err != nil {
 		return nil, fmt.Errorf("read published SDK: %w", err)
 	}

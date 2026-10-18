@@ -116,20 +116,35 @@ func (g *grammar) constraints() {
 	}
 
 	for name, required := range map[string][]string{
-		"Document": {"version"}, "Room": {"id", "boundary", "floor_material", "ceiling_material"},
-		"Edge": {"id", "start", "end", "material"}, "Content": {"id", "kind"},
+		"Document": {"version"}, "Room": {"id", "floor_material", "ceiling_material"},
+		"RoomRectangle": {"width", "depth", "material"},
+		"Edge":          {"id", "start", "end", "material"}, "Content": {"id", "kind"},
 		"Prefab": {"id"}, "Instance": {"id", "prefab"}, "MaterialOverride": {"from", "to"},
 		"Connection": {"id", "a", "b"}, "Port": {"id", "endpoint"},
 		"Solid":  {"id", "footprint", "side_material", "top_material", "bottom_material"},
 		"Sprite": {"texture", "facing", "alpha", "width", "height"}, "Lighting": {"version"},
 		"PointLight": {"id", "radius"}, "LightMotion": {"version", "period_seconds"},
 		"Animations": {"version", "presets"}, "AnimationPreset": {"name", "kind"}, "AnimationBinding": {"preset"}, "MaterialAnimation": {"material", "preset"},
-		"Environment": {"preset"}, "EnvironmentSun": {"azimuth", "elevation"},
+		"EnvironmentSun": {"azimuth", "elevation"},
 	} {
 		g.definitions[name].Required = required
 	}
 
 	set := func(name, field string, s *jsonschema.Schema) { g.definitions[name].Properties[field] = s }
+
+	g.definitions["Room"].OneOf = []*jsonschema.Schema{
+		{Required: []string{"boundary"}, Properties: map[string]*jsonschema.Schema{"rect": deny()}},
+		{Required: []string{"rect"}, Properties: map[string]*jsonschema.Schema{"rect": {Type: "object"}, "boundary": deny()}},
+	}
+	for _, field := range []string{"width", "depth"} {
+		set(
+			"RoomRectangle",
+			field,
+			&jsonschema.Schema{Type: "number", Minimum: new(worldsource.MinEdgeLength), Maximum: new(worldsource.MaxCoordinate * 2)},
+		)
+	}
+
+	set("RoomRectangle", "material", identifier())
 	set(
 		"Document",
 		"version",
@@ -146,6 +161,7 @@ func (g *grammar) constraints() {
 	set("Sprite", "alpha", choice("cutout", "blend"))
 	g.environmentConstraints()
 	g.particleConstraints()
+	g.vegetationConstraints()
 
 	for _, field := range []string{"width", "height"} {
 		set("Sprite", field, &jsonschema.Schema{Type: "number", ExclusiveMinimum: new(float64(0)), Maximum: new(worldsource.MaxCoordinate)})
@@ -205,6 +221,7 @@ func (g *grammar) constraints() {
 			},
 		},
 	}
+	g.fluidRules()
 	g.versionRules()
 }
 
@@ -240,6 +257,8 @@ func (g *grammar) versionRules() {
 		version uint16
 		fields  map[string]*jsonschema.Schema
 	}{
+		{worldsource.CompactRoomVersion, map[string]*jsonschema.Schema{"rooms": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"rect": deny()}}}}},
+		{worldsource.FluidsVersion, map[string]*jsonschema.Schema{"fluids": deny()}},
 		{worldsource.ActorVersion, map[string]*jsonschema.Schema{
 			"instances": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"tags": {MaxItems: new(0)}}}},
 			"rooms":     {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"contents": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"actor": {Type: "null"}}}}}}},

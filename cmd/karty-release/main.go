@@ -48,7 +48,7 @@ func run(root string, check bool) error {
 			return err
 		}
 
-		sampleVersion := release.SampleSDKVersion(filepath.Base(filepath.Dir(path)))
+		sampleVersion := release.SDKVersion()
 
 		updated, err := pinSample(original, sampleVersion)
 		if err != nil {

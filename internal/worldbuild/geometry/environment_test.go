@@ -48,9 +48,9 @@ func TestEnvironmentSampleCompilesAndOwnsSun(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	backdrop := world.EnvironmentBackdropMountains
-	if compiled.Environment.Preset != world.EnvironmentPreset(preset) || compiled.Environment.Version != world.EnvironmentVersion ||
-		compiled.Environment.Backdrop != backdrop {
+	if compiled.Environment.Preset != "" || compiled.Environment.Version != world.ExplicitEnvironmentVersion ||
+		compiled.Environment.Appearance == nil ||
+		compiled.Environment.Appearance.Lighting.Ambient != (world.Vec3{X: .4, Y: .52, Z: .72}) {
 		t.Fatal(compiled.Environment)
 	}
 
@@ -197,6 +197,7 @@ func environmentMaterials() map[string]uint32 {
 		"glass":           9,
 		"wood-edge":       10,
 		"furniture-steel": 11,
+		"path":            12,
 	}
 }
 
@@ -226,10 +227,15 @@ func TestEnvironmentFieldCellsPreserveOpenGroundAndChunkOwnership(t *testing.T) 
 		}
 
 		bounds, found := wantBounds[room.ID]
-		if !found || seen[room.ID] || !room.Sky || room.Floor.C != 0 || room.Ceiling.C != 12 || room.FloorMaterial != "ground" ||
-			room.FloorUV == nil || room.FloorUV.Scale == nil || room.FloorUV.Scale.X != 12 || room.FloorUV.Scale.Y != 12 {
+
+		material, repeat := environmentFieldFloorStyle(bounds)
+
+		if !found || seen[room.ID] || !room.Sky || room.Ceiling.C != 12 || room.FloorMaterial != material ||
+			room.FloorUV == nil || room.FloorUV.Scale == nil || room.FloorUV.Scale.X != repeat || room.FloorUV.Scale.Y != repeat {
 			t.Fatalf("grass quadrant lost its identity, open floor or world UV mapping: %+v", room)
 		}
+
+		assertEnvironmentTerrainRoomHeights(t, room)
 
 		seen[room.ID] = true
 		area := 0.0
@@ -282,6 +288,14 @@ func TestEnvironmentFieldCellsPreserveOpenGroundAndChunkOwnership(t *testing.T) 
 	}
 }
 
+func environmentFieldFloorStyle(bounds [4]float64) (string, float64) {
+	if bounds[0] == -.6 && bounds[2] == .6 {
+		return "path", 3
+	}
+
+	return "ground", 12
+}
+
 func environmentBodyOverlaps(footprint []world.Vec2, position world.Vec2, radius float64) bool {
 	for index, start := range footprint {
 		end := footprint[(index+1)%len(footprint)]
@@ -331,7 +345,7 @@ func TestEnvironmentBalancedLightmapDensityFitsChunkPages(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !recipe.Lightmap.Enabled || !recipe.Lightmap.Offline || !recipe.Chunks.Enabled || recipe.Lightmap.Density < 24 ||
+	if !recipe.Lightmap.Enabled || !recipe.Lightmap.Offline || !recipe.Chunks.Enabled || recipe.Lightmap.Density != 16 ||
 		recipe.Lightmap.PageSize != 1024 || recipe.Lightmap.Padding != 2 ||
 		!slices.Equal(recipe.Lightmap.Environment.Times, []float64{0, 9, 12, 17}) ||
 		recipe.Lightmap.Environment.DefaultTime != 12 || recipe.Lightmap.Environment.WeatherVariants ||
@@ -670,7 +684,7 @@ func TestEnvironmentStoneBoundaryClosesExposedEdgesWithoutSurfaceOverlaps(t *tes
 		}
 
 		walls = append(walls, item)
-		if !item.Collision || item.SideMaterial != 1 || item.TopMaterial != 1 || item.Bottom.C != -.08 ||
+		if !item.Collision || item.SideMaterial != 1 || item.TopMaterial != 1 ||
 			len(item.Footprint) != 4 {
 			t.Fatalf("boundary must be opaque colliding stone with its underside buried: %+v", item)
 		}
@@ -683,14 +697,21 @@ func TestEnvironmentStoneBoundaryClosesExposedEdgesWithoutSurfaceOverlaps(t *tes
 		}
 
 		for _, corner := range item.Footprint {
-			height := item.Top.A*corner.X + item.Top.B*corner.Y + item.Top.C
+			floor := environmentTerrainHeight(corner.X, corner.Y)
+			bottom := item.Bottom.A*corner.X + item.Bottom.B*corner.Y + item.Bottom.C
+
+			height := item.Top.A*corner.X + item.Top.B*corner.Y + item.Top.C - floor
+			if math.Abs(bottom-floor+.08) > 1e-7 {
+				t.Fatalf("boundary underside is not buried below local terrain: %q bottom=%g floor=%g", item.ID, bottom, floor)
+			}
+
 			if height < .839 || height > .921 {
-				t.Fatalf("boundary is not a low gently uneven wall: %q height=%g", item.ID, height)
+				t.Fatalf("boundary is not a low gently uneven wall over the terrain: %q height=%g", item.ID, height)
 			}
 		}
 	}
 
-	if len(walls) != 27 {
+	if len(walls) != 37 {
 		t.Fatal("boundary lost an exposed-edge section", len(walls))
 	}
 
@@ -1082,6 +1103,125 @@ func assertEnvironmentWindowLintel(t *testing.T, document world.Document, surfac
 
 		if !buried {
 			t.Fatal("window navigation lintel escapes the physical facade", surface.Binding, polygon)
+		}
+	}
+}
+
+// This independent reference checks authored knot heights and the flush entry,
+// including boundary solids whose corners cross a profile slope change.
+func environmentTerrainHeight(positionX, positionY float64) float64 {
+	if positionY < 24 {
+		return 0
+	}
+
+	heights := []float64{0, 1.8, .5, 1.3, 0}
+	row := min(3, max(0, int((positionY-24)/10)))
+	fraction := (positionY - (24 + float64(row)*10)) / 10
+
+	return heights[row]*(1-fraction) + heights[row+1]*fraction + .015*max(math.Abs(positionX)-12, 0)
+}
+
+func TestEnvironmentTerrainPortalEdgesAreContinuousAndEntryIsFlush(t *testing.T) {
+	t.Parallel()
+
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	compiled, err := geometry.Compile(expanded, environmentMaterials())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fieldSectors, layers, interiorEdges, entryEdges := 0, 0, 0, 0
+
+	for _, room := range expanded.Rooms {
+		layers += len(room.VegetationLayers)
+	}
+
+	for _, sector := range compiled.Sectors {
+		if !strings.HasPrefix(sector.SourceRoom, "test-ground-") {
+			continue
+		}
+
+		fieldSectors++
+
+		for _, wall := range sector.Walls {
+			if wall.Portal < 0 {
+				continue
+			}
+
+			target := compiled.Sectors[wall.Portal]
+
+			fieldTarget := strings.HasPrefix(target.SourceRoom, "test-ground-")
+			switch {
+			case fieldTarget:
+				interiorEdges++
+			case strings.HasPrefix(target.SourceRoom, "courtyard-"):
+				entryEdges++
+			default:
+				t.Fatalf("unexpected field portal target %q", target.SourceRoom)
+			}
+
+			assertEnvironmentTerrainPortalContinuity(t, sector, target, wall, fieldTarget)
+		}
+	}
+
+	if fieldSectors != 36 || layers != 70 || interiorEdges != 118 || entryEdges != 7 {
+		t.Fatalf(
+			"terrain changed field decomposition or vegetation budgets: sectors=%d layers=%d inside=%d entry=%d",
+			fieldSectors,
+			layers,
+			interiorEdges,
+			entryEdges,
+		)
+	}
+
+	if math.Abs(environmentTerrainHeight(0, 32)+1.7-3.14) > 1e-7 {
+		t.Fatal("Test ground camera lost its authored floor-relative spawn")
+	}
+}
+
+func assertEnvironmentTerrainRoomHeights(t *testing.T, room source.Room) {
+	t.Helper()
+
+	if math.Hypot(room.Floor.A, room.Floor.B) > .181 {
+		t.Fatalf("field slope is too steep for gentle terrain: %s %+v", room.ID, room.Floor)
+	}
+
+	for _, edge := range room.Boundary {
+		height := room.Floor.A*edge.Start.X + room.Floor.B*edge.Start.Y + room.Floor.C
+
+		expected := environmentTerrainHeight(edge.Start.X, edge.Start.Y)
+		if math.Abs(height-expected) > 1e-7 || height < -1e-7 || height > 1.980001 {
+			t.Fatalf("field %s lost authored terrain at %+v: height=%g expected=%g", room.ID, edge.Start, height, expected)
+		}
+	}
+}
+
+func assertEnvironmentTerrainPortalContinuity(t *testing.T, sector, target world.Sector, wall world.Wall, fieldTarget bool) {
+	t.Helper()
+
+	for _, point := range []world.Vec2{wall.Start, wall.End, {X: (wall.Start.X + wall.End.X) / 2, Y: (wall.Start.Y + wall.End.Y) / 2}} {
+		floor := sector.Floor.A*point.X + sector.Floor.B*point.Y + sector.Floor.C
+		other := target.Floor.A*point.X + target.Floor.B*point.Y + target.Floor.C
+		ceiling := sector.Ceiling.A*point.X + sector.Ceiling.B*point.Y + sector.Ceiling.C
+
+		otherCeiling := target.Ceiling.A*point.X + target.Ceiling.B*point.Y + target.Ceiling.C
+		if math.Abs(floor-other) > 1e-7 || math.Abs(ceiling-otherCeiling) > 1e-7 {
+			t.Fatalf(
+				"terrain portal has a floor/ceiling step: %s -> %s point=%+v floor=%g target=%g",
+				sector.SourceRoom,
+				target.SourceRoom,
+				point,
+				floor,
+				other,
+			)
+		}
+
+		if !fieldTarget && math.Abs(floor) > 1e-7 {
+			t.Fatalf("courtyard entry is not flush: %+v height=%g", point, floor)
 		}
 	}
 }

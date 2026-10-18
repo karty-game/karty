@@ -1,0 +1,25 @@
+{
+  "generator": "Built-in image_gen",
+  "date": "2026-10-15",
+  "prompts": [
+    {
+      "key": "palm",
+      "prompt": "Use case: photorealistic-natural. Asset type: original tropical vegetation albedo sprite atlas for a 2004-style game engine, not a picture of a tree. Create one tall image split EXACTLY into two equal square halves, total aspect ratio 1:2. UPPER HALF: one complete coconut palm frond cutout on actual transparent background, viewed flat orthographically from above. Stem starts exactly at bottom-center of upper square and grows vertically toward top-center; pointed tip near top with clear transparent margin. Long thin central green rib, 25-35 pairs of narrow tapered leaflets fan diagonally outward, graceful taper, slightly irregular gaps. Frond fills most of upper square's width at mid length. Muted natural olive/yellow-green upper leaf surfaces, coherent medium-sized leaf shapes, softly baked leaf curvature/vein detail with darker rib, no specular highlights or cast shadows. LOWER HALF: entirely opaque seamless square coconut-palm bark albedo, subtle horizontal gray-tan growth rings with fibrous brown-gray surface, not wood boards, not rope. Keep precisely separate upper frond cutout and lower bark square. Neutral diffuse daylight, no black background, no text, no labels, no borders, no extra plants. Original texture, not extracted from any game."
+    },
+    {
+      "key": "broadleaf",
+      "prompt": "Use case: photorealistic-natural. Asset type: original broadleaf tropical-tree albedo sprite atlas for a 2004-style game engine. One tall image, total aspect ratio 1:2, split EXACTLY into two equal square halves. UPPER HALF: one botanically coherent terminal leafy twig cutout on actual transparent background. A slim branching brown twig grows from bottom-center toward top-center with 3 secondary twigs carrying 18-25 individual waxy elongated oval tropical leaves. Leaves overlap into a rich irregular oblong foliage spray while leaving a few clear medium-sized gaps; substantial dark olive-green inner leaves and warm medium-green sun-facing leaves. All leaf stems visibly connect to twigs. Framing fills square with a clean transparent margin. Leaves are broad and readable, roughly 1/7 of image width; no tiny confetti noise. Neutral diffuse illumination, softly baked curvature and shading, no dramatic highlights. LOWER HALF: entirely opaque seamless square gray-brown tropical tree bark albedo, shallow longitudinal ridges, muted weathered surface, not wood planks. Keep exactly separate leaf upper half and bark lower half. No scenery, trunk silhouette, shadow on background, text, labels or borders. Original texture, not extracted from any game."
+    }
+  ],
+  "assets": [
+    {
+      "name": "palm-atlas-v1.png",
+      "source": "samples/terrain/levels/ground/palm-atlas-v1.png"
+    },
+    {
+      "name": "broadleaf-atlas-v1.png",
+      "source": "samples/terrain/levels/ground/broadleaf-atlas-v1.png"
+    }
+  ],
+  "normalPreparation": "scripts/terrain/author-tree-materials.go; estimated luminance relief, opaque tangent-space RGB. Source albedos remain unchanged; runtime transforms to 256x512."
+}

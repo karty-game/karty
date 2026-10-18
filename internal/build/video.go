@@ -2,6 +2,7 @@ package build
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"go/format"
@@ -12,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/karty-game/karty-sdk/format/cartridge"
+	"github.com/karty-game/karty/internal/contextio"
 	"github.com/karty-game/karty/internal/project"
 )
 
@@ -47,7 +49,11 @@ func videoAssetFile(videos []project.Video, engineImport string) ([]byte, error)
 }
 
 //nolint:wsl_v5 // Catalog construction and staging intentionally stay adjacent.
-func stageProjectVideos(directory, output, artifact string, videos []project.Video) error {
+func stageProjectVideos(ctx context.Context, directory, output, artifact string, videos []project.Video) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if len(videos) > cartridge.MaxVideoCount {
 		return cartridge.ErrVideos
 	}
@@ -58,12 +64,12 @@ func stageProjectVideos(directory, output, artifact string, videos []project.Vid
 		return err
 	}
 	defer root.Close()
-	if _, err := prepareMediaDirectory(output, ".kvid", ".video-"); err != nil {
+	if _, err := prepareMediaDirectory(ctx, output, ".kvid", ".video-"); err != nil {
 		return err
 	}
 	catalog := make([]cartridge.Video, 0, len(sorted))
 	for index, video := range sorted {
-		entry, err := stageVideoSource(root, output, video.Source)
+		entry, err := stageVideoSource(ctx, root, output, video.Source)
 		if err != nil {
 			return fmt.Errorf("video %q: %w", video.Name, err)
 		}
@@ -74,7 +80,7 @@ func stageProjectVideos(directory, output, artifact string, videos []project.Vid
 	if err != nil {
 		return err
 	}
-	wasm, err := os.ReadFile(artifact)
+	wasm, err := contextio.ReadFile(ctx, artifact)
 	if err != nil {
 		return err
 	}
@@ -82,12 +88,16 @@ func stageProjectVideos(directory, output, artifact string, videos []project.Vid
 	if err != nil {
 		return err
 	}
-	//nolint:gosec // artifact is the fixed dist/raw/game.kart path owned by this build.
-	return os.WriteFile(artifact, wasm, 0o600)
+	// artifact is the fixed dist/raw/game.kart path owned by this build.
+	return contextio.WriteFile(ctx, artifact, wasm, 0o600)
 }
 
 //nolint:wsl_v5,nlreturn // Chunk hashing is easier to audit as one sequential operation.
-func stageVideoSource(root *os.Root, output, path string) (cartridge.Video, error) {
+func stageVideoSource(ctx context.Context, root *os.Root, output, path string) (cartridge.Video, error) {
+	if err := ctx.Err(); err != nil {
+		return cartridge.Video{}, err
+	}
+
 	source, err := root.Open(path)
 	if err != nil {
 		return cartridge.Video{}, err
@@ -105,20 +115,26 @@ func stageVideoSource(root *os.Root, output, path string) (cartridge.Video, erro
 	defer os.Remove(staged.Name())
 	defer staged.Close()
 	header := make([]byte, min(info.Size(), maxMPEGHeader))
-	if _, err := io.ReadFull(source, header); err != nil || !validMPEG1Video(header) {
+	if _, err := io.ReadFull(contextio.Reader(ctx, source), header); err != nil {
+		return cartridge.Video{}, err
+	}
+	if !validMPEG1Video(header) {
 		return cartridge.Video{}, cartridge.ErrVideos
 	}
 	if _, err := source.Seek(0, 0); err != nil {
 		return cartridge.Video{}, err
 	}
 	entry := cartridge.Video{}
-	entry.Size, entry.SHA256, entry.Chunks, err = writeMediaEnvelope(
+	entry.Size, entry.SHA256, entry.Chunks, err = writeMediaEnvelope(ctx,
 		staged, source, cartridge.MediaKindMPEG1Video, info.Size(), cartridge.VideoChunkSize,
 	)
 	if err != nil {
 		return cartridge.Video{}, err
 	}
 	if err := staged.Close(); err != nil {
+		return cartridge.Video{}, err
+	}
+	if err := ctx.Err(); err != nil {
 		return cartridge.Video{}, err
 	}
 	if err := os.Rename(staged.Name(), filepath.Join(output, entry.Path())); err != nil {
@@ -155,12 +171,16 @@ func validMPEG1Video(header []byte) bool {
 }
 
 //nolint:wsl_v5,nlreturn // Catalog validation and file staging form one operation.
-func stageVideoFiles(target, artifact, raw string) error {
-	directory, err := prepareMediaDirectory(target, ".kvid", ".video-")
+func stageVideoFiles(ctx context.Context, target, artifact, raw string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	directory, err := prepareMediaDirectory(ctx, target, ".kvid", ".video-")
 	if err != nil {
 		return err
 	}
-	wasm, err := os.ReadFile(artifact)
+	wasm, err := contextio.ReadFile(ctx, artifact)
 	if err != nil {
 		return err
 	}
@@ -176,7 +196,9 @@ func stageVideoFiles(target, artifact, raw string) error {
 		return err
 	}
 	for _, video := range videos {
-		if err := copyFile(filepath.Join(raw, video.Path()), filepath.Join(directory, filepath.Base(video.Path())), 0o600); err != nil {
+		if err := copyFile(
+			ctx, filepath.Join(raw, video.Path()), filepath.Join(directory, filepath.Base(video.Path())), 0o600,
+		); err != nil {
 			return err
 		}
 	}

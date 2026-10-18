@@ -16,4 +16,7 @@ ortho_height = 60
 renderer = false
 
 [sdk]
-version = "0.0.12"
+version = "0.0.13"
+
+[packages.controllers]
+folder = "../../packages/controllers"

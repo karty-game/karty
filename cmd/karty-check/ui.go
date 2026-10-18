@@ -26,13 +26,13 @@ func runUI(ctx context.Context) error {
 	}
 	defer os.RemoveAll(temporary)
 
-	manifest, err := sdk.Resolve(release.SDKVersion())
+	manifest, err := sdk.ResolveContext(ctx, release.SDKVersion())
 	if err != nil {
 		return err
 	}
 
 	project := filepath.Join(temporary, "ui-demo")
-	if err := scaffold.CreateTemplate(project, "ui-demo", manifest, "ui"); err != nil {
+	if err := scaffold.CreateTemplateContext(ctx, project, "ui-demo", manifest, "ui"); err != nil {
 		return err
 	}
 

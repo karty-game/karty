@@ -13,7 +13,6 @@ import (
 	"html"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -28,7 +27,10 @@ import (
 	"github.com/karty-game/karty-ui/schema"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/assetusage"
+	"github.com/karty-game/karty/internal/contextio"
 	"github.com/karty-game/karty/internal/levelbuild"
+	"github.com/karty-game/karty/internal/packages"
+	"github.com/karty-game/karty/internal/process"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/toolchain"
@@ -47,7 +49,6 @@ const (
 	errUnsupportedTarget      staticError = "unsupported build target"
 	errHostNotFile            staticError = "host artifact is not a file"
 	errWebHostRequired        staticError = "web target requires the SDK-pinned public host; install the selected SDK or pass --host /path/to/karty-host.wasm"
-	errGoWebCompiler          staticError = "compiler=go is not supported for web targets yet; use compiler=tinygo"
 	errRegistrationCollision  staticError = "legacy registration file conflicts with the user-owned karty_register export; remove or rename it before building"
 	errSoundIdentifier        staticError = "sound names produce the same generated Go identifier"
 	errCachedAssetChanged     staticError = "cached processor output changed after validation"
@@ -57,19 +58,23 @@ const (
 
 // Options configures build tool overrides.
 type Options struct {
-	Go            string
-	TinyGo        string
-	WasmTools     string
-	Host          string
-	Target        string
-	CDN           string
-	Platform      string
-	AirProxy      bool
-	Development   bool
-	Progress      func(string)
-	Summary       func(Summary)
-	rendererDebug bool
-	cdnHost       *cdnHost
+	Compiler       string
+	Go             string
+	TinyGo         string
+	WasmTools      string
+	Host           string
+	Target         string
+	CDN            string
+	BundledRuntime bool
+	Platform       string
+	Development    bool
+	// DevelopmentBakes refreshes offline lighting for the live development server.
+	// Ordinary --development builds retain their mesh-only, cache-consuming policy.
+	DevelopmentBakes bool
+	Progress         func(string)
+	Summary          func(Summary)
+	rendererDebug    bool
+	cdnHost          *cdnHost
 }
 
 func (options Options) progress(label string) {
@@ -87,7 +92,17 @@ func Run(ctx context.Context, directory string) error {
 //
 //nolint:gocognit,gocyclo,maintidx,wsl_v5 // This function intentionally keeps the transactional build sequence visible.
 func RunWithOptions(ctx context.Context, directory string, options Options) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	started := time.Now()
+	if options.DevelopmentBakes && !options.Development {
+		return fmt.Errorf("development baking requires development mode: %w", os.ErrInvalid)
+	}
+	if options.BundledRuntime && options.CDN != "" {
+		return fmt.Errorf("--bundled-runtime cannot be combined with --cdn: %w", os.ErrInvalid)
+	}
 	if options.CDN != "" {
 		if options.Target != "web" {
 			return fmt.Errorf("--cdn requires --target web: %w", os.ErrInvalid)
@@ -113,20 +128,66 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 
 	options.progress("Reading project")
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	config, err := project.Load(directory)
 	if err != nil {
 		return err
 	}
+	if options.Compiler != "" {
+		config.Project.Compiler = options.Compiler
+	} else if options.Development {
+		config.Project.Compiler = "go"
+	}
+	if config.Project.Compiler != "go" && config.Project.Compiler != "tinygo" {
+		return fmt.Errorf("compiler must be go or tinygo: %w", os.ErrInvalid)
+	}
+	if options.Target == "web" && options.CDN == "" && options.Host == "" && os.Getenv("KARTY_HOST_WEB") == "" && !options.BundledRuntime {
+		options.CDN = config.Project.Web.RuntimeURL
+		if options.CDN != "" {
+			if err := validateCDNURL(options.CDN); err != nil {
+				return err
+			}
+		}
+	}
 
 	options.rendererDebug = config.Project.Debug.Renderer
+	packageSet, err := packages.Restore(ctx, directory)
+	if err != nil {
+		return err
+	}
+	defer packageSet.Close()
+	if len(packageSet.Items) > 0 {
+		options.progress("Resolving local packages")
+	}
+	if err := packages.CheckModules(ctx, directory, packageSet); err != nil {
+		return err
+	}
+	if err := runProcessors(ctx, directory, packageSet); err != nil {
+		return fmt.Errorf("process package inputs: %w", err)
+	}
+	config.Assets, err = packages.ResolveUI(ctx, directory, config.Assets, packageSet)
+	if err != nil {
+		return err
+	}
 
 	options.progress("Validating levels")
-	if _, err := levelbuild.GenerateSchemas(directory, true); err != nil {
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if _, err := levelbuild.GenerateSchemasWithPackages(ctx, directory, true, packageSet); err != nil {
 		return err
 	}
 
 	options.progress("Loading SDK")
-	manifest, err := sdk.Resolve(config.SDK.Version)
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	manifest, err := sdk.ResolveContext(ctx, config.SDK.Version)
 	if err != nil {
 		return err
 	}
@@ -149,11 +210,12 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		!slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityAudioStreamQOAv1) {
 		return errAudioStreamSDKRequired
 	}
-	if config.Project.Compiler == "go" && options.Target == "web" {
-		return errGoWebCompiler
-	}
 
 	options.progress("Preparing tools")
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	_, err = toolchain.Ensure(ctx, manifest, toolchain.EnsureOptions{
 		GoOverride:        options.Go,
 		TinyGoOverride:    options.TinyGo,
@@ -193,9 +255,19 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	if err != nil {
 		return err
 	}
+	if config.Project.StorageID == "" {
+		config.Project.StorageID = modulePath
+	}
+	if !validStorageIdentity(config.Project.StorageID) {
+		return fmt.Errorf("project.storage_id must contain 1–256 ASCII letters, digits, '.', '/', '_' or '-': %w", os.ErrInvalid)
+	}
 
 	options.progress("Generating game code")
-	generated, err := sdk.ClientFiles(manifest, compiler)
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	generated, err := sdk.ClientFilesContext(ctx, manifest, compiler)
 	if err != nil {
 		return fmt.Errorf("generate client API: %w", err)
 	}
@@ -271,11 +343,11 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
-	if err := writeGeneratedClientAPI(directory, generated); err != nil {
+	if err := writeGeneratedClientAPI(ctx, directory, generated); err != nil {
 		return err
 	}
 
-	if err := sdk.SyncDocs(directory, manifest); err != nil {
+	if err := sdk.SyncDocsContext(ctx, directory, manifest); err != nil {
 		return err
 	}
 
@@ -283,7 +355,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
-	if err := retireLegacyGeneratedRegistration(directory); err != nil {
+	if err := retireLegacyGeneratedRegistration(ctx, directory); err != nil {
 		return err
 	}
 
@@ -306,9 +378,13 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 
 	options.progress("Processing images and audio")
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	assetReport, err := analyzeProjectAssets(
 		ctx, directory, modulePath, manifest,
-		config.Assets.Textures, config.Assets.Sounds, textureNames, theme,
+		config.Assets.Textures, config.Assets.Sounds, textureNames, theme, views,
 	)
 	if err != nil {
 		return err
@@ -333,7 +409,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	assetReport.Summary.AssetOutputBytes += assetReport.Summary.AudioStreamOutputBytes
 
 	fontRoles := usedFontRoles(views)
-	if err := analyzeProjectFonts(directory, config.Assets.Fonts, fontRoles, &assetReport); err != nil {
+	if err := analyzeProjectFonts(ctx, directory, config.Assets.Fonts, fontRoles, &assetReport); err != nil {
 		return err
 	}
 
@@ -348,12 +424,25 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	artifact := filepath.Join(rawDirectory, "game.kart")
 
 	uiSchema := sdkUISchema(manifest)
+	if options.DevelopmentBakes {
+		options.progress("Updating offline lightmaps")
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if _, err := levelbuild.BakeDevelopment(ctx, directory, nil); err != nil {
+			return err
+		}
+	}
 	options.progress("Building levels")
-	levels, err := buildAndStageLevels(ctx, directory, rawDirectory, uiSchema, config.Assets.Theme.Source, manifest, options.Development)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	levels, err := buildAndStageLevels(ctx, directory, rawDirectory, uiSchema, config.Assets.Theme.Source, manifest,
+		options.Development && !options.DevelopmentBakes)
 	if err != nil {
 		return err
 	}
-	actionsSource, err := compileAuthoredActions(directory, modulePath, manifest, levels)
+	actionsSource, err := compileAuthoredActions(ctx, directory, modulePath, manifest, levels)
 	if err != nil {
 		return err
 	}
@@ -362,11 +451,15 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 
 	var cleanup func()
 
-	clientSource, cleanup, err = stageClient(directory, modulePath, views, actionsSource)
+	clientSource, cleanup, err = stageClient(ctx, directory, modulePath, views, actionsSource)
 	if err != nil {
 		return err
 	}
 	defer cleanup()
+
+	if err := CheckClientDependencies(ctx, directory, compiler, compilerPath, clientSource); err != nil {
+		return err
+	}
 
 	// Go can treat an existing output with the same build ID as current. Karty
 	// postprocesses that output with custom sections, so retaining it would make
@@ -376,9 +469,13 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 
 	options.progress("Compiling Go game")
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	arguments := compilerArguments(compiler, artifact)
 	arguments[len(arguments)-1] = clientSource
-	command := exec.CommandContext(ctx, compilerPath, arguments...)
+	command := process.CommandContext(ctx, compilerPath, arguments...)
 	command.Dir = directory
 	command.Env = compilerEnvironment(compiler)
 
@@ -387,13 +484,17 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 
 	options.progress("Packaging game")
-	if err := embedProjectAssets(
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := embedProjectAssets(ctx,
 		directory, artifact, assetReport.Textures, assetReport.Sounds, config.Assets.Fonts, fontRoles,
 	); err != nil {
 		return err
 	}
 
-	if err := embedUIAssets(
+	if err := embedUIAssets(ctx,
 		directory, artifact, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
 	); err != nil {
 		return err
@@ -412,24 +513,24 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 
 	if len(config.Assets.Videos) > 0 {
-		if err := stageProjectVideos(directory, rawDirectory, artifact, config.Assets.Videos); err != nil {
+		if err := stageProjectVideos(ctx, directory, rawDirectory, artifact, config.Assets.Videos); err != nil {
 			return err
 		}
 		assetReport.Features = append(assetReport.Features, cartridge.FeatureVideoMPEG1v1)
 		slices.Sort(assetReport.Features)
 	}
 	if len(assetReport.AudioStreams) > 0 {
-		if err := stageProjectAudioStreams(rawDirectory, artifact, assetReport.AudioStreams); err != nil {
+		if err := stageProjectAudioStreams(ctx, rawDirectory, artifact, assetReport.AudioStreams); err != nil {
 			return err
 		}
 		assetReport.Features = append(assetReport.Features, cartridge.FeatureAudioStreamQOAv1)
 		slices.Sort(assetReport.Features)
 	}
-	if err := writeAssetReport(rawDirectory, assetReport); err != nil {
+	if err := writeAssetReport(ctx, rawDirectory, assetReport); err != nil {
 		return err
 	}
 
-	if err := embedProjectManifest(artifact, config, compiler, levels, assetReport.Features); err != nil {
+	if err := embedProjectManifest(ctx, artifact, config, compiler, levels, assetReport.Features); err != nil {
 		return err
 	}
 
@@ -442,6 +543,10 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 
 	options.progress("Preparing runtime")
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if err := stageRequestedTarget(
 		ctx, manifest, config.Project.Name, distributionDirectory, rawDirectory, artifact, levels, options,
 	); err != nil {
@@ -452,7 +557,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 	if options.Summary != nil {
-		report, err := summarizeBuild(directory, config.Project.Name, manifest.Version, levels, assetReport, options)
+		report, err := summarizeBuild(ctx, directory, config.Project.Name, manifest.Version, levels, assetReport, options)
 		if err != nil {
 			return fmt.Errorf("summarize build output: %w", err)
 		}
@@ -460,7 +565,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		options.Summary(report)
 	}
 
-	return nil
+	return ctx.Err()
 }
 
 func removeLegacyRawCatalog(rawDirectory string) error {
@@ -491,8 +596,8 @@ func stageRequestedTarget(
 			return fmt.Errorf("resolve SDK web runtime: %w", err)
 		}
 
-		return stageTargetWithCDN(
-			distributionDirectory, rawDirectory, artifact, levels, "", "web", runtime, "", options.AirProxy,
+		return stageTargetWithCDN(ctx,
+			distributionDirectory, rawDirectory, artifact, levels, "", "web", runtime, "",
 			gameTitle, options.rendererDebug, options.cdnHost,
 		)
 	}
@@ -533,9 +638,9 @@ func stageRequestedTarget(
 		}
 	}
 
-	return stageTarget(
+	return stageTarget(ctx,
 		distributionDirectory, rawDirectory, artifact, levels,
-		options.Host, options.Target, webRuntime, options.Platform, options.AirProxy, gameTitle, options.rendererDebug,
+		options.Host, options.Target, webRuntime, options.Platform, gameTitle, options.rendererDebug,
 	)
 }
 
@@ -578,12 +683,6 @@ func findWebHostArtifact() (string, error) {
 			return environment, nil
 		}
 	}
-	if executable, err := os.Executable(); err == nil {
-		candidate := filepath.Join(filepath.Dir(executable), "..", "..", "host", "web", "karty-host.wasm")
-		if mode, inspectErr := inspectHostArtifact(candidate); inspectErr == nil && mode.IsRegular() {
-			return candidate, nil
-		}
-	}
 	return "", errWebHostRequired
 }
 
@@ -618,7 +717,7 @@ func buildAndStageLevels(
 		return nil, fmt.Errorf("build levels: %w", err)
 	}
 
-	if err := stageLevels(buildDirectory, levels, ""); err != nil {
+	if err := stageLevels(ctx, buildDirectory, levels, ""); err != nil {
 		return nil, err
 	}
 
@@ -662,8 +761,9 @@ func analyzeProjectAssets(
 	sounds []project.Sound,
 	names []string,
 	theme uicompiler.Theme,
+	views []uicompiler.Component,
 ) (assetpipeline.Report, error) {
-	usage := assetusage.Analyze(directory, modulePath, names)
+	usage := assetusage.AnalyzeWithUI(directory, modulePath, names, views)
 	for _, name := range theme.ImageNames() {
 		usage.Live[name] = "theme image reference"
 	}
@@ -752,19 +852,23 @@ func applyUsageSummary(report *assetpipeline.Report, usage []assetpipeline.Usage
 	}
 }
 
-func analyzeProjectFonts(
+func analyzeProjectFonts(ctx context.Context,
 	directory string,
 	fonts []project.Font,
 	used map[string]bool,
 	report *assetpipeline.Report,
 ) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	report.Fonts = make([]assetpipeline.FontUsage, 0, len(fonts))
 	report.Summary.DeclaredFontCount = len(fonts)
 
 	for _, font := range fonts {
 		path := filepath.Join(directory, filepath.FromSlash(font.Source))
 
-		contents, err := os.ReadFile(path)
+		contents, err := contextio.ReadFile(ctx, path)
 		if err != nil {
 			return fmt.Errorf("read %s font for validation: %w", font.Role, err)
 		}
@@ -821,6 +925,7 @@ func compilerEnvironment(compiler string) []string {
 		environment = removeEnvironmentValue(environment, "GOROOT")
 		environment = setEnvironmentValue(environment, "GOOS", "wasip1")
 		environment = setEnvironmentValue(environment, "GOARCH", "wasm")
+		environment = setEnvironmentValue(environment, "CGO_ENABLED", "0")
 	}
 
 	return environment
@@ -852,7 +957,11 @@ func setEnvironmentValue(environment []string, name, value string) []string {
 	return append(result, prefix+value)
 }
 
-func writeGeneratedClientAPI(directory string, generated map[string][]byte) error {
+func writeGeneratedClientAPI(ctx context.Context, directory string, generated map[string][]byte) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	root := filepath.Join(directory, ".karty")
 	if err := os.RemoveAll(filepath.Join(root, "assets")); err != nil {
 		return fmt.Errorf("replace generated assets package: %w", err)
@@ -870,7 +979,7 @@ func writeGeneratedClientAPI(directory string, generated map[string][]byte) erro
 			return fmt.Errorf("create generated client API directory: %w", err)
 		}
 
-		if err := os.WriteFile(path, contents, 0o600); err != nil {
+		if err := contextio.WriteFile(ctx, path, contents, 0o600); err != nil {
 			return fmt.Errorf("write generated client API: %w", err)
 		}
 	}
@@ -942,8 +1051,12 @@ func exportedAssetIdentifier(name string) string {
 	return result.String()
 }
 
-func retireLegacyGeneratedRegistration(directory string) error {
-	registered, err := sourceExportsRegistration(filepath.Join(directory, "src"))
+func retireLegacyGeneratedRegistration(ctx context.Context, directory string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	registered, err := sourceExportsRegistration(ctx, filepath.Join(directory, "src"))
 	if err != nil || !registered {
 		return err
 	}
@@ -963,7 +1076,7 @@ func retireLegacyGeneratedRegistration(directory string) error {
 		return fmt.Errorf("%s: %w", path, errRegistrationCollision)
 	}
 
-	contents, err := os.ReadFile(path)
+	contents, err := contextio.ReadFile(ctx, path)
 	if err != nil {
 		return fmt.Errorf("read generated registration: %w", err)
 	}
@@ -979,7 +1092,11 @@ func retireLegacyGeneratedRegistration(directory string) error {
 	return nil
 }
 
-func sourceExportsRegistration(directory string) (bool, error) {
+func sourceExportsRegistration(ctx context.Context, directory string) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+
 	entries, err := os.ReadDir(directory)
 	if err != nil {
 		return false, fmt.Errorf("read client source directory: %w", err)
@@ -992,7 +1109,7 @@ func sourceExportsRegistration(directory string) (bool, error) {
 
 		path := filepath.Join(directory, entry.Name())
 
-		contents, err := os.ReadFile(path)
+		contents, err := contextio.ReadFile(ctx, path)
 		if err != nil {
 			return false, fmt.Errorf("read client source %s: %w", entry.Name(), err)
 		}
@@ -1078,22 +1195,30 @@ func resolveCompiler(ctx context.Context, compiler string, manifest sdk.Manifest
 	return "tinygo", path, nil
 }
 
-func stageTarget(
+func stageTarget(ctx context.Context,
 	distributionDirectory, rawDirectory, clientArtifact string,
 	levels []levelbuild.Artifact,
 	hostArtifact, target, webRuntime, platform string,
-	airProxy bool, gameTitle string, rendererDebug bool,
+	gameTitle string, rendererDebug bool,
 ) error {
-	return stageTargetWithCDN(distributionDirectory, rawDirectory, clientArtifact, levels, hostArtifact, target, webRuntime, platform,
-		airProxy, gameTitle, rendererDebug, nil)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	return stageTargetWithCDN(ctx, distributionDirectory, rawDirectory, clientArtifact, levels, hostArtifact, target, webRuntime, platform,
+		gameTitle, rendererDebug, nil)
 }
 
-func stageTargetWithCDN(
+func stageTargetWithCDN(ctx context.Context,
 	distributionDirectory, rawDirectory, clientArtifact string,
 	levels []levelbuild.Artifact,
 	hostArtifact, target, webRuntime, platform string,
-	airProxy bool, gameTitle string, rendererDebug bool, cdn *cdnHost,
+	gameTitle string, rendererDebug bool, cdn *cdnHost,
 ) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if target == "" {
 		target = "native"
 	}
@@ -1128,23 +1253,23 @@ func stageTargetWithCDN(
 		return fmt.Errorf("create %s target directory: %w", target, err)
 	}
 
-	if err := stageTargetAssets(targetDirectory, clientArtifact); err != nil {
+	if err := stageTargetAssets(ctx, targetDirectory, clientArtifact); err != nil {
 		return err
 	}
 
-	if err := stageLevels(targetDirectory, levels, rawDirectory); err != nil {
+	if err := stageLevels(ctx, targetDirectory, levels, rawDirectory); err != nil {
 		return err
 	}
 
-	if err := stageVideoFiles(targetDirectory, clientArtifact, rawDirectory); err != nil {
+	if err := stageVideoFiles(ctx, targetDirectory, clientArtifact, rawDirectory); err != nil {
 		return err
 	}
 
-	if err := stageAudioStreamFiles(targetDirectory, clientArtifact, rawDirectory); err != nil {
+	if err := stageAudioStreamFiles(ctx, targetDirectory, clientArtifact, rawDirectory); err != nil {
 		return err
 	}
 
-	if err := stageHostArtifact(targetDirectory, hostArtifact, target, platform, hostMode); err != nil {
+	if err := stageHostArtifact(ctx, targetDirectory, hostArtifact, target, platform, hostMode); err != nil {
 		return err
 	}
 
@@ -1153,13 +1278,17 @@ func stageTargetWithCDN(
 	}
 
 	if target == "web" {
-		return stageWebTarget(targetDirectory, webRuntime, airProxy, gameTitle, rendererDebug, cdn)
+		return stageWebTarget(ctx, targetDirectory, webRuntime, gameTitle, rendererDebug, cdn)
 	}
 
 	return nil
 }
 
-func stageWebTarget(targetDirectory, webRuntime string, airProxy bool, gameTitle string, rendererDebug bool, cdn *cdnHost) error {
+func stageWebTarget(ctx context.Context, targetDirectory, webRuntime string, gameTitle string, rendererDebug bool, cdn *cdnHost) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if err := os.Remove(filepath.Join(targetDirectory, "wasm_exec.js")); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("remove stale web artifact: %w", err)
 	}
@@ -1170,7 +1299,7 @@ func stageWebTarget(targetDirectory, webRuntime string, airProxy bool, gameTitle
 		}
 	}
 
-	return stageWebShell(targetDirectory, webRuntime, airProxy, gameTitle, rendererDebug, cdn)
+	return stageWebShell(ctx, targetDirectory, webRuntime, gameTitle, rendererDebug, cdn)
 }
 
 //nolint:gosec // The caller supplies an explicit host path or a fixed packaged location.
@@ -1191,8 +1320,12 @@ func inspectHostArtifact(path string) (os.FileMode, error) {
 	return info.Mode().Perm(), nil
 }
 
-func stageTargetAssets(targetDirectory, clientArtifact string) error {
-	if err := copyFile(clientArtifact, filepath.Join(targetDirectory, "game.kart"), 0o600); err != nil {
+func stageTargetAssets(ctx context.Context, targetDirectory, clientArtifact string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if err := copyFile(ctx, clientArtifact, filepath.Join(targetDirectory, "game.kart"), 0o600); err != nil {
 		return fmt.Errorf("stage client artifact: %w", err)
 	}
 
@@ -1204,7 +1337,7 @@ func stageTargetAssets(targetDirectory, clientArtifact string) error {
 }
 
 func validateClientArtifact(ctx context.Context, directory, wasmTools, artifact string) error {
-	validate := exec.CommandContext(ctx, wasmTools, "validate", artifact)
+	validate := process.CommandContext(ctx, wasmTools, "validate", artifact)
 	validate.Dir = directory
 
 	if output, err := validate.CombinedOutput(); err != nil {
@@ -1222,7 +1355,11 @@ func removeLegacyClientArtifact(directory string) error {
 	return nil
 }
 
-func stageHostArtifact(targetDirectory, hostArtifact, target, platform string, mode os.FileMode) error {
+func stageHostArtifact(ctx context.Context, targetDirectory, hostArtifact, target, platform string, mode os.FileMode) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if hostArtifact == "" {
 		return nil
 	}
@@ -1232,23 +1369,27 @@ func stageHostArtifact(targetDirectory, hostArtifact, target, platform string, m
 		name = "karty-host.wasm"
 	}
 
-	if err := copyFile(hostArtifact, filepath.Join(targetDirectory, name), mode); err != nil {
+	if err := copyFile(ctx, hostArtifact, filepath.Join(targetDirectory, name), mode); err != nil {
 		return fmt.Errorf("stage host artifact: %w", err)
 	}
 
 	return nil
 }
 
-func embedProjectAssets(
+func embedProjectAssets(ctx context.Context,
 	directory, artifact string,
 	textures []assetpipeline.Texture,
 	sounds []assetpipeline.Sound,
 	fonts []project.Font,
 	usedFonts map[string]bool,
 ) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	assets := make([]cartridge.Asset, 0, len(textures)+len(fonts))
 	for _, texture := range textures {
-		contents, err := readVerifiedProcessedAsset(texture.SourcePath, texture.OutputSHA256, texture.OutputBytes)
+		contents, err := readVerifiedProcessedAsset(ctx, texture.SourcePath, texture.OutputSHA256, texture.OutputBytes)
 		if err != nil {
 			return fmt.Errorf("read texture %q for cartridge: %w", texture.Name, err)
 		}
@@ -1261,7 +1402,7 @@ func embedProjectAssets(
 			continue
 		}
 
-		contents, err := os.ReadFile(filepath.Join(directory, font.Source))
+		contents, err := contextio.ReadFile(ctx, filepath.Join(directory, font.Source))
 		if err != nil {
 			return fmt.Errorf("read %s font for cartridge: %w", font.Role, err)
 		}
@@ -1274,7 +1415,7 @@ func embedProjectAssets(
 		return fmt.Errorf("encode game assets: %w", err)
 	}
 
-	wasm, err := os.ReadFile(artifact)
+	wasm, err := contextio.ReadFile(ctx, artifact)
 	if err != nil {
 		return fmt.Errorf("read game cartridge: %w", err)
 	}
@@ -1287,7 +1428,7 @@ func embedProjectAssets(
 	if len(sounds) > 0 {
 		catalog := make([]cartridge.Sound, 0, len(sounds))
 		for _, sound := range sounds {
-			contents, readErr := readVerifiedProcessedAsset(sound.SourcePath, sound.OutputSHA256, sound.OutputBytes)
+			contents, readErr := readVerifiedProcessedAsset(ctx, sound.SourcePath, sound.OutputSHA256, sound.OutputBytes)
 			if readErr != nil {
 				return fmt.Errorf("read sound %q for cartridge: %w", sound.Name, readErr)
 			}
@@ -1309,21 +1450,29 @@ func embedProjectAssets(
 			return fmt.Errorf("embed game sounds: %w", err)
 		}
 	}
-	//nolint:gosec // artifact is the fixed dist/raw/game.kart path owned by this build.
-	if err := os.WriteFile(artifact, embedded, 0o600); err != nil {
+	// artifact is the fixed dist/raw/game.kart path owned by this build.
+	if err := contextio.WriteFile(ctx, artifact, embedded, 0o600); err != nil {
 		return fmt.Errorf("write game cartridge assets: %w", err)
 	}
 
 	return nil
 }
 
-func readVerifiedProcessedAsset(path, expectedDigest string, expectedBytes int64) ([]byte, error) {
-	contents, err := os.ReadFile(path)
+func readVerifiedProcessedAsset(ctx context.Context, path, expectedDigest string, expectedBytes int64) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	contents, err := contextio.ReadFile(ctx, path)
 	if err != nil {
 		return nil, err
 	}
 
-	digest := sha256.Sum256(contents)
+	digest, err := contextio.Sum256(ctx, contents)
+	if err != nil {
+		return nil, err
+	}
+
 	if int64(len(contents)) != expectedBytes || hex.EncodeToString(digest[:]) != expectedDigest {
 		return nil, errCachedAssetChanged
 	}
@@ -1365,13 +1514,17 @@ func fontRoleName(style ui.Style) string {
 	}
 }
 
-func embedProjectManifest(
+func embedProjectManifest(ctx context.Context,
 	artifact string,
 	config project.Config,
 	compiler string,
 	levels []levelbuild.Artifact,
 	features []string,
 ) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	dependencies := make([]cartridge.LevelDependency, 0, len(levels))
 	for _, level := range levels {
 		dependencies = append(dependencies, cartridge.LevelDependency{
@@ -1399,7 +1552,7 @@ func embedProjectManifest(
 		return fmt.Errorf("encode game manifest: %w", err)
 	}
 
-	wasm, err := os.ReadFile(artifact)
+	wasm, err := contextio.ReadFile(ctx, artifact)
 	if err != nil {
 		return fmt.Errorf("read game cartridge for manifest: %w", err)
 	}
@@ -1418,8 +1571,15 @@ func embedProjectManifest(
 	if err != nil {
 		return fmt.Errorf("embed game performance profiles: %w", err)
 	}
-	//nolint:gosec // artifact is the fixed dist/raw/game.kart path owned by this build.
-	if err := os.WriteFile(artifact, embedded, 0o600); err != nil {
+
+	if config.Project.StorageID != "" {
+		embedded, err = cartridge.EmbedSection(embedded, "karty.storage.v1", []byte(config.Project.StorageID))
+		if err != nil {
+			return fmt.Errorf("embed game storage identity: %w", err)
+		}
+	}
+	// artifact is the fixed dist/raw/game.kart path owned by this build.
+	if err := contextio.WriteFile(ctx, artifact, embedded, 0o600); err != nil {
 		return fmt.Errorf("write game cartridge manifest: %w", err)
 	}
 
@@ -1436,7 +1596,11 @@ func removeStagedAssets(root string) error {
 	return nil
 }
 
-func stageLevels(root string, artifacts []levelbuild.Artifact, sourceRoot string) error {
+func stageLevels(ctx context.Context, root string, artifacts []levelbuild.Artifact, sourceRoot string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	staging, err := os.MkdirTemp(root, ".content-stage-")
 	if err != nil {
 		return fmt.Errorf("create level staging directory: %w", err)
@@ -1444,15 +1608,19 @@ func stageLevels(root string, artifacts []levelbuild.Artifact, sourceRoot string
 	defer os.RemoveAll(staging)
 
 	for _, artifact := range artifacts {
-		if err := stageLevelContent(staging, sourceRoot, artifact.ContentSHA256, artifact.Bytes); err != nil {
+		if err := stageLevelContent(ctx, staging, sourceRoot, artifact.ContentSHA256, artifact.Bytes); err != nil {
 			return fmt.Errorf("stage level %q: %w", artifact.Name, err)
 		}
 
 		for _, chunk := range artifact.Chunks {
-			if err := stageLevelContent(staging, sourceRoot, chunk.ContentSHA256, chunk.Bytes); err != nil {
+			if err := stageLevelContent(ctx, staging, sourceRoot, chunk.ContentSHA256, chunk.Bytes); err != nil {
 				return fmt.Errorf("stage level %q chunk %d: %w", artifact.Name, chunk.ID, err)
 			}
 		}
+	}
+
+	if err := ctx.Err(); err != nil {
+		return err
 	}
 
 	destination := filepath.Join(root, "content")
@@ -1491,7 +1659,11 @@ func stageLevels(root string, artifacts []levelbuild.Artifact, sourceRoot string
 	return nil
 }
 
-func stageLevelContent(staging, sourceRoot, digest string, expected []byte) error {
+func stageLevelContent(ctx context.Context, staging, sourceRoot, digest string, expected []byte) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	decoded, err := hex.DecodeString(digest)
 	if err != nil || len(decoded) != sha256.Size || digest != strings.ToLower(digest) {
 		return fmt.Errorf("invalid content digest: %w", errCachedAssetChanged)
@@ -1522,21 +1694,29 @@ func stageLevelContent(staging, sourceRoot, digest string, expected []byte) erro
 			return errCachedAssetChanged
 		}
 
-		contents, err = io.ReadAll(io.LimitReader(file, int64(len(expected))+1))
+		contents, err = contextio.ReadAll(ctx, io.LimitReader(file, int64(len(expected))+1))
 		if err != nil {
 			return err
 		}
 	}
 
-	actual := sha256.Sum256(contents)
+	actual, err := contextio.Sum256(ctx, contents)
+	if err != nil {
+		return err
+	}
+
 	if len(contents) != len(expected) || hex.EncodeToString(actual[:]) != digest {
 		return errCachedAssetChanged
 	}
 
-	return os.WriteFile(filepath.Join(staging, name), contents, 0o600)
+	return contextio.WriteFile(ctx, filepath.Join(staging, name), contents, 0o600)
 }
 
-func writeAssetReport(buildDirectory string, report assetpipeline.Report) error {
+func writeAssetReport(ctx context.Context, buildDirectory string, report assetpipeline.Report) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if err := os.Remove(filepath.Join(buildDirectory, "asset-report.json")); err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -1546,68 +1726,48 @@ func writeAssetReport(buildDirectory string, report assetpipeline.Report) error 
 		return fmt.Errorf("encode asset report: %w", err)
 	}
 
-	if err := os.WriteFile(filepath.Join(buildDirectory, "asset-report.toml"), append(contents, '\n'), 0o600); err != nil {
+	if err := contextio.WriteFile(ctx, filepath.Join(buildDirectory, "asset-report.toml"), append(contents, '\n'), 0o600); err != nil {
 		return fmt.Errorf("write asset report: %w", err)
 	}
 
 	return nil
 }
 
-func stageWebShell(targetDirectory, wasmExec string, airProxy bool, gameTitle string, rendererDebug bool, cdn *cdnHost) error {
-	if err := copyFile(wasmExec, filepath.Join(targetDirectory, "wasm_exec.js"), 0o600); err != nil {
+func stageWebShell(ctx context.Context, targetDirectory, wasmExec string, gameTitle string, rendererDebug bool, cdn *cdnHost) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if err := copyFile(ctx, wasmExec, filepath.Join(targetDirectory, "wasm_exec.js"), 0o600); err != nil {
 		return fmt.Errorf("stage wasm_exec.js: %w", err)
 	}
 
-	clientHash, err := fileHash(filepath.Join(targetDirectory, "game.kart"))
+	clientHash, err := fileHash(ctx, filepath.Join(targetDirectory, "game.kart"))
 	if err != nil {
 		return fmt.Errorf("hash staged client: %w", err)
 	}
 
-	hostSource, err := webHostSource(targetDirectory, cdn)
+	hostSource, err := webHostSource(ctx, targetDirectory, cdn)
 	if err != nil {
 		return err
 	}
 
 	launcher := strings.NewReplacer("@@CLIENT_HASH@@", clientHash, "@@HOST_SOURCE@@", hostSource).Replace(webLauncherTemplate)
-	if err := os.WriteFile(filepath.Join(targetDirectory, "karty.js"), []byte(launcher), 0o600); err != nil {
+	if err := contextio.WriteFile(ctx, filepath.Join(targetDirectory, "karty.js"), []byte(launcher), 0o600); err != nil {
 		return fmt.Errorf("write web launcher: %w", err)
 	}
 
-	launcherHash, err := fileHash(filepath.Join(targetDirectory, "karty.js"))
+	launcherHash, err := fileHash(ctx, filepath.Join(targetDirectory, "karty.js"))
 	if err != nil {
 		return fmt.Errorf("hash staged launcher: %w", err)
 	}
 
-	runtimeHash, err := fileHash(filepath.Join(targetDirectory, "wasm_exec.js"))
+	runtimeHash, err := fileHash(ctx, filepath.Join(targetDirectory, "wasm_exec.js"))
 	if err != nil {
 		return fmt.Errorf("hash staged runtime: %w", err)
 	}
 
-	airProxyBootstrap := ""
-	if airProxy {
-		airProxyBootstrap = "<script>\n" +
-			"    // Air's SharedWorker also opens a root-relative SSE URL internally,\n" +
-			"    // so use its page-level EventSource fallback and preserve proxy prefixes.\n" +
-			"    const kartyAirURL = value => typeof value === \"string\" && value.startsWith(\"/__air_internal/\")\n" +
-			"      ? new URL(\".\" + value, window.location.href).href : value;\n" +
-			"    try {\n" +
-			"      Object.defineProperty(window, \"SharedWorker\", { configurable: true, value: undefined });\n" +
-			"    } catch (_) {\n" +
-			"      window.SharedWorker = undefined;\n" +
-			"    }\n" +
-			"    if (typeof window.EventSource === \"function\") {\n" +
-			"      window.EventSource = new Proxy(window.EventSource, {\n" +
-			"        construct(target, args) {\n" +
-			"          args[0] = kartyAirURL(args[0]);\n" +
-			"          return Reflect.construct(target, args);\n" +
-			"        },\n" +
-			"      });\n" +
-			"    }\n" +
-			"    window.KARTY_AIR_BASE_PATH_PATCHED = true;\n" +
-			"  </script>"
-	}
-
-	debugScripts, err := stageRendererDebugShell(targetDirectory, rendererDebug)
+	debugScripts, err := stageRendererDebugShell(ctx, targetDirectory, rendererDebug)
 	if err != nil {
 		return err
 	}
@@ -1617,33 +1777,11 @@ func stageWebShell(targetDirectory, wasmExec string, airProxy bool, gameTitle st
 		"@@RENDERER_DEBUG@@", debugScripts,
 		"@@LAUNCHER_HASH@@", launcherHash,
 		"@@RUNTIME_HASH@@", runtimeHash,
-		"@@AIR_PROXY_BOOTSTRAP@@", airProxyBootstrap,
 	).Replace(webIndexTemplate)
 
-	if err := os.WriteFile(filepath.Join(targetDirectory, "index.html"), []byte(index), 0o600); err != nil {
+	if err := contextio.WriteFile(ctx, filepath.Join(targetDirectory, "index.html"), []byte(index), 0o600); err != nil {
 		return fmt.Errorf("write web shell: %w", err)
 	}
 
 	return nil
-}
-
-func fileHash(path string) (string, error) {
-	contents, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-
-	digest := sha256.Sum256(contents)
-
-	return hex.EncodeToString(digest[:8]), nil
-}
-
-func copyFile(source, destination string, mode os.FileMode) error {
-	//nolint:gosec // source is a validated build-owned path or pinned tool artifact.
-	contents, err := os.ReadFile(source)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(destination, contents, mode) //nolint:gosec // destinations are fixed build artifacts.
 }

@@ -1,0 +1,21 @@
+extends = "dark"
+
+[images.elias]
+asset = "elias"
+slice = [0, 0, 0, 0]
+
+[images.elias-wistful]
+asset = "elias-wistful"
+slice = [0, 0, 0, 0]
+
+[images.iris]
+asset = "iris"
+slice = [0, 0, 0, 0]
+
+[images.iris-guarded]
+asset = "iris-guarded"
+slice = [0, 0, 0, 0]
+
+[images.iris-relieved]
+asset = "iris-relieved"
+slice = [0, 0, 0, 0]

@@ -23,6 +23,7 @@ func TestCompilerEnvironmentDisablesVCSStamping(t *testing.T) {
 
 func TestGoCompilerEnvironmentSelectsWASI(t *testing.T) {
 	t.Setenv("GOROOT", "/unexpected/outer-go")
+	t.Setenv("CGO_ENABLED", "1")
 
 	environment := compilerEnvironment("go")
 	for _, entry := range environment {
@@ -37,6 +38,10 @@ func TestGoCompilerEnvironmentSelectsWASI(t *testing.T) {
 
 	if value := environmentValue(environment, "GOARCH"); value != "wasm" {
 		t.Errorf("GOARCH = %q, want wasm", value)
+	}
+
+	if value := environmentValue(environment, "CGO_ENABLED"); value != "0" {
+		t.Errorf("CGO_ENABLED = %q, want 0", value)
 	}
 }
 

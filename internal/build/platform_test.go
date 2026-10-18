@@ -24,7 +24,7 @@ func TestStageForeignPlatformKeepsOtherDistributions(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := stageTarget(dist, root, game, nil, host, "native", "", platform, false, "platform-test", false); err != nil {
+		if err := stageTarget(t.Context(), dist, root, game, nil, host, "native", "", platform, "platform-test", false); err != nil {
 			t.Fatal(err)
 		}
 	}

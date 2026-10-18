@@ -40,6 +40,7 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 	document := sdkworld.Document{Version: sdkworld.Version}
 	if expanded.Environment != nil {
 		environment := *expanded.Environment
+		environment.Appearance = sdkworld.CloneEnvironmentAppearance(expanded.Environment.Appearance)
 		if environment.Sun != nil {
 			sun := *environment.Sun
 			environment.Sun = &sun
@@ -263,6 +264,7 @@ func Compile(expanded source.Expanded, materials map[string]uint32) (sdkworld.Do
 		return sdkworld.Document{}, fmt.Errorf("compile material layers: %w", err)
 	}
 
+	document.Fluids = worldsource.CompileFluids(expanded.Fluids)
 	if err := sdkworld.Validate(&document); err != nil {
 		return sdkworld.Document{}, fmt.Errorf("validate compiled world: %w", err)
 	}

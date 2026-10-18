@@ -21,10 +21,12 @@ import (
 	sdkworld "github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
 	"github.com/karty-game/karty-sdk/format/worldparticles"
+	"github.com/karty-game/karty-sdk/format/worldterrain"
 	uicompiler "github.com/karty-game/karty-ui/compiler"
 	ui "github.com/karty-game/karty-ui/schema"
 	"github.com/karty-game/karty/internal/actionbuild"
 	"github.com/karty-game/karty/internal/assetpipeline"
+	"github.com/karty-game/karty/internal/packages"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/pelletier/go-toml/v2"
@@ -46,6 +48,7 @@ type manifest struct {
 	} `toml:"level"`
 	Data     []dataEntry            `toml:"data"`
 	World    worldSettings          `toml:"world"`
+	Terrain  *terrainBuildSettings  `toml:"terrain"`
 	Lightmap *lightmapBuildSettings `toml:"lightmap"`
 	Chunks   *chunkBuildSettings    `toml:"chunks"`
 	Textures []textureEntry         `toml:"textures"`
@@ -120,6 +123,7 @@ type ChunkArtifact struct {
 }
 
 type assetBuild struct {
+	packages    *packages.Set
 	projectRoot string
 	manifest    sdk.Manifest
 	screenshot  bool
@@ -168,6 +172,16 @@ func buildAll(
 	themeSource string,
 	assets *assetBuild,
 ) ([]Artifact, error) {
+	set, err := packages.Restore(ctx, projectDirectory)
+	if err != nil {
+		return nil, err
+	}
+	defer set.Close()
+
+	if assets != nil {
+		assets.packages = set
+	}
+
 	levelsDirectory := filepath.Join(projectDirectory, "levels")
 
 	entries, err := os.ReadDir(levelsDirectory)
@@ -232,6 +246,24 @@ func build(
 	assets *assetBuild,
 ) (Artifact, error) {
 	definition, err := readLevelManifest(directory, assets)
+	if err != nil {
+		return Artifact{}, err
+	}
+
+	var set *packages.Set
+	if assets != nil {
+		set = assets.packages
+	}
+
+	if set == nil {
+		set, err = levelPackages(ctx, directory)
+		if err != nil {
+			return Artifact{}, err
+		}
+		defer set.Close()
+	}
+
+	definition, err = resolveLevelPackages(ctx, directory, definition, set)
 	if err != nil {
 		return Artifact{}, err
 	}
@@ -409,8 +441,14 @@ func loadMetadata(directory string, definition manifest, textures []metadataText
 			return nil, fmt.Errorf("parse level metadata: %w", err)
 		}
 	}
-	// Only the selected SDK build pipeline may declare a material atlas.
+	// Only the selected SDK build pipeline may declare compiled material/terrain resources.
 	delete(metadata, worldmaterial.MetadataKey)
+	delete(metadata, worldterrain.MetadataKey)
+
+	if definition.Terrain != nil {
+		metadata[worldterrain.MetadataKey] = level.StringValue(worldterrain.Schema)
+	}
+
 	metadata["kartyLevel"] = level.ObjectValue(level.Metadata{
 		"name":            level.StringValue(definition.Level.Name),
 		"kind":            level.StringValue(definition.Level.Kind),
@@ -556,8 +594,16 @@ func loadData(directory string, entries []dataEntry) ([]level.SourceEntry, error
 			return nil, ErrSource
 		}
 
+		if entry.Name == "@world/vegetation" {
+			return nil, fmt.Errorf("data %q is owned by world vegetation compilation: %w", entry.Name, ErrSource)
+		}
+
 		if entry.Name == worldparticles.EntryName {
 			return nil, fmt.Errorf("data %q is owned by world particle compilation: %w", entry.Name, ErrSource)
+		}
+
+		if entry.Name == worldterrain.EntryName {
+			return nil, fmt.Errorf("data %q is owned by world terrain compilation: %w", entry.Name, ErrSource)
 		}
 
 		if entry.Name == worldmaterial.LayoutEntry || entry.Name == worldmaterial.AlbedoEntry || entry.Name == worldmaterial.DataEntry ||
@@ -728,6 +774,10 @@ func readLevelManifest(directory string, assets *assetBuild) (manifest, error) {
 	}
 
 	if err := validateChunkSettings(definition, assets); err != nil {
+		return manifest{}, err
+	}
+
+	if err := validateTerrainSettings(definition, assets); err != nil {
 		return manifest{}, err
 	}
 

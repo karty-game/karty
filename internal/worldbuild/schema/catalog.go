@@ -87,6 +87,32 @@ func Level(value any, textures []string) *jsonschema.Schema {
 	fields["prefabs"].Items.Properties["particle_emitters"] = emitter
 	fields["prefabs"].Items.Properties["rooms"].Items.Properties["particle_emitters"] = emitter
 
+	vegetationPresets := make([]string, 0)
+
+	if vegetation, ok := root["vegetation"].(map[string]any); ok {
+		for _, p := range records(vegetation["presets"]) {
+			if name, ok := p["name"].(string); ok {
+				vegetationPresets = append(vegetationPresets, name)
+			}
+		}
+	}
+
+	layer := &jsonschema.Schema{
+		Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{"preset": sortedChoices(vegetationPresets)}},
+	}
+	fields["vegetation"] = &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
+		"presets": {
+			Items: &jsonschema.Schema{
+				Properties: map[string]*jsonschema.Schema{
+					"texture":        materials,
+					"normal_texture": {AnyOf: []*jsonschema.Schema{materials, {Enum: []any{""}}}},
+				},
+			},
+		},
+	}}
+	fields["rooms"].Items.Properties["vegetation_layers"] = layer
+	fields["prefabs"].Items.Properties["rooms"].Items.Properties["vegetation_layers"] = layer
+
 	return &jsonschema.Schema{
 		Schema:     draft,
 		Title:      "Karty level world",
@@ -106,33 +132,69 @@ func sortedChoices(names []string) *jsonschema.Schema {
 
 func scopeCatalog(materials, prefabs, presets *jsonschema.Schema) map[string]*jsonschema.Schema {
 	bands := &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
-		"top":    {Properties: map[string]*jsonschema.Schema{"texture": materials}},
-		"bottom": {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+		"top": {
+			Properties: map[string]*jsonschema.Schema{
+				"texture":        materials,
+				"normal_texture": {AnyOf: []*jsonschema.Schema{materials, {Enum: []any{""}}}},
+			},
+		},
+		"bottom": {
+			Properties: map[string]*jsonschema.Schema{
+				"texture":        materials,
+				"normal_texture": {AnyOf: []*jsonschema.Schema{materials, {Enum: []any{""}}}},
+			},
+		},
 	}}
 	content := &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
 		"actor": {
 			Properties: map[string]*jsonschema.Schema{
 				"solid_renderer": prefabs,
-				"sprite":         {Properties: map[string]*jsonschema.Schema{"texture": materials}},
-				"animation":      {Properties: map[string]*jsonschema.Schema{"preset": presets}},
+				"sprite": {
+					Properties: map[string]*jsonschema.Schema{
+						"texture":        materials,
+						"normal_texture": {AnyOf: []*jsonschema.Schema{materials, {Enum: []any{""}}}},
+					},
+				},
+				"animation": {Properties: map[string]*jsonschema.Schema{"preset": presets}},
 			},
 		},
 	}}
 
 	return map[string]*jsonschema.Schema{
 		"rooms": {Items: &jsonschema.Schema{Properties: map[string]*jsonschema.Schema{
-			"floor_material":    materials,
-			"ceiling_material":  materials,
-			"wall_bands":        bands,
-			"floor_secondary":   {Properties: map[string]*jsonschema.Schema{"texture": materials}},
-			"ceiling_secondary": {Properties: map[string]*jsonschema.Schema{"texture": materials}},
-			"wall_secondary":    {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+			"floor_material":   materials,
+			"rect":             {Properties: map[string]*jsonschema.Schema{"material": materials}},
+			"ceiling_material": materials,
+			"wall_bands":       bands,
+			"floor_secondary": {
+				Properties: map[string]*jsonschema.Schema{
+					"texture":        materials,
+					"normal_texture": {AnyOf: []*jsonschema.Schema{materials, {Enum: []any{""}}}},
+				},
+			},
+			"ceiling_secondary": {
+				Properties: map[string]*jsonschema.Schema{
+					"texture":        materials,
+					"normal_texture": {AnyOf: []*jsonschema.Schema{materials, {Enum: []any{""}}}},
+				},
+			},
+			"wall_secondary": {
+				Properties: map[string]*jsonschema.Schema{
+					"texture":        materials,
+					"normal_texture": {AnyOf: []*jsonschema.Schema{materials, {Enum: []any{""}}}},
+				},
+			},
 			"boundary": {
 				Items: &jsonschema.Schema{
 					Properties: map[string]*jsonschema.Schema{
-						"material":  materials,
-						"bands":     bands,
-						"secondary": {Properties: map[string]*jsonschema.Schema{"texture": materials}},
+						"material": materials,
+						"bands":    bands,
+						"secondary": {
+							Properties: map[string]*jsonschema.Schema{
+								"texture":        materials,
+								"normal_texture": {AnyOf: []*jsonschema.Schema{materials, {Enum: []any{""}}}},
+							},
+						},
 					},
 				},
 			},

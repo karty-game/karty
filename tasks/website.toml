@@ -1,0 +1,53 @@
+[docs]
+description = "Refresh the guide and sample gallery, then serve them locally"
+run = [
+  "mise run preview-docs",
+  'echo Docs: http://127.0.0.1:{{env.KARTY_DOCS_PORT | default(value="8081") | int(default=8081)}}/guide/',
+  'echo Samples: http://127.0.0.1:{{env.KARTY_DOCS_PORT | default(value="8081") | int(default=8081)}}/',
+  'go run ./cmd/karty serve --addr "127.0.0.1:{{env.KARTY_DOCS_PORT | default(value="8081") | int(default=8081)}}" dist/samples-site',
+]
+
+[generate-guide]
+description = "Generate Guides, API and Design with downloadable Markdown"
+run = "go run ./website/cmd/docs -output dist/guide -design-output dist/design -technical-output dist/technical"
+
+[check-guide]
+description = "Validate guide examples, links, output confinement and rendering"
+run = "go test -timeout=9s ./website/internal/generator ./website/cmd/docs"
+
+[check-website]
+description = "Check website generation, assembly and separation from CLI code"
+run = "go test -timeout=9s ./website/..."
+
+[generate-design-materialize]
+description = "Illustrate native Materialize output using KARTY_DOCS_MATERIALIZE from the selected SDK"
+run = 'node website/scripts/generate-design-materialize.mjs "$KARTY_DOCS_MATERIALIZE"'
+
+[check-technical-candidate]
+description = "Type-check all API examples against an installed SDK candidate"
+env = { KARTY_TECHNICAL_SDK = "0.0.13" }
+run = "go test -timeout=9s ./website/internal/generator -run TestTechnicalExamples -count=1 -v"
+
+[check-docs-web]
+description = "Review Samples, Guides, API and Design in desktop and mobile Chromium"
+run = "node website/scripts/check-docs-web.mjs"
+
+[check-samples]
+description = "Validate sample gallery and static preview assembly"
+run = "go test -timeout=9s ./website/cmd/samples"
+
+[capture-samples]
+description = "Capture sample gallery thumbnails from staged browser games"
+run = "node website/scripts/capture-samples.mjs"
+
+[build-samples]
+depends = ["build"]
+run = "go run ./website/cmd/samples build"
+
+[assemble-samples]
+description = "Assemble validated static sample previews for Pages CI"
+run = 'go run ./website/cmd/samples assemble "$SAMPLE_STATE" "$SAMPLE_SOURCE" "$DESTINATION" "$REMOVE_PREVIEW" "$OPEN_PRS"'
+
+[preview-docs]
+description = "Refresh the local guide and sample gallery, including built candidate samples"
+run = "go run ./website/cmd/samples preview"

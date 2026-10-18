@@ -97,7 +97,7 @@ linters:
           - cyclop
           - funlen
           - dupl
-      - path: "^(cmd|internal)/"
+      - path: "^(cmd|internal|website)/"
         linters:
           - cyclop
           - funlen

@@ -46,7 +46,7 @@ func TestAnalyzeRetainsScopeForDynamicLookup(t *testing.T) {
 
 	directory := usageProject(t, `package main
 import "example.com/game/.karty/engine"
-func spawn(name string) { new(engine.Game).NewSprite2DName(name, 0) }
+func spawn(name string) { new(engine.Game).NewSprite2D(engine.DynamicTexture(name), 0) }
 func main() { spawn("sprites.player") }
 `)
 
@@ -78,10 +78,8 @@ func (*Game) ShowUI(UIAsset) {}
 func (*Game) ShowInventory() {}
 type Game struct{}
 func (*Game) NewSprite2D(TextureID, int) {}
-func (*Game) NewSprite2DName(string, int) {}
-type Sprite2d struct{}
-func (*Sprite2d) UpdateAsset(TextureID) {}
-func (*Sprite2d) UpdateAssetName(string) {}
+type Sprite2D struct{}
+func (*Sprite2D) UpdateAsset(TextureID) {}
 func DynamicTexture(string) TextureID { return "" }
 `
 	if err := os.WriteFile(filepath.Join(engineDirectory, "engine.go"), []byte(engine), 0o600); err != nil {

@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -13,7 +14,9 @@ import (
 	"github.com/karty-game/karty/internal/sdk"
 )
 
-func compileAuthoredActions(directory, module string, manifest sdk.Manifest, artifacts []levelbuild.Artifact) ([]byte, error) {
+func compileAuthoredActions(ctx context.Context, directory, module string, manifest sdk.Manifest,
+	artifacts []levelbuild.Artifact,
+) ([]byte, error) {
 	declarations, err := actionbuild.Discover(directory, module)
 	if err != nil {
 		return nil, err
@@ -45,7 +48,7 @@ func compileAuthoredActions(directory, module string, manifest sdk.Manifest, art
 		return nil, nil
 	}
 
-	resources, err := sdk.Resources(manifest)
+	resources, err := sdk.ResourcesContext(ctx, manifest)
 	if err != nil {
 		return nil, err
 	}

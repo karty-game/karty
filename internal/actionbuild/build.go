@@ -100,7 +100,7 @@ func Discover(directory, module string) ([]Declaration, error) {
 func typeName(expr ast.Expr, engineAlias string) string {
 	switch value := expr.(type) {
 	case *ast.Ident:
-		if value.Name == "ActionContext" || value.Name == "WorldActorRef" {
+		if value.Name == "ActionContext" {
 			return "unsupported"
 		}
 
@@ -432,7 +432,7 @@ func actionParameters(function *ast.FuncDecl, engineAlias, kind string) ([]Param
 
 	for _, param := range params[1:] {
 		switch param.Type {
-		case "bool", "string", "int32", "uint32", "float32", "WorldActorRef":
+		case "bool", "string", "int32", "uint32", "float32", "EntityRef":
 		default:
 			return nil, invalidActions("unsupported argument type %s", param.Type)
 		}
@@ -836,7 +836,7 @@ func compileArgument(
 		}
 
 		expression = strconv.FormatBool(boolean)
-	case "WorldActorRef":
+	case "EntityRef":
 		actor, valid := value.(map[string]any)
 		if !valid {
 			return "", invalidActions("%s: expected actor argument", location)

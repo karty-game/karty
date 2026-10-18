@@ -1,0 +1,57 @@
+[generate-last-train-audio]
+description = "Regenerate Last Train’s original train Foley"
+run = "go run scripts/last-train-audio.go"
+
+[generate-last-train-score]
+description = "Render the acoustic score (requires FLUIDSYNTH_LIBRARY and LAST_TRAIN_SOUNDFONT)"
+run = 'python3 scripts/last-train-score.py --soundfont "$LAST_TRAIN_SOUNDFONT" --library "${FLUIDSYNTH_LIBRARY:-libfluidsynth.so.3}"'
+
+[check-last-train-audio]
+description = "Measure the packaged score and actual WebAudio across its loop"
+run = [
+  "go run scripts/check-last-train-score.go",
+  "KARTY_LAST_TRAIN_OUTPUT=dist/validation/last-train/audio-browser node scripts/check-last-train-web.mjs --audio-only",
+]
+
+[build-last-train-web]
+description = "Build Last Train with the package processor and pinned Yarn compiler"
+depends = ["build"]
+run = "mise exec dotnet@9.0.203 -- node scripts/build-last-train.mjs web"
+
+[build-last-train-native]
+description = "Build the native Last Train visual novel"
+depends = ["build"]
+run = "mise exec dotnet@9.0.203 -- node scripts/build-last-train.mjs native"
+
+[serve-last-train]
+description = "Serve the built Last Train sample on loopback"
+run = './dist/karty serve --addr "127.0.0.1:${KARTY_LAST_TRAIN_PORT:-4273}" "${KARTY_LAST_TRAIN_DIRECTORY:-samples/last-train/dist/web}"'
+
+[check-last-train-web]
+description = "Play all three Yarn endings, persistent saves and portrait touch in Chromium"
+run = "node scripts/check-last-train-web.mjs"
+
+[check-last-train-pacing]
+description = "Review the opening, text reveal and scene cards on desktop and portrait touch"
+run = [
+  "KARTY_LAST_TRAIN_OUTPUT=dist/validation/last-train/pacing node scripts/check-last-train-web.mjs --pacing-only",
+  "KARTY_LAST_TRAIN_OUTPUT=dist/validation/last-train/pacing-phone node scripts/check-last-train-web.mjs --pacing-only --phone-only",
+]
+
+[check-last-train-reading]
+description = "Check narration, icon controls, stable text reveal and introductions on desktop and phone"
+run = [
+  "KARTY_LAST_TRAIN_OUTPUT=dist/validation/last-train/reading node scripts/check-last-train-web.mjs --reading-only",
+  "KARTY_LAST_TRAIN_OUTPUT=dist/validation/last-train/reading-phone node scripts/check-last-train-web.mjs --reading-only --phone-only",
+]
+
+[check-last-train-native]
+description = "Start actual Last Train WASM with Xvfb and null audio"
+run = "node scripts/check-last-train-native.mjs"
+
+[check-last-train-direction]
+description = "Check authored expressions, animated staging, composition saves and reduced motion"
+run = [
+  "KARTY_LAST_TRAIN_OUTPUT=dist/validation/last-train/direction node scripts/check-last-train-web.mjs --direction-only",
+  "KARTY_LAST_TRAIN_OUTPUT=dist/validation/last-train/direction-phone node scripts/check-last-train-web.mjs --direction-only --phone-only",
+]

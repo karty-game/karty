@@ -1,16 +1,23 @@
 package build
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/karty-game/karty/internal/contextio"
 )
 
 //go:embed templates/renderer-debug.js
 var rendererDebugScript string
 
-func stageRendererDebugShell(directory string, enabled bool) (string, error) {
+func stageRendererDebugShell(ctx context.Context, directory string, enabled bool) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	path := filepath.Join(directory, "renderer-debug.js")
 	if !enabled {
 		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
@@ -26,11 +33,11 @@ func stageRendererDebugShell(directory string, enabled bool) (string, error) {
 		return "", err
 	}
 
-	if err := os.WriteFile(path, []byte(rendererDebugScript), 0o600); err != nil {
+	if err := contextio.WriteFile(ctx, path, []byte(rendererDebugScript), 0o600); err != nil {
 		return "", fmt.Errorf("stage renderer debugger: %w", err)
 	}
 
-	digest, err := fileHash(path)
+	digest, err := fileHash(ctx, path)
 	if err != nil {
 		return "", err
 	}

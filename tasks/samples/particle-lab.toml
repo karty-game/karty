@@ -1,0 +1,49 @@
+[generate-particle-lab]
+description = "Regenerate retained static masks and assemble particle-driven industrial effects"
+run = [
+  "go run samples/particle-lab/generate-static-assets.go",
+  "go run samples/particle-lab/generate-library.go",
+  "go run samples/particle-lab/generate-lab.go",
+]
+
+[check-particle-lab]
+description = "Check static-mask ownership, ten-layer effects, particle budgets and sector confinement"
+run = [
+  "go run samples/particle-lab/generate-static-assets.go -check",
+  "go run samples/particle-lab/generate-library.go -check",
+  "go run samples/particle-lab/generate-lab.go -check",
+  "go test -timeout=9s ./internal/worldbuild/geometry -run '^TestParticleLab' -count=1 -v",
+]
+
+[check-particle-lab-schema]
+depends = ["build"]
+dir = "samples/particle-lab"
+run = "../../dist/karty schema --check"
+
+[build-particle-lab-native]
+depends = ["build", "generate-particle-lab"]
+dir = "samples/particle-lab"
+run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
+
+[build-particle-lab-web]
+depends = ["build", "generate-particle-lab"]
+dir = "samples/particle-lab"
+run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
+
+[capture-particle-lab]
+description = "Capture the empty particle test room using the actual native host"
+depends = ["build"]
+dir = "samples/particle-lab"
+run = '../../dist/karty screenshot levels.lab --timeout 20s --width 960 --height 540 --batch room-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[serve-particle-lab]
+description = "Serve the built particle lab on loopback port 4245"
+depends = ["build"]
+dir = "samples/particle-lab"
+run = '../../dist/karty serve --addr "127.0.0.1:4245" dist/web'
+
+[capture-particle-smoke]
+description = "Capture the independent smoke recipes with the native host"
+depends = ["build"]
+dir = "samples/particle-lab"
+run = '../../dist/karty screenshot levels.smoke --timeout 20s --width 960 --height 540 --batch smoke-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'

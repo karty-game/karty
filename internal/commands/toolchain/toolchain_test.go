@@ -14,7 +14,7 @@ func TestInstallSelectsMaterializeOnlyWithSDKPin(t *testing.T) {
 		manifest.Tools.Materialize = version
 		options := installOptions(manifest)
 
-		if !options.NeedGo || !options.NeedTinyGo || !options.NeedAir || !options.NeedWasmTools ||
+		if !options.NeedGo || !options.NeedTinyGo || !options.NeedWasmTools ||
 			options.NeedMaterialize != (version != "") {
 			t.Fatalf("unexpected selection for %q: %+v", version, options)
 		}

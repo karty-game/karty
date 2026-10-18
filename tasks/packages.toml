@@ -1,0 +1,116 @@
+[test-controllers]
+description = "Test first-person, top-down 2D and isometric presets without generated bindings"
+run = "GOWORK=off go -C packages/controllers test -timeout=9s ./..."
+
+[build-controllers]
+description = "Compile the portable controllers for native Go and WASI"
+run = [
+  "GOWORK=off go -C packages/controllers build ./...",
+  "GOWORK=off GOOS=wasip1 GOARCH=wasm go -C packages/controllers build ./...",
+]
+
+[lint-controllers]
+description = "Run standard Go analysis on the standalone controller module"
+dir = "packages/controllers"
+run = "GOWORK=off golangci-lint run --no-config --default standard ./..."
+
+[export-controllers-starter]
+description = "Export the portable package as self-contained SDK starter template files"
+run = "node scripts/export-controllers-starter.mjs"
+
+[check-controllers-archive]
+description = "Export controllers and compile an independent archive-only Go/TinyGo game"
+depends = ["build"]
+run = "node scripts/check-controllers-archive.mjs"
+
+[build-controllers-willowbrook-snapshot]
+description = "Freeze Willowbrook sources and metadata before building its controller integration"
+depends = ["build"]
+run = "node scripts/build-controllers-willowbrook-snapshot.mjs"
+
+[check-package-processors]
+description = "Verify package processor input bounds, transactional outputs and generated-file ownership"
+run = "go test -timeout=9s ./internal/packages ./internal/build -run 'Processor|LocalArchive|ProjectManifest'"
+
+[generate-yarn-fixtures]
+description = "Compile authored compatibility fixtures with pinned Yarn Spinner 3.2.1"
+run = "mise exec dotnet@9.0.203 -- node scripts/yarn-fixtures.mjs"
+
+[test-dialogue-packages]
+description = "Test portable Yarn, dialogue presentation and save storage packages"
+run = [
+  "GOWORK=off go -C packages/dialogue test -timeout=9s ./...",
+  "GOWORK=off go -C packages/savegame test -timeout=9s ./...",
+  "GOWORK=off go -C samples/last-train test -timeout=9s ./internal/persistence ./internal/presentation",
+]
+
+[check-last-train-packages]
+description = "Export dialogue packages and play clean archive consumers with Go and TinyGo"
+depends = ["build"]
+run = "mise exec dotnet@9.0.203 -- node scripts/check-last-train-packages.mjs"
+
+[test-local-packages]
+description = "Validate local package archives, folder links, source confinement and level integration"
+run = [
+  "go test -timeout=9s ./internal/packages ./internal/assetusage ./internal/commands/packagecmd ./internal/commands/schema ./internal/commands/quality",
+  "go test -timeout=9s ./internal/devserver -run 'Package|ExplicitPackage'",
+  "go test -timeout=9s ./internal/levelbuild -run '^TestPackageInputs'",
+]
+
+[check-local-packages]
+description = "Run real CLI package export/import, linked dev edits and clean archive Go/TinyGo browser builds"
+depends = ["build"]
+run = ["go run ./testdata/local-packages/generate.go", "node scripts/check-local-packages.mjs"]
+
+[check-package-ui]
+description = "Validate shared package UI in two games, live edits and clean Go/TinyGo archive builds"
+depends = ["build"]
+run = "node scripts/check-package-ui.mjs"
+
+[restore-willowbrook-packages]
+description = "Restore Willowbrook's declared reusable Tiled package"
+depends = ["build"]
+dir = "samples/willowbrook"
+run = "../../dist/karty package restore"
+
+[test-tiled-package]
+description = "Test the portable Tiled parser, image importer and bounded Karty 2D adapter"
+dir = "packages/tiled"
+run = "GOWORK=off go test -timeout=9s ./..."
+
+[build-tiled-package]
+description = "Build the reusable Tiled package without any generated game bindings"
+dir = "packages/tiled"
+run = "GOWORK=off go build ./..."
+
+[restore-tiled-room]
+depends = ["build"]
+dir = "testdata/tiled-room"
+run = "../../dist/karty package restore"
+
+[author-tiled-room]
+depends = ["restore-tiled-room"]
+dir = "testdata/tiled-room"
+run = ["GOWORK=off go run ./cmd/author", "gofmt -w src/textures.generated.go"]
+
+[build-tiled-room-web]
+depends = ["build"]
+dir = "testdata/tiled-room"
+run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
+
+[check-tiled-package-web]
+run = "node scripts/check-tiled-package-web.mjs"
+
+[check-tiled-package-archive]
+description = "Export Tiled and build an independent consumer from only its checked archive"
+depends = ["build"]
+run = "node scripts/check-tiled-package-archive.mjs"
+
+[check-willowbrook-tiled]
+description = "Open/export/render the authoritative village with official Tiled executables without changing source"
+run = "bash scripts/check-willowbrook-tiled.sh"
+
+[check-controller-starters]
+description = "Scaffold all three bundled presets and compile each with Go and TinyGo using an installed SDK candidate"
+depends = ["build"]
+run = "node scripts/check-controller-starters.mjs"

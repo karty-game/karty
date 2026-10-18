@@ -1,0 +1,11 @@
+<template>
+  <panel class="card"><slot/></panel>
+</template>
+
+<style>
+.card
+  width: 320
+  padding: 20
+  gap: 12
+  background-image: theme.images.hud-panel
+</style>

@@ -75,10 +75,13 @@ func (settings environmentLightmapSettings) validate() error {
 
 func encodeEnvironmentWorldChunk(ctx context.Context, document world.Document, name string, chunk worldchunk.PlannedChunk,
 	materials []worldlightmapbake.Material, options worldlightmapbake.Options, settings environmentLightmapSettings,
-	pixelCaches ...*chunkPixelCache) (ChunkArtifact, worldchunk.Chunk, []ChunkArtifact, error) {
+	cache *chunkPixelCache) (ChunkArtifact, worldchunk.Chunk, []ChunkArtifact, error) {
 	if err := settings.validate(); err != nil {
 		return ChunkArtifact{}, worldchunk.Chunk{}, nil, err
 	}
+
+	// Fine foliage shadows are receiver-clipped runtime stamps. Opaque canopy
+	// proxies would leave visible polygons in these lower-resolution lightmaps.
 
 	mesh, err := worldchunk.EncodeMesh(chunk.Mesh, &document)
 	if err != nil {
@@ -121,11 +124,6 @@ func encodeEnvironmentWorldChunk(ctx context.Context, document world.Document, n
 	defaultTime := world.DefaultEnvironmentTimeOfDay
 	if settings.DefaultTime != nil {
 		defaultTime = *settings.DefaultTime
-	}
-
-	var cache *chunkPixelCache
-	if len(pixelCaches) > 0 {
-		cache = pixelCaches[0]
 	}
 
 	var (
@@ -240,7 +238,13 @@ func bakeEnvironmentVariantPixels(ctx context.Context, document world.Document, 
 		return image, rgbmRange, nil
 	}
 
-	result, err := worldlightmapbake.BakeEnvironment(ctx, document, layout, materials, settings, options)
+	var result worldlightmapbake.Result
+	if cache != nil && cache.baker != nil {
+		result, err = cache.baker.BakeEnvironment(ctx, layout, settings, options)
+	} else {
+		result, err = worldlightmapbake.BakeEnvironment(ctx, document, layout, materials, settings, options)
+	}
+
 	if err != nil {
 		return nil, 0, err
 	}

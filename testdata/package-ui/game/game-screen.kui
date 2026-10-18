@@ -1,0 +1,17 @@
+<template>
+  <panel modal="true" class="screen">
+    <HudBadge props={ HudBadgeProps{Title: title, Value: value, Change: change} }/>
+  </panel>
+</template>
+
+<script setup lang="go">
+func setup(title string, value func() string, change func()) {}
+</script>
+
+<style>
+.screen
+  width: 100%
+  height: 100%
+  align: center
+  justify: center
+</style>

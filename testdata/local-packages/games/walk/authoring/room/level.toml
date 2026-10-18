@@ -1,0 +1,9 @@
+[level]
+name = "levels.room"
+kind = "world"
+[world]
+source = "world.yaml"
+[[textures]]
+name = "accent"
+source = "accent.png"
+profile = "environment"

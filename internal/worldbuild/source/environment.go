@@ -71,6 +71,10 @@ func validateEnvironmentMapping(node *yaml.Node, version uint16) error {
 func validateEnvironmentNode(node *yaml.Node, version uint16) error {
 	for i := 0; i+1 < len(node.Content); i += 2 {
 		name, value := node.Content[i].Value, node.Content[i+1]
+		if err := validateAppearanceField(name, value, version); err != nil {
+			return err
+		}
+
 		if name == "backdrop" && version < worldsource.EnvironmentBackdropVersion {
 			return worldsource.ErrVersion
 		}
@@ -97,6 +101,54 @@ func validateEnvironmentNode(node *yaml.Node, version uint16) error {
 	}
 
 	return nil
+}
+
+func requireEnvironmentFields(node *yaml.Node, required []string) error {
+	if node.Kind != yaml.MappingNode {
+		return ErrYAML
+	}
+
+	for _, name := range required {
+		found := false
+		for i := 0; i+1 < len(node.Content); i += 2 {
+			found = found || node.Content[i].Value == name
+		}
+
+		if !found {
+			return ErrYAML
+		}
+	}
+
+	for i := 0; i+1 < len(node.Content); i += 2 {
+		name, value := node.Content[i].Value, node.Content[i+1]
+		switch name {
+		case "sun_color",
+			"ambient",
+			"zenith",
+			"horizon",
+			"nadir",
+			"cloud",
+			"sun",
+			"positive_x",
+			"negative_x",
+			"positive_y",
+			"negative_y",
+			"positive_z",
+			"negative_z":
+			if err := requireEnvironmentFields(value, []string{"x", "y", "z"}); err != nil {
+				return err
+			}
+		case "ambient_cube":
+			if err := requireEnvironmentFields(
+				value,
+				[]string{"positive_x", "negative_x", "positive_y", "negative_y", "positive_z", "negative_z"},
+			); err != nil {
+				return err
+			}
+		}
+	}
+
+	return validateSkyPresence(node)
 }
 
 func validateSkyPresence(node *yaml.Node) error {
@@ -128,6 +180,30 @@ func validateEnvironmentSunNode(node *yaml.Node) error {
 
 	if !azimuth || !elevation {
 		return ErrYAML
+	}
+
+	return nil
+}
+
+func validateAppearanceField(name string, value *yaml.Node, version uint16) error {
+	if version >= worldsource.ExplicitEnvironmentVersion && (name == "preset" || name == "palette" || name == "backdrop") {
+		return worldsource.ErrEnvironment
+	}
+
+	if version < worldsource.ExplicitEnvironmentVersion && (name == "lighting" || name == "colors") {
+		return worldsource.ErrVersion
+	}
+
+	if name == "lighting" {
+		if err := requireEnvironmentFields(value, []string{"sun_color", "sun_intensity", "ambient"}); err != nil {
+			return err
+		}
+	}
+
+	if name == "colors" {
+		if err := requireEnvironmentFields(value, []string{"zenith", "horizon", "nadir", "cloud", "sun"}); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -1,0 +1,21 @@
+version: "2"
+run:
+  timeout: 2m
+  relative-path-mode: wd
+linters:
+  default: standard
+  exclusions:
+    generated: strict
+    paths:
+      - '(^|/)(dist|\.karty|\.codex|\.agents)(/|$)'
+formatters:
+  enable: [gci, gofmt, golines]
+  settings:
+    golines:
+      max-len: 140
+  exclusions:
+    generated: strict
+    paths:
+      - '(^|/)(dist|\.karty|\.codex|\.agents)(/|$)'
+output:
+  path-mode: abs

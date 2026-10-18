@@ -34,14 +34,17 @@ func writeSummary(output io.Writer, report buildservice.Summary) error {
 
 	switch report.Target {
 	case "web":
-		if strings.HasPrefix(report.HostURL, "../") {
+		switch {
+		case report.PreviewURL != "":
+			fmt.Fprintf(&text, "\nPreview: %s (reloads after a successful build)\n", report.PreviewURL)
+		case strings.HasPrefix(report.HostURL, "../"):
 			fmt.Fprintf(
 				&text,
 				"\nNext: karty serve %s\n",
 				commandPath(filepath.ToSlash(filepath.Dir(report.Directory)), runtime.GOOS == "windows"),
 			)
 			fmt.Fprintln(&text, "Open http://127.0.0.1:8080/web/. Place the relative runtime mirror alongside the game directory.")
-		} else {
+		default:
 			fmt.Fprintln(&text, "\nNext: karty serve")
 			fmt.Fprintln(&text, "Open http://127.0.0.1:8080/. Upload the entire output directory to a static web host to share it.")
 		}

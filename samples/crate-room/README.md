@@ -13,7 +13,7 @@ Touch: drag MOVE to walk, drag LOOK to aim, hold SHOOT, tap BLAST or RESET.
 Independent fingers can move, aim and shoot together. Landscape gives the
 largest view on a phone.
 
-The project pins published SDK 0.0.12. Build and preview it with:
+Build and preview the project with:
 
 ```sh
 cd samples/crate-room
@@ -30,11 +30,21 @@ and no cartridge physics dependency. Generated bindings live in ignored
 generator are tracked. From the CLI root, `mise run generate-crate-room` rebuilds
 textures. The room uses source version 11's reusable solid renderer prefab.
 
+The static room lighting uses 32 hemisphere samples, three diffuse bounces and
+medium denoising at 16 texels per world unit. Movable crates use live lighting.
+
 Automatic website builds include this sample; publication is separate from a
 local build. The local docs gallery includes it too: after building the web target, run
 `mise run docs` from the CLI root and open `http://127.0.0.1:8081/`. The task
 copies the full web build and screenshot into the gallery. Use
 `mise run preview-docs` to refresh an already running docs server.
 
-See [material classifications](../../docs/sample-materials.md) for the asset
+See [the texture guide](https://karty-game.github.io/karty/main/guide/textures.html) for the asset
 inventory, Materialize presets, nonmetallic overrides and generation ownership.
+
+## Reusable controller
+
+This sample uses the [first-person preset](../../packages/controllers/README.md)
+from the shared `controllers` package. Input state and camera calculations are
+portable; this game owns its SDK adapter, entities and gameplay. Normal builds
+restore the declared package automatically.

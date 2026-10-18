@@ -5,13 +5,53 @@ on:
     branches: [main]
 permissions:
   contents: read
+concurrency:
+  group: checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+env:
+  GOWORK: "off"
 jobs:
-  test:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
+  windows-process-lifecycle:
+    runs-on: windows-2025
+    timeout-minutes: 10
+    env:
+      GOCACHE: ${{ runner.temp }}/karty-go-build
+      GOMODCACHE: ${{ runner.temp }}/karty-go-mod
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
+      - name: Cache Go modules and compiler output
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+            ${{ env.GOMODCACHE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cli-process-${{ hashFiles('mise.toml', 'go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cli-process-${{ hashFiles('mise.toml', 'go.sum') }}-
+      - run: mise run test-process-lifecycle
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GOCACHE: ${{ runner.temp }}/karty-go-build
+      GOMODCACHE: ${{ runner.temp }}/karty-go-mod
+      GOLANGCI_LINT_CACHE: ${{ runner.temp }}/karty-lint
+      GOMAXPROCS: "2"
+      GOFLAGS: "-p=1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+      - name: Cache Go modules, compiler output and lint facts
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+            ${{ env.GOMODCACHE }}
+            ${{ env.GOLANGCI_LINT_CACHE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cli-test-${{ hashFiles('mise.toml', 'go.sum', '.golangci.yml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cli-test-${{ hashFiles('mise.toml', 'go.sum', '.golangci.yml') }}-
       - run: mise run check-fmt
       - run: mise run test
       - run: mise run lint
@@ -19,9 +59,21 @@ jobs:
   materialize-software:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      GOCACHE: ${{ runner.temp }}/karty-go-build
+      GOMODCACHE: ${{ runner.temp }}/karty-go-mod
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
+      - name: Cache Go modules and compiler output
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+            ${{ env.GOMODCACHE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cli-materialize-${{ hashFiles('mise.toml', 'go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cli-materialize-${{ hashFiles('mise.toml', 'go.sum') }}-
       - name: Install headless software graphics dependencies
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
       - name: Generate atlas maps and verify paired QOI cache

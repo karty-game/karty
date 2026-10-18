@@ -1,0 +1,46 @@
+[check-terrain-import]
+description = "Validate compiled terrain imports, confinement and the sector doorway sample"
+run = "go test -timeout=9s ./internal/levelbuild -run '^TestTerrain' -count=1 -v"
+
+[author-terrain-structures]
+description = "Author the compact cove's bunker and wooden jetty solids"
+run = ["node scripts/terrain/author-structures.mjs", "prettier --write samples/terrain/levels/ground/world.yaml"]
+
+[author-terrain-paints]
+description = "Generate the lighthouse's small deterministic paint palette"
+run = "go run scripts/terrain/author-paints.go"
+
+[author-terrain-trees]
+description = "Author the compact cove's connected outdoor grid and seeded tree groups"
+run = ["node scripts/terrain/author-trees.mjs", "prettier --write samples/terrain/levels/ground/world.yaml"]
+
+[author-terrain-groundcover]
+description = "Prepare original coastal grass and choose ground-cover seed cohorts from retained terrain paint"
+run = ["go run scripts/terrain/author-groundcover.go", "mise run author-terrain-trees"]
+
+[author-terrain-seabed]
+description = "Choose submerged seaweed seed cohorts on retained terrain"
+run = ["go run scripts/terrain/author-seabed.go", "mise run author-terrain-trees"]
+
+[repair-terrain-groundcover]
+description = "Repair only invalid retained grass cohorts after local terrain changes, preserving counts"
+run = ["go run scripts/terrain/author-groundcover.go --repair", "mise run author-terrain-trees"]
+
+[build-terrain-web]
+depends = ["build"]
+dir = "samples/terrain"
+run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
+
+[author-terrain-tree-materials]
+description = "Prepare estimated tangent-space normals from original cove tree artwork"
+run = "go run scripts/terrain/author-tree-materials.go"
+
+[build-terrain-native]
+depends = ["build"]
+dir = "samples/terrain"
+run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
+
+[check-terrain-input]
+description = "Check the terrain sample's desktop and independent touch input"
+dir = "samples/terrain"
+run = "GOWORK=off go test -timeout=9s ./internal/fps"

@@ -1,0 +1,77 @@
+<template>
+  <panel class="phone-stage">
+    if props.Model.Scene == "platform" && props.Renderer.Ready("platform") {
+      <TrainImage source={ props.Renderer.Source("platform") } props={ TrainImageProps{} }/>
+    }
+    if props.Model.Scene == "carriage" && props.Renderer.Ready("carriage") {
+      <TrainImage source={ props.Renderer.Source("carriage") } props={ TrainImageProps{} }/>
+    }
+    if props.Model.Scene == "dining" && props.Renderer.Ready("dining") {
+      <TrainImage source={ props.Renderer.Source("dining") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.Ensemble() {
+      <panel class="ensemble-left"><TrainPortrait props={ TrainPortraitProps{Name: "mara", Renderer: props.Renderer} }/></panel>
+      <panel class="ensemble-middle"><TrainPortrait props={ TrainPortraitProps{Name: "elias", Renderer: props.Renderer} }/></panel>
+      <panel class="ensemble-right"><TrainPortrait props={ TrainPortraitProps{Name: "iris", Renderer: props.Renderer} }/></panel>
+    }
+    if !props.Renderer.Ensemble() {
+      <panel class="single"><TrainActor props={ TrainActorProps{Model: props.Model, Renderer: props.Renderer} }/></panel>
+    }
+  </panel>
+</template>
+<script setup lang="go">
+import "github.com/karty-game/dialogue"
+import "example.com/last-train/internal/stage"
+type TrainStageProps struct { Model *dialogue.Model; Renderer *stage.Renderer }
+func setup(props TrainStageProps) {}
+</script>
+<style>
+.phone-stage
+  position: absolute
+  left: 0
+  top: 0
+  width: 0
+  height: 0
+  padding: 0
+image
+  width: 100%
+  height: 100%
+  image-fit: cover
+.single
+  position: absolute
+  right: 0
+  bottom: 160
+  width: 77%
+  height: 63%
+  max-height: 490
+  padding: 0
+.ensemble-left
+  position: absolute
+  left: 0
+  bottom: 180
+  width: 54%
+  height: 52%
+  max-height: 398
+  padding: 0
+.ensemble-middle
+  position: absolute
+  left: 90
+  bottom: 180
+  width: 54%
+  height: 52%
+  max-height: 398
+  padding: 0
+.ensemble-right
+  position: absolute
+  right: 0
+  bottom: 180
+  width: 54%
+  height: 52%
+  max-height: 398
+  padding: 0
+@media (max-width: 600)
+  .phone-stage
+    width: 100%
+    height: 100%
+    background: #000000ff
+</style>

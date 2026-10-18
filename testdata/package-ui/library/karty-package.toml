@@ -1,0 +1,21 @@
+format_version = 1
+name = "hud-kit"
+version = "0.1.0"
+sdk = "0.0.13"
+
+[ui]
+layouts = ["ui/layouts/hud-card.kui"]
+theme = "ui/theme.toml"
+
+[[ui.components]]
+name = "badge"
+source = "ui/hud-badge.kui"
+
+[[ui.components]]
+name = "unused"
+source = "ui/hud-unused.kui"
+
+[[ui.images]]
+name = "panel"
+source = "assets/panel.png"
+profile = "interface"

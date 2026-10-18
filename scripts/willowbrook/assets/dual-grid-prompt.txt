@@ -1,0 +1,23 @@
+Use case: style-transfer.
+Asset type: TECHNICAL DUAL-GRID TERRAIN TILE ATLAS, using the approved village's grass and dirt textures. NOT an asset contact sheet or landscape.
+
+Input image 1: the approved village illustration. Use ONLY its quiet green grass, warm pale ochre dirt footpaths, sparse tiny grass blades/pebbles and crisp pixel-art cluster style. No scenery or objects from it.
+Input image 2: the EXACT CORNER-MASK BLUEPRINT to paint. Its 1024x1024 canvas is a 4x4 array of sixteen 256x256 cells. Preserve this exact canvas, cell alignment, mask geometry, material placement, and every connection point. Paint textures into its existing green and tan regions. Do not rearrange or redesign the masks.
+
+This is one base-grass cell plus FIFTEEN NONEMPTY DIRT CONFIGURATIONS (a proper 15-tile dual-grid set).
+Cells are in row-major binary mask order 0..15, bits NW=1, NE=2, SW=4, SE=8. A set bit is DIRT at that corner; an unset bit is GRASS.
+Row 1: 0 pure grass; 1 dirt NW only; 2 dirt NE only; 3 dirt top half.
+Row 2: 4 dirt SW only; 5 dirt left half; 6 dirt NE and SW as TWO SEPARATE rounded patches; 7 dirt except a grass SE concave corner.
+Row 3: 8 dirt SE only; 9 dirt NW and SE as TWO SEPARATE rounded patches; 10 dirt right half; 11 dirt except grass SW.
+Row 4: 12 dirt bottom half; 13 dirt except grass NE; 14 dirt except grass NW; 15 solid dirt.
+
+STRICT:
+- Each terrain tile fills its entire cell, flush to the cell boundary. The green and tan regions from the blueprint must both remain present exactly where shown.
+- All single-corner pieces must reach the appropriate two outer cell edges and meet those edges at their EXACT MIDPOINTS, as in the blueprint.
+- The straight transitions cross at the middle of the cells. Rounded corner and concave masks retain the blueprint's geometry.
+- Opposite-corner cases 6 and 9 are two disconnected dirt quarter disks, with continuous grass between them. Do not turn them into stripes or connected blobs.
+- At each cell's outermost 8-pixel border, preserve the blueprint's terrain separation exactly. Compatible tile edges must share the same texture/color and edge profile so they join without seams.
+- Inside cells only, add a restrained 2-4-pixel grass fringe along grass/dirt boundaries. Match the original artwork, without changing which corners are grass or dirt.
+- Grass should be a fairly quiet natural green, with tiny sparse blades. Dirt is soft warm pale ochre with sparse little pebbles. Same texture scale across all sixteen cells.
+- OPAQUE full-bleed atlas. No transparent gaps, no margins, no gutters, no grid lines, no decorative outer borders, no text, no numbering, no labels, no fake shadows, no 3D blocks, no cliffs, no trees, no houses, no water, no flowers.
+This is production-oriented terrain artwork with an exact connectivity blueprint. Geometry takes priority over decoration.

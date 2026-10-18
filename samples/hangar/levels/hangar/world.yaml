@@ -1,6 +1,31 @@
 # Original Hangar environment.
 # All connected wall spans are open; door mechanisms are deferred.
-version: 11
+version: 17
+fluids:
+  version: 1
+  items:
+    - id: acid
+      solids:
+        [
+          acid-south-west,
+          acid-south-east,
+          acid-west-0-entry,
+          acid-west-0-bend,
+          acid-west-1,
+          acid-east-entry,
+          acid-east-0,
+          acid-east-1,
+          acid-east-2,
+        ]
+      density: 25
+      linear_drag: 3
+      angular_drag: 2
+      foam_width: 0.22
+      foam_strength: 0.7
+      foam_color: { x: 0.74, y: 0.88, z: 0.30 }
+      fog_density: 0.45
+      fog_color: { x: 0.075, y: 0.16, z: 0.025 }
+      distortion: 0.006
 # BEGIN PARTICLE LAB EFFECTS: particles
 particles:
   version: 2
@@ -1938,17 +1963,19 @@ rooms:
       - { id: edge-3, start: { x: 46.00, y: 20.00 }, end: { x: 46.00, y: 16.00 }, material: ribbed }
       - { id: edge-4, start: { x: 46.00, y: 16.00 }, end: { x: 46.00, y: 15.55 }, material: ribbed }
       - { id: edge-5, start: { x: 46.00, y: 15.55 }, end: { x: 46.00, y: 12.00 }, material: ribbed }
-  - id: acid-control-west-step-0
-    floor: { c: 0.40 }
-    ceiling: { c: 3.60 }
-    floor_material: grate
+  # A single translating floor replaces the west stair flight. Fixed shaft
+  # walls and ceiling cover its complete 0.20 to 3.40 metre travel.
+  - id: acid-control-west-lift
+    floor: { c: 0.20 }
+    ceiling: { c: 7.80 }
+    floor_material: hazard
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
     boundary:
-      - { id: edge-0, start: { x: 20.00, y: 12.00 }, end: { x: 20.50, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 20.50, y: 12.00 }, end: { x: 20.50, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 20.50, y: 15.55 }, end: { x: 20.00, y: 15.55 }, material: steel }
+      - { id: edge-0, start: { x: 20.00, y: 12.00 }, end: { x: 28.00, y: 12.00 }, material: steel }
+      - { id: edge-1, start: { x: 28.00, y: 12.00 }, end: { x: 28.00, y: 15.55 }, material: steel }
+      - { id: edge-2, start: { x: 28.00, y: 15.55 }, end: { x: 20.00, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 20.00, y: 15.55 }, end: { x: 20.00, y: 12.00 }, material: steel }
   - id: acid-control-east-step-0
     floor: { c: 0.40 }
@@ -1962,18 +1989,6 @@ rooms:
       - { id: edge-1, start: { x: 46.00, y: 12.00 }, end: { x: 46.00, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 46.00, y: 15.55 }, end: { x: 45.62, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 45.62, y: 15.55 }, end: { x: 45.62, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-1
-    floor: { c: 0.60 }
-    ceiling: { c: 3.80 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 20.50, y: 12.00 }, end: { x: 21.00, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 21.00, y: 12.00 }, end: { x: 21.00, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 21.00, y: 15.55 }, end: { x: 20.50, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 20.50, y: 15.55 }, end: { x: 20.50, y: 12.00 }, material: steel }
   - id: acid-control-east-step-1
     floor: { c: 0.60 }
     ceiling: { c: 3.80 }
@@ -1986,18 +2001,6 @@ rooms:
       - { id: edge-1, start: { x: 45.62, y: 12.00 }, end: { x: 45.62, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 45.62, y: 15.55 }, end: { x: 45.25, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 45.25, y: 15.55 }, end: { x: 45.25, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-2
-    floor: { c: 0.80 }
-    ceiling: { c: 4.00 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 21.00, y: 12.00 }, end: { x: 21.50, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 21.50, y: 12.00 }, end: { x: 21.50, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 21.50, y: 15.55 }, end: { x: 21.00, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 21.00, y: 15.55 }, end: { x: 21.00, y: 12.00 }, material: steel }
   - id: acid-control-east-step-2
     floor: { c: 0.80 }
     ceiling: { c: 4.00 }
@@ -2010,18 +2013,6 @@ rooms:
       - { id: edge-1, start: { x: 45.25, y: 12.00 }, end: { x: 45.25, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 45.25, y: 15.55 }, end: { x: 44.88, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 44.88, y: 15.55 }, end: { x: 44.88, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-3
-    floor: { c: 1.00 }
-    ceiling: { c: 4.20 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 21.50, y: 12.00 }, end: { x: 22.00, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 22.00, y: 12.00 }, end: { x: 22.00, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 22.00, y: 15.55 }, end: { x: 21.50, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 21.50, y: 15.55 }, end: { x: 21.50, y: 12.00 }, material: steel }
   - id: acid-control-east-step-3
     floor: { c: 1.00 }
     ceiling: { c: 4.20 }
@@ -2034,18 +2025,6 @@ rooms:
       - { id: edge-1, start: { x: 44.88, y: 12.00 }, end: { x: 44.88, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 44.88, y: 15.55 }, end: { x: 44.50, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 44.50, y: 15.55 }, end: { x: 44.50, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-4
-    floor: { c: 1.20 }
-    ceiling: { c: 4.40 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 22.00, y: 12.00 }, end: { x: 22.50, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 22.50, y: 12.00 }, end: { x: 22.50, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 22.50, y: 15.55 }, end: { x: 22.00, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 22.00, y: 15.55 }, end: { x: 22.00, y: 12.00 }, material: steel }
   - id: acid-control-east-step-4
     floor: { c: 1.20 }
     ceiling: { c: 4.40 }
@@ -2058,18 +2037,6 @@ rooms:
       - { id: edge-1, start: { x: 44.50, y: 12.00 }, end: { x: 44.50, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 44.50, y: 15.55 }, end: { x: 44.12, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 44.12, y: 15.55 }, end: { x: 44.12, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-5
-    floor: { c: 1.40 }
-    ceiling: { c: 4.60 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 22.50, y: 12.00 }, end: { x: 23.00, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 23.00, y: 12.00 }, end: { x: 23.00, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 23.00, y: 15.55 }, end: { x: 22.50, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 22.50, y: 15.55 }, end: { x: 22.50, y: 12.00 }, material: steel }
   - id: acid-control-east-step-5
     floor: { c: 1.40 }
     ceiling: { c: 4.60 }
@@ -2082,18 +2049,6 @@ rooms:
       - { id: edge-1, start: { x: 44.12, y: 12.00 }, end: { x: 44.12, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 44.12, y: 15.55 }, end: { x: 43.75, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 43.75, y: 15.55 }, end: { x: 43.75, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-6
-    floor: { c: 1.60 }
-    ceiling: { c: 4.80 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 23.00, y: 12.00 }, end: { x: 23.50, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 23.50, y: 12.00 }, end: { x: 23.50, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 23.50, y: 15.55 }, end: { x: 23.00, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 23.00, y: 15.55 }, end: { x: 23.00, y: 12.00 }, material: steel }
   - id: acid-control-east-step-6
     floor: { c: 1.60 }
     ceiling: { c: 4.80 }
@@ -2106,18 +2061,6 @@ rooms:
       - { id: edge-1, start: { x: 43.75, y: 12.00 }, end: { x: 43.75, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 43.75, y: 15.55 }, end: { x: 43.38, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 43.38, y: 15.55 }, end: { x: 43.38, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-7
-    floor: { c: 1.80 }
-    ceiling: { c: 5.00 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 23.50, y: 12.00 }, end: { x: 24.00, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 24.00, y: 12.00 }, end: { x: 24.00, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 24.00, y: 15.55 }, end: { x: 23.50, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 23.50, y: 15.55 }, end: { x: 23.50, y: 12.00 }, material: steel }
   - id: acid-control-east-step-7
     floor: { c: 1.80 }
     ceiling: { c: 5.00 }
@@ -2130,18 +2073,6 @@ rooms:
       - { id: edge-1, start: { x: 43.38, y: 12.00 }, end: { x: 43.38, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 43.38, y: 15.55 }, end: { x: 43.00, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 43.00, y: 15.55 }, end: { x: 43.00, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-8
-    floor: { c: 2.00 }
-    ceiling: { c: 5.20 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 24.00, y: 12.00 }, end: { x: 24.50, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 24.50, y: 12.00 }, end: { x: 24.50, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 24.50, y: 15.55 }, end: { x: 24.00, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 24.00, y: 15.55 }, end: { x: 24.00, y: 12.00 }, material: steel }
   - id: acid-control-east-step-8
     floor: { c: 2.00 }
     ceiling: { c: 5.20 }
@@ -2154,18 +2085,6 @@ rooms:
       - { id: edge-1, start: { x: 43.00, y: 12.00 }, end: { x: 43.00, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 43.00, y: 15.55 }, end: { x: 42.62, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 42.62, y: 15.55 }, end: { x: 42.62, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-9
-    floor: { c: 2.20 }
-    ceiling: { c: 5.40 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 24.50, y: 12.00 }, end: { x: 25.00, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 25.00, y: 12.00 }, end: { x: 25.00, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 25.00, y: 15.55 }, end: { x: 24.50, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 24.50, y: 15.55 }, end: { x: 24.50, y: 12.00 }, material: steel }
   - id: acid-control-east-step-9
     floor: { c: 2.20 }
     ceiling: { c: 5.40 }
@@ -2178,18 +2097,6 @@ rooms:
       - { id: edge-1, start: { x: 42.62, y: 12.00 }, end: { x: 42.62, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 42.62, y: 15.55 }, end: { x: 42.25, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 42.25, y: 15.55 }, end: { x: 42.25, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-10
-    floor: { c: 2.40 }
-    ceiling: { c: 5.60 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 25.00, y: 12.00 }, end: { x: 25.50, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 25.50, y: 12.00 }, end: { x: 25.50, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 25.50, y: 15.55 }, end: { x: 25.00, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 25.00, y: 15.55 }, end: { x: 25.00, y: 12.00 }, material: steel }
   - id: acid-control-east-step-10
     floor: { c: 2.40 }
     ceiling: { c: 5.60 }
@@ -2202,18 +2109,6 @@ rooms:
       - { id: edge-1, start: { x: 42.25, y: 12.00 }, end: { x: 42.25, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 42.25, y: 15.55 }, end: { x: 41.88, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 41.88, y: 15.55 }, end: { x: 41.88, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-11
-    floor: { c: 2.60 }
-    ceiling: { c: 5.80 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 25.50, y: 12.00 }, end: { x: 26.00, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 26.00, y: 12.00 }, end: { x: 26.00, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 26.00, y: 15.55 }, end: { x: 25.50, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 25.50, y: 15.55 }, end: { x: 25.50, y: 12.00 }, material: steel }
   - id: acid-control-east-step-11
     floor: { c: 2.60 }
     ceiling: { c: 5.80 }
@@ -2226,18 +2121,6 @@ rooms:
       - { id: edge-1, start: { x: 41.88, y: 12.00 }, end: { x: 41.88, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 41.88, y: 15.55 }, end: { x: 41.50, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 41.50, y: 15.55 }, end: { x: 41.50, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-12
-    floor: { c: 2.80 }
-    ceiling: { c: 6.00 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 26.00, y: 12.00 }, end: { x: 26.50, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 26.50, y: 12.00 }, end: { x: 26.50, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 26.50, y: 15.55 }, end: { x: 26.00, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 26.00, y: 15.55 }, end: { x: 26.00, y: 12.00 }, material: steel }
   - id: acid-control-east-step-12
     floor: { c: 2.80 }
     ceiling: { c: 6.00 }
@@ -2250,18 +2133,6 @@ rooms:
       - { id: edge-1, start: { x: 41.50, y: 12.00 }, end: { x: 41.50, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 41.50, y: 15.55 }, end: { x: 41.12, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 41.12, y: 15.55 }, end: { x: 41.12, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-13
-    floor: { c: 3.00 }
-    ceiling: { c: 6.20 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 26.50, y: 12.00 }, end: { x: 27.00, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 27.00, y: 12.00 }, end: { x: 27.00, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 27.00, y: 15.55 }, end: { x: 26.50, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 26.50, y: 15.55 }, end: { x: 26.50, y: 12.00 }, material: steel }
   - id: acid-control-east-step-13
     floor: { c: 3.00 }
     ceiling: { c: 6.20 }
@@ -2274,18 +2145,6 @@ rooms:
       - { id: edge-1, start: { x: 41.12, y: 12.00 }, end: { x: 41.12, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 41.12, y: 15.55 }, end: { x: 40.75, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 40.75, y: 15.55 }, end: { x: 40.75, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-14
-    floor: { c: 3.20 }
-    ceiling: { c: 6.40 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 27.00, y: 12.00 }, end: { x: 27.50, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 27.50, y: 12.00 }, end: { x: 27.50, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 27.50, y: 15.55 }, end: { x: 27.00, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 27.00, y: 15.55 }, end: { x: 27.00, y: 12.00 }, material: steel }
   - id: acid-control-east-step-14
     floor: { c: 3.20 }
     ceiling: { c: 6.40 }
@@ -2298,18 +2157,6 @@ rooms:
       - { id: edge-1, start: { x: 40.75, y: 12.00 }, end: { x: 40.75, y: 15.55 }, material: steel }
       - { id: edge-2, start: { x: 40.75, y: 15.55 }, end: { x: 40.38, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 40.38, y: 15.55 }, end: { x: 40.38, y: 12.00 }, material: steel }
-  - id: acid-control-west-step-15
-    floor: { c: 3.40 }
-    ceiling: { c: 6.60 }
-    floor_material: grate
-    ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
-    boundary:
-      - { id: edge-0, start: { x: 27.50, y: 12.00 }, end: { x: 28.00, y: 12.00 }, material: steel }
-      - { id: edge-1, start: { x: 28.00, y: 12.00 }, end: { x: 28.00, y: 15.55 }, material: steel }
-      - { id: edge-2, start: { x: 28.00, y: 15.55 }, end: { x: 27.50, y: 15.55 }, material: steel }
-      - { id: edge-3, start: { x: 27.50, y: 15.55 }, end: { x: 27.50, y: 12.00 }, material: steel }
   - id: acid-control-east-step-15
     floor: { c: 3.40 }
     ceiling: { c: 6.60 }
@@ -2557,56 +2404,11 @@ connections:
   - id: acid-control-east-tunnel
     a: { room: trench-egress, edge: edge-0 }
     b: { room: acid-control-east-access, edge: edge-2 }
-  - id: acid-control-west-stairs
+  - id: acid-control-west-lift-entry
     a: { room: acid-control-west-access, edge: edge-1 }
-    b: { room: acid-control-west-step-0, edge: edge-3 }
-  - id: acid-control-west-riser-0
-    a: { room: acid-control-west-step-0, edge: edge-1 }
-    b: { room: acid-control-west-step-1, edge: edge-3 }
-  - id: acid-control-west-riser-1
-    a: { room: acid-control-west-step-1, edge: edge-1 }
-    b: { room: acid-control-west-step-2, edge: edge-3 }
-  - id: acid-control-west-riser-2
-    a: { room: acid-control-west-step-2, edge: edge-1 }
-    b: { room: acid-control-west-step-3, edge: edge-3 }
-  - id: acid-control-west-riser-3
-    a: { room: acid-control-west-step-3, edge: edge-1 }
-    b: { room: acid-control-west-step-4, edge: edge-3 }
-  - id: acid-control-west-riser-4
-    a: { room: acid-control-west-step-4, edge: edge-1 }
-    b: { room: acid-control-west-step-5, edge: edge-3 }
-  - id: acid-control-west-riser-5
-    a: { room: acid-control-west-step-5, edge: edge-1 }
-    b: { room: acid-control-west-step-6, edge: edge-3 }
-  - id: acid-control-west-riser-6
-    a: { room: acid-control-west-step-6, edge: edge-1 }
-    b: { room: acid-control-west-step-7, edge: edge-3 }
-  - id: acid-control-west-riser-7
-    a: { room: acid-control-west-step-7, edge: edge-1 }
-    b: { room: acid-control-west-step-8, edge: edge-3 }
-  - id: acid-control-west-riser-8
-    a: { room: acid-control-west-step-8, edge: edge-1 }
-    b: { room: acid-control-west-step-9, edge: edge-3 }
-  - id: acid-control-west-riser-9
-    a: { room: acid-control-west-step-9, edge: edge-1 }
-    b: { room: acid-control-west-step-10, edge: edge-3 }
-  - id: acid-control-west-riser-10
-    a: { room: acid-control-west-step-10, edge: edge-1 }
-    b: { room: acid-control-west-step-11, edge: edge-3 }
-  - id: acid-control-west-riser-11
-    a: { room: acid-control-west-step-11, edge: edge-1 }
-    b: { room: acid-control-west-step-12, edge: edge-3 }
-  - id: acid-control-west-riser-12
-    a: { room: acid-control-west-step-12, edge: edge-1 }
-    b: { room: acid-control-west-step-13, edge: edge-3 }
-  - id: acid-control-west-riser-13
-    a: { room: acid-control-west-step-13, edge: edge-1 }
-    b: { room: acid-control-west-step-14, edge: edge-3 }
-  - id: acid-control-west-riser-14
-    a: { room: acid-control-west-step-14, edge: edge-1 }
-    b: { room: acid-control-west-step-15, edge: edge-3 }
-  - id: acid-control-west-landing
-    a: { room: acid-control-west-step-15, edge: edge-1 }
+    b: { room: acid-control-west-lift, edge: edge-3 }
+  - id: acid-control-west-lift-landing
+    a: { room: acid-control-west-lift, edge: edge-1 }
     b: { room: acid-control, edge: edge-8 }
   - id: acid-control-east-stairs
     a: { room: acid-control-east-access, edge: edge-5 }

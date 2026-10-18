@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"path"
@@ -14,6 +13,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/karty-game/karty/internal/contextio"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -73,10 +73,14 @@ func resolveCDNHost(ctx context.Context, selected sdk.Manifest, hostURL, localHo
 		return nil, fmt.Errorf("--cdn release host version differs from the project SDK: %w", os.ErrInvalid)
 	}
 
-	return cdnHostFromManifest(published, hostURL, localHost)
+	return cdnHostFromManifest(ctx, published, hostURL, localHost)
 }
 
-func cdnHostFromManifest(manifest sdk.Manifest, hostURL, localHost string) (*cdnHost, error) {
+func cdnHostFromManifest(ctx context.Context, manifest sdk.Manifest, hostURL, localHost string) (*cdnHost, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	artifact := manifest.Artifacts.Host.Web
 
 	digest, err := hex.DecodeString(artifact.SHA256)
@@ -87,7 +91,7 @@ func cdnHostFromManifest(manifest sdk.Manifest, hostURL, localHost string) (*cdn
 	}
 
 	if localHost != "" {
-		if err := checkCDNOverride(localHost, artifact.SHA256); err != nil {
+		if err := checkCDNOverride(ctx, localHost, artifact.SHA256); err != nil {
 			return nil, err
 		}
 	}
@@ -95,7 +99,11 @@ func cdnHostFromManifest(manifest sdk.Manifest, hostURL, localHost string) (*cdn
 	return &cdnHost{URL: hostURL, SHA256: artifact.SHA256, Manifest: manifest}, nil
 }
 
-func checkCDNOverride(path, checksum string) error {
+func checkCDNOverride(ctx context.Context, path, checksum string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	file, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("inspect --cdn host override: %w", err)
@@ -113,7 +121,7 @@ func checkCDNOverride(path, checksum string) error {
 
 	digest := sha256.New()
 
-	if _, err := io.Copy(digest, file); err != nil {
+	if _, err := contextio.Copy(ctx, digest, file); err != nil {
 		return fmt.Errorf("hash --cdn host override: %w", err)
 	}
 
@@ -124,13 +132,17 @@ func checkCDNOverride(path, checksum string) error {
 	return nil
 }
 
-func webHostSource(directory string, cdn *cdnHost) (string, error) {
+func webHostSource(ctx context.Context, directory string, cdn *cdnHost) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	var sourceURL, checksum string
 
 	if cdn != nil {
 		sourceURL, checksum = cdn.URL, cdn.SHA256
 	} else {
-		hash, err := fileHash(filepath.Join(directory, "karty-host.wasm"))
+		hash, err := fileHash(ctx, filepath.Join(directory, "karty-host.wasm"))
 		if err != nil {
 			return "", fmt.Errorf("hash staged host: %w", err)
 		}

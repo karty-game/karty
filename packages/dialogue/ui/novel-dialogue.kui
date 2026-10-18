@@ -1,0 +1,122 @@
+<template>
+  <panel class="copy">
+    if !props.Model.Narration() {
+      <label class="speaker">{ props.Model.Speaker }</label>
+    }
+    <panel class="text-area">
+    if !props.Model.Narration() {
+      <label class="line-space">{ props.Model.Text }</label>
+      <label class="line">{ props.Model.DisplayWords() }</label>
+    } else {
+      <label class="prose-space">{ props.Model.Text }</label>
+      <label class="prose">{ props.Model.DisplayWords() }</label>
+    }
+    </panel>
+    <panel class="rule"/>
+    if len(props.Model.Choices) > 0 {
+      <panel class="choices">
+        for _, option := range props.Model.Choices {
+          <NovelChoice key={ uint32(option.ID + 1) } props={ NovelChoiceProps{Option: option, Choose: props.Choose} }/>
+        }
+      </panel>
+    } else {
+      <panel class="advance-row">
+        <button class="advance" enabled={ !props.Model.Done && !props.Model.Paused } onClick={ props.Advance }>{ props.Model.AdvanceLabel() }</button>
+      </panel>
+    }
+    <label class="status">{ props.Model.Status }</label>
+  </panel>
+</template>
+
+<script setup lang="go">
+import "github.com/karty-game/dialogue"
+
+type NovelDialogueProps struct {
+    Model *dialogue.Model
+    Advance func()
+    Choose func(int)
+}
+
+func setup(props NovelDialogueProps) {}
+</script>
+
+<style>
+.copy
+  padding: 0
+  gap: 10
+  align: stretch
+.speaker
+  color: #e3bd74ff
+  font-size: 19
+  font-family: display
+.text-area
+  padding: 0
+  gap: 0
+  align: stretch
+.line-space
+  color: #00000000
+  font-size: 22
+  min-height: 56
+.line
+  position: absolute
+  top: 0
+  left: 0
+  right: 0
+  color: #f4edddff
+  font-size: 22
+  min-height: 56
+.prose-space
+  color: #00000000
+  font-family: mono
+  font-size: 24
+  min-height: 60
+.prose
+  position: absolute
+  top: 0
+  left: 0
+  right: 0
+  color: #d4c3a6ff
+  font-family: mono
+  font-size: 24
+  min-height: 60
+.rule
+  height: 1
+  background: #b8914bff
+.choices
+  padding: 0
+  gap: 5
+  align: stretch
+.advance
+  width: 48
+  min-height: 44
+  font-size: 26
+  color: #e3bd74ff
+  background: #172536ff
+  text-align: right
+.advance:hover
+  background: #4c3c2aff
+.advance-row
+  direction: row
+  justify: end
+  padding: 0
+.status
+  color: #b6b8baff
+  font-size: 12
+@media (max-width: 600)
+  .line-space
+    font-size: 18
+    min-height: 42
+  .line
+    font-size: 18
+    min-height: 42
+  .prose-space
+    font-size: 21
+    min-height: 48
+  .prose
+    font-size: 21
+    min-height: 48
+  .copy
+    gap: 7
+  .speaker
+    font-size: 16
+</style>

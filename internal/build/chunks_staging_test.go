@@ -37,7 +37,7 @@ func TestChunkStagingPreservesNativeAndWebContentParity(t *testing.T) {
 			source = ""
 		}
 
-		if err := stageLevels(destination, artifacts, source); err != nil {
+		if err := stageLevels(t.Context(), destination, artifacts, source); err != nil {
 			t.Fatal(err)
 		}
 
@@ -53,7 +53,7 @@ func TestChunkStagingPreservesNativeAndWebContentParity(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := stageLevels(filepath.Join(root, "native"), artifacts, filepath.Join(root, "raw")); err == nil {
+	if err := stageLevels(t.Context(), filepath.Join(root, "native"), artifacts, filepath.Join(root, "raw")); err == nil {
 		t.Fatal("staging accepted a changed child")
 	}
 
@@ -69,7 +69,9 @@ func TestChunkStagingRejectsEscapingDigestsAndSymlinks(t *testing.T) {
 	root := t.TempDir()
 
 	data := []byte("chunk")
-	if err := stageLevels(root, []levelbuild.Artifact{{Name: "root", Bytes: data, ContentSHA256: "../escape"}}, ""); err == nil {
+	if err := stageLevels(
+		t.Context(), root, []levelbuild.Artifact{{Name: "root", Bytes: data, ContentSHA256: "../escape"}}, "",
+	); err == nil {
 		t.Fatal("escaping digest accepted")
 	}
 
@@ -92,7 +94,9 @@ func TestChunkStagingRejectsEscapingDigestsAndSymlinks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := stageLevels(destination, []levelbuild.Artifact{{Name: "root", Bytes: data, ContentSHA256: digest}}, source); err == nil {
+	if err := stageLevels(
+		t.Context(), destination, []levelbuild.Artifact{{Name: "root", Bytes: data, ContentSHA256: digest}}, source,
+	); err == nil {
 		t.Fatal("staging followed a content symlink outside its root")
 	}
 }

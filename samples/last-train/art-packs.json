@@ -1,0 +1,98 @@
+{
+  "opening": [
+    {
+      "name": "carriage",
+      "file": "passenger-carriage.png",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "platform",
+      "file": "rainy-station.png",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "mara",
+      "file": "mara-conductor.png",
+      "width": 640,
+      "height": 960
+    },
+    {
+      "name": "mara-worried",
+      "file": "mara-worried.png",
+      "width": 640,
+      "height": 960
+    }
+  ],
+  "investigation": [
+    {
+      "name": "elias",
+      "file": "elias-signalman.png",
+      "width": 640,
+      "height": 960
+    },
+    {
+      "name": "iris",
+      "file": "iris-traveller-blonde-glasses.png",
+      "width": 640,
+      "height": 960
+    },
+    {
+      "name": "elias-wistful",
+      "file": "elias-wistful.png",
+      "width": 640,
+      "height": 960
+    },
+    {
+      "name": "iris-guarded",
+      "file": "iris-guarded.png",
+      "width": 640,
+      "height": 960
+    },
+    {
+      "name": "iris-relieved",
+      "file": "iris-relieved.png",
+      "width": 640,
+      "height": 960
+    }
+  ],
+  "conclusion": [
+    {
+      "name": "dining",
+      "file": "dining-car.png",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "mara-relieved",
+      "file": "mara-relieved.png",
+      "width": 640,
+      "height": 960
+    },
+    {
+      "name": "elias-hopeful",
+      "file": "elias-hopeful.png",
+      "width": 640,
+      "height": 960
+    },
+    {
+      "name": "mara-resolute",
+      "file": "mara-resolute.png",
+      "width": 640,
+      "height": 960
+    },
+    {
+      "name": "elias-reading",
+      "file": "elias-reading.png",
+      "width": 640,
+      "height": 960
+    },
+    {
+      "name": "iris-offering",
+      "file": "iris-offering.png",
+      "width": 640,
+      "height": 960
+    }
+  ]
+}

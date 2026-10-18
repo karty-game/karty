@@ -1,0 +1,14 @@
+<template>
+  <panel class="picture"><image/></panel>
+</template>
+<style>
+.picture
+  width: 100%
+  height: 100%
+  padding: 0
+image
+  width: 100%
+  height: 100%
+  image: theme.images.mara-resolute
+  image-fit: contain
+</style>

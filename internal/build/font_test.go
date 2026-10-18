@@ -26,7 +26,7 @@ func TestAnalyzeProjectFontsReportsUsedAndStrippedRoles(t *testing.T) {
 	fonts := []project.Font{{Role: "body", Source: "body.ttf"}, {Role: "mono", Source: "mono.ttf"}}
 	report := assetpipeline.Report{}
 
-	if err := analyzeProjectFonts(directory, fonts, map[string]bool{"body": true}, &report); err != nil {
+	if err := analyzeProjectFonts(t.Context(), directory, fonts, map[string]bool{"body": true}, &report); err != nil {
 		t.Fatal(err)
 	}
 
@@ -53,7 +53,7 @@ func TestEmbedProjectAssetsRetainsOnlyUsedFontRoles(t *testing.T) {
 	}
 
 	fonts := []project.Font{{Role: "body", Source: "body.ttf"}, {Role: "mono", Source: "mono.ttf"}}
-	if err := embedProjectAssets(directory, artifact, nil, nil, fonts, map[string]bool{"body": true}); err != nil {
+	if err := embedProjectAssets(t.Context(), directory, artifact, nil, nil, fonts, map[string]bool{"body": true}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -82,7 +82,7 @@ func TestAnalyzeProjectFontsRejectsMalformedFont(t *testing.T) {
 
 	report := assetpipeline.Report{}
 
-	err := analyzeProjectFonts(
+	err := analyzeProjectFonts(t.Context(),
 		directory,
 		[]project.Font{{Role: "body", Source: "body.ttf"}},
 		map[string]bool{"body": true},

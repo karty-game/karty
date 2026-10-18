@@ -1,0 +1,72 @@
+[
+  {
+    "x": 1,
+    "y": 2,
+    "preset": "coastal-seagrass",
+    "count": 6,
+    "seed": 7028195
+  },
+  {
+    "x": 2,
+    "y": 2,
+    "preset": "coastal-seagrass",
+    "count": 8,
+    "seed": 7041767
+  },
+  {
+    "x": 3,
+    "y": 2,
+    "preset": "coastal-seagrass",
+    "count": 10,
+    "seed": 7108139
+  },
+  {
+    "x": 4,
+    "y": 2,
+    "preset": "coastal-seagrass",
+    "count": 8,
+    "seed": 7027308
+  },
+  {
+    "x": 3,
+    "y": 3,
+    "preset": "coastal-seagrass",
+    "count": 3,
+    "seed": 7036527
+  },
+  {
+    "x": 1,
+    "y": 1,
+    "preset": "coastal-ribbon-kelp",
+    "count": 1,
+    "seed": 8011039
+  },
+  {
+    "x": 1,
+    "y": 2,
+    "preset": "coastal-ribbon-kelp",
+    "count": 4,
+    "seed": 8023348
+  },
+  {
+    "x": 2,
+    "y": 2,
+    "preset": "coastal-ribbon-kelp",
+    "count": 4,
+    "seed": 8022024
+  },
+  {
+    "x": 3,
+    "y": 2,
+    "preset": "coastal-ribbon-kelp",
+    "count": 7,
+    "seed": 8025453
+  },
+  {
+    "x": 4,
+    "y": 2,
+    "preset": "coastal-ribbon-kelp",
+    "count": 5,
+    "seed": 8027247
+  }
+]

@@ -1,0 +1,41 @@
+[check-world-camera]
+run = "go run ./cmd/karty-check --world-camera"
+
+[build-world-camera-web]
+depends = ["build"]
+dir = "samples/world-camera"
+run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
+
+[serve-world-camera]
+dir = "samples/world-camera"
+run = "../../dist/karty serve"
+
+[generate-world-camera-materials]
+description = "Regenerate the world-camera sample's authored albedo textures"
+run = "go run ./cmd/world-camera-materials"
+
+[check-world-camera-components]
+description = "Test camera movement, accepted-pose followers and HUD with small native CPU fixtures"
+run = "go test -timeout=9s ./cmd/karty-check -run '^TestWorldCameraComponents$' -count=1 -v"
+
+[check-world-camera-hooks]
+description = "Test the current SDK hooks and remount behavior without loading world assets or a browser"
+run = "go test -timeout=9s ./cmd/karty-check -run '^TestWorldCameraComponents$' -count=1 -v"
+
+[build-world-camera-native]
+depends = ["build"]
+dir = "samples/world-camera"
+run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
+
+[check-world-camera-geometry]
+description = "Execute the actual Roman court package and verify basin solids and chunk ownership"
+run = "go test -timeout=9s ./internal/levelbuild -run '^(TestWorldCameraSampleLevelCompiles|TestRomanStaticSolidSamplePackagedWASM|TestWorldCameraSampleChunkAreasKeepWholeCourtyard)$' -count=1 -v"
+
+[check-world-camera-native]
+description = "Execute world-camera mount/remount, camera pan/zoom and guest lifecycle with Wazero"
+dir = "samples/world-camera"
+run = '"${KARTY_HOST_CHECK:?set the matching karty-host-check path}" --camera-switch-check --cartridge dist/native/game.kart'
+
+[generate-world-camera-fixtures]
+description = "Regenerate the rounded basin, hanging braziers and corridor sconces"
+run = "go run ./cmd/world-camera-fixtures"

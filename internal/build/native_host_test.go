@@ -109,7 +109,7 @@ func TestNativeStageRejectsInvalidHostBeforeChangingDistribution(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err := stageTarget(dist, root, "missing-game.kart", nil, host, "native", "", "darwin-arm64", false, "test", false)
+		err := stageTarget(t.Context(), dist, root, "missing-game.kart", nil, host, "native", "", "darwin-arm64", "test", false)
 		if err == nil || !strings.Contains(err.Error(), "native host") {
 			t.Fatalf("invalid host was not rejected before staging: %v", err)
 		}

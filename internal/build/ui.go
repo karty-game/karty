@@ -1,24 +1,29 @@
 package build
 
 import (
+	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty-ui/compiler"
 	"github.com/karty-game/karty-ui/schema"
 	"github.com/karty-game/karty/internal/assetusage"
+	"github.com/karty-game/karty/internal/contextio"
 	"github.com/karty-game/karty/internal/project"
 )
 
 // UI assets have their own embedded section; they are never staged loose.
-func embedUIAssets(
+func embedUIAssets(ctx context.Context,
 	directory, artifact string,
 	entries []project.Texture,
 	layouts []project.Layout,
 	themeSource string,
 ) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if len(entries) == 0 {
 		return nil
 	}
@@ -38,7 +43,7 @@ func embedUIAssets(
 		return err
 	}
 
-	usage := assetusage.AnalyzeUI(directory, module, names)
+	usage := assetusage.AnalyzeUIWithComponents(directory, module, names, views)
 
 	assets := make([]cartridge.Asset, 0, len(entries))
 	theme := uicompiler.DefaultTheme()
@@ -95,7 +100,7 @@ func embedUIAssets(
 		return fmt.Errorf("encode UI bundle: %w", err)
 	}
 
-	wasm, err := os.ReadFile(artifact)
+	wasm, err := contextio.ReadFile(ctx, artifact)
 	if err != nil {
 		return fmt.Errorf("read cartridge for UI: %w", err)
 	}
@@ -104,8 +109,8 @@ func embedUIAssets(
 	if err != nil {
 		return fmt.Errorf("embed UI: %w", err)
 	}
-	//nolint:gosec // Fixed build-owned dist/raw/game.kart artifact.
-	if err := os.WriteFile(artifact, wasm, 0o600); err != nil {
+	// Fixed build-owned dist/raw/game.kart artifact.
+	if err := contextio.WriteFile(ctx, artifact, wasm, 0o600); err != nil {
 		return fmt.Errorf("write UI cartridge: %w", err)
 	}
 

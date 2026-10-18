@@ -96,6 +96,20 @@ func TestCDNSummaryReportsRemoteDependencyAndRelativePreviewRoot(t *testing.T) {
 
 type failedSummaryWriter struct{}
 
+func TestDevSummaryUsesTheActivePreviewURL(t *testing.T) {
+	t.Parallel()
+
+	var output bytes.Buffer
+	if err := writeSummary(&output, buildservice.Summary{Target: "web", PreviewURL: "http://127.0.0.1:4310/"}); err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(output.String(), "http://127.0.0.1:4310/") || strings.Contains(output.String(), "karty serve") ||
+		strings.Contains(output.String(), ":8080") {
+		t.Fatal(output.String())
+	}
+}
+
 func (failedSummaryWriter) Write([]byte) (int, error) {
 	return 0, io.ErrClosedPipe
 }

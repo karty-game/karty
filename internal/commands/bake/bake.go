@@ -40,6 +40,7 @@ func Command() *cli.Command {
 				Usage:       "indirect lighting denoiser: off, low or medium",
 			},
 			&cli.IntFlag{Name: "workers", DefaultText: "available CPUs, up to 64", Usage: "CPU worker count (1–64)"},
+			&cli.BoolFlag{Name: "incremental", Usage: "reuse completed bakes matching current sources and bake settings"},
 		},
 		Action: run,
 	}
@@ -51,7 +52,7 @@ func run(ctx context.Context, command *cli.Command) error {
 		return err
 	}
 
-	manifest, err := sdk.Resolve(config.SDK.Version)
+	manifest, err := sdk.ResolveContext(ctx, config.SDK.Version)
 	if err != nil {
 		return err
 	}
@@ -60,7 +61,9 @@ func run(ctx context.Context, command *cli.Command) error {
 		return err
 	}
 
-	options := levelbuild.BakeOptions{Level: command.String("level"), Workers: command.Int("workers")}
+	options := levelbuild.BakeOptions{
+		Level: command.String("level"), Workers: command.Int("workers"), Incremental: command.Bool("incremental"),
+	}
 	if command.IsSet("samples") {
 		value := command.Int("samples")
 		options.Samples = &value
@@ -117,14 +120,32 @@ func run(ctx context.Context, command *cli.Command) error {
 }
 
 func writeReport(output io.Writer, report levelbuild.BakeReport) error {
+	if report.Reused {
+		_, err := fmt.Fprintf(
+			output,
+			"Reused %s in %s\n  Samples: %d | Bounces: %d | Denoise: %s\n  No rays traced or files written\n  %s\n  %s\n",
+			report.Name,
+			report.Duration.Round(time.Millisecond),
+			report.Stats.Samples,
+			report.Stats.Bounces,
+			report.Stats.Denoise,
+			report.Manifest,
+			report.Image,
+		)
+
+		return err
+	}
+
 	var text strings.Builder
 
-	fmt.Fprintf(&text,
-		"Baked %s in %s\n  Receiver texels: %d | Rays: %d\n  Samples: %d | Bounces: %d\n  Denoise: %s in %s\n  Files: 2, %s\n  %s\n  %s\n",
+	fmt.Fprintf(
+		&text,
+		"Baked %s in %s\n  Receiver texels: %d | Rays: %d | Throughput: %.2f Mrays/sec\n  Samples: %d | Bounces: %d\n  Denoise: %s in %s\n  Files: 2, %s\n  %s\n  %s\n",
 		report.Name,
 		report.Duration.Round(time.Millisecond),
 		report.Stats.ReceiverTexels,
 		report.Stats.Rays,
+		millionRaysPerSecond(report.Stats.Rays, report.Duration),
 		report.Stats.Samples,
 		report.Stats.Bounces,
 		report.Stats.Denoise,
@@ -147,23 +168,44 @@ func writeReport(output io.Writer, report levelbuild.BakeReport) error {
 }
 
 func writeSummary(output io.Writer, reports []levelbuild.BakeReport, duration time.Duration) error {
-	var bytes int64
+	var (
+		bytes int64
+		rays  uint64
+		files int
+	)
 
 	for _, report := range reports {
 		bytes += report.OutputBytes
+
+		rays += report.Stats.Rays
+		if !report.Reused {
+			files += 2
+		}
 	}
 
 	_, err := fmt.Fprintf(
 		output,
-		"\nBake complete in %s\n  Levels: %d | Chunks: 0\n  Wrote %d files, %s, under %s\n  Standalone baking writes whole-level lighting. Builds bake chunk lighting.\n\nNext: karty build\n",
+		"\nBake complete in %s\n  Levels: %d | Chunks: 0\n  Rays: %d | Throughput: %.2f Mrays/sec\n  Wrote %d files, %s, under %s\n  Standalone baking writes whole-level lighting. Builds bake chunk lighting.\n\nNext: karty build\n",
 		duration.Round(time.Millisecond),
 		len(reports),
-		len(reports)*2,
+		rays,
+		millionRaysPerSecond(rays, duration),
+		files,
 		ui.Size(bytes),
 		filepath.ToSlash(filepath.Join(".karty", "bakes")),
 	)
 
 	return err
+}
+
+func millionRaysPerSecond(rays uint64, duration time.Duration) float64 {
+	const raysPerMillion = 1_000_000
+
+	if duration <= 0 {
+		return 0
+	}
+
+	return float64(rays) / duration.Seconds() / raysPerMillion
 }
 
 func validateBakeSDK(manifest sdk.Manifest) error {

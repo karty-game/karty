@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"hash"
@@ -10,11 +11,16 @@ import (
 	"strings"
 
 	"github.com/karty-game/karty-sdk/format/cartridge"
+	"github.com/karty-game/karty/internal/contextio"
 )
 
 const mediaContentDirectory = "content"
 
-func prepareMediaDirectory(root, extension, temporaryPrefix string) (string, error) {
+func prepareMediaDirectory(ctx context.Context, root, extension, temporaryPrefix string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	directory := filepath.Join(root, mediaContentDirectory)
 	if err := os.MkdirAll(directory, 0o750); err != nil {
 		return "", err
@@ -95,13 +101,17 @@ func (writer *mediaHashWriter) flushChunk() {
 	writer.chunkBytes = 0
 }
 
-func writeMediaEnvelope(
+func writeMediaEnvelope(ctx context.Context,
 	destination io.Writer,
 	source io.Reader,
 	kind cartridge.MediaKind,
 	payloadSize int64,
 	chunkSize int,
 ) (storedSize int64, digest string, chunks []string, err error) {
+	if err := ctx.Err(); err != nil {
+		return 0, "", nil, err
+	}
+
 	storedSize, err = cartridge.MediaEnvelopeSize(kind, uint64(payloadSize))
 	if err != nil {
 		return 0, "", nil, err
@@ -114,7 +124,7 @@ func writeMediaEnvelope(
 		return 0, "", nil, err
 	}
 
-	if _, err = io.Copy(wrapped, source); err != nil {
+	if _, err = contextio.Copy(ctx, wrapped, source); err != nil {
 		return 0, "", nil, err
 	}
 

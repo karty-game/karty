@@ -1,0 +1,53 @@
+[project]
+name = "vigil"
+compiler = "tinygo"
+
+[project.resolution]
+width = 1280
+height = 720
+
+[project.camera]
+near = 0.05
+far = 100
+ortho_height = 14
+
+[sdk]
+version = "0.0.13"
+
+[[assets.texture]]
+name = "sight-mask"
+source = "levels/crypt/z-vision.png"
+profile = "sprite"
+
+[[assets.music]]
+name = "church-ambience"
+source = "assets/sounds/church-ambience.wav"
+profile = "music"
+
+[assets.music.transform]
+# Match the host mixer offline; resampling this loop during WASM playback stalls frames.
+sample_rate = 48000
+channels = "mono"
+
+[[assets.sound]]
+name = "ember-crackle"
+source = "assets/sounds/ember-crackle.wav"
+
+[[assets.sound]]
+name = "fireball-cast"
+source = "assets/sounds/fireball-cast.wav"
+
+[[assets.sound]]
+name = "fireball-impact"
+source = "assets/sounds/fireball-impact.wav"
+
+[[assets.sound]]
+name = "shrine-chime"
+source = "assets/sounds/shrine-chime.wav"
+
+[[assets.sound]]
+name = "stone-footstep"
+source = "assets/sounds/stone-footstep.wav"
+
+[packages.controllers]
+folder = "../../packages/controllers"

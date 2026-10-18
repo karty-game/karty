@@ -17,7 +17,7 @@ func TestEnvironmentSchemaControlsAndVersion(t *testing.T) {
 		fields string
 		valid  bool
 	}{
-		{"preset: daylight", true}, {"preset: space", true}, {"preset: cartoon, palette: twilight", true},
+		{"preset: daylight", true}, {"preset: daylight-bright", true}, {"preset: space", true}, {"preset: cartoon, palette: twilight", true},
 		{"preset: fantasy, palette: violet, sun: {azimuth: 0, elevation: 90}", true},
 		{"preset: daylight, time_of_day: 0, cloud_amount: 0", true},
 		{"preset: daylight, time_of_day: 23.99, cloud_amount: 1", true},

@@ -1,0 +1,189 @@
+<template>
+  <panel class="screen" modal="false">
+    <panel class="heading">
+      <label class="eyebrow">THE ABBEY BELOW</label>
+      <label class="title">V I G I L</label>
+      <label class="area">{ props.Area() }</label>
+    </panel>
+    <panel class="objective">
+      <label class="eyebrow">KEEP THE LIGHT</label>
+      <label class="count">{ props.Progress() }</label>
+      <label class="subtle">vigil lights</label>
+    </panel>
+    <panel class="bottom">
+      <label class="message">{ props.Status() }</label>
+      if props.Prompt() != "" {
+        <button class="interact" onClick={ props.Interact }>{ props.Prompt() }</button>
+      }
+      if props.Help() {
+        <label class="help">Click / tap to walk · WASD / arrows</label>
+        <label class="help">Shift: hasten · E / Space: rekindle</label>
+        <label class="help">F: fireball · R: restart · H: hide help</label>
+      }
+    </panel>
+    <panel class="spell-frame">
+      <button class="fireball" enabled={ props.SpellReady() } onClick={ props.Fireball }>F · Fireball</button>
+    </panel>
+    <label class="spell-status">{ spellStatus() }</label>
+    <panel class="tools">
+      <button onClick={ props.ZoomOut }>-</button>
+      <button onClick={ props.ZoomIn }>+</button>
+      <button onClick={ props.ToggleHelp }>?</button>
+    </panel>
+  </panel>
+</template>
+<script setup lang="go">
+type VigilProps struct {
+  Area func() string
+  Status func() string
+  Progress func() string
+  Prompt func() string
+  Help func() bool
+  ToggleHelp func()
+  Interact func()
+  Reset func()
+  Fireball func()
+  SpellReady func() bool
+  ZoomIn func()
+  ZoomOut func()
+}
+func setup(props VigilProps) {
+  spellStatus := func() string {
+    if props.SpellReady() { return "READY" }
+    return "GATHERING EMBERS"
+  }
+}
+</script>
+<style>
+.screen
+  width: 100%
+  height: 100%
+  padding: 30
+.heading
+  width: 236
+  padding: 10
+  align: start
+  gap: 4
+  background: #111314a8
+.eyebrow
+  font-size: 10
+  color: #b39c71
+.title
+  font-family: display
+  font-size: 32
+  color: #e0d4b9
+.area
+  font-family: display
+  font-size: 14
+  color: #c2b6a2
+.objective
+  position: absolute
+  top: 0
+  right: 0
+  width: 126
+  padding: 10
+  align: end
+  gap: 4
+  background: #111314a8
+.count
+  font-family: display
+  font-size: 26
+  color: #dbc497
+.subtle
+  font-size: 10
+  color: #a69b86
+.bottom
+  position: absolute
+  bottom: 48
+  left: 0
+  right: 0
+  align: center
+  gap: 6
+.message
+  font-family: display
+  font-size: 16
+  color: #dfcba1
+.help
+  font-size: 11
+  color: #b6ac98
+.tools
+  position: absolute
+  top: 112
+  right: 0
+  direction: row
+  gap: 5
+button
+  min-width: 38
+  min-height: 38
+  background: #202022ed
+  color: #cfbb91
+  font-family: display
+  font-size: 16
+button:hover
+  background: #49402e
+  color: #f0d7a0
+button:pressed
+  background: #17191a
+.interact
+  min-width: 244
+  min-height: 42
+  font-size: 13
+  background: #302b20f0
+.spell-frame
+  position: absolute
+  bottom: 140
+  right: 0
+  padding: 1
+  background: #8e7144
+.fireball
+  min-width: 148
+  min-height: 46
+  font-size: 17
+  background: #35271eeb
+  color: #f1cb87
+.fireball:hover
+  background: #69462c
+  color: #fff0c9
+.fireball:pressed
+  background: #211a16
+.fireball:disabled
+  background: #202020ef
+  color: #8b8376
+.spell-status
+  position: absolute
+  bottom: 122
+  right: 0
+  width: 150
+  text-align: center
+  font-size: 9
+  color: #bba478
+@media (max-width: 700)
+  .screen
+    padding: 16
+  .heading
+    width: 196
+    padding: 8
+  .title
+    font-size: 26
+  .area
+    font-size: 12
+  .objective
+    width: 110
+    padding: 8
+  .eyebrow
+    font-size: 9
+  .count
+    font-size: 24
+  .tools
+    top: 108
+  .bottom
+    bottom: 58
+  .help
+    font-size: 10
+  .message
+    font-size: 12
+  .spell-frame
+    bottom: 150
+  .spell-status
+    bottom: 132
+</style>

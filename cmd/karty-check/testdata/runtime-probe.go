@@ -14,7 +14,7 @@ type Game struct {
 	label                     *engine.EntityText2D
 	marker                    *engine.EntityVector2D
 	left, right               bool
-	leftRequest, rightRequest engine.LevelRequestID
+	leftRequest, rightRequest engine.RequestID
 	leftHandle, rightHandle   engine.LevelHandle
 	levelStage                uint8
 }
@@ -29,22 +29,22 @@ func main() {
 
 // Initialize is called when the game is first started to set up the initial state.
 func (game *Game) Initialize() {
-	game.player = game.NewSprite2D(assets.TextureSpritesPlayer, engine.NewVec2D(48, 48))
-	panel := game.NewVector2D(engine.Rectangle(360, 56), engine.NewVec2D(16, 216))
+	game.player = game.NewSprite2D(assets.TextureSpritesPlayer, engine.NewVec2(48, 48))
+	panel := game.NewVector2D(engine.Rectangle(360, 56), engine.NewVec2(16, 216))
 	panel.SetFill(engine.RGBA(25, 45, 80, 255))
 	panel.SetLayer(-1)
-	game.label = game.NewText2D("Arrow keys move; click to place", engine.NewVec2D(28, 232))
+	game.label = game.NewText2D("Arrow keys move; click to place", engine.NewVec2(28, 232))
 	game.label.SetSize(20)
-	game.marker = game.NewVector2D(engine.Circle(12), engine.NewVec2D(304, 80))
+	game.marker = game.NewVector2D(engine.Circle(12), engine.NewVec2(304, 80))
 	game.marker.SetFill(engine.RGBA(255, 170, 60, 180))
 	game.marker.SetStroke(engine.ColorWhite, 2)
-	axis := game.NewVector2D(engine.Line(engine.NewVec2D(72, 24)), engine.NewVec2D(256, 120))
+	axis := game.NewVector2D(engine.Line(engine.NewVec2(72, 24)), engine.NewVec2(256, 120))
 	axis.SetStroke(engine.RGBA(100, 220, 255, 255), 3)
 
 	for i := 0; i < 10; i++ {
 		game.entities = append(
 			game.entities,
-			game.NewSprite2D(assets.TextureSpritesPlayer, engine.NewVec2D(float32(i*16), 64+float32(i*16))),
+			game.NewSprite2D(assets.TextureSpritesPlayer, engine.NewVec2(float32(i*16), 64+float32(i*16))),
 		)
 	}
 	game.leftRequest = game.RequestLevel("levels.left")
@@ -94,7 +94,7 @@ func (game *Game) advanceMotion(frame engine.Frame) {
 		game.player.Translate(2, 0)
 	}
 
-	// Text and vector entities move through the same Transform2d as sprites.
+	// Text and vector entities move through the same Transform2D as sprites.
 	// Reverse every two seconds at the host's fixed 60 updates per second.
 	direction := float32(1)
 	if frame.Number%240 >= 120 {

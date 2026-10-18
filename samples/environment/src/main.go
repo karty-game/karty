@@ -13,7 +13,7 @@ type Game struct {
 	camera       *engine.EntityCamera3D
 	chairs       [12]*engine.EntityWorldSolid
 	level        engine.LevelHandle
-	request      engine.LevelRequestID
+	request      engine.RequestID
 	panel        *engine.UI
 	fps          *FPSController
 	keys         [256]bool
@@ -40,6 +40,10 @@ func (game *Game) Hooks() engine.Hooks {
 			}
 			game.request = 0
 			game.level = event.Handle
+			if err := game.World(game.level).
+				Configure(engine.WorldSettings{Mode: engine.WorldSpatial, Gravity: engine.Vec3{Z: -9.81}}); err != nil {
+				panic(err)
+			}
 			game.createChairs()
 			game.applyEnvironment()
 			game.visit(game.view)
@@ -101,7 +105,7 @@ func (game *Game) loadLevel() {
 		game.CancelLevel(game.request)
 	}
 	game.clearChairs()
-	game.fps.SetCamera(nil)
+	game.fps.SetCamera(nil, nil)
 	if game.camera != nil {
 		game.camera.Destroy()
 		game.camera = nil
@@ -143,7 +147,7 @@ func (game *Game) resetEnvironment() {
 
 func (game *Game) applyEnvironment() {
 	if game.level != 0 {
-		game.SetEnvironment(game.level, engine.EnvironmentSettings{TimeOfDay: game.timeOfDay, CloudAmount: game.cloudAmount})
+		game.World(game.level).ConfigureEnvironment(engine.EnvironmentSettings{TimeOfDay: game.timeOfDay, CloudAmount: game.cloudAmount})
 	}
 	game.invalidate()
 }
@@ -159,35 +163,34 @@ var viewpoints = [...]viewpoint{
 	{"Windows", -8.3, -10.5, 1.7, .55, .06},
 	{"Courtyard", 1, 0, 1.7, -.08, .04},
 	{"Look back", 1, 13, 1.7, 3.20, .08},
-	{"Test ground", 0, 32, 1.7, -.35, .18},
+	{"Test ground", 0, 32, 3.14, -.35, .18},
 }
 
 func (game *Game) visit(index int) {
 	if game.level == 0 || index < 0 || index >= len(viewpoints) {
 		return
 	}
-	game.fps.SetCamera(nil)
+	game.fps.SetCamera(nil, nil)
 	if game.camera != nil {
 		game.camera.Destroy()
 	}
 	p := viewpoints[index]
 	game.camera = game.NewCamera3D(game.level, engine.CameraSettings{
 		Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-		Position: engine.NewVec3D(p.x, p.y, p.z), Yaw: p.yaw, Pitch: p.pitch,
+		Position: engine.NewVec3(p.x, p.y, p.z), Yaw: p.yaw, Pitch: p.pitch,
 		FOVY: config.CameraFOVY, Near: config.CameraNear, Far: config.CameraFar,
 		OrthoHeight: config.CameraOrthoHeight, ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
 	})
 	game.camera.SetLayer(-10)
-	game.SetPhysicsBox(game.camera, engine.PhysicsBox{
-		HalfExtents: engine.NewVec3D(.3, .3, .85), Offset: engine.NewVec3D(0, 0, -.85),
-		Mass: 80, Friction: .5, LockRotation: true,
-	})
-	game.fps.SetCamera(game.camera)
-	if _, err := game.WatchTransform(game.camera, nil); err != nil {
-		game.status = err.Error()
-	} else {
-		game.status = p.name
+	body, err := game.World(game.level).
+		AttachBody(game.camera.Ref(), engine.BodySettings{Kind: engine.BodyDynamic, Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(.3, .3, .85), Offset: engine.NewVec3(0, 0, -.85)}, Rotate: false, Forces: engine.BodyForces{GravityScale: 1, Buoyancy: false}, Mass: 80, Friction: .5})
+	if err != nil {
+		panic(err)
 	}
+	game.fps.SetCamera(game.camera, body)
+
+	game.status = p.name
+
 	game.view = index
 	game.invalidate()
 }

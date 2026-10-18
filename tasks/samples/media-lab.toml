@@ -1,0 +1,16 @@
+[generate-media-lab-audio]
+description = "Master periodic music and leave headroom for Media Lab's full effect burst"
+run = "go run scripts/media-lab-audio.go"
+
+[check-media-lab-audio-assets]
+description = "Verify Media Lab audio matches its retained sources and mastering recipe"
+run = "go run scripts/media-lab-audio.go -check"
+
+[build-media-lab-web]
+depends = ["build", "generate-media-lab-audio"]
+dir = "samples/media-lab"
+run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
+
+[check-media-lab-audio-web]
+description = "Measure production music continuity, loop boundaries and full-burst mix headroom in actual WebAudio"
+run = "node scripts/check-media-lab-audio-web.mjs"

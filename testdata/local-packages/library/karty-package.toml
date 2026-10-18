@@ -1,0 +1,20 @@
+format_version = 1
+name = "placeholder-kit"
+version = "0.1.0"
+sdk = "0.0.13"
+prefabs = "prefabs.yaml"
+
+[[textures]]
+name = "checker"
+source = "assets/checker.png"
+profile = "environment"
+
+[[textures]]
+name = "wood"
+source = "assets/wood.png"
+profile = "environment"
+
+[[textures]]
+name = "frame"
+source = "assets/frame.png"
+profile = "environment"

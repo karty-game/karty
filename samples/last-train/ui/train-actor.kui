@@ -1,0 +1,46 @@
+<template>
+  <panel class="actor-slot">
+    if props.Renderer.ReducedMotion() && props.Model.Portrait == "mara" {
+      <panel class="still"><TrainPortrait props={ TrainPortraitProps{Name: "mara", Renderer: props.Renderer} }/></panel>
+    }
+    if props.Renderer.ReducedMotion() && props.Model.Portrait == "elias" {
+      <panel class="still"><TrainPortrait props={ TrainPortraitProps{Name: "elias", Renderer: props.Renderer} }/></panel>
+    }
+    if props.Renderer.ReducedMotion() && props.Model.Portrait == "iris" {
+      <panel class="still"><TrainPortrait props={ TrainPortraitProps{Name: "iris", Renderer: props.Renderer} }/></panel>
+    }
+    if !props.Renderer.ReducedMotion() && props.Model.Portrait == "mara" {
+      <panel class="entrance"><TrainPortrait props={ TrainPortraitProps{Name: "mara", Renderer: props.Renderer} }/></panel>
+    }
+    if !props.Renderer.ReducedMotion() && props.Model.Portrait == "elias" {
+      <panel class="entrance"><TrainPortrait props={ TrainPortraitProps{Name: "elias", Renderer: props.Renderer} }/></panel>
+    }
+    if !props.Renderer.ReducedMotion() && props.Model.Portrait == "iris" {
+      <panel class="entrance"><TrainPortrait props={ TrainPortraitProps{Name: "iris", Renderer: props.Renderer} }/></panel>
+    }
+  </panel>
+</template>
+<script setup lang="go">
+import "github.com/karty-game/dialogue"
+import "example.com/last-train/internal/stage"
+type TrainActorProps struct { Model *dialogue.Model; Renderer *stage.Renderer }
+func setup(props TrainActorProps) {}
+</script>
+<style>
+.actor-slot
+  padding: 0
+  width: 100%
+  height: 100%
+.still
+  padding: 0
+  width: 100%
+  height: 100%
+.entrance
+  padding: 0
+  width: 100%
+  height: 100%
+  transition-enter: slide-from-right
+  transition-exit: slide-to-right
+  transition-duration: 540
+  transition-easing: ease-in-out
+</style>

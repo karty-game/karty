@@ -1,0 +1,43 @@
+name: Build game
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    env:
+      GOEXPERIMENT: simd
+      GOWORK: "off"
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: "{{ .Tools.Go }}"
+          cache: false
+      - name: Install public CLI and Go quality tools
+        run: |
+          go install github.com/karty-game/karty/cmd/karty@latest
+          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Install the project SDK and graphics libraries
+        run: |
+          SDK_VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("karty.toml", "rb"))["sdk"]["version"])')
+          echo "SDK_VERSION=$SDK_VERSION" >> "$GITHUB_ENV"
+          karty sdk install "$SDK_VERSION"
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
+      - name: Build and check the game
+        run: |
+          karty build --target web
+          karty fmt --check
+          karty lint
+          for notice in RUNTIME_LICENSE.md SDK_LICENSE.md; do
+            curl -fsSL "https://github.com/karty-game/karty-sdk/releases/download/sdk-v$SDK_VERSION/$notice" -o "dist/web/$notice"
+          done
+      - uses: actions/upload-artifact@v7.0.0
+        with:
+          name: game-web
+          path: dist/web/
+          if-no-files-found: error

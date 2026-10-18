@@ -48,7 +48,7 @@ func installSDK(ctx context.Context, command *cli.Command) error {
 			return err
 		}
 
-		return sdk.InstallBundle(version, data, command.String("sha256"))
+		return sdk.InstallBundleContext(ctx, version, data, command.String("sha256"))
 	}
 
 	if command.String("sha256") != "" {

@@ -1,0 +1,35 @@
+<template>
+  <panel class="row">
+    <button class="choice" enabled={ props.Option.Enabled } onClick={ choose }>{ props.Option.Text }</button>
+  </panel>
+</template>
+
+<script setup lang="go">
+import "github.com/karty-game/dialogue"
+type NovelChoiceProps struct { Option dialogue.Option; Choose func(int) }
+func setup(props NovelChoiceProps) { choose := func() { props.Choose(props.Option.ID) } }
+</script>
+
+<style>
+.row
+  padding: 0
+  gap: 0
+  align: stretch
+.choice
+  min-height: 40
+  font-size: 17
+  color: #f4edddff
+  background: #192839ff
+  text-align: left
+.choice:hover
+  background: #4c3c2aff
+.choice:focus
+  background: #614c31ff
+.choice:disabled
+  color: #78818aff
+  background: #101c29ff
+@media (max-width: 600)
+  .choice
+    font-size: 15
+    min-height: 40
+</style>

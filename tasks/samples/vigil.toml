@@ -1,0 +1,57 @@
+[render-vigil-character]
+description = "Rebake Vigil's complete character frames with Blender 2.79b (optional art workflow)"
+run = [
+  '"${VIGIL_BLENDER:-blender}" -b scripts/vigil/source/pilgrim.blend -t 2 -P scripts/vigil/source/render.py -- --output tmp/vigil-character-frames',
+  "go run scripts/vigil/source/assemble.go tmp/vigil-character-frames scripts/vigil/assets",
+]
+
+[generate-vigil-sounds]
+description = "Synthesize Vigil's original quiet church ambience and spatial sound effects"
+run = "go run scripts/vigil-sound-assets.go"
+
+[check-vigil-sounds]
+description = "Verify Vigil's deterministic PCM sounds, headroom and seamless loop endpoints"
+run = "go run scripts/vigil-sound-assets.go -check"
+
+[author-vigil]
+description = "Prepare Vigil's original sprite sheets, materials and shared dungeon geometry"
+dir = "samples/vigil"
+run = [
+  "GOWORK=off go run ./cmd/author",
+  "prettier --write levels/crypt/world.yaml",
+  "gofmt -w src/textures.generated.go",
+]
+
+[check-vigil]
+description = "Verify Vigil endpoint projection, engine-result lifecycle, collision and bounded waypoint following"
+dir = "samples/vigil"
+run = "GOWORK=off go test -timeout=9s ./internal/dungeon ./cmd/author"
+
+[build-vigil-web]
+depends = ["build"]
+dir = "samples/vigil"
+run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
+
+[build-vigil-native]
+depends = ["build"]
+dir = "samples/vigil"
+run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
+
+[check-vigil-web]
+description = "Execute Vigil's actual WASM, eight-direction movement, pilgrimage and touch controls in Chromium"
+run = "node scripts/check-vigil-web.mjs"
+
+[check-vigil-audio-web]
+description = "Measure Vigil's actual WebAudio output, player-root distance and dimetric stereo through ordinary play"
+run = "node scripts/check-vigil-audio-web.mjs"
+
+[review-vigil-walk]
+description = "Export an eight-direction moving comparison of Vigil's source studies and whole-body walk"
+run = "node scripts/review-vigil-walk.mjs"
+
+[fmt-vigil-navigation]
+description = "Format Vigil's engine path-query adapter and game-owned waypoint follower"
+run = [
+  "gofmt -w internal/release/version.go cmd/karty-release/main_test.go samples/vigil/src/main.go samples/vigil/src/navigation.go samples/vigil/internal/dungeon/dungeon.go samples/vigil/internal/dungeon/navigation.go samples/vigil/internal/dungeon/dungeon_test.go samples/vigil/internal/dungeon/navigation_test.go",
+  "prettier --write scripts/check-vigil-web.mjs",
+]

@@ -14,7 +14,7 @@ type Game struct {
 	panel            *engine.UI
 	status           string
 	level            engine.LevelHandle
-	request, release engine.LevelRequestID
+	request, release engine.RequestID
 	keys             [256]bool
 	view             int
 	captured, hidden bool
@@ -144,16 +144,13 @@ func (game *Game) visit(index int) {
 	p := viewpoints[index]
 	game.camera = game.NewCamera3D(game.level, engine.CameraSettings{
 		Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-		Position: engine.NewVec3D(p.x, p.y, p.z), Yaw: p.yaw, Pitch: p.pitch,
+		Position: engine.NewVec3(p.x, p.y, p.z), Yaw: p.yaw, Pitch: p.pitch,
 		FOVY: config.CameraFOVY, Near: config.CameraNear, Far: config.CameraFar,
 		OrthoHeight:   config.CameraOrthoHeight,
 		ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
 	})
 	game.camera.SetLayer(-10)
-	if _, err := game.WatchTransform(game.camera, nil); err != nil {
-		game.setStatus("Camera unavailable")
-		return
-	}
+
 	game.setStatus(p.name)
 }
 

@@ -6,12 +6,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/karty-game/karty/internal/contextio"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -61,6 +61,10 @@ func Host(version, target string) (string, error) {
 
 // InstallHost downloads, verifies, and atomically installs a raw host artifact.
 func InstallHost(ctx context.Context, version, target string, artifact sdk.ToolArtifact) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	cacheDir, err := kartyHome("")
 	if err != nil {
 		return "", err
@@ -70,6 +74,10 @@ func InstallHost(ctx context.Context, version, target string, artifact sdk.ToolA
 }
 
 func installHost(ctx context.Context, cacheDir, version, target string, artifact sdk.ToolArtifact) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	if version == "" || artifact.URL == "" || artifact.SHA256 == "" {
 		return "", errHostMetadata
 	}
@@ -96,7 +104,7 @@ func installHost(ctx context.Context, cacheDir, version, target string, artifact
 	installDir := filepath.Join(cacheDir, "hosts", version, platform)
 
 	path := filepath.Join(installDir, name)
-	if err := verifyCachedHost(path, artifact.SHA256); err == nil {
+	if err := verifyCachedHost(ctx, path, artifact.SHA256); err == nil {
 		return installedHost(path, target)
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return "", err
@@ -117,8 +125,12 @@ func installHost(ctx context.Context, cacheDir, version, target string, artifact
 	}
 	defer os.RemoveAll(staging)
 
-	if err := os.WriteFile(filepath.Join(staging, name), contents, mode); err != nil {
+	if err := contextio.WriteFile(ctx, filepath.Join(staging, name), contents, mode); err != nil {
 		return "", fmt.Errorf("stage host: %w", err)
+	}
+
+	if err := ctx.Err(); err != nil {
+		return "", err
 	}
 
 	if err := os.Rename(staging, installDir); err != nil {
@@ -136,7 +148,7 @@ func installedHost(path, target string) (string, error) {
 	return executable("managed Karty host", path)
 }
 
-func verifyCachedHost(path, checksum string) error {
+func verifyCachedHost(ctx context.Context, path, checksum string) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("open cached Karty host: %w", err)
@@ -153,7 +165,7 @@ func verifyCachedHost(path, checksum string) error {
 	}
 
 	digest := sha256.New()
-	if _, err := io.Copy(digest, file); err != nil {
+	if _, err := contextio.Copy(ctx, digest, file); err != nil {
 		return fmt.Errorf("hash cached Karty host: %w", err)
 	}
 
@@ -174,12 +186,16 @@ func downloadHost(ctx context.Context, artifact sdk.ToolArtifact) ([]byte, error
 	}
 	defer response.Close()
 
-	contents, err := io.ReadAll(response)
+	contents, err := contextio.ReadAll(ctx, response)
 	if err != nil {
 		return nil, fmt.Errorf("read Karty host: %w", err)
 	}
 
-	digest := sha256.Sum256(contents)
+	digest, hashErr := contextio.Sum256(ctx, contents)
+	if hashErr != nil {
+		return nil, hashErr
+	}
+
 	if hex.EncodeToString(digest[:]) != artifact.SHA256 {
 		return nil, fmt.Errorf("karty host checksum = %x, want %s: %w", digest, artifact.SHA256, errHostChecksum)
 	}
@@ -190,6 +206,10 @@ func downloadHost(ctx context.Context, artifact sdk.ToolArtifact) ([]byte, error
 // EnsureHost installs the host selected by the project SDK when that SDK
 // publishes a checksum-pinned release artifact.
 func EnsureHost(ctx context.Context, manifest sdk.Manifest, target string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	manifest, err := manifestWithPublishedHost(ctx, manifest, target)
 	if err != nil {
 		return "", err

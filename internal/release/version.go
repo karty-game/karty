@@ -1,13 +1,12 @@
-// Package release contains the SDK selected by CLI defaults and release checks.
+// Package release defines the CLI build identity and selected SDK.
 package release
 
-// CurrentSDK is the released default for new projects and compatibility checks.
-const CurrentSDK = "0.0.12"
+// Version identifies the CLI build, independently of its selected SDK.
+// Release builds set it from their tag through Go linker flags.
+var Version = "dev" //nolint:gochecknoglobals // Go linker flags require a variable for the release build identity.
+
+// CurrentSDK is the SDK required by current projects, templates and samples.
+const CurrentSDK = "0.0.13"
 
 // SDKVersion returns the unprefixed version used by manifests and project files.
 func SDKVersion() string { return CurrentSDK }
-
-// SampleSDKVersion selects the published SDK for every managed sample.
-func SampleSDKVersion(_ string) string {
-	return CurrentSDK
-}

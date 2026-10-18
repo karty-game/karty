@@ -25,7 +25,7 @@ func TestRegistrationMigrationRemovesOnlyGeneratedShim(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := retireLegacyGeneratedRegistration(directory); err != nil {
+	if err := retireLegacyGeneratedRegistration(t.Context(), directory); err != nil {
 		t.Fatal(err)
 	}
 
@@ -54,7 +54,7 @@ func TestRegistrationMigrationPreservesLegacyAndUserFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := retireLegacyGeneratedRegistration(directory); err != nil {
+	if err := retireLegacyGeneratedRegistration(t.Context(), directory); err != nil {
 		t.Fatal(err)
 	}
 
@@ -74,7 +74,7 @@ func TestRegistrationMigrationPreservesLegacyAndUserFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := retireLegacyGeneratedRegistration(directory); err == nil {
+	if err := retireLegacyGeneratedRegistration(t.Context(), directory); err == nil {
 		t.Fatal("migration removed a user-owned registration file")
 	}
 
@@ -103,7 +103,7 @@ func TestRegistrationMigrationIgnoresDirectiveOutsideMainDeclaration(t *testing.
 		t.Fatal(err)
 	}
 
-	if err := retireLegacyGeneratedRegistration(directory); err != nil {
+	if err := retireLegacyGeneratedRegistration(t.Context(), directory); err != nil {
 		t.Fatal(err)
 	}
 

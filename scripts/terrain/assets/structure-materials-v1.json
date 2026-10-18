@@ -1,0 +1,33 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-10-15",
+  "prompts": {
+    "wood": "Use case: photorealistic-natural. Asset type: seamless square game albedo texture, original weathered coastal pier timber. Orthographic straight-on macro photograph filling the entire image with dry aged silver-brown hardwood grain running vertically, narrow longitudinal fibrous cracks and sparse dark knots. Restrained warm grey and brown, slightly sun bleached and salt worn. This is one continuous wood surface, no assembled planks, no plank boundaries, no boards, no nails, no joins, no frame, no perspective, no shadows or directional illumination, no painted markings or text. Realistic broad grain variation should remain legible after reduction to 512px. Tile seamlessly across every edge, approximately 1024 square, fully opaque. Neutral diffuse lighting; albedo intended for a small early-2000s tropical harbor, not an illustration or scene.",
+    "concrete": "Use case: photorealistic-natural. Asset type: seamless square game albedo texture, original weathered military coastal bunker concrete. Orthographic straight-on view filling entire image with coarse aged poured concrete, muted warm grey limestone aggregate, subtle irregular formwork traces, occasional narrow hairline cracks, faint darker water run stains and sparse olive discoloration near micro recesses. Large-scale subtle blotches, moderate contrast, durable heavy solid concrete. No brickwork, blocks, tiles or panel grid, no doors or windows, no bolts, no frame, no perspective, no cast shadows or directional lighting, no text or symbols. Neutral diffuse flat light, game-ready albedo texture that stays readable at 512 pixels. Seamless edges, approximately 1024 square, fully opaque."
+  },
+  "assets": {
+    "levels/ground/pier-wood-v1.png": "Original generated source retained at samples/terrain/levels/ground/pier-wood-v1.png",
+    "levels/ground/bunker-concrete-v1.png": "Original generated source retained at samples/terrain/levels/ground/bunker-concrete-v1.png"
+  },
+  "references": [
+    "https://steamcommunity.com/app/13520/screenshots/",
+    "https://www.pcgames.de/screenshots/1280x1024/2004/04/x_explosionamstrand03.jpg"
+  ],
+  "notes": "Original generated tiles, copied unmodified. Original Far Cry references inform proportions and weathering; no reference pixels are copied. Materialize derives runtime normals and mips.",
+  "measurements": {
+    "levels/ground/pier-wood-v1.png": {
+      "width": 1254,
+      "height": 1254,
+      "bytes": 3713869,
+      "sha256": "fbdac334c9094f23847fe0cee98cd0d27804a6e100c0372b1928aa9acd27eb33",
+      "runtimeMaxDimensions": [512, 512]
+    },
+    "levels/ground/bunker-concrete-v1.png": {
+      "width": 1254,
+      "height": 1254,
+      "bytes": 4355855,
+      "sha256": "a4ed777235508f9a46426f5c8963ec6031f7dde4100495e128b7c1c0a0777c5f",
+      "runtimeMaxDimensions": [512, 512]
+    }
+  }
+}

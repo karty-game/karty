@@ -3,11 +3,13 @@ package scaffold
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -34,21 +36,29 @@ func CreateGame(destination, name string, manifest sdk.Manifest) error {
 
 // CreateTemplate selects user-owned game or UI source while sharing SDK setup.
 func CreateTemplate(destination, name string, manifest sdk.Manifest, selection string) error {
+	return CreateTemplateContext(context.Background(), destination, name, manifest, selection)
+}
+
+// CreateTemplateContext renders a starter from the selected SDK with cancellation.
+func CreateTemplateContext(ctx context.Context, destination, name string, manifest sdk.Manifest, selection string) error {
+	selection, err := NormalizeTemplate(selection)
+	if err != nil {
+		return err
+	}
+
+	if err := ValidateDestination(destination, name); err != nil {
+		return err
+	}
+
+	if err := ValidateTemplate(ctx, manifest, selection); err != nil {
+		return err
+	}
+
 	if selection == "ui" && manifest.Templates.Game == "0.0.1" {
 		return fmt.Errorf("UI scaffolding requires an SDK with .kui templates (SDK 0.0.9 or newer): %w", errUnsupportedTemplateFile)
 	}
 
-	if !supportsTemplate(selection) {
-		return errUnsupportedTemplateFile
-	}
-
-	if _, err := os.Stat(destination); err == nil {
-		return fmt.Errorf("%s: %w", destination, errProjectDirectoryExists)
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("inspect project directory: %w", err)
-	}
-
-	tree, err := sdk.Resources(manifest)
+	tree, err := sdk.ResourcesContext(ctx, manifest)
 	if err != nil {
 		return err
 	}
@@ -97,7 +107,7 @@ func CreateTemplate(destination, name string, manifest sdk.Manifest, selection s
 		return fmt.Errorf("render game template: %w", err)
 	}
 
-	generated, err := sdk.ClientFiles(manifest, "tinygo")
+	generated, err := sdk.ClientFilesContext(ctx, manifest, "tinygo")
 	if err != nil {
 		return fmt.Errorf("generate client API: %w", err)
 	}
@@ -142,7 +152,7 @@ func CreateTemplate(destination, name string, manifest sdk.Manifest, selection s
 		return err
 	}
 
-	return sdk.SyncDocs(destination, manifest)
+	return sdk.SyncDocsContext(ctx, destination, manifest)
 }
 
 func templateVersion(_ string, manifest sdk.Manifest) string {
@@ -150,7 +160,63 @@ func templateVersion(_ string, manifest sdk.Manifest) string {
 }
 
 func supportsTemplate(selection string) bool {
-	return selection == "game" || selection == "ui"
+	return selection == "blank" || selection == "game" || selection == "ui" || selection == "fps" || selection == "isometric"
+}
+
+// NormalizeTemplate accepts guide names and preserves the historical game alias.
+func NormalizeTemplate(selection string) (string, error) {
+	if selection == "2d" {
+		return "game", nil
+	}
+
+	if selection == "none" {
+		return "blank", nil
+	}
+
+	if !supportsTemplate(selection) {
+		return "", fmt.Errorf("unknown template %q; choose blank, 2d, fps, isometric or ui: %w", selection, os.ErrInvalid)
+	}
+
+	return selection, nil
+}
+
+// ValidateDestination checks user input before SDK downloads or project writes.
+func ValidateDestination(destination, name string) error {
+	if !regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_-]*$`).MatchString(name) {
+		return fmt.Errorf(
+			"invalid project name %q; start with a letter and use letters, numbers, hyphens or underscores: %w",
+			name,
+			os.ErrInvalid,
+		)
+	}
+
+	if _, err := os.Lstat(destination); err == nil {
+		return fmt.Errorf("%s: %w", destination, errProjectDirectoryExists)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("inspect project directory: %w", err)
+	}
+
+	return nil
+}
+
+// ValidateTemplate checks the selected bundle rather than guessing from its version.
+func ValidateTemplate(ctx context.Context, manifest sdk.Manifest, selection string) error {
+	tree, err := sdk.ResourcesContext(ctx, manifest)
+	if err != nil {
+		return err
+	}
+
+	path := "templates/" + selection + "/" + manifest.Templates.Game
+	if _, err := fs.Stat(tree, path); err != nil {
+		return fmt.Errorf(
+			"SDK %s does not include the %s starter; choose another template or an SDK containing it: %w",
+			manifest.Version,
+			selection,
+			err,
+		)
+	}
+
+	return nil
 }
 
 func addUIPackage(

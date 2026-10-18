@@ -390,7 +390,7 @@ max_texels = 1048576
 shadow_size = 256
 offline = true
 bake_samples = 32
-bake_bounces = 2
+bake_bounces = 3
 bake_denoise = "medium"
 
 # BEGIN PARTICLE LAB EFFECTS: textures

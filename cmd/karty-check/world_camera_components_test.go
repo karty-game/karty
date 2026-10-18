@@ -119,7 +119,7 @@ func componentNativeImports(contents []byte) ([]byte, error) {
 			continue
 		}
 
-		if function.Type.Results != nil {
+		if function.Type.Results != nil && function.Name.Name != "hostAccessSave" {
 			return nil, fmt.Errorf("unsupported fixture import %s: %w", function.Name.Name, os.ErrInvalid)
 		}
 
@@ -129,6 +129,8 @@ func componentNativeImports(contents []byte) ([]byte, error) {
 		audioStub := ""
 
 		switch function.Name.Name {
+		case "hostAccessSave":
+			audioStub = "return -4"
 		case "hostSetSoundEmitter":
 			audioStub = "fixtureAudioCalls=append(fixtureAudioCalls,FixtureAudioCall{emitterID,soundID,levelID,sourceID,x,y,z,volume,nearDistance,farDistance,flags})"
 		case "hostStopSoundEmitter":
@@ -256,6 +258,8 @@ const (CameraFOVY=1.0471976;CameraOrthoHeight=30;CameraNear=.05;CameraFar=80;Res
 const componentEngineFixture = `package engine
 var fixtureCommands []byte
 func FixtureBegin(){beginCommands(1)}
+func FixtureEntityRef(id uint32,level LevelHandle) EntityRef{return registerEntity(id,level,nil)}
+func FixtureAcceptedPose(id uint32,pose Transform3D){synchronizeEntity(InputEvent{Type:EventAuthoritativeTransform,EntityID:id,Transform3D:pose})}
 func FixtureCommands()[]byte{finishCommands();return fixtureCommands}
 type FixtureAudioCall struct {Emitter,Sound,Level,Source uint32;X,Y,Z,Volume,Near,Far float32;Flags uint32}
 var fixtureAudioCalls []FixtureAudioCall

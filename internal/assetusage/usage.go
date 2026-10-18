@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/karty-game/karty-ui/codegen"
+	"github.com/karty-game/karty-ui/compiler"
 	"github.com/karty-game/karty/internal/project"
 )
 
@@ -41,12 +42,18 @@ type Result struct {
 // Analyze type-checks the generated engine package together with project source.
 // An analysis uncertainty retains all assets instead of risking a false strip.
 func Analyze(directory, modulePath string, names []string) Result {
+	return AnalyzeWithUI(directory, modulePath, names, nil)
+}
+
+// AnalyzeWithUI uses the build's resolved components, including package exports.
+// Nil components preserve standalone project discovery and conservative fallback.
+func AnalyzeWithUI(directory, modulePath string, names []string, components []uicompiler.Component) Result {
 	known := make(map[string]struct{}, len(names))
 	for _, name := range names {
 		known[name] = struct{}{}
 	}
 
-	fileSet, enginePackage, assetsPackage, sourceFiles, info, err := loadTypeInfo(directory, modulePath)
+	fileSet, enginePackage, assetsPackage, sourceFiles, info, err := loadTypeInfo(directory, modulePath, components)
 	if err != nil {
 		return keepAll(err)
 	}
@@ -58,7 +65,10 @@ func Analyze(directory, modulePath string, names []string) Result {
 	return result
 }
 
-func loadTypeInfo(directory, modulePath string) (*token.FileSet, *types.Package, *types.Package, []*ast.File, *types.Info, error) {
+func loadTypeInfo(
+	directory, modulePath string,
+	components []uicompiler.Component,
+) (*token.FileSet, *types.Package, *types.Package, []*ast.File, *types.Info, error) {
 	fileSet := token.NewFileSet()
 	enginePath := modulePath + "/.karty/engine"
 
@@ -92,7 +102,7 @@ func loadTypeInfo(directory, modulePath string) (*token.FileSet, *types.Package,
 		return nil, nil, nil, nil, nil, err
 	}
 
-	sourceFiles, err = appendUIFiles(fileSet, directory, modulePath, sourceFiles)
+	sourceFiles, err = appendUIFiles(fileSet, directory, modulePath, sourceFiles, components)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -160,7 +170,7 @@ func inspectUses(
 		}
 
 		switch object.Name() {
-		case "DynamicTexture", "NewSprite2DName", "UpdateAssetName", "TextureID":
+		case "DynamicTexture", "TextureID":
 			result.KeepAll = true
 			result.Diagnostic = fmt.Sprintf("%s at %s", ReasonDynamicLookup, sourcePosition(directory, fileSet.Position(identifier.Pos())))
 		}
@@ -320,21 +330,26 @@ func keepAll(err error) Result {
 	}
 }
 
-func appendUIFiles(fileSet *token.FileSet, directory, modulePath string, sourceFiles []*ast.File) ([]*ast.File, error) {
-	if _, err := os.Stat(filepath.Join(directory, "karty.toml")); os.IsNotExist(err) {
-		return sourceFiles, nil
-	}
+func appendUIFiles(
+	fileSet *token.FileSet,
+	directory, modulePath string,
+	sourceFiles []*ast.File,
+	views []uicompiler.Component,
+) ([]*ast.File, error) {
+	if views == nil {
+		if _, err := os.Stat(filepath.Join(directory, "karty.toml")); os.IsNotExist(err) {
+			return sourceFiles, nil
+		}
 
-	config, err := project.Load(directory)
-	if err != nil {
-		return nil, err
-	}
+		config, err := project.Load(directory)
+		if err != nil {
+			return nil, err
+		}
 
-	views, err := project.CompileUI(
-		directory, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
-	)
-	if err != nil {
-		return nil, err
+		views, err = project.CompileUI(directory, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	clientFiles, err := codegen.UIClientFiles(views, modulePath)

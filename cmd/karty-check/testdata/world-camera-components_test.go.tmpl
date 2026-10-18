@@ -41,7 +41,7 @@ func TestIdleAndStoppedMovement(t *testing.T) {
 }
 func TestWalkNormalizationAndOrbitIsolation(t *testing.T) {
 	settings := perspectiveCamera(0)
-	settings.Position = engine.NewVec3D(0, 0, 2)
+	settings.Position = engine.NewVec3(0, 0, 2)
 	settings.Yaw = 0
 	next := walkingCamera(settings, 1, 1)
 	if distance := math.Hypot(float64(next.Position.X), float64(next.Position.Y)); math.Abs(distance-.04) > 1e-6 || next.Position.Z != 2 {
@@ -63,7 +63,7 @@ func TestAcceptedPoseDrivesMarkerAndHUD(t *testing.T) {
 	controller := controllerFixture()
 	var hud cameraHUD
 	var follower markerFollower
-	follower.Bind(engine.WorldActorRef{ID: 10})
+	follower.Bind(engine.FixtureEntityRef(1000010,9))
 	controller.onMoved = func(pose engine.Transform3D) { follower.Follow(pose); hud.Refresh(&controller) }
 	if !hud.Refresh(&controller) {
 		t.Fatal("initial HUD missing")
@@ -74,12 +74,10 @@ func TestAcceptedPoseDrivesMarkerAndHUD(t *testing.T) {
 	if hud.Refresh(&controller) {
 		t.Fatal("HUD published a proposed, unaccepted movement")
 	}
-	accepted := engine.NewTransform3D(engine.NewVec3D(7, 2, 3))
+	accepted := engine.NewTransform3D(engine.NewVec3(7, 2, 3))
 	accepted.Yaw = math.Pi / 2
 	accepted.Pitch = math.Pi / 6
-	if !controller.camera.ApplyAuthoritativeTransform(engine.InputEvent{Type: engine.EventAuthoritativeTransform, EntityID: controller.camera.ID, Transform3D: accepted}) {
-		t.Fatal("accepted transform rejected")
-	}
+	engine.FixtureAcceptedPose(controller.camera.ID,accepted)
 	engine.FixtureBegin()
 	controller.OnTransformChanged(accepted)
 	commands := engine.FixtureCommands()
@@ -110,27 +108,27 @@ func TestAcceptedPoseDrivesMarkerAndHUD(t *testing.T) {
 func TestDisposedActorsAndFreshBindings(t *testing.T) {
 	var follower markerFollower
 	var spinner spinnerAnimation
-	follower.Bind(engine.WorldActorRef{ID: 10})
-	spinner.Bind(engine.WorldActorRef{ID: 11})
+	follower.Bind(engine.FixtureEntityRef(1000010,9))
+	spinner.Bind(engine.FixtureEntityRef(1000011,9))
 	follower.Reset()
 	spinner.Reset()
 	engine.FixtureBegin()
-	follower.Follow(engine.NewTransform3D(engine.NewVec3D(1, 2, 3)))
+	follower.Follow(engine.NewTransform3D(engine.NewVec3(1, 2, 3)))
 	spinner.Update(5)
 	if count := commandCount(); count != 0 {
 		t.Fatal("released actors received commands", count)
 	}
-	follower.Bind(engine.WorldActorRef{ID: 20})
-	spinner.Bind(engine.WorldActorRef{ID: 21})
+	follower.Bind(engine.FixtureEntityRef(1000020,9))
+	spinner.Bind(engine.FixtureEntityRef(1000021,9))
 	engine.FixtureBegin()
-	follower.Follow(engine.NewTransform3D(engine.NewVec3D(1, 2, 3)))
-	if bytes := engine.FixtureCommands(); binary.LittleEndian.Uint32(bytes[27:31]) != 20 {
+	follower.Follow(engine.NewTransform3D(engine.NewVec3(1, 2, 3)))
+	if bytes := engine.FixtureCommands(); binary.LittleEndian.Uint32(bytes[27:31]) != 1000020 {
 		t.Fatal("marker retained stale actor", bytes)
 	}
 	engine.FixtureBegin()
 	spinner.Update(5)
 	spinner.Update(5)
-	if bytes := engine.FixtureCommands(); binary.LittleEndian.Uint32(bytes[16:20]) != 1 || binary.LittleEndian.Uint32(bytes[27:31]) != 21 {
+	if bytes := engine.FixtureCommands(); binary.LittleEndian.Uint32(bytes[16:20]) != 1 || binary.LittleEndian.Uint32(bytes[27:31]) != 1000021 {
 		t.Fatal("spinner retained actor/duplicated a frame", bytes)
 	}
 	engine.FixtureBegin()

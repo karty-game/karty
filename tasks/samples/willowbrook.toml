@@ -1,0 +1,34 @@
+[author-willowbrook]
+description = "Prepare reusable Tiled images and metadata-driven foreground masks without changing the map"
+depends = ["restore-willowbrook-packages"]
+dir = "samples/willowbrook"
+run = ["GOWORK=off go run ./cmd/author", "gofmt -w src/textures.generated.go"]
+
+[check-willowbrook]
+description = "Check village stair/bridge traversal, cliffs, prop collision and following-camera projection"
+depends = ["restore-willowbrook-packages"]
+dir = "samples/willowbrook"
+run = "GOWORK=off go test -timeout=9s ./internal/... ./cmd/author"
+
+[build-willowbrook-web]
+depends = ["build"]
+dir = "samples/willowbrook"
+run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
+
+[build-willowbrook-native]
+depends = ["build"]
+dir = "samples/willowbrook"
+run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
+
+[check-willowbrook-web]
+description = "Play the real village WASM in Chromium and verify 2D camera, portrait touch, treasure routes and structure overlap"
+run = "node scripts/check-willowbrook-web.mjs"
+
+[serve-willowbrook]
+description = "Serve an immutable Willowbrook snapshot on loopback port 39718"
+run = "node scripts/willowbrook-server.mjs samples/willowbrook/dist/web 39718"
+
+[author-willowbrook-guide]
+description = "Write the exact 16-corner-state guide used for Willowbrook's approved dual-grid art"
+dir = "samples/willowbrook"
+run = "GOWORK=off go run ./cmd/dual-grid-guide"

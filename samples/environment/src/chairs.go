@@ -16,14 +16,14 @@ var diningSeats = [...]struct{ x, y, yaw float32 }{
 func (game *Game) createChairs() {
 	for tableIndex, table := range diningTables {
 		for seatIndex, seat := range diningSeats {
-			transform := engine.NewTransform3D(engine.NewVec3D(table.x+seat.x, table.y+seat.y, .555))
+			transform := engine.NewTransform3D(engine.NewVec3(table.x+seat.x, table.y+seat.y, .555))
 			transform.Yaw = seat.yaw
 			chair := game.NewWorldSolid(game.level, transform, engine.SolidRenderer{Prefab: "chair"})
-			game.SetPhysicsBox(chair, engine.PhysicsBox{
-				HalfExtents: engine.NewVec3D(.38, .4, .54),
-				Mass:        6, Friction: .55, Restitution: .02,
-			})
-			game.WatchTransform(chair, nil)
+			if _, err := game.World(game.level).
+				AttachBody(chair.Ref(), engine.BodySettings{Kind: engine.BodyDynamic, Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(.38, .4, .54)}, Rotate: true, Forces: engine.BodyForces{GravityScale: 1, Buoyancy: true}, Mass: 6, Friction: .55, Restitution: .02}); err != nil {
+				panic(err)
+			}
+
 			game.chairs[tableIndex*len(diningSeats)+seatIndex] = chair
 		}
 	}

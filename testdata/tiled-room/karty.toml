@@ -1,0 +1,17 @@
+[project]
+name = "tiled-room"
+compiler = "go"
+
+[project.resolution]
+width = 1280
+height = 720
+
+[sdk]
+version = "0.0.13"
+
+[packages.tiled]
+folder = "../../packages/tiled"
+
+[[build.processors]]
+use = "tiled.compile"
+inputs = ["maps/room.tmj", "art/tiles.tsj"]

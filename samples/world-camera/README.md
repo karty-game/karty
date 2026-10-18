@@ -35,7 +35,7 @@ translucent water with animated height waves and planar reflections. Three bronz
 
 ## Run it
 
-[Set up once](../README.md#make-it-yours), then from this sample's folder,
+[Set up once](../README.md#run-a-sample), then from this sample's folder,
 build its chunk lightmaps and open the preview:
 
 ```sh
@@ -47,7 +47,7 @@ galleries, and north turn. Each contains its own prebuilt mesh and baked lightma
 the shared textures and complete portal graph remain in the root level. Rebuild
 after changing the world, its materials or its static lights. Area hints can
 split when their mesh or lightmap exceeds the configured budget; see
-[chunk settings](../../docs/chunk-levels.md).
+the selected SDK's `.karty/docs/` for chunk settings.
 
 The courtyard uses a 1024 square lightmap and the five smaller areas use 512
 square lightmaps, all at the same authored density of 16 texels per unit.
@@ -65,5 +65,5 @@ metre and 0.5×0.25-metre bricks. Their darker colour and alpha masks remove
 whole bricks along the inner edge. Bands follow the sloping floors and ceilings.
 Change the artwork or YAML and rebuild to update them.
 
-See [material classifications](../../docs/sample-materials.md) for the asset
+See [the texture guide](https://karty-game.github.io/karty/main/guide/textures.html) for the asset
 inventory, Materialize presets, nonmetallic overrides and generation ownership.

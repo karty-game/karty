@@ -17,9 +17,13 @@ Images, sound and video all come together in this little interactive scene.
 Click or tap to enable browser audio. The short video is a colorful test pattern
 with a tone, so you can see and hear playback together.
 
+The music is mastered as a continuous 48 kHz loop. The burst effect leaves
+headroom for all simultaneous voices plus music. Its original WAV fixtures and
+reproducible mastering steps are in [sound-sources](sound-sources/README.md).
+
 ## Run it
 
-[Set up once](../README.md#make-it-yours), then from this sample's folder:
+[Set up once](../README.md#run-a-sample), then from this sample's folder:
 
 ```sh
 ../../dist/karty dev

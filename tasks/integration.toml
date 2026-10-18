@@ -1,0 +1,106 @@
+[check-materialize-pipeline]
+description = "Check per-asset material generation, cache reuse and level authoring"
+run = [
+  "go test -timeout=9s ./internal/assetpipeline -run 'WorldMaterial|MaskedAtlas|OpaqueFrame|CoveredMaterial|MaterialMip' -count=1",
+  "go test -timeout=9s ./internal/levelbuild -run '^TestMaterializeAuthoring$' -count=1",
+]
+
+[check-sprite-density]
+description = "Validate world sprite density limits, deterministic processing and source preservation"
+run = "go test -timeout=9s ./internal/levelbuild -run SpriteDensity -count=1 -v"
+
+[test-process-lifecycle]
+description = "Execute real build-tool process tree cancellation and development server shutdown checks"
+run = "go test -timeout=9s ./internal/process ./internal/commands/dev"
+
+[bench-dev-watcher]
+description = "Measure metadata polling and periodic content verification over 10,000 files and a 128 MiB asset"
+run = "go test -timeout=9s ./internal/devserver -run '^$' -bench '^BenchmarkWatcherLargeProject$' -benchtime=1x -count=1"
+
+[check-summaries]
+description = "Check build and bake output counts and next commands"
+run = "go test -timeout=9s ./internal/commands/build ./internal/commands/bake ./internal/ui ./internal/build ./internal/levelbuild -run 'Summary|Size'"
+
+[check-cdn]
+description = "Validate shared browser runtime URLs, hashes and launcher behavior"
+run = "go test -timeout=9s ./internal/build ./internal/commands/build -run 'CDN|BrowserLauncher|BrowserChunkBridge|ResourceProducers'"
+
+[smoke]
+depends = ["build"]
+run = "bash scripts/smoke.sh"
+
+[check-web]
+run = "go run ./cmd/karty-check --web"
+
+[check-browser]
+run = "go run ./cmd/karty-check --browser"
+
+[check-ui]
+run = "go run ./cmd/karty-check --ui"
+
+[check-dev]
+run = "go run ./cmd/karty-check --watcher"
+
+[check-guest-allocations]
+run = "go run ./cmd/karty-check --allocations"
+
+[check-client-hooks]
+description = "Validate hooks/actions with a small native WASM fixture; no browser required"
+run = "go run ./cmd/karty-check --client-hooks --native-only"
+
+[check-renderer-debug-ui]
+description = "Verify sample shells leave renderer controls to the host debug screen"
+run = "node internal/build/testdata/renderer-debug.test.mjs"
+
+[test-dev-server]
+description = "Verify immutable development builds, source watching and reconnecting browser updates"
+run = ["go test -timeout=9s ./internal/devserver", "node internal/devserver/browser.test.mjs"]
+
+[check-materialize-software]
+description = "Generate real atlas maps using released Materialize and headless Mesa software OpenGL"
+env = { KARTY_TEST_MATERIALIZE_ATLAS = "1" }
+run = "bash scripts/check-materialize-software.sh"
+
+[check-integration]
+run = "bash scripts/check-integration.sh"
+
+[check-video]
+run = "node scripts/check-video.mjs"
+
+[check-client-hooks-native]
+description = "Build the crafted hooks/actions fixture twice and execute its native WASM lifecycle"
+run = "go run ./cmd/karty-check --client-hooks --native-only"
+
+[check-client-hooks-web]
+description = "Optional Chromium smoke for the crafted hooks/actions fixture, with a 9-second execution budget"
+run = "go run ./cmd/karty-check --client-hooks"
+
+[check-sample-clients]
+description = "Compile current sample sources and exercise UI controls with small CPU fixtures; no sample resources or browser"
+run = "go test -timeout=9s ./cmd/karty-check -run '^Test(SampleUISources|SampleClients)$' -count=1 -v"
+
+[generate-action-contract]
+description = "Refresh the public SDK action schema snapshot with its owning exporter"
+run = "go run github.com/karty-game/karty-sdk/cmd/karty-actions-schema --out internal/actionbuild/testdata/actions-v1.generated.json"
+
+[fmt-fluids]
+run = [
+  "golangci-lint fmt internal/worldbuild/geometry/fluids_test.go internal/worldbuild/schema/fluids*.go internal/worldbuild/source/animations.go internal/levelbuild/world_fluids_test.go internal/levelbuild/world_animations.go internal/release/version.go cmd/karty-release/main_test.go samples/hangar/src/crates.go",
+  "prettier --write samples/hangar/levels/hangar/world.yaml",
+]
+
+[check-new-project]
+description = "Check the setup wizard, project extras, template selection and Go quality command contracts"
+run = "go test -timeout=9s ./internal/commands/new ./internal/commands/quality ./internal/scaffold ./internal/commands ./internal/sdk"
+
+[check-api-migration]
+description = "Reject retired SDK usage and check current sample, API and guide consumers"
+run = [
+  "go test -timeout=9s ./cmd/karty-check -run 'TestCurrentAPIConsumers|TestSampleClients|TestSampleUISources|TestWorldCamera' -count=1",
+  "go test -timeout=9s ./website/internal/generator ./internal/actionbuild ./internal/assetusage -count=1",
+]
+
+[check-api-samples]
+description = "Build every current sample against the installed SDK through the public CLI"
+depends = ["build"]
+run = "mise exec dotnet@9.0.203 -- node scripts/check-api-samples.mjs"

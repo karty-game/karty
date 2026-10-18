@@ -41,7 +41,8 @@ type Manifest struct {
 		SoundProfiles   map[string]SoundProfile    `toml:"sound-profiles"`
 	} `toml:"assets"`
 	Tools struct {
-		Air                 string `toml:"air"`
+		// Air preserves historical signed SDK metadata; it is never installed or required.
+		Air                 string `toml:"air,omitempty"`
 		Go                  string `toml:"go"`
 		Materialize         string `toml:"materialize"`
 		MaterializeRevision string `toml:"materialize-revision"`
@@ -49,7 +50,8 @@ type Manifest struct {
 		WasmTools           string `toml:"wasm-tools"`
 	} `toml:"tools"`
 	Artifacts struct {
-		Air         map[string]ToolArtifact         `toml:"air"`
+		// Air preserves historical signed SDK metadata; it is never installed or required.
+		Air         map[string]ToolArtifact         `toml:"air,omitempty"`
 		Materialize map[string]MaterialToolArtifact `toml:"materialize"`
 		TinyGo      map[string]ToolArtifact         `toml:"tinygo"`
 		WasmTools   map[string]ToolArtifact         `toml:"wasm-tools"`
@@ -104,7 +106,7 @@ func validateManifest(version string, manifest Manifest) error {
 	if manifest.Version != version || manifest.API.Version == "" || manifest.Host.Version == "" ||
 		manifest.Templates.Game == "" ||
 		len(manifest.Assets.TextureProfiles) == 0 || manifest.Assets.TextureProfiles["sprite"].Processor == "" ||
-		manifest.Tools.Air == "" || manifest.Tools.Go == "" || manifest.Tools.TinyGo == "" ||
+		manifest.Tools.Go == "" || manifest.Tools.TinyGo == "" ||
 		manifest.Tools.WasmTools == "" {
 		return fmt.Errorf("SDK %s: %w", version, errIncompleteSDK)
 	}

@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "generator": "scripts/vigil-sound-assets.go",
+  "sampleRate": 24000,
+  "channels": 1,
+  "bits": 16,
+  "sounds": [
+    {
+      "name": "church-ambience.wav",
+      "seconds": 32,
+      "samples": 768000,
+      "peak": 0.03326517532883694,
+      "rms": 0.009911405296555155,
+      "mean": -1.5577155878337625e-8,
+      "loop": true,
+      "boundaryStep": 0.00033570360423597,
+      "sha256": "d2ac26f35fd4d15439feb753ce06eb9f287cfdc4ef77fde907bd0d544d45b6d3"
+    },
+    {
+      "name": "fireball-cast.wav",
+      "seconds": 0.35,
+      "samples": 8400,
+      "peak": 0.31998657185583057,
+      "rms": 0.06316163614544083,
+      "mean": 9.809520902851512e-8,
+      "loop": false,
+      "boundaryStep": 0,
+      "sha256": "de8c1da8fb73c2d2ecc69e17d7a624a6b82dc6b31eaca9615946bcc7e6fdcc41"
+    },
+    {
+      "name": "fireball-impact.wav",
+      "seconds": 0.65,
+      "samples": 15600,
+      "peak": 0.35999633777886286,
+      "rms": 0.05129631585885146,
+      "mean": 1.0759730904968136e-7,
+      "loop": false,
+      "boundaryStep": 0,
+      "sha256": "3424b721c9fb3a81b1626d7ba2e001ff0009d75d01f2062ca36c234d6fa140cf"
+    },
+    {
+      "name": "shrine-chime.wav",
+      "seconds": 1.8,
+      "samples": 43200,
+      "peak": 0.23999755851924193,
+      "rms": 0.05716547870327743,
+      "mean": 5.934154620347711e-8,
+      "loop": false,
+      "boundaryStep": 0,
+      "sha256": "7cb0ab078dfcb6f8ffeb3f5677f4e115c7ed26c37e5ae369ba1bca68db43d838"
+    },
+    {
+      "name": "stone-footstep.wav",
+      "seconds": 0.18,
+      "samples": 4320,
+      "peak": 0.31998657185583057,
+      "rms": 0.058600144354401695,
+      "mean": -1.2009598636172028e-7,
+      "loop": false,
+      "boundaryStep": 0,
+      "sha256": "70725bc59368bae0a58293bebe12e1f9e48b7845681c1d3caf51ba53db020be7"
+    },
+    {
+      "name": "ember-crackle.wav",
+      "seconds": 3,
+      "samples": 72000,
+      "peak": 0.07415997802667318,
+      "rms": 0.013999957365132825,
+      "mean": -5.9341546202903226e-8,
+      "loop": true,
+      "boundaryStep": 0.0057985168004394665,
+      "sha256": "abeee18d15af9364ee9b3e757fcaca9f67ff20aed32d94ab84997e3ac4f418bf"
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 [tools]
-hk = "2.6.0"
+hk = "2.7.0"
 taplo = "0.10.0"
-uv = "0.13.0"
+uv = "0.13.1"
 yamllint = { version = "1.38.0", uvx = true }
 prettier = "3.9.10"
-golangci-lint = "2.14.0"
-go = "1.27.2"
-node = "26.11.1"
+golangci-lint = "2.15.0"
+goreleaser = "2.18.3"
+go = "1.27.1"
+node = "26.12.0"
 
 # Required by the public SDK offline baker on Go 1.27.
 [env]
@@ -21,6 +22,10 @@ fmt = "mise run fmt"
 lint = "mise run lint"
 test = "mise run test"
 
+# Keep everyday commands here; focused tasks live under tasks/.
+[task_config]
+includes = ["tasks/*.toml", "tasks/samples/*.toml"]
+
 [tasks.test]
 depends = ["generate-hangar-walk"]
 run = ["go run ./cmd/karty-release --check", "go run ./cmd/karty-test-sdk", "bash scripts/test.sh"]
@@ -30,61 +35,8 @@ description = "Run unit tests without the published SDK download check"
 depends = ["generate-hangar-walk"]
 run = "bash scripts/test.sh"
 
-[tasks.check-materialize-pipeline]
-description = "Check per-asset material generation, cache reuse and level authoring"
-run = [
-  "go test -timeout=9s ./internal/assetpipeline -run 'WorldMaterial|MaskedAtlas|OpaqueFrame|CoveredMaterial|MaterialMip' -count=1",
-  "go test -timeout=9s ./internal/levelbuild -run '^TestMaterializeAuthoring$' -count=1",
-]
-
-[tasks.check-sprite-density]
-description = "Validate world sprite density limits, deterministic processing and source preservation"
-run = "go test -timeout=9s ./internal/levelbuild -run SpriteDensity -count=1 -v"
-
 [tasks.build]
 run = "go build -o dist/karty ./cmd/karty"
-
-[tasks.docs]
-description = "Refresh the guide and sample gallery, then serve them locally"
-run = [
-  "mise run preview-docs",
-  'echo Docs: http://127.0.0.1:{{env.KARTY_DOCS_PORT | default(value="8081") | int(default=8081)}}/guide/',
-  'echo Samples: http://127.0.0.1:{{env.KARTY_DOCS_PORT | default(value="8081") | int(default=8081)}}/',
-  'go run ./cmd/karty serve --addr "127.0.0.1:{{env.KARTY_DOCS_PORT | default(value="8081") | int(default=8081)}}" dist/samples-site',
-]
-
-[tasks.generate-guide]
-description = "Generate the Markdown game authoring guide and static reading page"
-run = "go run ./cmd/karty-guide -output dist/guide"
-
-[tasks.check-guide]
-description = "Validate guide examples, links, output confinement and rendering"
-run = "go test -timeout=9s ./internal/guide ./cmd/karty-guide"
-
-[tasks.check-summaries]
-description = "Check build and bake output counts and next commands"
-run = "go test -timeout=9s ./internal/commands/build ./internal/commands/bake ./internal/ui ./internal/build ./internal/levelbuild -run 'Summary|Size'"
-
-[tasks.check-cdn]
-description = "Validate shared browser runtime URLs, hashes and launcher behavior"
-run = "go test -timeout=9s ./internal/build ./internal/commands/build -run 'CDN|BrowserLauncher|BrowserChunkBridge|ResourceProducers'"
-
-[tasks.check-samples]
-description = "Validate sample gallery and static preview assembly"
-run = "go test -timeout=9s ./cmd/karty-samples"
-
-[tasks.capture-samples]
-description = "Capture sample gallery thumbnails from staged browser games"
-run = "node cmd/karty-samples/capture.mjs"
-
-[tasks.build-cli-linux-amd64]
-run = "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/cli/linux-amd64/karty ./cmd/karty"
-
-[tasks.build-cli-darwin-arm64]
-run = "CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o dist/cli/darwin-arm64/karty ./cmd/karty"
-
-[tasks.build-cli-windows-amd64]
-run = "CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/cli/windows-amd64/karty.exe ./cmd/karty"
 
 [tasks.check]
 run = ["mise run check-fmt", "mise run lint", "mise run test", "mise run build"]
@@ -95,380 +47,16 @@ run = "hk fix --all --profile format"
 [tasks.check-fmt]
 run = "hk check --all --profile format"
 
-[tasks.smoke]
-depends = ["build"]
-run = "bash scripts/smoke.sh"
 [tasks.install-browser]
 run = ["npm ci --ignore-scripts", "npx playwright install chromium --only-shell"]
-[tasks.check-web]
-run = "go run ./cmd/karty-check --web"
-[tasks.check-browser]
-run = "go run ./cmd/karty-check --browser"
-[tasks.check-ui]
-run = "go run ./cmd/karty-check --ui"
-[tasks.check-dev]
-run = "go run ./cmd/karty-check --watcher"
-[tasks.check-guest-allocations]
-run = "go run ./cmd/karty-check --allocations"
-
-[tasks.check-world-camera]
-run = "go run ./cmd/karty-check --world-camera"
-
-[tasks.check-client-hooks]
-description = "Validate hooks/actions with a small native WASM fixture; no browser required"
-run = "go run ./cmd/karty-check --client-hooks --native-only"
-
-[tasks.check-renderer-debug-ui]
-description = "Verify sample shells leave renderer controls to the host debug screen"
-run = "node internal/build/testdata/renderer-debug.test.mjs"
-
-[tasks.build-world-camera-web]
-depends = ["build"]
-dir = "samples/world-camera"
-run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
-
-[tasks.serve-world-camera]
-dir = "samples/world-camera"
-run = "../../dist/karty serve"
-
-[tasks.check-materialize-software]
-description = "Generate real atlas maps using released Materialize and headless Mesa software OpenGL"
-env = { KARTY_TEST_MATERIALIZE_ATLAS = "1" }
-run = "bash scripts/check-materialize-software.sh"
-
-[tasks.generate-world-camera-materials]
-description = "Regenerate the world-camera sample's authored albedo textures"
-run = "go run ./cmd/world-camera-materials"
 
 [tasks.lint]
 run = "hk check --all"
 
 [tasks.lint-go]
-description = "Lint CLI source packages, excluding ignored build output"
-run = "golangci-lint run ./cmd/... ./internal/..."
-
-[tasks.check-integration]
-run = "bash scripts/check-integration.sh"
-
-[tasks.build-samples]
-depends = ["build"]
-run = "go run ./cmd/karty-samples build"
-
-[tasks.assemble-samples]
-description = "Assemble validated static sample previews for Pages CI"
-run = 'go run ./cmd/karty-samples assemble "$SAMPLE_STATE" "$SAMPLE_SOURCE" "$DESTINATION" "$REMOVE_PREVIEW" "$OPEN_PRS"'
-
-[tasks.build-cli-linux-arm64]
-run = "CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o dist/cli/linux-arm64/karty ./cmd/karty"
-
-[tasks.check-video]
-run = "node scripts/check-video.mjs"
-
-[tasks.prepare-release]
-run = "go run ./cmd/karty-release"
-
-[tasks.check-release]
-run = "go run ./cmd/karty-release --check"
-
-[tasks.check-client-hooks-native]
-description = "Build the crafted hooks/actions fixture twice and execute its native WASM lifecycle"
-run = "go run ./cmd/karty-check --client-hooks --native-only"
-
-[tasks.check-client-hooks-web]
-description = "Optional Chromium smoke for the crafted hooks/actions fixture, with a 9-second execution budget"
-run = "go run ./cmd/karty-check --client-hooks"
-
-[tasks.check-world-camera-components]
-description = "Test camera movement, accepted-pose followers and HUD with small native CPU fixtures"
-run = "go test -timeout=9s ./cmd/karty-check -run '^TestWorldCameraComponents$' -count=1 -v"
-
-[tasks.check-world-camera-hooks]
-description = "Test the current SDK hooks and remount behavior without loading world assets or a browser"
-run = "go test -timeout=9s ./cmd/karty-check -run '^TestWorldCameraComponents$' -count=1 -v"
-
-[tasks.check-sample-clients]
-description = "Compile current sample sources and exercise UI controls with small CPU fixtures; no sample resources or browser"
-run = "go test -timeout=9s ./cmd/karty-check -run '^Test(SampleUISources|SampleClients)$' -count=1 -v"
+description = "Lint CLI and website Go packages, excluding ignored build output"
+run = "golangci-lint run ./cmd/... ./internal/... ./website/..."
 
 [tasks.install-hooks]
 description = "Install repository hk hooks with the pinned mise environment"
 run = "hk install --mise"
-
-[tasks.generate-action-contract]
-description = "Refresh the public SDK action schema snapshot with its owning exporter"
-run = "go run github.com/karty-game/karty-sdk/cmd/karty-actions-schema --out internal/actionbuild/testdata/actions-v1.generated.json"
-
-[tasks.check-hangar-schema]
-depends = ["build"]
-dir = "samples/hangar"
-run = "../../dist/karty schema --check"
-
-[tasks.generate-hangar-materials]
-description = "Regenerate Hangar's restrained industrial surface variants"
-run = "go run scripts/hangar-material-assets.go"
-
-[tasks.check-hangar-materials]
-description = "Verify Hangar surface variants match their handwritten generator"
-run = "go run scripts/hangar-material-assets.go -check"
-
-[tasks.generate-hangar-walk]
-description = "Compile Hangar's authored floors, portals and solids for bounded player stepping"
-depends = ["generate-hangar-ceiling-lights"]
-run = "go run scripts/hangar-walk-assets.go"
-
-[tasks.generate-hangar-ceiling-lights]
-description = "Regenerate suspended strip fixtures above Hangar's authored overhead lights"
-depends = ["generate-hangar-heroes"]
-run = "go run scripts/hangar-ceiling-lights.go"
-
-[tasks.check-hangar-ceiling-lights]
-description = "Verify ceiling fixtures remain aligned with their point sources and ceiling mounts"
-run = "go run scripts/hangar-ceiling-lights.go -check"
-
-[tasks.generate-hangar-heroes]
-description = "Regenerate the barrel hoop and reactor cap bevels with isolated bare-metal trim"
-depends = ["generate-hangar-effects"]
-run = "go run scripts/hangar-hero-assets.go"
-
-[tasks.check-hangar-heroes]
-description = "Verify bounded hero trim matches its owning handwritten generator"
-run = "go run scripts/hangar-hero-assets.go -check"
-
-[tasks.check-hangar-walk]
-description = "Verify Hangar player support data matches its authored geometry"
-run = "go run scripts/hangar-walk-assets.go -check"
-
-[tasks.generate-hangar-effects]
-description = "Reuse Particle Lab fire, smoke, discharge and acid recipes in confined Hangar placements"
-depends = ["generate-particle-lab"]
-run = "go run samples/hangar/generate-effects.go"
-
-[tasks.check-hangar-effects]
-description = "Check reused Hangar effect blocks, texture ownership and complete convex-sector confinement"
-run = ["go run samples/particle-lab/generate-library.go -check", "go run samples/hangar/generate-effects.go -check"]
-
-[tasks.generate-hangar-sounds]
-description = "Prepare mono reactor, computer and crate loops from retained CC0 recordings"
-run = "go run scripts/hangar-sound-assets.go"
-
-[tasks.check-hangar-sounds]
-description = "Verify Hangar sound loops match their retained recordings and processor"
-run = "go run scripts/hangar-sound-assets.go -check"
-
-[tasks.build-hangar-native]
-depends = ["build", "generate-hangar-materials", "generate-hangar-walk", "generate-hangar-sounds"]
-dir = "samples/hangar"
-run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.build-hangar-web]
-depends = ["build", "generate-hangar-materials", "generate-hangar-walk", "generate-hangar-sounds"]
-dir = "samples/hangar"
-run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
-
-[tasks.capture-hangar-particles]
-description = "Capture barrel and acid particle viewpoints in one passive native session"
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --timeout 20s --width 960 --height 540 --batch particle-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-ceiling-lights]
-description = "Review the suspended strip fixtures from arrival, reactor and loading views"
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --timeout 10s --width 960 --height 540 --batch ceiling-lights-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-machinery]
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --position 7.5,5.3,1.7 --yaw 30 --pitch 2 --output dist/screenshots/animation-machinery.png --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-materials]
-description = "Review Hangar's wall layers and fixed decals at five detail viewpoints"
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --batch materials-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-acid]
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --position 27,23,1.8 --yaw -18 --pitch -36 --output dist/screenshots/animation-acid.png --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-pistons]
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --position 4,15.8,1.7 --yaw -56 --pitch -8 --output dist/screenshots/animation-pistons.png --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-acid-overview]
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --position 28.5,23,3 --yaw 12 --pitch -28 --output dist/screenshots/animation-acid-overview.png --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-acid-south]
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --position 31,23,3 --yaw 180 --pitch -30 --output dist/screenshots/animation-acid-south.png --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-acid-east]
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --position 33,26,2 --yaw 80 --pitch -4 --output dist/screenshots/animation-acid-east.png --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.bake-hangar]
-description = "Refresh Hangar's authored offline lighting after material or light changes"
-depends = ["build", "generate-hangar-materials", "generate-hangar-ceiling-lights"]
-dir = "samples/hangar"
-run = "../../dist/karty bake --level levels.hangar"
-
-[tasks.capture-hangar-planar-reflections]
-description = "Review Hangar's planar acid reflection from three views and a dry metal control"
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --timeout 10s --width 640 --height 360 --batch reflection-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-control]
-description = "Capture the acid control room, overlook and both stair approaches"
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --batch acid-control-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-reactor]
-description = "Capture the reactor bands with the selected native host"
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --position 4.1,16.5,1.7 --yaw 24 --pitch 3.4 --output dist/screenshots/emission-reactor.png --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.capture-hangar-emission-acid]
-description = "Capture the emissive acid with the selected native host"
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --position 27,23,1.8 --yaw -18 --pitch -36 --output dist/screenshots/emission-acid.png --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.generate-environment]
-description = "Regenerate the shared environment test layout and procedural materials"
-run = "go run scripts/environment-assets.go"
-
-[tasks.check-environment-geometry]
-description = "Compile the daylight layout and verify glazing, roof and furniture walkway clearance"
-run = "go test -timeout=9s ./internal/worldbuild/geometry -run '^TestEnvironment' -count=1 -v"
-
-[tasks.check-environment-schema]
-depends = ["build"]
-dir = "samples/environment"
-run = "../../dist/karty schema --check"
-
-[tasks.build-environment-web]
-depends = ["build"]
-dir = "samples/environment"
-run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
-
-[tasks.build-environment-geometry-web]
-description = "Build the environment geometry preview without running new offline bakes"
-depends = ["build"]
-dir = "samples/environment"
-run = '../../dist/karty build --target web --development --host "${KARTY_HOST_WEB:-}"'
-
-[tasks.build-environment-native]
-depends = ["build"]
-dir = "samples/environment"
-run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.serve-environment]
-dir = "samples/environment"
-run = "../../dist/karty serve"
-
-[tasks.capture-environment-daylight]
-depends = ["build"]
-dir = "samples/environment"
-run = '../../dist/karty screenshot levels.daylight --timeout 10s --width 960 --height 540 --batch daylight-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.generate-particle-lab]
-description = "Regenerate retained static masks and assemble particle-driven industrial effects"
-run = [
-  "go run samples/particle-lab/generate-static-assets.go",
-  "go run samples/particle-lab/generate-library.go",
-  "go run samples/particle-lab/generate-lab.go",
-]
-
-[tasks.check-particle-lab]
-description = "Check static-mask ownership, ten-layer effects, particle budgets and sector confinement"
-run = [
-  "go run samples/particle-lab/generate-static-assets.go -check",
-  "go run samples/particle-lab/generate-library.go -check",
-  "go run samples/particle-lab/generate-lab.go -check",
-  "go test -timeout=9s ./internal/worldbuild/geometry -run '^TestParticleLab' -count=1 -v",
-]
-
-[tasks.check-particle-lab-schema]
-depends = ["build"]
-dir = "samples/particle-lab"
-run = "../../dist/karty schema --check"
-
-[tasks.build-particle-lab-native]
-depends = ["build", "generate-particle-lab"]
-dir = "samples/particle-lab"
-run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.build-particle-lab-web]
-depends = ["build", "generate-particle-lab"]
-dir = "samples/particle-lab"
-run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
-
-[tasks.capture-particle-lab]
-description = "Capture the empty particle test room using the actual native host"
-depends = ["build"]
-dir = "samples/particle-lab"
-run = '../../dist/karty screenshot levels.lab --timeout 20s --width 960 --height 540 --batch room-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.serve-particle-lab]
-description = "Serve the built particle lab on loopback port 4245"
-depends = ["build"]
-dir = "samples/particle-lab"
-run = '../../dist/karty serve --addr "127.0.0.1:4245" dist/web'
-
-[tasks.capture-particle-smoke]
-description = "Capture the independent smoke recipes with the native host"
-depends = ["build"]
-dir = "samples/particle-lab"
-run = '../../dist/karty screenshot levels.smoke --timeout 20s --width 960 --height 540 --batch smoke-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.build-world-camera-native]
-depends = ["build"]
-dir = "samples/world-camera"
-run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
-
-[tasks.check-world-camera-geometry]
-description = "Execute the actual Roman court package and verify basin solids and chunk ownership"
-run = "go test -timeout=9s ./internal/levelbuild -run '^(TestWorldCameraSampleLevelCompiles|TestRomanStaticSolidSamplePackagedWASM|TestWorldCameraSampleChunkAreasKeepWholeCourtyard)$' -count=1 -v"
-
-[tasks.check-world-camera-native]
-description = "Execute world-camera mount/remount, camera pan/zoom and guest lifecycle with Wazero"
-dir = "samples/world-camera"
-run = '"${KARTY_HOST_CHECK:?set the matching karty-host-check path}" --camera-switch-check --cartridge dist/native/game.kart'
-
-[tasks.generate-world-camera-fixtures]
-description = "Regenerate the rounded basin, hanging braziers and corridor sconces"
-run = "go run ./cmd/world-camera-fixtures"
-
-[tasks.generate-crate-room]
-description = "Regenerate crate room procedural material PNGs"
-run = "go run samples/crate-room/generate-assets.go"
-
-[tasks.build-crate-room-web]
-description = "Build the regular box-physics sample with installed SDK 0.0.12"
-dir = "samples/crate-room"
-run = "../../dist/karty build --target web"
-
-[tasks.build-crate-room-native]
-description = "Build the box-physics sample for native"
-dir = "samples/crate-room"
-run = "../../dist/karty build --target native"
-
-[tasks.preview-docs]
-description = "Refresh the local guide and sample gallery, including built candidate samples"
-run = "go run ./cmd/karty-samples preview"
-
-[tasks.capture-hangar-pool]
-description = "Capture Hangar's deep pool and continuous exit ramps for visual review"
-depends = ["build"]
-dir = "samples/hangar"
-run = '../../dist/karty screenshot levels.hangar --width 960 --height 540 --batch pool-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'

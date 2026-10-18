@@ -1,0 +1,236 @@
+// Author extracts reusable image inputs for the editable Tiled village.
+// Run from the CLI root: mise run author-willowbrook.
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/png"
+	"math"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+
+	"github.com/karty-game/tiled"
+	"github.com/karty-game/tiled/source"
+)
+
+type record = map[string]any
+
+const target = "levels/village"
+
+var textures = map[string]*image.NRGBA{}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+func save(name string, im *image.NRGBA) {
+	textures[name] = im
+	f, e := os.Create(filepath.Join(target, name+".png"))
+	must(e)
+	must(png.Encode(f, im))
+	must(f.Close())
+}
+func load(name string) image.Image {
+	f, e := os.Open(name)
+	must(e)
+	defer f.Close()
+	im, e := png.Decode(f)
+	must(e)
+	return im
+}
+func crop(im image.Image, r image.Rectangle) *image.NRGBA {
+	out := image.NewNRGBA(image.Rect(0, 0, r.Dx(), r.Dy()))
+	draw.Draw(out, out.Bounds(), im, r.Min, draw.Src)
+	return out
+}
+func alphaBounds(im image.Image) image.Rectangle {
+	return alphaBoundsAt(im, 0x8000)
+}
+
+func alphaBoundsAt(im image.Image, minimum uint32) image.Rectangle {
+	r := image.Rectangle{}
+	for y := im.Bounds().Min.Y; y < im.Bounds().Max.Y; y++ {
+		for x := im.Bounds().Min.X; x < im.Bounds().Max.X; x++ {
+			_, _, _, a := im.At(x, y).RGBA()
+			if a >= minimum {
+				r = r.Union(image.Rect(x, y, x+1, y+1))
+			}
+		}
+	}
+	if r.Empty() {
+		panic("empty source sprite")
+	}
+	return r
+}
+func resize(im image.Image, w, h int) *image.NRGBA {
+	out := image.NewNRGBA(image.Rect(0, 0, w, h))
+	r := im.Bounds()
+	for y := range h {
+		for x := range w {
+			out.Set(x, y, im.At(r.Min.X+x*r.Dx()/w, r.Min.Y+y*r.Dy()/h))
+		}
+	}
+	return out
+}
+func prepareArt() {
+	im := load("../../scripts/willowbrook/assets/hero.png")
+	b := im.Bounds()
+	cells := make([]*image.NRGBA, 12)
+	maxW, maxH := 0, 0
+	for i := range 12 {
+		r := image.Rect(i%3*b.Dx()/3, i/3*b.Dy()/4, (i%3+1)*b.Dx()/3, (i/3+1)*b.Dy()/4)
+		cell := crop(im, r)
+		// Detached dust and shadows must not determine the character's soles.
+		keepLargestComponent(cell)
+		a := alphaBounds(cell)
+		cells[i] = crop(cell, a)
+		maxW = max(maxW, a.Dx())
+		maxH = max(maxH, a.Dy())
+	}
+	// One scale for all frames; sole-normalize each pose on the same 32x48 canvas.
+	scale := math.Min(30/float64(maxW), 46/float64(maxH))
+	for i, cell := range cells {
+		frame := image.NewNRGBA(image.Rect(0, 0, 32, 48))
+		small := resize(cell, max(1, int(float64(cell.Bounds().Dx())*scale)), max(1, int(float64(cell.Bounds().Dy())*scale)))
+		at := image.Pt((32-small.Bounds().Dx())/2, 48-small.Bounds().Dy())
+		draw.Draw(frame, small.Bounds().Add(at), small, image.Point{}, draw.Src)
+		save(fmt.Sprintf("hero-%02d", i), frame)
+	}
+}
+
+func rgb(r, g, b uint8) color.NRGBA { return color.NRGBA{r, g, b, 255} }
+func fill(im *image.NRGBA, r image.Rectangle, c color.NRGBA) {
+	draw.Draw(im, r, &image.Uniform{c}, image.Point{}, draw.Src)
+}
+func hash(x, y int) uint32 {
+	n := uint32(x*374761393 + y*668265263 + 713)
+	n = (n ^ (n >> 13)) * 1274126177
+	return n ^ (n >> 16)
+}
+func prepareSoil() {
+	im := image.NewNRGBA(image.Rect(0, 0, 32, 32))
+	for y := range 32 {
+		for x := range 32 {
+			c := rgb(135, 96, 55)
+			if y%8 < 2 {
+				c = rgb(108, 77, 47)
+			} else if hash(x/2, y/2)%7 == 0 {
+				c = rgb(156, 113, 64)
+			}
+			im.SetNRGBA(x, y, c)
+		}
+	}
+	save("soil", im)
+}
+func prepareTiles() {
+	prepareSoil()
+	prepareTerrain()
+	flower := image.NewNRGBA(image.Rect(0, 0, 32, 32))
+	for i := range 7 {
+		x, y := 4+int(hash(i, 3)%24), 4+int(hash(i, 8)%24)
+		fill(flower, image.Rect(x, y, x+2, y+5), rgb(88, 137, 66))
+		c := rgb(249, 237, 186)
+		if i%3 == 0 {
+			c = rgb(235, 145, 128)
+		}
+		fill(flower, image.Rect(x-2, y-2, x+4, y+2), c)
+		fill(flower, image.Rect(x, y-4, x+2, y+4), c)
+		flower.SetNRGBA(x, y, rgb(235, 186, 69))
+	}
+	save("flowers", flower)
+	sprout := image.NewNRGBA(image.Rect(0, 0, 32, 32))
+	for _, x := range []int{7, 23} {
+		for _, y := range []int{8, 24} {
+			fill(sprout, image.Rect(x-5, y-1, x+5, y+2), rgb(64, 120, 57))
+			fill(sprout, image.Rect(x-2, y-5, x+2, y+5), rgb(96, 151, 61))
+			fill(sprout, image.Rect(x-1, y-4, x+2, y-1), rgb(160, 189, 76))
+		}
+	}
+	save("sprouts", sprout)
+
+}
+
+func manifest(levelMap *tiled.Map, aliases map[string]string) {
+	names := make([]string, 0, len(textures))
+	for name := range textures {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	var level strings.Builder
+	level.WriteString("# Generated reusable image inputs. The authored scene is the Tiled map.\ntextures = [\n")
+	ids := map[string]int{}
+	for i, name := range names {
+		ids[name] = i + 1
+		fmt.Fprintf(&level, "  {name = %q, source = %q},\n", name, name+".png")
+	}
+	level.WriteString("]\n[level]\nname = \"levels.village\"\nkind = \"tiled\"\n")
+	must(os.WriteFile(filepath.Join(target, "level.toml"), []byte(level.String()), 0644))
+	var code strings.Builder
+	code.WriteString("// Code generated by cmd/author. DO NOT EDIT.\npackage main\n\nvar textureIDs = map[string]uint32{\n")
+	for _, name := range names {
+		fmt.Fprintf(&code, "%q:%d,\n", name, ids[name])
+	}
+	aliasKeys := make([]string, 0, len(aliases))
+	for key := range aliases {
+		aliasKeys = append(aliasKeys, key)
+	}
+	sort.Strings(aliasKeys)
+	for _, key := range aliasKeys {
+		fmt.Fprintf(&code, "%q:%d,\n", key, ids[aliases[key]])
+	}
+	code.WriteString("}\nvar textureSizes = map[uint32][2]int{\n")
+	for _, name := range names {
+		im := textures[name]
+		fmt.Fprintf(&code, "%d:{%d,%d},\n", ids[name], im.Bounds().Dx(), im.Bounds().Dy())
+	}
+	code.WriteString("}\nvar heroTextures = [12]uint32{")
+	for i := range 12 {
+		fmt.Fprintf(&code, "%d,", ids[fmt.Sprintf("hero-%02d", i)])
+	}
+	code.WriteString("}\n")
+	for _, v := range []struct{ symbol, name string }{{"clueNoteTexture", "clue-note"}, {"treasureClosedTexture", "treasure-closed"}, {"treasureOpenTexture", "treasure-open"}} {
+		fmt.Fprintf(&code, "const %s uint32 = %d\n", v.symbol, ids[v.name])
+	}
+	must(os.WriteFile("src/textures.generated.go", []byte(code.String()), 0644))
+	evidence := record{
+		"kind":         "tiled",
+		"map":          "internal/village/village.tmj",
+		"width":        levelMap.Width,
+		"height":       levelMap.Height,
+		"tileWidth":    levelMap.TileWidth,
+		"tileHeight":   levelMap.TileHeight,
+		"sprites":      len(levelMap.Sprites),
+		"imageAliases": aliases,
+		"textures":     ids,
+		"terrain": record{
+			"kind":         "dual-grid",
+			"source":       "scripts/willowbrook/assets/dual-grid-grass-path.png",
+			"sourceSha256": terrainSourceHash,
+			"cornerBits":   []string{"NW", "NE", "SW", "SE"},
+		},
+	}
+	data, e := json.MarshalIndent(evidence, "", "  ")
+	must(e)
+	must(os.WriteFile("internal/village/map.generated.json", append(data, '\n'), 0644))
+}
+func main() {
+	must(os.MkdirAll(target, 0755))
+	prepareArt()
+	prepareTiles()
+	prepareScenery()
+	prepareEnvironment()
+	levelMap, err := source.Load(os.DirFS("."), "internal/village/village.tmj")
+	must(err)
+	must(prepareForegroundMasks(levelMap))
+	aliases, err := importTiledImages(os.DirFS("."), levelMap, save)
+	must(err)
+	manifest(levelMap, aliases)
+	fmt.Printf("Willowbrook: %d reusable textures; authored Tiled scene preserved\n", len(textures))
+}

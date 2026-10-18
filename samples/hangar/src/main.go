@@ -14,12 +14,13 @@ type Game struct {
 	torchEnabled   bool
 	bolt           lightBolt
 	level          engine.LevelHandle
-	request        engine.LevelRequestID
+	request        engine.RequestID
 	panel          *engine.UI
 	fps            *FPSController
 	crates         [len(freightStacks)]*engine.EntityWorldSolid
 	audio          hangarAudio
 	audioPending   bool
+	elevatorFrame  uint64
 	keys           [256]bool
 	view           int
 	status         string
@@ -41,6 +42,12 @@ func (game *Game) Hooks() engine.Hooks {
 				return
 			}
 			game.level = event.Handle
+			game.elevatorFrame = 0
+			game.World(game.level).SetFloorZ("acid-control-west-lift#0", .2)
+			if err := game.World(game.level).
+				Configure(engine.WorldSettings{Mode: engine.WorldSpatial, Gravity: engine.Vec3{Z: -9.81}}); err != nil {
+				panic(err)
+			}
 			game.createCrates()
 			game.visit(0)
 			game.audioPending = true
@@ -58,15 +65,6 @@ func (game *Game) start() {
 	game.status = "Preparing the hangar..."
 	game.torchEnabled = true
 	game.fps = NewFPSController(&game.Game)
-	game.fps.SceneContains = func(x, y float32) bool {
-		if game.panel == nil {
-			return true
-		}
-		if y <= 145 {
-			return false
-		}
-		return !game.cameraMenuOpen || x < float32(config.ResolutionWidth)-288 || y > 420
-	}
 	game.fps.OnTouchMode = func() {
 		if game.panel != nil {
 			game.panel.Invalidate()
@@ -107,6 +105,8 @@ var viewpoints = [...]viewpoint{
 	{"07 / SERVICE WINDOWS", 8, 6, 1.7, -1.9897, 0},
 	{"08 / ACID CONTROL ROOM", 31, 14.6, 5.1, 0, -.24},
 	{"09 / BURNING BARREL", 12.6, -1.55, 1.9, 1.5708, -.2443},
+	{"10 / UNDER THE ACID", 37, 23.2, -1.8, -1.5708, -.05},
+	{"11 / FLOAT DEMO", 48.8, 22, 1.9, -1.5708, -.35},
 }
 
 func (game *Game) visit(index int) {
@@ -125,7 +125,7 @@ func (game *Game) visit(index int) {
 	p := viewpoints[index]
 	game.camera = game.NewCamera3D(game.level, engine.CameraSettings{
 		Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-		Position: engine.NewVec3D(p.x, p.y, p.z), Yaw: p.yaw, Pitch: p.pitch,
+		Position: engine.NewVec3(p.x, p.y, p.z), Yaw: p.yaw, Pitch: p.pitch,
 		FOVY: config.CameraFOVY, Near: config.CameraNear, Far: config.CameraFar,
 		OrthoHeight:   config.CameraOrthoHeight,
 		ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
@@ -133,20 +133,21 @@ func (game *Game) visit(index int) {
 	game.camera.SetLayer(-10)
 	// Keep the walking controller's floor and stair proposals; the body lets
 	// accepted steps push the movable freight through the host's box solver.
-	game.SetPhysicsBox(game.camera, engine.PhysicsBox{
-		HalfExtents: engine.NewVec3D(.3, .3, .85), Offset: engine.NewVec3D(0, 0, -.85),
-		Mass: 80, Friction: .5, LockRotation: true,
-	})
-	game.torch = game.NewSpotLight(game.level, engine.NewVec3D(p.x, p.y, p.z), engine.NewVec3D(3, 2.7, 2.16), 18, .25, .50)
+	body, err := game.World(game.level).
+		AttachBody(game.camera.Ref(), engine.BodySettings{Kind: engine.BodyDynamic, Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(.3, .3, .85), Offset: engine.NewVec3(0, 0, -.85)}, Rotate: false, Forces: engine.BodyForces{GravityScale: 1, Buoyancy: false}, Mass: 80, Friction: .5})
+	if err != nil {
+		panic(err)
+	}
+	game.torch = game.NewSpotLight(game.level, engine.NewVec3(p.x, p.y, p.z), engine.NewVec3(3, 2.7, 2.16), 18, .25, .50)
 	// Camera-local axes are right, forward and up: hold the torch low on the right.
-	game.torch.AttachToCamera(game.camera, engine.NewVec3D(.35, .20, -.30))
+	game.torch.AttachTo(game.camera.Ref(), engine.NewVec3(.35, .20, -.30))
 	game.torch.SetEnabled(game.torchEnabled)
 	game.torch.SetShadows(true)
 	game.torchAim = lightAim{yaw: float64(p.yaw), pitch: float64(p.pitch), cameraYaw: float64(p.yaw), cameraPitch: float64(p.pitch)}
-	game.fps.SetCamera(game.camera)
+	game.fps.SetCamera(game.camera, body)
 	// The generated hook applies the host's accepted pose to camera.Settings.
 	// Every walking proposal starts from that pose, including on the stairs.
-	if _, err := game.WatchTransform(game.camera, game.acceptTorchPose); err != nil {
+	if _, err := game.WatchTransform(game.camera.Ref(), game.acceptTorchPose); err != nil {
 		game.status = err.Error()
 	} else {
 		game.status = p.name
@@ -189,6 +190,7 @@ func (game *Game) key(key engine.Key, down bool) {
 }
 
 func (game *Game) update(frame engine.Frame) {
+	game.updateElevator()
 	game.fps.Update(frame)
 	game.updateTorch(frame.Number)
 	if game.audioPending {

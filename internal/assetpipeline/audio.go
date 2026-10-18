@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/cwbudde/algo-dsp/dsp/resample"
 	"github.com/karty-game/karty-sdk/codec/qoa"
 	"github.com/karty-game/karty-sdk/format/asset"
 )
@@ -40,7 +39,7 @@ const (
 	maxSourceSampleRate      = 384_000
 	AudioEncodingQOA         = "qoa"
 	wavNormalizerRevision    = "wav-pcm16@1"
-	resamplerRevision        = "cwbudde/algo-dsp:quality-best@v0.7.1"
+	resamplerRevision        = "cwbudde/algo-dsp:edge-held-aligned-quality-best@v0.13.0:1"
 	waveSubformatPCM         = "\x01\x00\x00\x00\x00\x00\x10\x00\x80\x00\x00\xaa\x00\x38\x9b\x71"
 	waveSubformatFloat       = "\x03\x00\x00\x00\x00\x00\x10\x00\x80\x00\x00\xaa\x00\x38\x9b\x71"
 )
@@ -489,7 +488,9 @@ func resamplePCM16(samples []int16, channels uint16, inputRate, outputRate uint3
 			input[frame] = float64(samples[frame*int(channels)+channel]) / pcm16Scale
 		}
 
-		output, err := resample.Resample(input, int(outputRate), int(inputRate), resample.WithQuality(resample.QualityBest))
+		// Whole assets need delay compensation and a flushed tail. The causal
+		// streaming helper shifts attacks and truncates loop endpoints.
+		output, err := resampleAudioChannel(input, inputRate, outputRate)
 		if err != nil {
 			return nil, fmt.Errorf("resample audio: %w", err)
 		}

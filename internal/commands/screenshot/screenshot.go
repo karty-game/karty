@@ -75,7 +75,7 @@ func run(ctx context.Context, command *cli.Command) error {
 		return err
 	}
 
-	manifest, err := sdk.Resolve(config.SDK.Version)
+	manifest, err := sdk.ResolveContext(ctx, config.SDK.Version)
 	if err != nil {
 		return err
 	}

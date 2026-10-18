@@ -1,0 +1,25 @@
+extends = "dark"
+
+[images.dining]
+asset = "dining"
+slice = [0, 0, 0, 0]
+
+[images.elias-hopeful]
+asset = "elias-hopeful"
+slice = [0, 0, 0, 0]
+
+[images.elias-reading]
+asset = "elias-reading"
+slice = [0, 0, 0, 0]
+
+[images.iris-offering]
+asset = "iris-offering"
+slice = [0, 0, 0, 0]
+
+[images.mara-relieved]
+asset = "mara-relieved"
+slice = [0, 0, 0, 0]
+
+[images.mara-resolute]
+asset = "mara-resolute"
+slice = [0, 0, 0, 0]

@@ -3,11 +3,10 @@ package dev
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
-func TestManagedDevBuildResolvesSDKInsteadOfPassingHostOverride(t *testing.T) {
+func TestManagedDevelopmentKeepsSDKHostAndOwnsBaking(t *testing.T) {
 	t.Chdir(t.TempDir())
 	t.Setenv("KARTY_HOST_WEB", "")
 
@@ -16,21 +15,14 @@ func TestManagedDevBuildResolvesSDKInsteadOfPassingHostOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	command := strings.Join(devBuildCommand("karty", host), " ")
-	if host != "" || strings.Contains(command, "--host") {
-		t.Fatalf("managed build converted to local override: %s", command)
-	}
-
-	if !strings.Contains(command, "--target web") {
-		t.Fatal(command)
-	}
-
-	if !strings.Contains(command, "--development") {
-		t.Fatal("dev rebuild can produce fresh chunks:", command)
+	options := developmentOptions(host, "go", "", "", "")
+	if options.Host != "" || options.Target != "web" || options.Compiler != "go" || !options.Development || !options.DevelopmentBakes ||
+		!options.BundledRuntime {
+		t.Fatalf("unexpected development options: %+v", options)
 	}
 }
 
-func TestDevBuildPreservesLocalHostAndRejectsMissingOverride(t *testing.T) {
+func TestDevelopmentPreservesToolAndHostOverrides(t *testing.T) {
 	t.Parallel()
 
 	path := filepath.Join(t.TempDir(), "local host.wasm")
@@ -43,12 +35,13 @@ func TestDevBuildPreservesLocalHostAndRejectsMissingOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	command := strings.Join(devBuildCommand("karty", host), " ")
-	if !strings.Contains(command, "--host "+shellQuote(path)) {
-		t.Fatal(command)
+	options := developmentOptions(host, "tinygo", "go-custom", "tinygo-custom", "wasm-tools-custom")
+	if options.Host != path || options.Go != "go-custom" || options.TinyGo != "tinygo-custom" || options.WasmTools != "wasm-tools-custom" ||
+		options.Compiler != "tinygo" {
+		t.Fatalf("lost overrides: %+v", options)
 	}
 
 	if _, err := devHost(path + ".missing"); err == nil {
-		t.Fatal("missing override accepted")
+		t.Fatal("missing explicit host accepted")
 	}
 }

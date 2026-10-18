@@ -5,6 +5,15 @@ on:
 permissions:
   contents: write
 jobs:
+  validate-windows-process-lifecycle:
+    runs-on: windows-2025
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+      - run: mise run test-process-lifecycle
   validate:
     strategy:
       fail-fast: false
@@ -14,6 +23,10 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 45
+    env:
+      GOWORK: "off"
+      GOMAXPROCS: "2"
+      GOFLAGS: "-p=1"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -72,7 +85,7 @@ jobs:
             if (-not $game.HasExited) { Stop-Process -Id $game.Id -Force }
           }
   release:
-    needs: [validate, validate-windows-arm64]
+    needs: [validate, validate-windows-arm64, validate-windows-process-lifecycle]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -83,7 +96,7 @@ jobs:
       - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
-          version: "~> v2"
+          version: "v2.18.3"
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

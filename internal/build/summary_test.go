@@ -49,7 +49,7 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 			},
 		},
 	}
-	if err := stageLevels(raw, levels, ""); err != nil {
+	if err := stageLevels(t.Context(), raw, levels, ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -58,7 +58,7 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 	for _, platform := range []string{"linux-arm64", "darwin-arm64"} {
 		writeSummaryFixture(t, hostPath, nativeHeader(t, platform))
 
-		if err := stageTarget(
+		if err := stageTarget(t.Context(),
 			filepath.Join(root, "dist"),
 			raw,
 			gamePath,
@@ -67,7 +67,6 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 			"native",
 			"",
 			platform,
-			false,
 			"test",
 			false,
 		); err != nil {
@@ -90,7 +89,9 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 		Sounds: []assetpipeline.Sound{{}}, AudioStreams: []assetpipeline.AudioStream{{}, {}},
 	}
 
-	report, err := summarizeBuild(root, "test", release.SDKVersion(), levels, assets, Options{Target: "native", Platform: "darwin-arm64"})
+	report, err := summarizeBuild(
+		t.Context(), root, "test", release.SDKVersion(), levels, assets, Options{Target: "native", Platform: "darwin-arm64"},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +114,7 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 	defaultHost := nativeHeader(t, runtime.GOOS+"-"+runtime.GOARCH)
 	writeSummaryFixture(t, hostPath, defaultHost)
 
-	if err := stageTarget(
+	if err := stageTarget(t.Context(),
 		filepath.Join(root, "dist"),
 		raw,
 		gamePath,
@@ -122,7 +123,6 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 		"native",
 		"",
 		"",
-		false,
 		"test",
 		false,
 	); err != nil {
@@ -136,7 +136,7 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 
 	writeSummaryFixture(t, filepath.Join(notes, "README"), []byte("notes"))
 
-	defaultReport, err := summarizeBuild(root, "test", release.SDKVersion(), levels, assets, Options{Host: hostPath})
+	defaultReport, err := summarizeBuild(t.Context(), root, "test", release.SDKVersion(), levels, assets, Options{Host: hostPath})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +179,7 @@ func TestSummaryRejectsEscapingOutputAndNonRegularEntries(t *testing.T) {
 				}
 			}
 
-			if _, err := summarizeBuild(
+			if _, err := summarizeBuild(t.Context(),
 				root,
 				"test",
 				release.SDKVersion(),

@@ -18,10 +18,24 @@ jobs:
         with:
           persist-credentials: false
       - uses: jdx/mise-action@v4
+      - name: Restore sample lightmap bakes
+        id: bake-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: samples/*/.karty/bakes
+          key: ${{ runner.os }}-sample-bakes-v1-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-sample-bakes-v1-
       - name: Install headless software graphics dependencies
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
       - name: Bake offline lightmaps and build sample web previews
         run: mise run build-samples -- --cdn
+      - name: Save sample lightmap bakes
+        if: steps.bake-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: samples/*/.karty/bakes
+          key: ${{ steps.bake-cache.outputs.cache-primary-key }}
       - uses: actions/upload-artifact@v7
         with:
           name: sample-site

@@ -1,0 +1,49 @@
+[project]
+name = "Last Train"
+storage_id = "com.karty.samples.last-train"
+compiler = "tinygo"
+
+[project.resolution]
+width = 1280
+height = 720
+
+[sdk]
+version = "0.0.13"
+
+[[build.processors]]
+use = "dialogue.compile"
+inputs = ["dialogue/*.yarn"]
+
+[[assets.font]]
+role = "body"
+source = "assets/fonts/DejaVuSans.ttf"
+
+[[assets.font]]
+role = "mono"
+source = "assets/fonts/LiberationSerif-Italic.ttf"
+
+[[assets.font]]
+role = "display"
+source = "assets/fonts/DejaVuSerif-Bold.ttf"
+
+[[assets.music]]
+name = "last-carriage"
+source = "assets/audio/last-carriage.wav"
+
+[[assets.environment]]
+name = "night-train"
+source = "assets/audio/night-train.wav"
+
+[[assets.sound]]
+name = "ticket-punch"
+source = "assets/audio/ticket-punch.wav"
+
+[[assets.sound]]
+name = "station-whistle"
+source = "assets/audio/station-whistle.wav"
+
+[packages.dialogue]
+folder = '../../packages/dialogue'
+
+[packages.savegame]
+folder = '../../packages/savegame'

@@ -1,11 +1,15 @@
 version: 2
 project_name: karty
+# Keep release cleanup confined to its own generated artifact directory.
+dist: dist/goreleaser
 builds:
   - id: karty
     main: ./cmd/karty
     binary: karty
     env: [CGO_ENABLED=0]
     flags: [-trimpath]
+    ldflags:
+      - -s -w -X github.com/karty-game/karty/internal/release.Version={{ .Version }}
     goos: [darwin, linux, windows]
     goarch: [amd64, arm64]
     ignore:

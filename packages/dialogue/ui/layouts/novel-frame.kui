@@ -1,0 +1,79 @@
+<template>
+  <panel modal="true" class="frame">
+    <panel class="scene"><slot name="scene"/></panel>
+    <panel class="portrait"><slot name="portrait"/></panel>
+    <panel class="heading"><slot name="heading"/></panel>
+    <panel class="dialogue"><slot/></panel>
+    <panel class="toolbar"><slot name="toolbar"/></panel>
+    <slot name="overlay"/>
+  </panel>
+</template>
+
+<style>
+.frame
+  padding: 0
+  gap: 0
+  width: 100%
+  height: 100%
+  background: #10151eff
+.scene
+  padding: 0
+  position: absolute
+  left: 0
+  right: 0
+  top: 0
+  bottom: 0
+  align: stretch
+.portrait
+  padding: 0
+  position: absolute
+  right: 52
+  bottom: 0
+  width: 450
+  height: 94%
+  max-height: 675
+  align: stretch
+.heading
+  position: absolute
+  top: 24
+  left: 32
+  padding: 14
+  gap: 5
+  background: #11151bd9
+.toolbar
+  position: absolute
+  top: 24
+  right: 32
+  direction: row
+  gap: 6
+  padding: 6
+  background: #11151bd9
+.dialogue
+  position: absolute
+  bottom: 24
+  left: 32
+  right: 32
+  padding: 20
+  background: #0a1523f2
+  align: stretch
+@media (max-width: 600)
+  .portrait
+    right: 4
+    bottom: 170
+    width: 265
+    height: 398
+  .heading
+    top: 8
+    left: 8
+    padding: 10
+  .toolbar
+    top: 140
+    left: 8
+    right: 8
+    gap: 4
+  .dialogue
+    left: 8
+    right: 8
+    bottom: 72
+    padding: 14
+</style>

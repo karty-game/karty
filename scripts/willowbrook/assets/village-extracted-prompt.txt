@@ -1,0 +1,26 @@
+Use case: background-extraction / precise-object-edit.
+Asset type: reusable pixel-art scenery extracted from the SINGLE approved village illustration in Image 1, for reconstructing that scene as a playable map.
+
+Image 1 is the exact approved SOURCE ARTWORK. This is an extraction/decomposition task, not an invitation to redesign or reinterpret. Preserve the source's silhouettes, object designs, front-aligned pseudo-orthographic drawing, color palette, texture density and sunlight. Complete only occluded little edges needed to isolate each piece. Never rotate the cottage or add a new isometric viewpoint. The user explicitly rejected redesigned three-quarter houses.
+
+Produce ONE 4-column by 3-row atlas, EXACTLY twelve assets, each kept inside its own equal presentation cell with substantial transparent padding. Prefer 2048x1536 canvas with 512x512 cells. The objects themselves may be tall, wide, irregular or span multiple game cells. No cell borders or labels. Fully transparent alpha around isolated objects; no colored backdrop, halos, vignette, floor slabs or shadows cast outside an object.
+
+ROW 1 left to right:
+1. Extract the complete LOWER LEFT cottage exactly as drawn in the source: chimney to its left, red tile roof, cream front facade, original front door/windows, tiny original right annex and stone foot, plus its adjoining barrels and flower pots. Keep the SAME SOURCE VIEW and roof shape; do not invent a new side wall or rotate the building.
+2. Extract the large round tree immediately RIGHT OF THE ADVENTURER: same jade and lime canopy shapes, brown trunk, exact source view, full object.
+3. Extract a low leafy shrub from beside the original cottage: broad irregular bush, the original green leaf clusters, no ground.
+4. Extract a group of the original riverbank boulders with a little moss: three irregular warm gray stones, no water or ground behind them.
+
+ROW 2:
+5. Extract a reusable STRAIGHT HORIZONTAL SECTION of the original central terrace cliff: irregular rock face, cracks and small vines, overhanging grassy top lip, same front-facing projection. Width twice its visible height, no side faces or pedestal, compatible horizontal ends for repeating.
+6. Extract a SHORT TIMBER FENCE WITH WHITE AND CORAL FLOWERS as at the original bottom foreground. Horizontal crossbars, same posts and flower clusters, no terrain slab.
+7. Extract the LANTERN POST immediately right of the adventurer: original timber upright and hanging lantern, same proportions/view and source yellow glow confined inside the lantern.
+8. Extract a little BARREL, CRATE AND FLOWER-POT cluster from the original cottage frontage, complete independent silhouette, no building or ground backdrop.
+
+ROW 3:
+9. A seamless CYAN WATER SURFACE TILE using the source stream's exact blue/cyan palette, small ripples, glints and pixel clusters. Fill only a square tile within the cell, no land, no rocks, no water-volume side faces.
+10. A seamless WEATHERED STONE BLOCK TEXTURE TILE taken from the original staircase: original pale warm gray slabs, small chips and subtle cool shadows, front-on flat texture, no perspective or grass, square tile within cell.
+11. One SMALL CLOSED WOODEN TREASURE CACHE, the one necessary new prop. Design it as a low unobtrusive old wooden chest that belongs with the source's crates, subdued timber and iron fittings, a few moss pixels, source front-aligned top-down RPG view. No large golden ornaments, no ground, no cast shadow.
+12. The SAME TREASURE CACHE OPEN, same exact scale, orientation, canvas position and ground baseline as asset 11, lid lifted, a few small warm gold coins visible inside. No glow, particles or effects outside the object.
+
+Crisp purposeful original pixel-art clusters. Preserve the original image's relatively restrained warm greens, cream, ochre stone, red roof and cool jade shadows. No thick new black comic outlines, no modern 3D rendering, no extra details outside the requested objects. This is a transparent extraction atlas, not a collage of little landscape scenes.

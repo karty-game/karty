@@ -144,12 +144,19 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 
 	data = append(data, particleEntries...)
 
-	skyEntries, skyFeatures, err := compileWorldSky(directory, definition, assets)
+	vegetationEntries, vegetationFeatures, err := compileWorldVegetation(directory, definition, &compiled, textureMetadata, assets)
 	if err != nil {
-		return worldMaterialBuild{}, fmt.Errorf("level %q sky: %w", definition.Level.Name, err)
+		return worldMaterialBuild{}, fmt.Errorf("level %q vegetation: %w", definition.Level.Name, err)
 	}
 
-	data = append(data, skyEntries...)
+	data = append(data, vegetationEntries...)
+
+	outdoorEntries, outdoorFeatures, err := compileWorldSkyAndTerrain(directory, definition, &compiled, assets)
+	if err != nil {
+		return worldMaterialBuild{}, fmt.Errorf("level %q outdoor resources: %w", definition.Level.Name, err)
+	}
+
+	data = append(data, outdoorEntries...)
 
 	animations, err := worldAnimationFeatures(assets, compiled)
 	if err != nil {
@@ -224,7 +231,8 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 	}
 
 	atlas.features = append(atlas.features, particleFeatures...)
-	atlas.features = append(atlas.features, skyFeatures...)
+	atlas.features = append(atlas.features, vegetationFeatures...)
+	atlas.features = append(atlas.features, outdoorFeatures...)
 	atlas.features = append(atlas.features, animations...)
 	atlas.features = append(atlas.features, environment...)
 	atlas.features = append(atlas.features, lighting...)

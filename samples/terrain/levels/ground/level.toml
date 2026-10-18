@@ -1,0 +1,255 @@
+[level]
+name = "levels.ground"
+kind = "world"
+
+[world]
+source = "world.yaml"
+
+[terrain]
+source = "terrain.bin"
+
+# Shared ocean surface: world animation supplies ripples and the fluid volume
+# supplies underwater medium effects. The authored geometric sea level is Z 0.
+[[textures]]
+name = "ocean"
+source = "ocean-v2.png"
+profile = "environment"
+
+[textures.transform]
+max_width = 512
+max_height = 512
+
+[textures.materialize]
+preset = "water"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.4
+height = 0
+ao = 0
+rim = 0.1
+
+[[textures]]
+name = "ocean-boundary"
+source = "ocean.png"
+profile = "environment"
+
+# Opaque sand below every heightfield vertex continues beneath the distant sea.
+[[textures]]
+name = "seabed"
+source = "seabed.png"
+profile = "environment"
+
+# Distant submerged backdrop; retain the original while limiting runtime texels.
+[textures.transform]
+max_width = 512
+max_height = 512
+
+[[textures]]
+name = "pier-wood"
+source = "pier-wood-v1.png"
+profile = "environment"
+
+[textures.transform]
+max_width = 512
+max_height = 512
+
+[textures.materialize]
+preset = "wood"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.3
+height = 0.015
+ao = 0.3
+rim = 0
+
+[[textures]]
+name = "bunker-concrete"
+source = "bunker-concrete-v1.png"
+profile = "environment"
+
+[textures.transform]
+max_width = 512
+max_height = 512
+
+[textures.materialize]
+preset = "concrete"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.28
+height = 0.01
+ao = 0.35
+rim = 0
+
+[[textures]]
+name = "coastal-rock"
+source = "coastal-rock-v1.png"
+profile = "environment"
+[textures.transform]
+max_width = 256
+max_height = 256
+[textures.materialize]
+preset = "concrete"
+metallic_scale = 0
+[textures.material_strengths]
+normal = 0.35
+height = 0.015
+ao = 0.25
+rim = 0
+
+[[textures]]
+name = "lighthouse-white"
+source = "lighthouse-white.png"
+profile = "environment"
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "lighthouse-red"
+source = "lighthouse-red.png"
+profile = "environment"
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "lighthouse-metal"
+source = "lighthouse-metal.png"
+profile = "environment"
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+
+[[textures]]
+name = "lighthouse-lamp"
+source = "lighthouse-lamp.png"
+profile = "environment"
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+[textures.emission]
+intensity = 1.1
+
+# Two reusable tree atlases, each pairing foliage above with opaque bark below.
+[[textures]]
+name = "coastal-palm"
+source = "palm-atlas-v1.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 512
+
+[[textures]]
+name = "coastal-grass"
+source = "grass-patch-v4.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 256
+
+[[textures]]
+name = "coastal-grass-normal"
+source = "grass-patch-v4-normal.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 256
+
+[[textures]]
+name = "coastal-palm-normal"
+source = "palm-normal-v1.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 512
+
+[[textures]]
+name = "coastal-broadleaf"
+source = "broadleaf-atlas-v1.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 512
+
+[[textures]]
+name = "coastal-broadleaf-normal"
+source = "broadleaf-normal-v1.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 512
+
+[[textures]]
+name = "coastal-tall-grass"
+source = "tall-grass-v1.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 256
+
+[[textures]]
+name = "coastal-tall-grass-normal"
+source = "tall-grass-v1-normal.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 256
+
+[[textures]]
+name = "coastal-red-fruit"
+source = "red-fruit-v1.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 256
+
+[[textures]]
+name = "coastal-red-fruit-normal"
+source = "red-fruit-v1-normal.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 256
+
+[[textures]]
+name = "coastal-seagrass"
+source = "seaweed-short-v1.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 256
+
+[[textures]]
+name = "coastal-seagrass-normal"
+source = "seaweed-short-v1-normal.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 256
+
+[[textures]]
+name = "coastal-ribbon-kelp"
+source = "seaweed-tall-v1.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 256
+
+[[textures]]
+name = "coastal-ribbon-kelp-normal"
+source = "seaweed-tall-v1-normal.png"
+profile = "sprite"
+[textures.transform]
+max_width = 256
+max_height = 256

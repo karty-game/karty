@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 
 	"github.com/karty-game/karty/internal/build"
 	"github.com/karty-game/karty/internal/release"
@@ -20,12 +19,11 @@ import (
 )
 
 var errCheckMode = errors.New("select exactly one of --web, --browser, --watcher, --allocations, --ui, --world-camera, or --client-hooks")
-var errWatcherPlatform = errors.New("watcher integration check currently requires macOS or Linux")
 
 func main() {
-	web := flag.Bool("web", false, "execute staged browser launcher and actual TinyGo client under Node")
+	web := flag.Bool("web", false, "execute staged browser launcher with TinyGo and Go clients under Node")
 	browser := flag.Bool("browser", false, "execute the Go/Ebiten host and TinyGo client in Chromium")
-	watcher := flag.Bool("watcher", false, "check managed Air rebuild and generated-file exclusion behavior")
+	watcher := flag.Bool("watcher", false, "check native development watcher, publication and generated-file exclusions")
 	allocations := flag.Bool("allocations", false, "check actual TinyGo guest allocation counters")
 	checkUI := flag.Bool("ui", false, "scaffold and execute the UI template in native WASM and Chromium")
 	worldCamera := flag.Bool("world-camera", false, "build the packaged world sample twice and verify native/browser camera switching")
@@ -92,23 +90,13 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 		return runWorldCamera(ctx, root)
 	}
 
-	manifest, err := sdk.Resolve(release.SDKVersion())
-	if err != nil {
-		return err
+	if watcher {
+		return command(ctx, root, nil, "go", "test", "./internal/devserver", "./internal/commands/dev", "-timeout=9s", "-count=1")
 	}
 
-	if watcher {
-		if runtime.GOOS == "windows" {
-			return errWatcherPlatform
-		}
-
-		air, resolveErr := toolchain.Air(toolchain.AirOptions{Version: manifest.Tools.Air})
-		if resolveErr != nil {
-			return fmt.Errorf("resolve managed Air; run karty toolchain install: %w", resolveErr)
-		}
-
-		return command(ctx, root, []string{"KARTY_TEST_AIR=" + air}, "go", "test",
-			"./internal/commands/dev", "-timeout=9s", "-run", "TestAirWatcherLifecycle", "-count=1")
+	manifest, err := sdk.ResolveContext(ctx, release.SDKVersion())
+	if err != nil {
+		return err
 	}
 
 	if _, err := exec.LookPath("node"); err != nil {
@@ -122,7 +110,7 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 	defer os.RemoveAll(temporary)
 
 	project := filepath.Join(temporary, "runtime-probe")
-	if err := scaffold.CreateGame(project, "runtime-probe", manifest); err != nil {
+	if err := scaffold.CreateTemplateContext(ctx, project, "runtime-probe", manifest, "game"); err != nil {
 		return err
 	}
 
@@ -188,7 +176,7 @@ func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bo
 	}
 
 	if web {
-		return command(ctx, root, nil, "node", "internal/build/testdata/launcher.test.mjs", filepath.Join(project, "dist/web"))
+		return checkWebCompilers(ctx, root, project, options)
 	}
 
 	if browser {
@@ -235,4 +223,31 @@ func validateCheckMode(modes ...bool) error {
 	}
 
 	return nil
+}
+
+func checkWebCompilers(ctx context.Context, root, project string, options build.Options) error {
+	if err := command(
+		ctx,
+		root,
+		nil,
+		"node",
+		"internal/build/testdata/launcher.test.mjs",
+		filepath.Join(project, "dist/web"),
+	); err != nil {
+		return err
+	}
+
+	options.Compiler = "go"
+	if err := build.RunWithOptions(ctx, project, options); err != nil {
+		return err
+	}
+
+	return command(
+		ctx,
+		root,
+		[]string{"KARTY_TEST_COMPILER=go"},
+		"node",
+		"internal/build/testdata/launcher.test.mjs",
+		filepath.Join(project, "dist/web"),
+	)
 }

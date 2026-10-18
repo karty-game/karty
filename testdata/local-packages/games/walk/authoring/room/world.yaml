@@ -1,0 +1,22 @@
+version: 11
+rooms:
+  - id: room
+    floor: { c: 0 }
+    ceiling: { c: 4 }
+    floor_material: std.checker
+    ceiling_material: std.checker
+    boundary:
+      - { id: south, start: { x: 0, y: 0 }, end: { x: 12, y: 0 }, material: std.checker }
+      - { id: east, start: { x: 12, y: 0 }, end: { x: 12, y: 18 }, material: std.checker }
+      - { id: north, start: { x: 12, y: 18 }, end: { x: 0, y: 18 }, material: std.checker }
+      - { id: west, start: { x: 0, y: 18 }, end: { x: 0, y: 0 }, material: std.checker }
+
+# Placements, transforms and material choices belong to the game.
+instances:
+  - id: display-crate
+    prefab: std.crate
+    transform: { translation: { x: 4, y: 9, z: 0 }, yaw_degrees: 15, scale: 1.5 }
+  - id: customized-stack
+    prefab: std.crate-stack
+    transform: { translation: { x: 7, y: 10, z: 0 }, yaw_degrees: -20, scale: 1 }
+    materials: [{ from: std.wood, to: accent }]

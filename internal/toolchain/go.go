@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/karty-game/karty/internal/process"
 )
 
 type goError string
@@ -49,16 +51,29 @@ func Go(ctx context.Context, options GoOptions) (string, error) {
 	}
 
 	if options.Version != "" {
-		output, err := exec.CommandContext(ctx, path, "version").CombinedOutput()
+		output, err := process.CommandContext(ctx, path, "version").CombinedOutput()
 		if err != nil {
 			return "", fmt.Errorf("check Go version: %w\n%s", err, output)
 		}
 
 		want := "go" + options.Version
-		if !strings.Contains(string(output), want) {
-			return "", fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), errGoVersionMismatch)
+		if !matchesGoVersion(string(output), want) {
+			return "", fmt.Errorf(
+				"%s; expected %s (select it with --go or KARTY_GO): %w",
+				strings.TrimSpace(string(output)),
+				want,
+				errGoVersionMismatch,
+			)
 		}
 	}
 
 	return path, nil
+}
+
+// matchesGoVersion compares the compiler's complete version token. Prefix
+// matching would accept go1.27.10 or go1.27.1rc1 for a go1.27.1 SDK pin.
+func matchesGoVersion(output, expected string) bool {
+	fields := strings.Fields(output)
+
+	return len(fields) == 4 && fields[0] == "go" && fields[1] == "version" && fields[2] == expected
 }

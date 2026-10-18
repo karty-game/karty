@@ -25,7 +25,7 @@ func TestVideoStagingAndTypedIDs(t *testing.T) {
 		t.Fatal(err)
 	}
 	videos := []project.Video{{Name: "z.demo", Source: "clip.mpg"}, {Name: "a.demo", Source: "clip.mpg"}}
-	if err := stageProjectVideos(directory, directory, artifact, videos); err != nil {
+	if err := stageProjectVideos(t.Context(), directory, directory, artifact, videos); err != nil {
 		t.Fatal(err)
 	}
 	wasm, err := os.ReadFile(artifact)
@@ -44,7 +44,7 @@ func TestVideoStagingAndTypedIDs(t *testing.T) {
 		t.Fatalf("catalog: %+v", catalog)
 	}
 	target := t.TempDir()
-	if err := stageVideoFiles(target, artifact, directory); err != nil {
+	if err := stageVideoFiles(t.Context(), target, artifact, directory); err != nil {
 		t.Fatal(err)
 	}
 	//nolint:gosec // The validated catalog path is the subject of this test.
@@ -80,7 +80,7 @@ func TestVideoSourceRejectsEscapeAndUnsupportedHeader(t *testing.T) {
 	}
 	defer root.Close()
 	for _, path := range []string{"bad.mpg", "../escape.mpg"} {
-		if _, err := stageVideoSource(root, t.TempDir(), path); err == nil {
+		if _, err := stageVideoSource(t.Context(), root, t.TempDir(), path); err == nil {
 			t.Fatal("accepted invalid source")
 		}
 	}
@@ -108,7 +108,7 @@ func TestVideoSourceRejectsMPEG2MissingSequenceAndOversizedFrames(t *testing.T) 
 			}
 			defer root.Close()
 
-			if _, err := stageVideoSource(root, t.TempDir(), "clip.mpg"); err == nil {
+			if _, err := stageVideoSource(t.Context(), root, t.TempDir(), "clip.mpg"); err == nil {
 				t.Fatal("accepted unsupported MPEG stream")
 			}
 		})

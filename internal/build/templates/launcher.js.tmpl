@@ -120,14 +120,18 @@
     const videoSections = WebAssembly.Module.customSections(module, "karty.videos.v1");
     if (videoSections.length > 1) throw new Error("The game video section is duplicated");
     globalThis.kartyVideoBundle = videoSections.length ? videoSections[0] : null;
-    globalThis.kartyVideoBaseURL = new URL(url, globalThis.location?.href || "http://localhost/").href;
+    globalThis.kartyVideoBaseURL = new URL(url, globalThis.document?.baseURI || globalThis.location?.href || "http://localhost/").href;
     const audioStreamSections = WebAssembly.Module.customSections(module, "karty.audio-streams.v1");
     if (audioStreamSections.length > 1) throw new Error("The game streaming audio section is duplicated");
     globalThis.kartyAudioStreamBundle = audioStreamSections.length ? audioStreamSections[0] : null;
-    globalThis.kartyAudioStreamBaseURL = new URL(url, globalThis.location?.href || "http://localhost/").href;
+    globalThis.kartyAudioStreamBaseURL = new URL(url, globalThis.document?.baseURI || globalThis.location?.href || "http://localhost/").href;
     const manifests = WebAssembly.Module.customSections(module, "karty.manifest.v1");
     if (manifests.length !== 1) throw new Error("The game cartridge manifest section is missing or duplicated");
     globalThis.kartyManifestBundle = manifests[0];
+    const storageIdentities = WebAssembly.Module.customSections(module, "karty.storage.v1");
+    if (storageIdentities.length > 1 || (storageIdentities.length && storageIdentities[0].byteLength > 256))
+      throw new Error("Invalid game storage identity");
+    globalThis.kartyStorageIdentity = storageIdentities.length ? new TextDecoder("utf-8", { fatal: true }).decode(storageIdentities[0]) : "";
     const performanceProfiles = WebAssembly.Module.customSections(module, "karty.performance.v1");
     if (performanceProfiles.length > 1) throw new Error("The game performance profile section is duplicated");
     globalThis.kartyPerformanceBundle = performanceProfiles.length ? performanceProfiles[0] : null;
@@ -177,6 +181,39 @@
       return 0;
     },
     environ_get: () => 0,
+    // Host-owned standard streams only: empty stdin, diagnostic stdout/stderr.
+    // No preopened directories or guest-managed filesystem descriptors.
+    fd_close: () => 8,
+    fd_prestat_get: () => 8,
+    fd_prestat_dir_name: () => 8,
+    fd_fdstat_get: (fd, pointer) => {
+      fd >>>= 0; pointer >>>= 0;
+      if (fd > 2) return 8;
+      const bytes = clientMemory();
+      if (pointer > bytes.length - 24) return 21;
+      bytes.fill(0, pointer, pointer + 24);
+      bytes[pointer] = 2; // WASI character device, fdstat is 24 bytes.
+      clientDataView().setBigUint64(pointer + 8, fd === 0 ? 2n : 64n, true);
+      return 0;
+    },
+    fd_fdstat_set_flags: (fd, flags) => {
+      fd >>>= 0; flags >>>= 0;
+      if (fd > 2) return 8;
+      return (flags & ~4) === 0 ? 0 : 58; // NONBLOCK accepted; other modes ENOTSUP.
+    },
+    fd_read: (fd, iovs, iovsLen, read) => {
+      if (fd !== 0) return 8;
+      iovs >>>= 0; iovsLen >>>= 0; read >>>= 0;
+      const bytes = clientMemory(), memory = clientDataView();
+      if (read > bytes.length - 4 || iovs > bytes.length || iovsLen > (bytes.length - iovs) / 8) return 21;
+      if (iovsLen > 1024) return 28;
+      for (let index = 0; index < iovsLen; index++) {
+        const pointer = memory.getUint32(iovs + index * 8, true), length = memory.getUint32(iovs + index * 8 + 4, true);
+        if (pointer > bytes.length || length > bytes.length - pointer) return 21;
+      }
+      memory.setUint32(read, 0, true); // EOF, without changing guest input buffers.
+      return 0;
+    },
     fd_write: (fd, iovs, iovsLen, written) => {
       if (fd !== 1 && fd !== 2) return 8; // WASI EBADF
       const bytes = clientMemory(),
@@ -212,11 +249,30 @@
     },
     sched_yield: () => 0,
     poll_oneoff: () => 0,
-    clock_time_get: () => 0,
+    clock_time_get: (clock, precision, pointer) => {
+      const bytes = clientMemory();
+      pointer >>>= 0;
+      if (pointer > bytes.length - 8) return 21;
+      if (clock !== 0 && clock !== 1) return 28;
+      const milliseconds = clock === 0 ? Date.now() : performance.now();
+      clientDataView().setBigUint64(pointer, BigInt(Math.floor(milliseconds * 1e6)), true);
+      return 0;
+    },
   };
   const imports = {
     wasi_snapshot_preview1: wasi,
     karty: {
+      access_save: (operation, keyPointer, keyLength, bufferPointer, bufferLength) => {
+        operation >>>= 0; keyPointer >>>= 0; keyLength >>>= 0; bufferPointer >>>= 0; bufferLength >>>= 0;
+        const memory = clientMemory();
+        if (keyLength === 0 || keyLength > 64 || bufferLength > 48 * 1024 ||
+            keyPointer > memory.length || keyLength > memory.length - keyPointer ||
+            bufferPointer > memory.length || bufferLength > memory.length - bufferPointer) return -1;
+        const key = new TextDecoder().decode(memory.subarray(keyPointer, keyPointer + keyLength));
+        if (!/^[A-Za-z0-9_-]{1,64}$/.test(key) || operation < 1 || operation > 3 || (operation === 3 && bufferLength !== 0)) return -1;
+        if (typeof globalThis.kartyHostAccessSave !== "function") return -4;
+        return globalThis.kartyHostAccessSave(operation, key, memory.subarray(bufferPointer, bufferPointer + bufferLength));
+      },
       log: (pointer, length) => globalThis.kartyHostLog(readClientString(pointer, length)),
       play_sound: (soundID) => globalThis.kartyHostPlaySound(soundID),
       play_sfx_from: (soundID, entityID, volume, nearDistance, farDistance) =>

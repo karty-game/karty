@@ -4,7 +4,7 @@ import "package://github.com/jdx/hk/releases/download/v2.5.0/hk@2.5.0#/Builtins.
 min_hk_version = "2.5.0"
 fail_fast = false
 jobs = 2
-exclude = List("dist", "tmp", "node_modules", ".karty", ".codex", ".agents", "vendor")
+exclude = List("dist", "tmp", "node_modules", ".karty", ".codex", ".agents", "vendor", "docs", "spike", "spikes", "concept-art", "website/validation")
 
 steps {
   ["golangci-lint-fmt"] = (Builtins.golangci_lint_fmt) {

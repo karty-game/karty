@@ -8,17 +8,19 @@ import (
 	"example.com/hangar/.karty/engine"
 )
 
-func audioGame() *Game {
+func audioGame(t *testing.T) *Game {
 	engine.FixtureBegin()
 	engine.FixtureAudioReset()
 	game := &Game{level: 9}
+ if err:=game.World(9).Configure(engine.WorldSettings{Mode:engine.WorldSpatial,Gravity:engine.Vec3{Z:-9.81}});err!=nil{t.Fatal(err)}
+ t.Cleanup(func(){game.stopAudio();for _,crate:=range game.crates{if crate!=nil{crate.Destroy()}}})
 	game.createCrates()
 	game.createAudio()
 	return game
 }
 
 func TestAudioAmbientPlacementAndIdleCrateBudget(t *testing.T) {
-	game := audioGame()
+	game := audioGame(t)
 	defer game.stopAudio()
 	calls := engine.FixtureAudioCalls()
 	if len(calls) != 8 {
@@ -71,7 +73,7 @@ func TestAudioAmbientPlacementAndIdleCrateBudget(t *testing.T) {
 }
 
 func TestCrateAudioStartsOnAcceptedMotionAndRetiresWithoutChurn(t *testing.T) {
-	game := audioGame()
+	game := audioGame(t)
 	defer game.stopAudio()
 	game.updateAudio(1)
 	engine.FixtureAudioReset()
@@ -135,7 +137,7 @@ func TestCrateAudioStartsOnAcceptedMotionAndRetiresWithoutChurn(t *testing.T) {
 }
 
 func TestCrateAudioCascadeCountsFadingVoicesAndPrefersClosest(t *testing.T) {
-	game := audioGame()
+	game := audioGame(t)
 	defer game.stopAudio()
 	game.camera = game.NewCamera3D(9, engine.CameraSettings{})
 	game.updateAudio(1)
@@ -151,10 +153,10 @@ func TestCrateAudioCascadeCountsFadingVoicesAndPrefersClosest(t *testing.T) {
 		}
 		engine.FixtureAudioReset()
 		if frame == 3 {
-			game.camera.Settings.Position = engine.NewVec3D(31, 7.8, 2)
+			game.camera.Settings.Position = engine.NewVec3(31, 7.8, 2)
 		}
 		if frame == 12 {
-			game.camera.Settings.Position = engine.NewVec3D(-3, 7, .81)
+			game.camera.Settings.Position = engine.NewVec3(freightStacks[1].x,freightStacks[1].y,freightStacks[1].z)
 		}
 		for _, crate := range game.crates {
 			if frame <= 20 || frame >= 60 {
@@ -202,9 +204,10 @@ func TestCrateAudioCascadeCountsFadingVoicesAndPrefersClosest(t *testing.T) {
 	if !selected[1] {
 		t.Fatal("closest crate omitted after listener moved")
 	}
-	if selected[10] {
-		t.Fatal("farther crate displaced a closer one")
-	}
+	for near, chosen := range selected {
+ if chosen {continue}
+ for far, chosen := range selected {if chosen && game.crateSoundDistance(near)+0.001<game.crateSoundDistance(far) {t.Fatal("farther crate displaced a closer one",near,far)}}
+ }
 	engine.FixtureAudioReset()
 	game.stopAudio()
 	if len(engine.FixtureAudioStops()) != 15 {
@@ -213,7 +216,7 @@ func TestCrateAudioCascadeCountsFadingVoicesAndPrefersClosest(t *testing.T) {
 }
 
 func TestCrateAudioEvictsSilentWarmVoiceForImmediateNewMotion(t *testing.T) {
-	game := audioGame()
+	game := audioGame(t)
 	defer game.stopAudio()
 	game.camera = game.NewCamera3D(9, engine.CameraSettings{})
 	game.updateAudio(1)

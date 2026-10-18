@@ -1,0 +1,9 @@
+[project]
+name = "controllers-consumer"
+
+[project.resolution]
+width = 1280
+height = 720
+
+[sdk]
+version = "0.0.13"

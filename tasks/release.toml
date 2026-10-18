@@ -1,0 +1,26 @@
+[build-cli-linux-amd64]
+run = "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/cli/linux-amd64/karty ./cmd/karty"
+
+[build-cli-darwin-arm64]
+run = "CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o dist/cli/darwin-arm64/karty ./cmd/karty"
+
+[build-cli-windows-amd64]
+run = "CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/cli/windows-amd64/karty.exe ./cmd/karty"
+
+[build-cli-linux-arm64]
+run = "CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o dist/cli/linux-arm64/karty ./cmd/karty"
+
+[prepare-release]
+run = "go run ./cmd/karty-release"
+
+[check-release]
+run = "go run ./cmd/karty-release --check"
+
+[check-release-config]
+description = "Validate the pinned GoReleaser configuration without building or publishing"
+run = "goreleaser check"
+
+[release-snapshot]
+description = "Build local CLI archives and checksums in dist/goreleaser without publishing"
+depends = ["check-release-config"]
+run = "goreleaser release --snapshot --clean --parallelism 2"

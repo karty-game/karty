@@ -267,7 +267,7 @@ func TestTransformWAVIsDeterministicGolden(t *testing.T) {
 
 	digest := sha256.Sum256(encodePCM16(first.Samples))
 
-	const wantDigest = "36b8a8c074d2d7caa2e8d5b605c7188f27e73f55b658103393bb3301364c721c"
+	const wantDigest = "762c63d8a5b5a3bfa6dfc87f0e2139d4b65b7502eb3d58cb7955745c3029de9f"
 	if got := hex.EncodeToString(digest[:]); got != wantDigest {
 		t.Fatalf("golden digest = %s, want %s", got, wantDigest)
 	}
@@ -355,7 +355,7 @@ func TestProcessAudioOwnsBytesAndHasGoldenDigests(t *testing.T) {
 	const (
 		wantSourceDigest = "497aa05de6c9e023033563eb37c96a0ad5525a4c66331d890ae40f56d5a9e84f"
 		wantOutputDigest = "6a9d27827d09305ce86c1af636c0c3fa79e51f2f7098c30b05646e2fa97370cc"
-		wantRecipeDigest = "7ccbf961d5acf3b1880ab0348ac07ba6e017b7d181728aeb2d01f28046e4424b"
+		wantRecipeDigest = "06b50f984d1488ceb5179c6d984bf780afe516a6b210751cc1abb278d164a85b"
 	)
 
 	if got := formatDigest(first.SourceDigest); got != wantSourceDigest {

@@ -4,9 +4,9 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/karty-game/karty/internal/contextio"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -27,10 +28,21 @@ var versionPattern = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z]+
 const maxBundleBytes = 32 << 20
 const bundleTimeout = 2 * time.Minute
 
+// ErrNotInstalled distinguishes an absent SDK bundle from a damaged installation.
+var ErrNotInstalled = errors.New("SDK is not installed")
+
 // Resolve uses only the exact installed, checksummed SDK.
 // Install published versions explicitly with `karty sdk install VERSION`.
 
 func Resolve(version string) (Manifest, error) {
+	return ResolveContext(context.Background(), version)
+}
+
+func ResolveContext(ctx context.Context, version string) (Manifest, error) {
+	if err := ctx.Err(); err != nil {
+		return Manifest{}, err
+	}
+
 	if err := validateVersion(version); err != nil {
 		return Manifest{}, err
 	}
@@ -40,28 +52,36 @@ func Resolve(version string) (Manifest, error) {
 		return Manifest{}, err
 	}
 
-	data, err := readBundleFile(filepath.Join(root, version, "sdk.zip"))
+	data, err := readBundleFileContext(ctx, filepath.Join(root, version, "sdk.zip"))
 	if os.IsNotExist(err) {
-		return Manifest{}, fmt.Errorf("SDK %s is not installed; run karty sdk install %s: %w", version, version, err)
+		return Manifest{}, fmt.Errorf("SDK %s is not installed; run karty sdk install %s: %w: %w", version, version, ErrNotInstalled, err)
 	}
 
 	if err != nil {
 		return Manifest{}, err
 	}
 
-	hash, err := os.ReadFile(filepath.Join(root, version, "sha256"))
+	hash, err := contextio.ReadFile(ctx, filepath.Join(root, version, "sha256"))
 	if err != nil {
 		return Manifest{}, err
 	}
 
-	if err := verifyBundleHash(data, string(hash)); err != nil {
+	if err := verifyBundleHashContext(ctx, data, string(hash)); err != nil {
 		return Manifest{}, err
 	}
 
-	return readBundle(version, data)
+	return readBundleContext(ctx, version, data)
 }
 
 func readBundle(version string, data []byte) (Manifest, error) {
+	return readBundleContext(context.Background(), version, data)
+}
+
+func readBundleContext(ctx context.Context, version string, data []byte) (Manifest, error) {
+	if err := ctx.Err(); err != nil {
+		return Manifest{}, err
+	}
+
 	if len(data) > maxBundleBytes {
 		return Manifest{}, bundleError("SDK bundle exceeds size limit")
 	}
@@ -71,27 +91,13 @@ func readBundle(version string, data []byte) (Manifest, error) {
 		return Manifest{}, err
 	}
 
-	seen := map[string]bool{}
-
-	var total uint64
-
-	for _, file := range archive.File {
-		if !fs.ValidPath(file.Name) || strings.Contains(file.Name, "\\") || !file.Mode().IsRegular() || seen[file.Name] {
-			return Manifest{}, bundleError("invalid SDK entry %q", file.Name)
-		}
-
-		seen[file.Name] = true
-		if file.UncompressedSize64 > maxBundleBytes {
-			return Manifest{}, bundleError("SDK entry exceeds size limit")
-		}
-
-		total += file.UncompressedSize64
-		if total > maxBundleBytes || len(seen) > 2048 {
-			return Manifest{}, bundleError("SDK bundle exceeds limits")
-		}
+	if err := validateBundleEntries(ctx, archive.File); err != nil {
+		return Manifest{}, err
 	}
 
-	compatibility, err := readCompatibility(archive, version)
+	tree := contextio.Filesystem(ctx, archive)
+
+	compatibility, err := readCompatibility(tree, version)
 	if err != nil {
 		return Manifest{}, err
 	}
@@ -102,12 +108,16 @@ func readBundle(version string, data []byte) (Manifest, error) {
 	}
 
 	if compatibility.ProjectCodegen == authoredActionProjectCodegen {
-		if _, err := fs.ReadFile(archive, "contracts/actions-v1.schema.json"); err != nil {
+		if _, err := fs.ReadFile(tree, "contracts/actions-v1.schema.json"); err != nil {
+			if canceled := ctx.Err(); canceled != nil {
+				return Manifest{}, canceled
+			}
+
 			return Manifest{}, bundleError("SDK project generator requires the authored action schema")
 		}
 	}
 
-	raw, err := fs.ReadFile(archive, "manifest.toml")
+	raw, err := fs.ReadFile(tree, "manifest.toml")
 	if err != nil {
 		return Manifest{}, err
 	}
@@ -125,13 +135,13 @@ func readBundle(version string, data []byte) (Manifest, error) {
 
 	manifest.Compatibility = compatibility
 	for _, compiler := range []string{"go", "tinygo"} {
-		if _, err = ClientFiles(manifest, compiler); err != nil {
+		if _, err = ClientFilesContext(ctx, manifest, compiler); err != nil {
 			return Manifest{}, err
 		}
 	}
 
 	for _, prefix := range []string{"docs/" + manifest.Docs.Version, "templates/game/" + manifest.Templates.Game} {
-		if _, err = fs.Stat(archive, prefix); err != nil {
+		if _, err = fs.Stat(tree, prefix); err != nil {
 			return Manifest{}, err
 		}
 	}
@@ -139,27 +149,63 @@ func readBundle(version string, data []byte) (Manifest, error) {
 	return manifest, nil
 }
 
-// Resources exposes only the selected SDK archive's public build inputs.
-func Resources(manifest Manifest) (fs.FS, error) {
-	if manifest.resources != nil {
-		return manifest.resources, nil
+func validateBundleEntries(ctx context.Context, files []*zip.File) error {
+	seen := map[string]bool{}
+
+	var total uint64
+
+	for _, file := range files {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
+		if !fs.ValidPath(file.Name) || strings.Contains(file.Name, "\\") || !file.Mode().IsRegular() || seen[file.Name] {
+			return bundleError("invalid SDK entry %q", file.Name)
+		}
+
+		seen[file.Name] = true
+		if file.UncompressedSize64 > maxBundleBytes {
+			return bundleError("SDK entry exceeds size limit")
+		}
+
+		total += file.UncompressedSize64
+		if total > maxBundleBytes || len(seen) > 2048 {
+			return bundleError("SDK bundle exceeds limits")
+		}
 	}
 
-	resolved, err := Resolve(manifest.Version)
+	return nil
+}
+
+// Resources exposes only the selected SDK archive's public build inputs.
+func Resources(manifest Manifest) (fs.FS, error) {
+	return ResourcesContext(context.Background(), manifest)
+}
+
+func ResourcesContext(ctx context.Context, manifest Manifest) (fs.FS, error) {
+	if manifest.resources != nil {
+		return contextio.Filesystem(ctx, manifest.resources), ctx.Err()
+	}
+
+	resolved, err := ResolveContext(ctx, manifest.Version)
 	if err != nil {
 		return nil, err
 	}
 
-	return resolved.resources, nil
+	return contextio.Filesystem(ctx, resolved.resources), ctx.Err()
 }
 
 // ClientFiles copies pre-generated SDK bindings; no WIT generator runs in the CLI.
 func ClientFiles(manifest Manifest, compiler string) (map[string][]byte, error) {
+	return ClientFilesContext(context.Background(), manifest, compiler)
+}
+
+func ClientFilesContext(ctx context.Context, manifest Manifest, compiler string) (map[string][]byte, error) {
 	if compiler != "go" && compiler != "tinygo" {
 		return nil, bundleError("unsupported compiler %q", compiler)
 	}
 
-	tree, err := Resources(manifest)
+	tree, err := ResourcesContext(ctx, manifest)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +237,15 @@ func sdkCache() (string, error) {
 	return filepath.Join(root, "sdks"), nil
 }
 func verifyBundleHash(data []byte, want string) error {
-	hash := sha256.Sum256(data)
+	return verifyBundleHashContext(context.Background(), data, want)
+}
+
+func verifyBundleHashContext(ctx context.Context, data []byte, want string) error {
+	hash, err := contextio.Sum256(ctx, data)
+	if err != nil {
+		return err
+	}
+
 	if len(want) != 64 || hex.EncodeToString(hash[:]) != want {
 		return bundleError("SDK bundle checksum mismatch")
 	}
@@ -229,12 +283,12 @@ func InstallPublished(ctx context.Context, version string) error {
 		return bundleError("download SDK bundle: %s", response.Status)
 	}
 
-	data, err := io.ReadAll(io.LimitReader(response.Body, maxBundleBytes+1))
+	data, err := contextio.ReadAll(ctx, io.LimitReader(response.Body, maxBundleBytes+1))
 	if err != nil {
 		return err
 	}
 
-	bundled, err := readBundle(version, data)
+	bundled, err := readBundleContext(ctx, version, data)
 	if err != nil {
 		return err
 	}
@@ -248,21 +302,29 @@ func InstallPublished(ctx context.Context, version string) error {
 		return bundleError("signed manifest and SDK bundle metadata differ")
 	}
 
-	return InstallBundle(version, data, manifest.Bundle.SHA256)
+	return InstallBundleContext(ctx, version, data, manifest.Bundle.SHA256)
 }
 
 // InstallBundle installs a bounded, checksummed SDK atomically. This also supports
 // candidate artifacts produced locally by engine contributors.
 func InstallBundle(version string, data []byte, checksum string) error {
+	return InstallBundleContext(context.Background(), version, data, checksum)
+}
+
+func InstallBundleContext(ctx context.Context, version string, data []byte, checksum string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if err := validateVersion(version); err != nil {
 		return err
 	}
 
-	if err := verifyBundleHash(data, checksum); err != nil {
+	if err := verifyBundleHashContext(ctx, data, checksum); err != nil {
 		return err
 	}
 
-	if _, err := readBundle(version, data); err != nil {
+	if _, err := readBundleContext(ctx, version, data); err != nil {
 		return err
 	}
 
@@ -276,7 +338,7 @@ func InstallBundle(version string, data []byte, checksum string) error {
 	}
 
 	target := filepath.Join(root, version)
-	if existing, err := os.ReadFile(filepath.Join(target, "sha256")); err == nil {
+	if existing, err := contextio.ReadFile(ctx, filepath.Join(target, "sha256")); err == nil {
 		if string(existing) != checksum {
 			return bundleError(
 				"SDK %s is immutable; installed checksum differs; remove %q only if it is a pre-release local candidate, then reinstall",
@@ -284,12 +346,12 @@ func InstallBundle(version string, data []byte, checksum string) error {
 			)
 		}
 
-		contents, err := readBundleFile(filepath.Join(target, "sdk.zip"))
+		contents, err := readBundleFileContext(ctx, filepath.Join(target, "sdk.zip"))
 		if err != nil {
 			return err
 		}
 
-		return verifyBundleHash(contents, checksum)
+		return verifyBundleHashContext(ctx, contents, checksum)
 	}
 
 	stage, err := os.MkdirTemp(root, ".sdk-")
@@ -298,11 +360,15 @@ func InstallBundle(version string, data []byte, checksum string) error {
 	}
 	defer os.RemoveAll(stage)
 
-	if err = os.WriteFile(filepath.Join(stage, "sdk.zip"), data, 0600); err != nil {
+	if err = contextio.WriteFile(ctx, filepath.Join(stage, "sdk.zip"), data, 0600); err != nil {
 		return err
 	}
 
-	if err = os.WriteFile(filepath.Join(stage, "sha256"), []byte(checksum), 0600); err != nil {
+	if err = contextio.WriteFile(ctx, filepath.Join(stage, "sha256"), []byte(checksum), 0600); err != nil {
+		return err
+	}
+
+	if err := ctx.Err(); err != nil {
 		return err
 	}
 
@@ -316,6 +382,14 @@ func bundleError(message string, args ...any) error {
 }
 
 func readBundleFile(path string) ([]byte, error) {
+	return readBundleFileContext(context.Background(), path)
+}
+
+func readBundleFileContext(ctx context.Context, path string) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -331,7 +405,7 @@ func readBundleFile(path string) ([]byte, error) {
 		return nil, bundleError("invalid cached archive")
 	}
 
-	data, err := io.ReadAll(io.LimitReader(file, maxBundleBytes+1))
+	data, err := contextio.ReadAll(ctx, io.LimitReader(file, maxBundleBytes+1))
 	if err != nil {
 		return nil, err
 	}

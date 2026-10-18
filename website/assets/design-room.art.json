@@ -1,0 +1,8 @@
+{
+  "kind": "concept illustration",
+  "tool": "built-in image_gen.imagegen",
+  "prompt": "Use case: illustration-story\nAsset type: wide editorial illustration for the Why Karty page in game development documentation\nPrimary request: illustrate the satisfaction of building a small game world from simple flat room outlines, reusable crates and materials. Show an isometric cutaway room gradually assembled from outlined floor shapes into a textured, softly lit playable space. The room has a doorway, a few crates and one warm lamp; beside it are the matching flat outline and a small stack of material swatches. This is conceptual artwork, not a screenshot or software UI.\nStyle/medium: carefully drawn technical editorial illustration with restrained shading, crisp architectural edges and tactile stone/painted metal surfaces; simple enough to read at document-column size\nComposition/framing: wide landscape, single cohesive scene, comfortable empty margins; no panels, no embedded text, no arrows\nColor palette: warm off-white background with muted teal and rust accents, dark charcoal linework, amber lamp glow, matching a quiet technical documentation theme\nConstraints: no words, letters, numbers, logos, people, fake UI, watermark or exaggerated fantasy architecture. Do not depict an existing graphical editor or imply a product screenshot.",
+  "file": "design-room.png",
+  "sha256": "c813d7509a4e755f475043f32cb986b700ef42eb9b9f1802a372a7bccdb578a8",
+  "notes": "Generated conceptual artwork. No runtime execution, editor UI or game screenshot is depicted. The generated PNG bytes are copied unchanged."
+}

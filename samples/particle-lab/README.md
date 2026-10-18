@@ -9,9 +9,8 @@ Every emitter layer uses **one static sprite**, and each reusable effect has
 colour and fading create the detail over time. Effects use no animated sprite
 actors or flipbook animation resources.
 
-The sample requires **SDK 0.0.12**, source world version 11 and
-`world/particles@2`. Normal builds install its published bundle and matching
-host automatically.
+Install the SDK selected in [karty.toml](karty.toml). It must advertise
+`world/particles@2`; builds select its matching host.
 
 ## Controls and review rooms
 

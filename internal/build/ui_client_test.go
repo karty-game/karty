@@ -40,7 +40,7 @@ func setup(title string) {
 		t.Fatal(err)
 	}
 
-	stage, cleanup, err := stageClient(root, "example.com/demo", []uicompiler.Component{view}, nil)
+	stage, cleanup, err := stageClient(t.Context(), root, "example.com/demo", []uicompiler.Component{view}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func setup(title string) {
 		t.Fatal("private staging directory survived cleanup")
 	}
 
-	repeated, repeatedCleanup, err := stageClient(root, "example.com/demo", []uicompiler.Component{view}, nil)
+	repeated, repeatedCleanup, err := stageClient(t.Context(), root, "example.com/demo", []uicompiler.Component{view}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func setup(title string) {
 		t.Fatalf("identical inputs changed staging path: %s / %s", stage, repeated)
 	}
 
-	if _, _, err := stageClient(root, "example.com/demo", []uicompiler.Component{view}, nil); err == nil {
+	if _, _, err := stageClient(t.Context(), root, "example.com/demo", []uicompiler.Component{view}, nil); err == nil {
 		t.Fatal("concurrent staging reused an occupied directory")
 	}
 
@@ -91,7 +91,7 @@ func setup(title string) {
 		t.Fatal(err)
 	}
 
-	if _, _, err := stageClient(root, "example.com/demo", []uicompiler.Component{view}, nil); err == nil {
+	if _, _, err := stageClient(t.Context(), root, "example.com/demo", []uicompiler.Component{view}, nil); err == nil {
 		t.Fatal("accepted source symlink")
 	}
 }
@@ -205,7 +205,7 @@ func setup(title string) {}
 		t.Fatalf("discovered components: %v", err)
 	}
 
-	stage, cleanup, err := stageClient(root, "example.com/demo", views, nil)
+	stage, cleanup, err := stageClient(t.Context(), root, "example.com/demo", views, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +222,7 @@ func setup(title string) {}
 	}
 
 	config.Assets.UI[0].Keep = true
-	if err := embedUIAssets(root, artifact, config.Assets.UI, config.Assets.Layouts, ""); err != nil {
+	if err := embedUIAssets(t.Context(), root, artifact, config.Assets.UI, config.Assets.Layouts, ""); err != nil {
 		t.Fatal(err)
 	}
 

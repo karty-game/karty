@@ -1,26 +1,35 @@
 # Karty
 
-**Start building Go games in minutes.**
+Build small games in Go, with a CLI for creating projects, previewing changes
+and packaging releases.
 
-- Make 2.5D retro shooters and isometric action RPGs.
-- Create 3D world by stacking 2D shapes without learning external tools like Blender.
-- Create, develop, preview, and package your game with one CLI.
-- Build one kartridge and run it anywhere (on the web, Linux, macOS, or Windows).
-- Built on [Ebitengine](https://ebitengine.org/) and [EbitenUI](https://github.com/ebitenui/ebitenui).
+[Play the demos](https://karty-game.github.io/karty/main/) ·
+[Game guides](https://karty-game.github.io/karty/main/guide/) ·
+[CLI releases](https://github.com/karty-game/karty/releases/latest)
+
+- Make retro first-person games, isometric adventures, 2D games and [visual novels](samples/last-train/README.md).
+- Build 3D rooms from floor plans, heights and reusable shapes.
+- Package a WebAssembly cartridge for the browser, Linux, macOS or Windows.
+
+Built on [Ebitengine](https://ebitengine.org/) and [EbitenUI](https://github.com/ebitenui/ebitenui).
 
 > [!WARNING]
-> Karty is a work in progress under active development. APIs and features are
-> subject to change.
+> Karty is under active development. APIs, project formats and features may change.
 
-| First-person Hangar                                                                                                                       | Isometric Roman court                                                                                                                                                    |
-| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [![The Hangar's lit reactor room, viewed at player height.](samples/hangar/preview.jpg)](https://karty-game.github.io/karty/main/hangar/) | [![The Roman court and adjoining gallery, viewed with an isometric camera.](internal/guide/assets/isometric.jpg)](https://karty-game.github.io/karty/main/world-camera/) |
+| First-person Hangar                                                                                                                       | Dimetric Vigil                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| [![The Hangar's lit reactor room, viewed at player height.](samples/hangar/preview.jpg)](https://karty-game.github.io/karty/main/hangar/) | [![A pilgrim at the candlelit altar of a dark abbey crypt.](samples/vigil/preview.jpg)](samples/vigil/README.md) |
 
 ## Start a game
 
 Download the [CLI release](https://github.com/karty-game/karty/releases/latest)
 for your development machine, extract it, and put `karty` on your `PATH`.
-See [supported platforms](docs/distribution.md) for developer tool requirements.
+See [supported platforms](https://karty-game.github.io/karty/main/guide/share.html)
+for developer tool requirements.
+
+This checkout's starters and samples use [SDK 0.0.13](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.0.13).
+The CLI downloads the pinned SDK and matching hosts when needed. See
+[contributor setup](CONTRIBUTING.md#local-setup) for working from source.
 
 ```sh
 karty new my-game
@@ -28,9 +37,17 @@ cd my-game
 karty dev
 ```
 
+In a terminal, `new` offers blank, 2D, first-person, isometric and UI starters, plus
+optional Git and GitHub Actions setup. Use `--yes --template 2d` for scripts.
+
 Open the preview address printed by `karty dev`. The first setup downloads the
-project's pinned SDK and tools; later builds reuse them. Press Ctrl+C to stop
-previewing, then package your game:
+project's pinned SDK and tools; later builds reuse them. Save changes to update
+the preview. Compatible lighting, material and global UI edits update live;
+code and structural changes reload the game. Build errors leave the previous
+game running. See [the setup guide](https://karty-game.github.io/karty/main/guide/start.html)
+for details.
+
+Press Ctrl+C to stop the preview, then package your game:
 
 ```sh
 karty build --target web
@@ -43,10 +60,14 @@ Share the complete `dist/web/` or `dist/native/` directory. Keep your source and
 
 ## Explore Karty
 
-- [Play the demos](https://karty-game.github.io/karty/main/)
-- [Read the game guide](https://karty-game.github.io/karty/main/guide/)
-- [Browse sample code](samples/README.md)
-- [CLI docs and reference](docs/README.md)
-- [Supported platforms and publishing](docs/distribution.md)
-- [KartUI](https://github.com/karty-game/karty-ui) and [SDK](https://github.com/karty-game/karty-sdk)
-- [MIT source license](LICENSE.md) and [runtime license](https://github.com/karty-game/karty-sdk/blob/main/RUNTIME_LICENSE.md)
+| Looking for             | Start here                                                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| A working example       | [Sample projects](samples/README.md)                                                                                                  |
+| Reusable game code      | [Controllers, dialogue, saves and Tiled maps](packages/README.md)                                                                     |
+| API behavior and design | [API reference](https://karty-game.github.io/karty/main/technical/) · [Design notes](https://karty-game.github.io/karty/main/design/) |
+| CLI development         | [Contributing and repository layout](CONTRIBUTING.md)                                                                                 |
+
+[KartUI](https://github.com/karty-game/karty-ui) ·
+[SDK](https://github.com/karty-game/karty-sdk) ·
+[MIT source license](LICENSE.md) ·
+[Runtime license](https://github.com/karty-game/karty-sdk/blob/main/RUNTIME_LICENSE.md)

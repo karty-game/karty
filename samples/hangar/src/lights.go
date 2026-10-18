@@ -88,8 +88,8 @@ func (game *Game) updateTorch(frame uint64) {
 // Only one bolt exists at a time; this lighting study has no projectile collision.
 type lightBolt struct {
 	light     *engine.EntityLight3D
-	position  engine.Vec3D
-	step      engine.Vec3D
+	position  engine.Vec3
+	step      engine.Vec3
 	remaining uint8
 }
 
@@ -112,7 +112,7 @@ func (game *Game) launchLight() {
 	// collision corrections. The bolt leaves that eye in its viewing direction.
 	settings := game.camera.Settings
 	yaw, pitch := float64(settings.Yaw), float64(settings.Pitch)
-	direction := engine.NewVec3D(
+	direction := engine.NewVec3(
 		float32(math.Sin(yaw)*math.Cos(pitch)),
 		float32(math.Cos(yaw)*math.Cos(pitch)),
 		float32(math.Sin(pitch)),
@@ -122,9 +122,9 @@ func (game *Game) launchLight() {
 	position.Y += direction.Y * .5
 	position.Z += direction.Z * .5
 	game.bolt = lightBolt{
-		light:     game.NewPointLight(game.level, position, engine.NewVec3D(4, 1.2, .25), 5),
+		light:     game.NewPointLight(game.level, position, engine.NewVec3(4, 1.2, .25), 5),
 		position:  position,
-		step:      engine.NewVec3D(direction.X*.14, direction.Y*.14, direction.Z*.14),
+		step:      engine.NewVec3(direction.X*.14, direction.Y*.14, direction.Z*.14),
 		remaining: 90,
 	}
 }
@@ -144,7 +144,7 @@ func (bolt *lightBolt) update() {
 	bolt.light.SetPose(bolt.position, 0, 0)
 	if bolt.remaining < 20 {
 		fade := float32(bolt.remaining) / 20
-		bolt.light.SetColor(engine.NewVec3D(4*fade, 1.2*fade, .25*fade))
+		bolt.light.SetColor(engine.NewVec3(4*fade, 1.2*fade, .25*fade))
 	}
 }
 

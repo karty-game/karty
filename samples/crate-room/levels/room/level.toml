@@ -5,6 +5,16 @@ kind = "world"
 [world]
 source = "world.yaml"
 
+[lightmap]
+enabled = true
+offline = true
+density = 16
+page_size = 1024
+padding = 4
+bake_samples = 32
+bake_bounces = 3
+bake_denoise = "medium"
+
 [[textures]]
 name = "floor"
 source = "floor.png"

@@ -9,16 +9,19 @@ require (
 	github.com/cwbudde/algo-dsp v0.13.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/google/jsonschema-go v0.4.3
-	github.com/karty-game/karty-sdk v0.0.14
-	github.com/karty-game/karty-ui v0.0.6
+	github.com/karty-game/karty-sdk v0.0.15
+	github.com/karty-game/karty-ui v0.0.7
 	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/file v1.2.1
-	github.com/knadh/koanf/v2 v2.3.8
+	github.com/knadh/koanf/v2 v2.4.1
+	github.com/mattn/go-isatty v0.0.24
 	github.com/muesli/termenv v0.16.0
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/urfave/cli/v3 v3.14.0
 	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/image v0.47.0
+	golang.org/x/mod v0.42.0
+	golang.org/x/sys v0.49.0
 )
 
 require (
@@ -37,7 +40,6 @@ require (
 	github.com/hchargois/qoi v1.0.0 // indirect
 	github.com/knadh/koanf/maps v0.1.3 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
-	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.31 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -47,7 +49,6 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/xo/terminfo v1.2.0 // indirect
-	golang.org/x/exp v0.0.0-20261011100332-faecfb24eb49 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
 	golang.org/x/text v0.43.0 // indirect
 )

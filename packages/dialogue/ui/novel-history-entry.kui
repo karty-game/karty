@@ -1,0 +1,33 @@
+<template>
+  <panel class="entry">
+    if props.Entry.Speaker != "" && props.Entry.Speaker != "Narrator" {
+      <label class="speaker">{ props.Entry.Speaker }</label>
+      <label class="speech">{ props.Entry.Text }</label>
+    } else {
+      <label class="prose">{ props.Entry.Text }</label>
+    }
+  </panel>
+</template>
+
+<script setup lang="go">
+import "github.com/karty-game/dialogue"
+type NovelHistoryEntryProps struct { Entry dialogue.Entry }
+func setup(props NovelHistoryEntryProps) {}
+</script>
+
+<style>
+.entry
+  gap: 3
+  padding: 10
+  background: #142233ff
+.speaker
+  color: #e3bd74ff
+  font-size: 16
+.speech
+  font-size: 18
+  color: #f4edddff
+.prose
+  font-family: mono
+  font-size: 21
+  color: #d4c3a6ff
+</style>

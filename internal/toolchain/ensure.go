@@ -17,12 +17,10 @@ type EnsureOptions struct {
 	GoOverride          string
 	TinyGoOverride      string
 	WasmToolsOverride   string
-	AirOverride         string
 	MaterializeOverride string
 	NeedGo              bool
 	NeedTinyGo          bool
 	NeedWasmTools       bool
-	NeedAir             bool
 	NeedMaterialize     bool
 }
 
@@ -31,7 +29,6 @@ type EnsurePaths struct {
 	Go          string
 	TinyGo      string
 	WasmTools   string
-	Air         string
 	Materialize string
 }
 
@@ -74,15 +71,6 @@ func Ensure(ctx context.Context, manifest sdk.Manifest, options EnsureOptions) (
 		}
 
 		paths.WasmTools = path
-	}
-
-	if options.NeedAir {
-		path, err := ensureAir(ctx, manifest, options.AirOverride, platform)
-		if err != nil {
-			return EnsurePaths{}, err
-		}
-
-		paths.Air = path
 	}
 
 	if options.NeedMaterialize {
@@ -128,24 +116,6 @@ func ensureWasmTools(ctx context.Context, manifest sdk.Manifest, override, platf
 	path, err := InstallWasmTools(ctx, InstallWasmToolsOptions{Version: manifest.Tools.WasmTools, Artifact: value})
 	if err != nil {
 		return "", fmt.Errorf("install wasm-tools: %w", err)
-	}
-
-	return path, nil
-}
-
-func ensureAir(ctx context.Context, manifest sdk.Manifest, override, platform string) (string, error) {
-	if override != "" {
-		return Air(AirOptions{Override: override, Version: manifest.Tools.Air})
-	}
-
-	value, err := artifact(manifest.Version, "Air", platform, manifest.Artifacts.Air)
-	if err != nil {
-		return "", err
-	}
-
-	path, err := InstallAir(ctx, InstallAirOptions{Version: manifest.Tools.Air, Artifact: value})
-	if err != nil {
-		return "", fmt.Errorf("install Air: %w", err)
 	}
 
 	return path, nil

@@ -48,7 +48,7 @@ func TestAudioStreamStagingAndTypedIDs(t *testing.T) {
 			},
 		},
 	}
-	if err := stageProjectAudioStreams(directory, artifact, streams); err != nil {
+	if err := stageProjectAudioStreams(t.Context(), directory, artifact, streams); err != nil {
 		t.Fatal(err)
 	}
 	wasm, err := os.ReadFile(artifact)
@@ -67,7 +67,7 @@ func TestAudioStreamStagingAndTypedIDs(t *testing.T) {
 		t.Fatalf("catalog = %+v", catalog)
 	}
 	target := t.TempDir()
-	if err := stageAudioStreamFiles(target, artifact, directory); err != nil {
+	if err := stageAudioStreamFiles(t.Context(), target, artifact, directory); err != nil {
 		t.Fatal(err)
 	}
 	//nolint:gosec // The validated catalog path is the subject of the staging test.

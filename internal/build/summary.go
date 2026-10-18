@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -17,15 +18,20 @@ import (
 type Summary struct {
 	Project, SDK, Target, Platform, Directory string
 	HostURL                                   string
+	PreviewURL                                string
 	Levels, Chunks, Files                     int
 	Textures, Sounds, Streams                 int
 	Bytes, CartridgeBytes                     int64
 	Duration                                  time.Duration
 }
 
-func summarizeBuild(directory, name, version string, levels []levelbuild.Artifact,
+func summarizeBuild(ctx context.Context, directory, name, version string, levels []levelbuild.Artifact,
 	assets assetpipeline.Report, options Options,
 ) (Summary, error) {
+	if err := ctx.Err(); err != nil {
+		return Summary{}, err
+	}
+
 	target := options.Target
 	if target == "" {
 		target = "raw"
@@ -72,6 +78,10 @@ func summarizeBuild(directory, name, version string, levels []levelbuild.Artifac
 
 	report.CartridgeBytes = info.Size()
 	err = fs.WalkDir(root.FS(), ".", func(path string, entry fs.DirEntry, err error) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		if err != nil {
 			return err
 		}

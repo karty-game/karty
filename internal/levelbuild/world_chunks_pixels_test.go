@@ -407,7 +407,7 @@ func TestBoundedBakeAutomaticAndImportedDistanceExpectations(t *testing.T) {
 	}
 
 	header, err := worldlightmap.DecodePrebakeManifest(encoded)
-	if err != nil || header.MaxRayDistance != 4 || header.Producer != "cpu-rnm3-pathtrace@3" {
+	if err != nil || header.MaxRayDistance != 4 || header.Producer != worldlightmap.BoundedOfflinePrebakeProducer {
 		t.Fatalf("bounded manifest did not bind distance/producer: %+v, %v", header, err)
 	}
 

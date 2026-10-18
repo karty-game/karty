@@ -150,7 +150,7 @@ func (game *Game) drawMoveStick(x, y, dx, dy float32) {
 	// that image even when a portrait thumb starts in the surrounding letterbox.
 	x = max(moveStickRadius+8, min(float32(config.ResolutionWidth)-moveStickRadius-8, x))
 	y = max(moveStickRadius+8, min(float32(config.ResolutionHeight)-moveStickRadius-8, y))
-	basePosition := engine.NewVec2D(x, y)
+	basePosition := engine.NewVec2(x, y)
 	if game.moveStick.base == nil {
 		base := game.NewVector2D(engine.Circle(moveStickRadius), basePosition)
 		base.SetFill(engine.RGBA(20, 30, 34, 140))
@@ -165,13 +165,13 @@ func (game *Game) drawMoveStick(x, y, dx, dy float32) {
 		dx *= moveStickRadius / length
 		dy *= moveStickRadius / length
 	}
-	thumbPosition := engine.NewVec2D(x+dx, y+dy)
+	thumbPosition := engine.NewVec2(x+dx, y+dy)
 	for _, item := range []struct {
 		entity   *engine.EntityVector2D
-		position engine.Vec2D
+		position engine.Vec2
 	}{{game.moveStick.base, basePosition}, {game.moveStick.thumb, thumbPosition}} {
 		if item.entity.Position != item.position {
-			item.entity.Set(item.position, engine.NewVec2D(1, 1), 0)
+			item.entity.Set(item.position, engine.NewVec2(1, 1), 0)
 		}
 		if item.entity.Alpha != 1 {
 			item.entity.SetAlpha(1)

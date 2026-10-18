@@ -1,3 +1,7 @@
+# This generator-owned manifest uses compact inline tables to retain the SDK's
+# 16 KiB metadata bound. cmd/author validates its size; sample builds parse it.
+exclude = ["samples/vigil/levels/crypt/level.toml"]
+
 [formatting]
 column_width = 120
 align_entries = false

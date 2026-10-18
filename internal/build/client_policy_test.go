@@ -12,7 +12,7 @@ import (
 	"github.com/karty-game/karty/internal/sdk"
 )
 
-func TestGeneratedClientsExcludeJSONTransitively(t *testing.T) {
+func TestGeneratedClientsExcludeUnapprovedDecodersTransitively(t *testing.T) {
 	t.Parallel()
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
@@ -45,7 +45,7 @@ func TestGeneratedClientsExcludeJSONTransitively(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := writeGeneratedClientAPI(root, bindings); err != nil {
+			if err := writeGeneratedClientAPI(t.Context(), root, bindings); err != nil {
 				t.Fatal(err)
 			}
 
@@ -55,7 +55,7 @@ func TestGeneratedClientsExcludeJSONTransitively(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			stage, cleanup, err := stageClient(root, module, []uicompiler.Component{view}, nil)
+			stage, cleanup, err := stageClient(t.Context(), root, module, []uicompiler.Component{view}, nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -78,6 +78,9 @@ func TestGeneratedClientsExcludeJSONTransitively(t *testing.T) {
 
 			for _, forbidden := range []struct{ dependency, function string }{
 				{"encoding/json", "json.Marshal"},
+				{"encoding/csv", "csv.NewReader"},
+				{"encoding/xml", "xml.NewDecoder"},
+				{"encoding/gob", "gob.NewDecoder"},
 				{"log/slog", "slog.Info"},
 			} {
 				writeClientPolicyFixture(
@@ -87,7 +90,7 @@ func TestGeneratedClientsExcludeJSONTransitively(t *testing.T) {
 					"package wrapper\nimport \""+forbidden.dependency+"\"\nvar Encode = "+forbidden.function+"\n",
 				)
 
-				if err := CheckClientDependencies(t.Context(), root, "go", goTool, "./src"); !errors.Is(err, errClientJSONDependency) {
+				if err := CheckClientDependencies(t.Context(), root, "go", goTool, "./src"); !errors.Is(err, errClientDecoderDependency) {
 					t.Fatalf("indirect %s dependency was accepted: %v", forbidden.dependency, err)
 				}
 			}
@@ -105,5 +108,21 @@ func writeClientPolicyFixture(t *testing.T, root, name, source string) {
 
 	if err := os.WriteFile(path, []byte(source), 0o600); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestClientDecoderPolicyNamesExactPackagesAndKnownCodecTrees(t *testing.T) {
+	t.Parallel()
+
+	for _, name := range []string{"encoding/json", "encoding/json/v2", "encoding/csv", "encoding/xml", "encoding/gob", "log/slog", "go.yaml.in/yaml/v3", "gopkg.in/yaml.v3", "github.com/pelletier/go-toml/v2/unstable", "github.com/BurntSushi/toml", "github.com/goccy/go-json", "github.com/json-iterator/go"} {
+		if !forbiddenClientDecoder(name) {
+			t.Errorf("decoder allowed: %s", name)
+		}
+	}
+
+	for _, name := range []string{"encoding/binary", "encoding/hex", "fmt", "github.com/karty-game/tiled", "example.com/json-model", "encoding/jsonish"} {
+		if forbiddenClientDecoder(name) {
+			t.Errorf("unrelated package forbidden: %s", name)
+		}
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"io"
+	"io/fs"
 	"testing"
 
 	"github.com/karty-game/karty/internal/release"
@@ -19,14 +19,9 @@ func TestLocalUIScreenReachabilityPatchSDK(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resources, err := sdk.Resources(manifest)
+	resources, err := sdk.ResourcesContext(t.Context(), manifest)
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	reader, ok := resources.(*zip.Reader)
-	if !ok {
-		t.Fatal("SDK resources are not a ZIP archive")
 	}
 
 	t.Setenv("KARTY_HOME", t.TempDir())
@@ -35,33 +30,35 @@ func TestLocalUIScreenReachabilityPatchSDK(t *testing.T) {
 
 	writer := zip.NewWriter(&output)
 
-	for _, file := range reader.File {
-		stream, err := file.Open()
+	err = fs.WalkDir(resources, ".", func(name string, file fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+
+		if file.IsDir() {
+			return nil
+		}
+
+		data, err := fs.ReadFile(resources, name)
 		if err != nil {
-			t.Fatal(err)
+			return err
 		}
 
-		data, err := io.ReadAll(stream)
-		if closeErr := stream.Close(); closeErr != nil {
-			t.Fatal(closeErr)
-		}
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if file.Name == "manifest.toml" {
+		if name == "manifest.toml" {
 			data = bytes.Replace(data, []byte("version = '"+release.SDKVersion()+"'"), []byte("version = '9.9.9'"), 1)
 		}
 
-		entry, err := writer.Create(file.Name)
+		entry, err := writer.Create(name)
 		if err != nil {
-			t.Fatal(err)
+			return err
 		}
 
-		if _, err = entry.Write(data); err != nil {
-			t.Fatal(err)
-		}
+		_, err = entry.Write(data)
+
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	if err := writer.Close(); err != nil {

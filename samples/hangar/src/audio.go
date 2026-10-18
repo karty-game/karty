@@ -25,7 +25,7 @@ const (
 type hangarAudio struct {
 	ambient       [ambientSoundCount]*engine.SoundEmitter
 	crates        [len(freightStacks)]*engine.SoundEmitter
-	previous      [len(freightStacks)]engine.Vec3D
+	previous      [len(freightStacks)]engine.Vec3
 	volume        [len(freightStacks)]float32
 	lastMoved     [len(freightStacks)]uint64
 	retiringUntil [len(freightStacks)]uint64
@@ -34,25 +34,25 @@ type hangarAudio struct {
 
 func (game *Game) createAudio() {
 	game.audio.ambient[0] = game.NewSoundEmitter(game.level, assets.SoundReactorHum,
-		engine.NewVec3D(8, 21.7, 2.6), engine.SoundEmitterOptions{
+		engine.NewVec3(8, 21.7, 2.6), engine.SoundEmitterOptions{
 			Volume: .8, NearDistance: 3, FarDistance: 28, Loop: true, Occlusion: true,
 		})
 	// The upper console bank uses the same recording and tuning as the lower
 	// terminals. Its source sits in front of the authored console colliders.
-	for index, position := range [...]engine.Vec3D{
-		engine.NewVec3D(-13.7, 19, 3.2), engine.NewVec3D(-13.7, 25, 3.2), engine.NewVec3D(34.4, 11.85, 4.9),
+	for index, position := range [...]engine.Vec3{
+		engine.NewVec3(-13.7, 19, 3.2), engine.NewVec3(-13.7, 25, 3.2), engine.NewVec3(34.4, 11.85, 4.9),
 	} {
 		game.audio.ambient[index+1] = game.NewSoundEmitter(game.level, assets.SoundComputerIdle, position,
 			engine.SoundEmitterOptions{Volume: .7, NearDistance: 1, FarDistance: 9, Loop: true, Occlusion: true})
 	}
 	// Above the barrel rim and the acid surface, respectively, so the source
 	// does not start inside the solid drum or below the authored liquid surface.
-	game.audio.ambient[4] = game.NewSoundEmitter(game.level, assets.SoundFireAmbience, engine.NewVec3D(14.8, -1.55, 1.12),
+	game.audio.ambient[4] = game.NewSoundEmitter(game.level, assets.SoundFireAmbience, engine.NewVec3(14.8, -1.55, 1.12),
 		engine.SoundEmitterOptions{Volume: .25, NearDistance: 1, FarDistance: 8, Loop: true, Occlusion: true})
 	// The south basin and both trench branches each have a quiet source above
 	// the liquid's highest wave. Smaller gain and range keep overlap gentle.
-	for index, position := range [...]engine.Vec3D{
-		engine.NewVec3D(31, 18, -.95), engine.NewVec3D(26.4, 29, -.95), engine.NewVec3D(37, 29, -.95),
+	for index, position := range [...]engine.Vec3{
+		engine.NewVec3(31, 18, -.95), engine.NewVec3(26.4, 29, -.95), engine.NewVec3(37, 29, -.95),
 	} {
 		game.audio.ambient[index+5] = game.NewSoundEmitter(game.level, assets.SoundAcidAmbience, position,
 			engine.SoundEmitterOptions{Volume: .16, NearDistance: 1.5, FarDistance: 10, Loop: true, Occlusion: true})
@@ -67,8 +67,8 @@ func (game *Game) createAudio() {
 func (game *Game) updateAudio(frame uint64) {
 	if game.camera != nil {
 		yaw := float64(game.camera.Settings.Yaw)
-		game.SetAudioReceiver(game.camera, engine.AudioReceiverOptions{
-			Right: engine.NewVec2D(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
+		game.SetAudioReceiver(game.camera.Ref(), engine.AudioReceiverOptions{
+			Right: engine.NewVec2(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
 		})
 	}
 	if game.audio.frame == 0 {
@@ -146,8 +146,8 @@ func (game *Game) updateAudio(frame uint64) {
 		}
 		// Give the host the real source and initial movement gain together;
 		// it must never prebuffer PCM using an unattached origin-point source.
-		emitter := game.NewAttachedSoundEmitter(game.level, assets.SoundCrateScrape, game.crates[index],
-			engine.Vec3D{}, crateSoundOptions(desired[index]))
+		emitter := game.NewAttachedSoundEmitter(game.level, assets.SoundCrateScrape, game.crates[index].Ref(),
+			engine.Vec3{}, crateSoundOptions(desired[index]))
 		if emitter == nil {
 			break
 		}
@@ -237,7 +237,7 @@ func (game *Game) closestMovingCrates(volume [len(freightStacks)]float32) [len(f
 }
 
 func (game *Game) crateSoundDistance(index int) float64 {
-	var receiver engine.Vec3D
+	var receiver engine.Vec3
 	if game.camera != nil {
 		receiver = game.camera.Settings.Position
 	}

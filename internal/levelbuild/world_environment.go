@@ -19,6 +19,22 @@ func worldEnvironmentFeatures(assets *assetBuild, document world.Document) ([]st
 
 	features := []string{world.FeatureEnvironment}
 
+	if document.Environment.Version == world.ExplicitEnvironmentVersion {
+		if !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldEnvironmentV2) {
+			return nil, fmt.Errorf("requires an SDK advertising %s: %w", asset.CapabilityWorldEnvironmentV2, ErrManifest)
+		}
+
+		features = append(features, world.FeatureEnvironmentAppearance)
+	}
+
+	if document.Environment.Preset == world.EnvironmentDaylightBright {
+		if !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldEnvironmentSkylightV1) {
+			return nil, fmt.Errorf("requires an SDK advertising %s: %w", asset.CapabilityWorldEnvironmentSkylightV1, ErrManifest)
+		}
+
+		features = append(features, world.FeatureEnvironmentSkylight)
+	}
+
 	if document.Environment.Backdrop != "" {
 		if !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldEnvironmentBackdropV1) {
 			return nil, fmt.Errorf("requires an SDK advertising %s: %w", asset.CapabilityWorldEnvironmentBackdropV1, ErrManifest)

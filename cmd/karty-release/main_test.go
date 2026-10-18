@@ -122,13 +122,13 @@ func TestPreparationRetainsDeclaredCandidateSamples(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
-	for _, name := range []string{"crate-room", "hangar", "particle-lab"} {
+	for _, name := range []string{"crate-room", "hangar", "particle-lab", "willowbrook", "vigil"} {
 		path := filepath.Join(root, "samples", name, "karty.toml")
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
 
-		if err := os.WriteFile(path, []byte("[sdk]\nversion = '0.0.12'\n"), 0o600); err != nil {
+		if err := os.WriteFile(path, []byte("[sdk]\nversion = '"+release.SDKVersion()+"'\n"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -141,9 +141,9 @@ func TestPreparationRetainsDeclaredCandidateSamples(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, name := range []string{"crate-room", "hangar", "particle-lab"} {
+	for _, name := range []string{"crate-room", "hangar", "particle-lab", "willowbrook", "vigil"} {
 		data, err := os.ReadFile(filepath.Join(root, "samples", name, "karty.toml"))
-		if err != nil || !strings.Contains(string(data), "0.0.12") {
+		if err != nil || !strings.Contains(string(data), release.SDKVersion()) {
 			t.Fatalf("%s candidate pin changed: %s, %v", name, data, err)
 		}
 	}

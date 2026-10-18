@@ -11,7 +11,7 @@ type Game struct {
 	cameraHUD
 	marker                                             markerFollower
 	spinner                                            spinnerAnimation
-	request, release, tagQuery, spinQuery, markerQuery engine.LevelRequestID
+	request, release, tagQuery, spinQuery, markerQuery engine.RequestID
 	level                                              engine.LevelHandle
 	controls                                           *engine.UI
 	status                                             string
@@ -65,7 +65,7 @@ func (game *Game) onLevelReady(event engine.LevelReady) {
 		game.fps.Output = game.output
 		game.camera = game.NewCamera3D(game.level, game.fps)
 		game.camera.SetLayer(-10)
-		if _, err := game.WatchTransform(game.camera, game.cameraController.OnTransformChanged); err != nil {
+		if _, err := game.WatchTransform(game.camera.Ref(), game.cameraController.OnTransformChanged); err != nil {
 			game.setStatus(err.Error())
 			return
 		}
@@ -74,14 +74,14 @@ func (game *Game) onLevelReady(event engine.LevelReady) {
 		game.orbitCamera = game.NewCamera3D(game.level, orbitSettings)
 		game.orbitCamera.SetLayer(-10)
 		game.orbitPose = orbitSettings
-		if _, err := game.WatchTransform(game.orbitCamera, game.cameraController.OnOrbitTransformChanged); err != nil {
+		if _, err := game.WatchTransform(game.orbitCamera.Ref(), game.cameraController.OnOrbitTransformChanged); err != nil {
 			game.setStatus(err.Error())
 			return
 		}
 		game.orbitCamera.SetAlpha(0)
-		game.tagQuery = game.QueryWorldTag(game.level, "interactive", 8)
-		game.spinQuery = game.QueryWorldTag(game.level, "spinner", 1)
-		game.markerQuery = game.QueryWorldTag(game.level, "player-marker", 1)
+		game.tagQuery = game.World(game.level).FindTagged("interactive", 8)
+		game.spinQuery = game.World(game.level).FindTagged("spinner", 1)
+		game.markerQuery = game.World(game.level).FindTagged("player-marker", 1)
 		game.showCameraInfo()
 		game.setStatus("Discovering actors...")
 		if _, err := StartAuthoredSequence(game.level, "levels.camera-showcase", "welcome"); err != nil {
@@ -95,17 +95,17 @@ func (game *Game) onActorQuery(event engine.ActorQueryResult) {
 	}
 	if event.RequestID == game.markerQuery {
 		if len(event.Actors) != 0 {
-			game.marker.Bind(game.WorldActor(event.Actors[0]))
+			game.marker.Bind(event.Actors[0])
 			game.marker.Follow(cameraTransform(game.fps))
 		}
 	} else if event.RequestID == game.spinQuery {
 		if len(event.Actors) != 0 {
-			game.spinner.Bind(game.WorldActor(event.Actors[0]))
+			game.spinner.Bind(event.Actors[0])
 		}
 	} else if event.RequestID == game.tagQuery {
 		game.actorCount = uint8(len(event.Actors))
 		for _, actorID := range event.Actors {
-			game.WorldActor(actorID).SetTags("interactive", "verified")
+			actorID.SetTags("interactive", "verified")
 		}
 		game.showStatus()
 	}
@@ -366,7 +366,7 @@ func (game *Game) visit(courtyard bool) {
 	game.fps.Output = game.output
 	game.camera = game.NewCamera3D(game.level, game.fps)
 	game.camera.SetLayer(-10)
-	if _, err := game.WatchTransform(game.camera, game.cameraController.OnTransformChanged); err != nil {
+	if _, err := game.WatchTransform(game.camera.Ref(), game.cameraController.OnTransformChanged); err != nil {
 		game.setStatus(err.Error())
 		return
 	}
@@ -379,12 +379,12 @@ func (game *Game) visit(courtyard bool) {
 }
 
 //karty:action actor.tag
-func tagAuthoredActor(context engine.ActionContext, actor engine.WorldActorRef, tag string) error {
+func tagAuthoredActor(context engine.ActionContext, actor engine.EntityRef, tag string) error {
 	actor.SetTags(tag)
 	return nil
 }
 
 //karty:condition actor.ready
-func authoredActorReady(context engine.ActionContext, actor engine.WorldActorRef) (bool, error) {
+func authoredActorReady(context engine.ActionContext, actor engine.EntityRef) (bool, error) {
 	return actor.ID != 0, nil
 }

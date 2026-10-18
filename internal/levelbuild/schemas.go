@@ -1,6 +1,7 @@
 package levelbuild
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty/internal/packages"
 	worldschema "github.com/karty-game/karty/internal/worldbuild/schema"
 	"github.com/karty-game/karty/internal/worldbuild/source"
 	"github.com/pelletier/go-toml/v2"
@@ -21,6 +23,20 @@ var ErrSchemaOutput = errors.New("invalid level schema output")
 // validate is true, schema checks run before SDK installation or asset work.
 // Only level manifests and authored YAML are read; texture bytes are not needed.
 func GenerateSchemas(directory string, validate bool) (int, error) {
+	return GenerateSchemasContext(context.Background(), directory, validate)
+}
+
+func GenerateSchemasContext(ctx context.Context, directory string, validate bool) (int, error) {
+	set, err := packages.Restore(ctx, directory)
+	if err != nil {
+		return 0, err
+	}
+	defer set.Close()
+
+	return GenerateSchemasWithPackages(ctx, directory, validate, set)
+}
+
+func GenerateSchemasWithPackages(ctx context.Context, directory string, validate bool, set *packages.Set) (int, error) {
 	root, err := os.OpenRoot(directory)
 	if err != nil {
 		return 0, err
@@ -48,58 +64,21 @@ func GenerateSchemas(directory string, validate bool) (int, error) {
 	count := 0
 
 	for _, entry := range entries {
+		if err := ctx.Err(); err != nil {
+			return count, err
+		}
+
 		if !entry.IsDir() {
 			continue
 		}
 
-		levelDirectory := filepath.Join(directory, "levels", entry.Name())
-
-		levelRoot, openErr := root.OpenRoot("levels/" + entry.Name())
-		if openErr != nil {
-			return count, openErr
+		generated, err := generateLevelSchema(ctx, root, directory, entry.Name(), validate, set)
+		if generated {
+			count++
 		}
 
-		contents, readErr := readSchemaManifest(levelRoot)
-		_ = levelRoot.Close()
-
-		if errors.Is(readErr, fs.ErrNotExist) {
-			continue
-		}
-
-		if readErr != nil {
-			return count, readErr
-		}
-
-		var definition manifest
-		if err := toml.Unmarshal(contents, &definition); err != nil {
-			return count, fmt.Errorf("parse %s: %w", filepath.Join(levelDirectory, "level.toml"), err)
-		}
-
-		if definition.World.Source == "" {
-			continue
-		}
-
-		value, readErr := schemaWorld(levelDirectory, definition)
-		s := worldschema.Level(value, schemaTextures(definition))
-
-		data, err := worldschema.Encode(s)
 		if err != nil {
 			return count, err
-		}
-
-		if err = writeSchema(root, "levels/"+entry.Name()+".schema.json", data); err != nil {
-			return count, err
-		}
-
-		count++
-		if readErr != nil {
-			return count, readErr
-		}
-
-		if validate {
-			if err := validateSchemaValue(levelDirectory, definition, value); err != nil {
-				return count, err
-			}
 		}
 	}
 
@@ -211,4 +190,62 @@ func writeSchema(root *os.Root, name string, contents []byte) error {
 	}
 
 	return nil
+}
+
+func generateLevelSchema(ctx context.Context, root *os.Root, directory, name string, validate bool, set *packages.Set) (bool, error) {
+	levelDirectory := filepath.Join(directory, "levels", name)
+
+	levelRoot, openErr := root.OpenRoot("levels/" + name)
+	if openErr != nil {
+		return false, openErr
+	}
+
+	contents, readErr := readSchemaManifest(levelRoot)
+	_ = levelRoot.Close()
+
+	if errors.Is(readErr, fs.ErrNotExist) {
+		return false, nil
+	}
+
+	if readErr != nil {
+		return false, readErr
+	}
+
+	var definition manifest
+	if err := toml.Unmarshal(contents, &definition); err != nil {
+		return false, fmt.Errorf("parse %s: %w", filepath.Join(levelDirectory, "level.toml"), err)
+	}
+
+	if definition.World.Source == "" {
+		return false, nil
+	}
+
+	definition, err := resolveLevelPackages(ctx, levelDirectory, definition, set)
+	if err != nil {
+		return false, err
+	}
+
+	value, readErr := schemaWorld(levelDirectory, definition)
+	s := worldschema.Level(value, schemaTextures(definition))
+
+	data, err := worldschema.Encode(s)
+	if err != nil {
+		return false, err
+	}
+
+	if err = writeSchema(root, "levels/"+name+".schema.json", data); err != nil {
+		return false, err
+	}
+
+	if readErr != nil {
+		return true, readErr
+	}
+
+	if validate {
+		if err := validateSchemaValue(levelDirectory, definition, value); err != nil {
+			return true, err
+		}
+	}
+
+	return true, nil
 }

@@ -13,7 +13,7 @@ func TestRendererDebugStagingOptInAndRemoval(t *testing.T) {
 	directory := t.TempDir()
 
 	for _, enabled := range []bool{false, true, false} {
-		scripts, err := stageRendererDebugShell(directory, enabled)
+		scripts, err := stageRendererDebugShell(t.Context(), directory, enabled)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -49,7 +49,7 @@ func TestRendererDebugStagingRejectsSymlink(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := stageRendererDebugShell(directory, true); err == nil {
+	if _, err := stageRendererDebugShell(t.Context(), directory, true); err == nil {
 		t.Fatal("debug staging followed a symlink")
 	}
 

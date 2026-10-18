@@ -7,8 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
+	worldlightmapbake "github.com/karty-game/karty-sdk/bake/worldlightmap"
 	"github.com/karty-game/karty-sdk/codec/qoi"
 	"github.com/karty-game/karty-sdk/format/level"
+	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldlightmap"
 )
 
@@ -24,6 +26,7 @@ const (
 type chunkPixelCache struct {
 	root, relative, directory string
 	hits, misses              int
+	baker                     *worldlightmapbake.Baker
 }
 
 func prepareChunkPixelCache(root, directory string) (*chunkPixelCache, error) {
@@ -53,7 +56,7 @@ func prepareChunkPixelCache(root, directory string) (*chunkPixelCache, error) {
 }
 
 func (cache *chunkPixelCache) read(key, producer string, rgbmRange float64) ([]byte, bool) {
-	if cache == nil || !validPixelCacheDigest(key) {
+	if !cache.enabled() || !validPixelCacheDigest(key) {
 		return nil, false
 	}
 
@@ -97,7 +100,7 @@ func (cache *chunkPixelCache) read(key, producer string, rgbmRange float64) ([]b
 }
 
 func (cache *chunkPixelCache) write(key, producer string, rgbmRange float64, image []byte) error {
-	if cache == nil {
+	if !cache.enabled() {
 		return nil
 	}
 
@@ -126,6 +129,10 @@ func (cache *chunkPixelCache) write(key, producer string, rgbmRange float64, ima
 	return atomicBakeWrite(cache.directory, key+".bin", encoded)
 }
 
+func (cache *chunkPixelCache) enabled() bool {
+	return cache != nil && cache.directory != ""
+}
+
 func validPixelCacheDigest(value string) bool {
 	if len(value) != hex.EncodedLen(sha256.Size) {
 		return false
@@ -138,4 +145,21 @@ func validPixelCacheDigest(value string) bool {
 	}
 
 	return true
+}
+
+// One task owns the document/images and releases shared transport at completion.
+// A cache without a disk directory only shares in-memory preparation.
+func prepareChunkBaker(cache *chunkPixelCache, document world.Document, materials []worldlightmapbake.Material,
+	enabled bool) (*chunkPixelCache, func()) {
+	if !enabled {
+		return cache, func() {}
+	}
+
+	if cache == nil {
+		cache = &chunkPixelCache{}
+	}
+
+	cache.baker = worldlightmapbake.NewBaker(document, materials)
+
+	return cache, func() { cache.baker = nil }
 }

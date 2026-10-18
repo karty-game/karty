@@ -6,12 +6,19 @@ import (
 	"go/token"
 	"go/types"
 	"strings"
+
+	"github.com/karty-game/karty-ui/compiler"
 )
 
 // AnalyzeUI retains named UI references and conservatively retains the complete
 // UI scope when a lookup is dynamic, a method escapes, or typing is incomplete.
 func AnalyzeUI(directory, modulePath string, names []string) Result {
-	fileSet, enginePackage, _, files, info, err := loadTypeInfo(directory, modulePath)
+	return AnalyzeUIWithComponents(directory, modulePath, names, nil)
+}
+
+// AnalyzeUIWithComponents shares the exact compiled component graph with build.
+func AnalyzeUIWithComponents(directory, modulePath string, names []string, components []uicompiler.Component) Result {
+	fileSet, enginePackage, _, files, info, err := loadTypeInfo(directory, modulePath, components)
 	if err != nil {
 		return keepAll(err)
 	}

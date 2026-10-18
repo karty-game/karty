@@ -12,7 +12,6 @@ import (
 	"image/png"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -24,6 +23,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
+	"github.com/karty-game/karty/internal/process"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/toolchain"
 )
@@ -634,7 +634,7 @@ func runManagedMaterialize(ctx context.Context, manifest sdk.Manifest, directory
 
 	return materializeWithFallback(ctx, runtime.GOOS, os.Environ(), func(environment []string) (string, error) {
 		// #nosec G204 -- Only the checksum-verified SDK-managed binary is executed.
-		command := exec.CommandContext(ctx, executable, arguments...)
+		command := process.CommandContext(ctx, executable, arguments...)
 		command.Dir, command.Env = directory, environment
 		command.WaitDelay = time.Second
 

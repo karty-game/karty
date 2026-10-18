@@ -1,0 +1,7 @@
+format_version = 1
+name = "tiled"
+version = "0.1.0"
+
+[[processors]]
+name = "compile"
+command = ["go", "run", "-buildvcs=false", "./cmd/tiled-processor"]

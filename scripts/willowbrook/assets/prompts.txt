@@ -1,0 +1,17 @@
+Generated with the built-in image_gen tool, transparent_background=true.
+These are original isolated assets; no map illustration is used in the game.
+
+Shared prefix (prepended verbatim to each asset prompt):
+Use case: stylized-concept. Original game production sprite asset for Willowbrook, cute classic 16-bit JRPG / RPG Maker pixel art matching a cozy cream-and-terracotta village. Crisp deliberate pixel clusters, warm sunny palette, painted highlights from upper left and cool shadow on right. Orthographic three-quarter TOP-DOWN RPG view, front facade visible, horizontal front edge, NOT diamond isometric. Isolated on a genuinely transparent background. No text, watermark, border, ground plane, cast ground shadow, scene or background.
+
+cottage.png:
+One single complete small cottage sprite, square 1024x1024 canvas. Cream plaster, chunky warm timber framing, coral terracotta gabled roof, short chimney, central arched brown door, two small blue-paned windows with flower boxes, modest stone base. Cute slightly squat proportions. Camera looks down at about 45 degrees and sees roof and front, tiny right side visible. One cottage only, centered with generous transparent padding; bottom stone doorstep horizontal. Detailed but readable at 160 pixels tall. No plants outside flower boxes, no surrounding garden.
+
+tree.png:
+One single complete round leafy deciduous tree sprite, square 1024x1024 canvas. Large fluffy rounded green canopy made of readable pixel clusters with golden lime upper-left highlights, dark teal lower-right leaf masses, short brown branching trunk, a few visible root pixels. Front RPG view looking down 45 degrees; canopy round, trunk centered at bottom. Charming classic RPG tree, silhouette clean. Centered with transparent padding. No detached leaves, grass base or other objects.
+
+hero.png:
+A production animation sprite sheet on a 768x1024 canvas: EXACTLY 3 equal-width columns and 4 equal-height rows, 12 separate whole body sprites total, centered with ample transparent padding inside each cell; no sprite crosses a cell boundary. SAME cute chibi young adventurer with short blond hair, blue cape, tan tunic, brown satchel and brown boots in every cell. Row 1 faces DOWN toward viewer: left foot step, neutral standing, right foot step. Row 2 faces LEFT: left step, neutral standing, right step. Row 3 faces RIGHT: left step, neutral standing, right step. Row 4 faces UP away from viewer: left step, neutral standing, right step. Show back of blond hair and blue cape in all row 4 frames. All sprites identical scale and footing baseline within their cells, full head to boots, no weapon or shadow. Pixel art like classic RPG Maker overworld sprites, large head and small body, clear silhouette at 24x32 pixels. No grid lines.
+
+The tool returned 1254x1254 cottage/tree images and a 1086x1448 hero sheet.
+The authoring program reads actual dimensions; it does not assume requested sizes.

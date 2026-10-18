@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/karty-game/karty/internal/contextio"
 )
 
 // MaterialTool identifies a binary tool, not a source build or the Unity editor.
@@ -62,6 +64,10 @@ const (
 // The verified archive is retained to recheck every file on warm installs;
 // damaged caches fail closed and must be removed before reinstalling.
 func InstallMaterialTool(ctx context.Context, options InstallMaterialToolOptions) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	platform := options.Platform
 	if platform == "" {
 		platform = runtime.GOOS + "-" + runtime.GOARCH
@@ -107,7 +113,7 @@ func InstallMaterialTool(ctx context.Context, options InstallMaterialToolOptions
 		return "", err
 	}
 
-	if err := publishMaterialInstall(staging, installDir, warm); err != nil {
+	if err := publishMaterialInstall(ctx, staging, installDir, warm); err != nil {
 		return "", err
 	}
 
@@ -194,7 +200,7 @@ func readMaterialArchive(
 		return nil, err
 	}
 
-	contents, readErr := io.ReadAll(io.LimitReader(archive, materialArchiveLimit+1))
+	contents, readErr := contextio.ReadAll(ctx, io.LimitReader(archive, materialArchiveLimit+1))
 	closeErr := archive.Close()
 
 	if readErr != nil {
@@ -209,7 +215,11 @@ func readMaterialArchive(
 		return nil, fmt.Errorf("material archive exceeds download bound: %w", os.ErrInvalid)
 	}
 
-	digest := sha256.Sum256(contents)
+	digest, hashErr := contextio.Sum256(ctx, contents)
+	if hashErr != nil {
+		return nil, hashErr
+	}
+
 	if hex.EncodeToString(digest[:]) != artifact.SHA256 {
 		return nil, fmt.Errorf("material archive checksum mismatch: %w", os.ErrInvalid)
 	}
@@ -238,17 +248,25 @@ func stageMaterialInstall(ctx context.Context, staging string, contents []byte, 
 		return err
 	}
 
-	return os.WriteFile(filepath.Join(staging, "artifact.archive"), contents, 0o600)
+	return contextio.WriteFile(ctx, filepath.Join(staging, "artifact.archive"), contents, 0o600)
 }
 
-func publishMaterialInstall(staging, installDir string, warm bool) error {
+func publishMaterialInstall(ctx context.Context, staging, installDir string, warm bool) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if warm {
-		if err := compareMaterialInstall(staging, installDir); err != nil {
+		if err := compareMaterialInstall(ctx, staging, installDir); err != nil {
 			return fmt.Errorf("material cache integrity: %w", err)
 		}
-	} else if err := os.Rename(staging, installDir); err != nil {
+
+		return ctx.Err()
+	}
+
+	if err := os.Rename(staging, installDir); err != nil {
 		// A concurrent installer may have won. Accept only identical contents.
-		if integrityErr := compareMaterialInstall(staging, installDir); integrityErr != nil {
+		if integrityErr := compareMaterialInstall(ctx, staging, installDir); integrityErr != nil {
 			return fmt.Errorf("publish material tool: %w", err)
 		}
 	}
@@ -392,7 +410,7 @@ func (writer *materialArchiveWriter) write(ctx context.Context, name string, dir
 		return err
 	}
 
-	_, copyErr := io.CopyN(file, source, size)
+	_, copyErr := contextio.CopyN(ctx, file, source, size)
 	closeErr := file.Close()
 
 	if copyErr != nil {
@@ -413,6 +431,10 @@ func extractMaterialZip(ctx context.Context, contents []byte, writer *materialAr
 	}
 
 	for _, entry := range reader.File {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		if err := extractMaterialZipEntry(ctx, entry, writer); err != nil {
 			return err
 		}
@@ -436,8 +458,14 @@ func extractMaterialZipEntry(ctx context.Context, entry *zip.File, writer *mater
 	if writeErr == nil {
 		var extra [1]byte
 
-		n, eofErr := input.Read(extra[:])
-		if n != 0 || eofErr != io.EOF {
+		readCount, eofErr := contextio.Reader(ctx, input).Read(extra[:])
+		if canceled := ctx.Err(); canceled != nil {
+			_ = input.Close()
+
+			return canceled
+		}
+
+		if readCount != 0 || eofErr != io.EOF {
 			writeErr = fmt.Errorf("invalid material ZIP contents: %w", os.ErrInvalid)
 		}
 	}
@@ -451,7 +479,7 @@ func extractMaterialZipEntry(ctx context.Context, entry *zip.File, writer *mater
 	return closeErr
 }
 
-func compareMaterialInstall(expected, actual string) error {
+func compareMaterialInstall(ctx context.Context, expected, actual string) error {
 	if err := materialDirectory(actual); err != nil {
 		return err
 	}
@@ -459,6 +487,10 @@ func compareMaterialInstall(expected, actual string) error {
 	entries := make(map[string]fs.FileInfo)
 
 	err := filepath.Walk(expected, func(name string, info fs.FileInfo, err error) error {
+		if canceled := ctx.Err(); canceled != nil {
+			return canceled
+		}
+
 		if err != nil {
 			return err
 		}
@@ -477,6 +509,10 @@ func compareMaterialInstall(expected, actual string) error {
 	}
 
 	err = filepath.Walk(actual, func(name string, info fs.FileInfo, err error) error {
+		if canceled := ctx.Err(); canceled != nil {
+			return canceled
+		}
+
 		if err != nil {
 			return err
 		}
@@ -498,12 +534,12 @@ func compareMaterialInstall(expected, actual string) error {
 			return nil
 		}
 
-		wantHash, err := hashMaterialFile(filepath.Join(expected, relative), want.Size())
+		wantHash, err := hashMaterialFile(ctx, filepath.Join(expected, relative), want.Size())
 		if err != nil {
 			return err
 		}
 
-		actualHash, err := hashMaterialFile(name, want.Size())
+		actualHash, err := hashMaterialFile(ctx, name, want.Size())
 		if err != nil {
 			return err
 		}
@@ -525,7 +561,7 @@ func compareMaterialInstall(expected, actual string) error {
 	return nil
 }
 
-func hashMaterialFile(filename string, size int64) ([sha256.Size]byte, error) {
+func hashMaterialFile(ctx context.Context, filename string, size int64) ([sha256.Size]byte, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return [sha256.Size]byte{}, err
@@ -533,7 +569,7 @@ func hashMaterialFile(filename string, size int64) ([sha256.Size]byte, error) {
 	defer file.Close()
 
 	hash := sha256.New()
-	_, err = io.Copy(hash, io.LimitReader(file, size+1))
+	_, err = contextio.Copy(ctx, hash, io.LimitReader(file, size+1))
 
 	var sum [sha256.Size]byte
 	copy(sum[:], hash.Sum(nil))

@@ -15,3 +15,10 @@ samples/particle-lab/effects/imports/brackeys/
 # Original converted templates retain byte checksums in sources/static-assets.json.
 samples/particle-lab/effects/brackeys-fire-combined.yaml
 samples/particle-lab/effects/brackeys-fire-separate.yaml
+
+# Local investigations and review notes.
+/docs/
+/spike/
+/spikes/
+/concept-art/
+/website/validation/

@@ -7,7 +7,7 @@ var camera *engine.EntityCamera3D
 var mounted int
 var level engine.LevelHandle
 var completed bool
-var actor engine.WorldActorRef
+var actor engine.EntityRef
 var inputMoved bool
 
 //go:wasmexport karty_register
@@ -19,13 +19,13 @@ func main() {
 			level = event.Handle
 			camera = game.NewCamera3D(level, engine.CameraSettings{
 				Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-				Position: engine.NewVec3D(2, 1, 1), FOVY: 1, OrthoHeight: 4, Near: .05, Far: 10,
+				Position: engine.NewVec3(2, 1, 1), FOVY: 1, OrthoHeight: 4, Near: .05, Far: 10,
 				ViewportWidth: 160, ViewportHeight: 120,
 			})
 			// Transform acceptance belongs to the hook contract; material rendering
 			// and baking have their own small GPU fixtures.
 			camera.SetAlpha(0)
-			if _, err := game.WatchTransform(camera, func(pose engine.Transform3D) {
+			if _, err := game.WatchTransform(camera.Ref(), func(pose engine.Transform3D) {
 				if camera.Settings.Position != pose.Position {
 					panic("unsynchronized transform hook")
 				}
@@ -55,7 +55,9 @@ func main() {
 				position := camera.Settings.Position
 				position.X += .25
 				inputMoved = true
-				camera.SetPose(position, 0, 0)
+				if err := camera.Ref().SetPose(engine.NewTransform3D(position)); err != nil {
+					panic(err)
+				}
 			}
 		},
 		OnKeyUp: func(key engine.Key) {
@@ -74,12 +76,12 @@ func main() {
 }
 
 //karty:condition fixture.ready
-func ready(context engine.ActionContext, actor engine.WorldActorRef) (bool, error) {
+func ready(context engine.ActionContext, actor engine.EntityRef) (bool, error) {
 	return actor.ID != 0, nil
 }
 
 //karty:action fixture.complete
-func complete(context engine.ActionContext, target engine.WorldActorRef) error {
+func complete(context engine.ActionContext, target engine.EntityRef) error {
 	actor = target
 	if mounted == 1 {
 		actor.SetTags("first-mount")

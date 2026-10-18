@@ -13,7 +13,7 @@ far = 120
 ortho_height = 50
 
 [sdk]
-version = "0.0.12"
+version = "0.0.13"
 
 [[assets.sound]]
 name = "reactor-hum"
@@ -34,3 +34,6 @@ source = "assets/sounds/fire-ambience.wav"
 [[assets.sound]]
 name = "acid-ambience"
 source = "assets/sounds/acid-ambience.wav"
+
+[packages.controllers]
+folder = "../../packages/controllers"

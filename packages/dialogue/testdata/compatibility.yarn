@@ -1,0 +1,32 @@
+title: Start
+---
+<<declare $clue = false>>
+<<declare $trust = 0>>
+Mara: A ticket is missing. #line:opening
+-> Inspect the envelope. #line:inspect
+    <<set $clue = true>>
+    <<set $trust += 1>>
+    <<portrait iris>>
+    Iris: You noticed the seal. #line:seal
+-> Leave it alone. #line:leave
+    Elias: Some journeys should stay private. #line:private
+<<if $clue and $trust > 0>>
+    <<detour Clue>>
+<<else>>
+    Mara: We arrive without an answer. #line:unresolved
+<<endif>>
+<<jump Finish>>
+===
+title: Clue
+---
+Iris: Trust: {$trust}. #line:trust
+<<return>>
+===
+title: Finish
+---
+-> Reveal the clue. <<if $clue>> #line:reveal
+    <<ending truth>>
+-> Keep the secret. #line:secret
+    <<ending secret>>
+<<stop>>
+===

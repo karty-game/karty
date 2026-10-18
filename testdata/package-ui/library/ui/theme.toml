@@ -1,0 +1,11 @@
+extends = "dark"
+
+[colors]
+primary = "#195480ff"
+
+[typography]
+title = 30
+
+[images.hud-panel]
+asset = "panel"
+slice = [4, 4, 4, 4]

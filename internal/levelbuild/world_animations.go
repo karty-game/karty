@@ -9,15 +9,25 @@ import (
 )
 
 func worldAnimationFeatures(assets *assetBuild, document world.Document) ([]string, error) {
+	features := []string{}
+
+	if document.Fluids != nil {
+		if assets == nil || !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldFluidsV1) {
+			return nil, fmt.Errorf("requires an SDK advertising %s: %w", asset.CapabilityWorldFluidsV1, ErrManifest)
+		}
+
+		features = append(features, world.FeatureFluids)
+	}
+
 	if document.Animations == nil {
-		return nil, nil
+		return features, nil
 	}
 
 	if assets == nil || !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldAnimationsV1) {
 		return nil, fmt.Errorf("requires an SDK advertising %s: %w", asset.CapabilityWorldAnimationsV1, ErrManifest)
 	}
 
-	return []string{world.FeatureAnimations}, nil
+	return append(features, world.FeatureAnimations), nil
 }
 
 func validateAnimationFrames(document world.Document, textures []metadataTexture) error {

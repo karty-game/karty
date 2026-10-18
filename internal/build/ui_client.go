@@ -1,6 +1,8 @@
 package build
 
 import (
+	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -12,10 +14,15 @@ import (
 	"github.com/karty-game/karty-ui/codegen"
 	"github.com/karty-game/karty-ui/compiler"
 	"github.com/karty-game/karty-ui/schema"
+	"github.com/karty-game/karty/internal/contextio"
 )
 
 // stageClient keeps generated source in a fresh private directory.
-func stageClient(directory, module string, views []uicompiler.Component, actions []byte) (string, func(), error) {
+func stageClient(ctx context.Context, directory, module string, views []uicompiler.Component, actions []byte) (string, func(), error) {
+	if err := ctx.Err(); err != nil {
+		return "", nil, err
+	}
+
 	files, err := codegen.UIClientFiles(views, module)
 	if err != nil {
 		return "", nil, err
@@ -63,28 +70,28 @@ func stageClient(directory, module string, views []uicompiler.Component, actions
 	}
 	defer stageRoot.Close()
 
-	err = copyClientSources(source, sourceRoot, stageRoot, len(actions) != 0)
+	err = copyClientSources(ctx, source, sourceRoot, stageRoot, len(actions) != 0)
 	if err != nil {
 		cleanup()
 
 		return "", nil, err
 	}
 
-	if err := writeLocalUI(stageRoot, views, files); err != nil {
+	if err := writeLocalUI(ctx, stageRoot, views, files); err != nil {
 		cleanup()
 
 		return "", nil, err
 	}
 
 	if len(actions) != 0 {
-		if err := stageRoot.WriteFile("karty_actions.go", actions, 0600); err != nil {
+		if err := writeRootFile(ctx, stageRoot, "karty_actions.go", actions, 0600); err != nil {
 			cleanup()
 
 			return "", nil, err
 		}
 	}
 
-	stable, err := stableUIStage(stage)
+	stable, err := stableUIStage(ctx, stage)
 	if err != nil {
 		cleanup()
 
@@ -98,7 +105,11 @@ func stageClient(directory, module string, views []uicompiler.Component, actions
 
 // TinyGo embeds the compilation directory in WASM debug data. Name the staged
 // package by its contents so repeated builds retain identical source paths.
-func stableUIStage(stage string) (string, error) {
+func stableUIStage(ctx context.Context, stage string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	root, err := os.OpenRoot(stage)
 	if err != nil {
 		return "", err
@@ -108,6 +119,10 @@ func stableUIStage(stage string) (string, error) {
 	digest := sha256.New()
 
 	err = fs.WalkDir(root.FS(), ".", func(path string, entry fs.DirEntry, walkErr error) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		if walkErr != nil {
 			return walkErr
 		}
@@ -116,7 +131,7 @@ func stableUIStage(stage string) (string, error) {
 			return nil
 		}
 
-		contents, err := root.ReadFile(path)
+		contents, err := readRootFile(ctx, root, path)
 		if err != nil {
 			return err
 		}
@@ -124,8 +139,11 @@ func stableUIStage(stage string) (string, error) {
 		for _, value := range [][]byte{[]byte(path), contents} {
 			var size [8]byte
 			binary.LittleEndian.PutUint64(size[:], uint64(len(value)))
+
 			_, _ = digest.Write(size[:])
-			_, _ = digest.Write(value)
+			if _, err := contextio.Copy(ctx, digest, bytes.NewReader(value)); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -141,6 +159,10 @@ func stableUIStage(stage string) (string, error) {
 		return "", err
 	}
 
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	if err := os.Rename(stage, stable); err != nil {
 		return "", err
 	}
@@ -148,9 +170,13 @@ func stableUIStage(stage string) (string, error) {
 	return stable, nil
 }
 
-func writeLocalUI(stageRoot *os.Root, views []uicompiler.Component, files map[string][]byte) error {
+func writeLocalUI(ctx context.Context, stageRoot *os.Root, views []uicompiler.Component, files map[string][]byte) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	for _, view := range views {
-		if err := stageRoot.WriteFile("karty_ui_"+view.Name+".go", files[view.Source], 0o600); err != nil {
+		if err := writeRootFile(ctx, stageRoot, "karty_ui_"+view.Name+".go", files[view.Source], 0o600); err != nil {
 			return err
 		}
 	}
@@ -158,8 +184,16 @@ func writeLocalUI(stageRoot *os.Root, views []uicompiler.Component, files map[st
 	return nil
 }
 
-func copyClientSources(source string, sourceRoot, stageRoot *os.Root, hasActions bool) error {
+func copyClientSources(ctx context.Context, source string, sourceRoot, stageRoot *os.Root, hasActions bool) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	return filepath.WalkDir(source, func(path string, entry fs.DirEntry, walkErr error) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		if walkErr != nil {
 			return walkErr
 		}
@@ -181,7 +215,7 @@ func copyClientSources(source string, sourceRoot, stageRoot *os.Root, hasActions
 			return fmt.Errorf("client staging requires regular files: %s: %w", path, ui.ErrTemplate)
 		}
 
-		data, err := sourceRoot.ReadFile(relative)
+		data, err := readRootFile(ctx, sourceRoot, relative)
 		if err != nil {
 			return err
 		}
@@ -198,6 +232,6 @@ func copyClientSources(source string, sourceRoot, stageRoot *os.Root, hasActions
 				data...)
 		}
 
-		return stageRoot.WriteFile(relative, data, 0o600)
+		return writeRootFile(ctx, stageRoot, relative, data, 0o600)
 	})
 }

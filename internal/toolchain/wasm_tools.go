@@ -6,16 +6,16 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 
+	"github.com/karty-game/karty/internal/contextio"
+	"github.com/karty-game/karty/internal/process"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -53,6 +53,10 @@ func WasmTools(version string) (string, error) {
 
 // InstallWasmTools downloads, verifies, and atomically installs wasm-tools.
 func InstallWasmTools(ctx context.Context, options InstallWasmToolsOptions) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	if options.Version == "" || options.Artifact.URL == "" || options.Artifact.SHA256 == "" {
 		return "", errWasmToolsMetadata
 	}
@@ -96,7 +100,7 @@ func InstallWasmTools(ctx context.Context, options InstallWasmToolsOptions) (str
 	}
 	defer os.RemoveAll(staging)
 
-	extractErr := extractWasmTools(staging, archive, options.Artifact.SHA256)
+	extractErr := extractWasmTools(ctx, staging, archive, options.Artifact.SHA256)
 	if extractErr != nil {
 		return "", extractErr
 	}
@@ -104,6 +108,10 @@ func InstallWasmTools(ctx context.Context, options InstallWasmToolsOptions) (str
 	validateErr := validateWasmTools(ctx, filepath.Join(staging, executableName("wasm-tools")))
 	if validateErr != nil {
 		return "", validateErr
+	}
+
+	if err := ctx.Err(); err != nil {
+		return "", err
 	}
 
 	renameErr := os.Rename(staging, installDir)
@@ -114,29 +122,37 @@ func InstallWasmTools(ctx context.Context, options InstallWasmToolsOptions) (str
 	return executable("managed wasm-tools", executablePath)
 }
 
-func extractWasmTools(destination string, source io.Reader, expectedSHA256 string) error {
-	contents, readErr := io.ReadAll(source)
+func extractWasmTools(ctx context.Context, destination string, source io.Reader, expectedSHA256 string) error {
+	contents, readErr := contextio.ReadAll(ctx, source)
 	if readErr != nil {
 		return fmt.Errorf("read wasm-tools archive: %w", readErr)
 	}
 
-	actual := sha256.Sum256(contents)
+	actual, hashErr := contextio.Sum256(ctx, contents)
+	if hashErr != nil {
+		return hashErr
+	}
+
 	if hex.EncodeToString(actual[:]) != expectedSHA256 {
 		return fmt.Errorf("wasm-tools archive checksum = %x, want %s: %w", actual, expectedSHA256, errWasmToolsChecksum)
 	}
 
 	if bytes.HasPrefix(contents, []byte("PK\x03\x04")) {
-		return extractWasmToolsZip(destination, contents)
+		return extractWasmToolsZip(ctx, destination, contents)
 	}
 
-	gzipReader, gzipErr := gzip.NewReader(bytes.NewReader(contents))
+	gzipReader, gzipErr := gzip.NewReader(contextio.Reader(ctx, bytes.NewReader(contents)))
 	if gzipErr != nil {
 		return fmt.Errorf("open wasm-tools archive: %w", gzipErr)
 	}
 	defer gzipReader.Close()
 
-	reader := tar.NewReader(gzipReader)
+	reader := tar.NewReader(contextio.Reader(ctx, gzipReader))
 	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		header, nextErr := reader.Next()
 		if errors.Is(nextErr, io.EOF) {
 			break
@@ -152,7 +168,7 @@ func extractWasmTools(destination string, source io.Reader, expectedSHA256 strin
 
 		path := filepath.Join(destination, executableName("wasm-tools"))
 
-		writeErr := writeArchiveFile(path, reader, header.Size, header.FileInfo().Mode())
+		writeErr := writeArchiveFile(ctx, path, reader, header.Size, header.FileInfo().Mode())
 		if writeErr != nil {
 			return writeErr
 		}
@@ -168,13 +184,17 @@ func extractWasmTools(destination string, source io.Reader, expectedSHA256 strin
 	return nil
 }
 
-func extractWasmToolsZip(destination string, contents []byte) error {
+func extractWasmToolsZip(ctx context.Context, destination string, contents []byte) error {
 	archive, err := zip.NewReader(bytes.NewReader(contents), int64(len(contents)))
 	if err != nil {
 		return fmt.Errorf("open wasm-tools ZIP archive: %w", err)
 	}
 
 	for _, entry := range archive.File {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		if entry.FileInfo().IsDir() || filepath.Base(entry.Name) != executableName("wasm-tools") {
 			continue
 		}
@@ -190,7 +210,7 @@ func extractWasmToolsZip(destination string, contents []byte) error {
 			return openErr
 		}
 
-		copyErr := writeArchiveFile(path, input, int64(entry.UncompressedSize64), entry.Mode())
+		copyErr := writeArchiveFile(ctx, path, input, int64(entry.UncompressedSize64), entry.Mode())
 		closeErr := input.Close()
 
 		if copyErr != nil {
@@ -213,7 +233,7 @@ func extractWasmToolsZip(destination string, contents []byte) error {
 }
 
 func validateWasmTools(ctx context.Context, path string) error {
-	command := exec.CommandContext(ctx, path, "--version")
+	command := process.CommandContext(ctx, path, "--version")
 	if output, err := command.CombinedOutput(); err != nil {
 		return fmt.Errorf("validate downloaded wasm-tools: %w\n%s", err, output)
 	}

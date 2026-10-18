@@ -1,0 +1,27 @@
+# All coordinates are prefab-local. Definitions contain no global lighting.
+prefabs:
+  - id: crate
+    solids:
+      - id: box
+        footprint: [{ x: -0.5, y: -0.5 }, { x: 0.5, y: -0.5 }, { x: 0.5, y: 0.5 }, { x: -0.5, y: 0.5 }]
+        bottom: { c: 0 }
+        top: { c: 1 }
+        side_material: wood
+        top_material: wood
+        bottom_material: wood
+        collision: true
+      - id: band
+        footprint: [{ x: -0.52, y: -0.52 }, { x: 0.52, y: -0.52 }, { x: 0.52, y: 0.52 }, { x: -0.52, y: 0.52 }]
+        bottom: { c: 0.44 }
+        top: { c: 0.56 }
+        side_material: frame
+        top_material: frame
+        bottom_material: frame
+        collision: true
+  - id: crate-stack
+    instances:
+      - id: lower
+        prefab: crate
+      - id: upper
+        prefab: crate
+        transform: { translation: { x: 0, y: 0, z: 1 }, yaw_degrees: 12, scale: 1 }

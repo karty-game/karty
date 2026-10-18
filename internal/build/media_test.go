@@ -22,7 +22,7 @@ func TestPrepareMediaDirectoryRemovesOnlyOwnedFiles(t *testing.T) {
 		}
 	}
 
-	if _, err := prepareMediaDirectory(root, ".kaud", ".audio-"); err != nil {
+	if _, err := prepareMediaDirectory(t.Context(), root, ".kaud", ".audio-"); err != nil {
 		t.Fatal(err)
 	}
 

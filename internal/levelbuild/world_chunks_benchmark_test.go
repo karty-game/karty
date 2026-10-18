@@ -75,6 +75,7 @@ func BenchmarkEditorChunkGeometry(b *testing.B) {
 					nil,
 					chunkBakeOptions(nil),
 					true,
+					nil,
 				); err != nil {
 					b.Fatal(err)
 				}
@@ -94,7 +95,7 @@ func BenchmarkEditorChunkGeometry(b *testing.B) {
 		b.ReportAllocs()
 
 		for b.Loop() {
-			result, err := buildWorldChunks(b.Context(), "", definition, document, worldMaterialBuild{metadata: []byte(`{}`)})
+			result, err := buildWorldChunks(b.Context(), "", definition, document, worldMaterialBuild{metadata: []byte(`{}`)}, nil)
 			if err != nil {
 				b.Fatal(err)
 			}

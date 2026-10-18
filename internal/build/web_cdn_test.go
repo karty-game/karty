@@ -14,6 +14,41 @@ import (
 	"github.com/karty-game/karty/internal/sdk"
 )
 
+func TestProjectCDNDefaultAndLocalPackagingPrecedence(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+
+	config := "[project]\nname='cdn-test'\n[project.web]\nruntime_url='http://insecure.example/host.wasm'\n[sdk]\nversion='invalid'\n"
+	if err := os.WriteFile(filepath.Join(root, "karty.toml"), []byte(config), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, example := range []struct {
+		name        string
+		options     Options
+		usesDefault bool
+	}{
+		{name: "project default", options: Options{Target: "web"}, usesDefault: true},
+		{name: "bundled runtime", options: Options{Target: "web", BundledRuntime: true}},
+		{name: "custom host", options: Options{Target: "web", Host: "custom.wasm"}},
+		{name: "native", options: Options{Target: "native"}},
+		{name: "explicit CDN", options: Options{Target: "web", CDN: "https://cdn.example/host.wasm"}},
+	} {
+		t.Run(example.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := RunWithOptions(t.Context(), root, example.options)
+			if err == nil {
+				t.Fatal("invalid fixture SDK was accepted")
+			}
+
+			if strings.Contains(err.Error(), "absolute --cdn URLs must use HTTPS") != example.usesDefault {
+				t.Fatalf("unexpected runtime selection: %v", err)
+			}
+		})
+	}
+}
+
 func TestCDNURLValidationAndTargetFailBeforeProjectIO(t *testing.T) {
 	t.Parallel()
 
@@ -66,7 +101,7 @@ func TestCDNRequiresReleasePinAndRejectsDifferentHostOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if host, err := cdnHostFromManifest(
+	if host, err := cdnHostFromManifest(t.Context(),
 		manifest,
 		"../runtime/host.wasm",
 		localHost,
@@ -79,7 +114,7 @@ func TestCDNRequiresReleasePinAndRejectsDifferentHostOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := cdnHostFromManifest(
+	if _, err := cdnHostFromManifest(t.Context(),
 		manifest,
 		"../runtime/host.wasm",
 		localHost,
@@ -89,7 +124,7 @@ func TestCDNRequiresReleasePinAndRejectsDifferentHostOverride(t *testing.T) {
 	}
 
 	manifest.Artifacts.Host.Web.SHA256 = ""
-	if _, err := cdnHostFromManifest(manifest, "../runtime/host.wasm", ""); err == nil {
+	if _, err := cdnHostFromManifest(t.Context(), manifest, "../runtime/host.wasm", ""); err == nil {
 		t.Fatal("CDN host without a release checksum accepted")
 	}
 }
@@ -124,7 +159,7 @@ func TestCDNStagesLocalRuntimeAndExcludesBundledHostFromSummary(t *testing.T) {
 	}
 
 	cdn := &cdnHost{URL: "../runtime/" + release.SDKVersion() + "/host.wasm", SHA256: strings.Repeat("a", 64)}
-	if err := stageTargetWithCDN(
+	if err := stageTargetWithCDN(t.Context(),
 		filepath.Join(root, "dist"),
 		raw,
 		game,
@@ -133,7 +168,6 @@ func TestCDNStagesLocalRuntimeAndExcludesBundledHostFromSummary(t *testing.T) {
 		"web",
 		runtime,
 		"",
-		false,
 		"CDN game",
 		false,
 		cdn,
@@ -155,7 +189,9 @@ func TestCDNStagesLocalRuntimeAndExcludesBundledHostFromSummary(t *testing.T) {
 		t.Fatalf("CDN host source missing from generated launcher:\n%s", launcher)
 	}
 
-	report, err := summarizeBuild(root, "test", release.SDKVersion(), nil, assetpipeline.Report{}, Options{Target: "web", cdnHost: cdn})
+	report, err := summarizeBuild(
+		t.Context(), root, "test", release.SDKVersion(), nil, assetpipeline.Report{}, Options{Target: "web", cdnHost: cdn},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,7 +233,7 @@ func TestCDNHostLiteralPreservesQuotesAndEscapesScriptSeparators(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	source, err := webHostSource("", &cdnHost{URL: url, SHA256: strings.Repeat("a", 64)})
+	source, err := webHostSource(t.Context(), "", &cdnHost{URL: url, SHA256: strings.Repeat("a", 64)})
 	if err != nil {
 		t.Fatal(err)
 	}

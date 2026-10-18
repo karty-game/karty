@@ -44,6 +44,7 @@ type Actor struct {
 }
 
 type Room struct {
+	VegetationLayers                                []worldsource.VegetationLayer
 	ID, SourceRoom, Instance                        string
 	Sky                                             bool
 	Boundary                                        []worldsource.Edge
@@ -65,6 +66,8 @@ type Connection struct {
 }
 
 type Expanded struct {
+	Fluids      *worldsource.Fluids
+	Vegetation  *worldsource.Vegetation
 	Rooms       []Room
 	Connections []Connection
 	Environment *sdkworld.Environment
@@ -88,6 +91,7 @@ type affine struct {
 }
 
 type scopeResult struct {
+	vegetationLayerCount int
 	rooms                []Room
 	connections          []Connection
 	ports                map[string]Endpoint
@@ -142,6 +146,10 @@ func Decode(contents []byte) (Expanded, error) {
 		return Expanded{}, fmt.Errorf("decode trailing YAML: %w: %w", err, ErrYAML)
 	}
 
+	document, err := worldsource.ExpandCompactRooms(&document)
+	if err != nil {
+		return Expanded{}, fmt.Errorf("expand compact rooms: %w", err)
+	}
 	if err := worldsource.Validate(&document); err != nil {
 		return Expanded{}, fmt.Errorf("validate world source: %w", err)
 	}
@@ -180,27 +188,14 @@ func Decode(contents []byte) (Expanded, error) {
 		Solids:               result.solids,
 		Contents:             result.contents,
 		Animations:           document.Animations,
+		Fluids:               document.Fluids,
+		Vegetation:           document.Vegetation,
 		Particles:            document.Particles,
 		ParticleEmitters:     result.particleEmitters,
 		ParticleEmitterRooms: result.particleEmitterRooms,
 	}
-	if document.Environment != nil {
-		expanded.Sky = document.Environment.Sky
-		expanded.Environment = &sdkworld.Environment{
-			Version: sdkworld.EnvironmentVersion, Preset: document.Environment.Preset,
-			Palette: document.Environment.Palette, Backdrop: document.Environment.Backdrop,
-		}
-		if document.Environment.Sun != nil {
-			sun := *document.Environment.Sun
-			expanded.Environment.Sun = &sun
-		}
-		if document.Environment.TimeOfDay != nil {
-			expanded.Environment.TimeOfDay = new(*document.Environment.TimeOfDay)
-		}
-		if document.Environment.CloudAmount != nil {
-			expanded.Environment.CloudAmount = new(*document.Environment.CloudAmount)
-		}
-	}
+	expandEnvironment(document, &expanded)
+
 	if document.Lighting != nil {
 		expanded.Lighting = &sdkworld.Lighting{
 			Version: document.Lighting.Version, Ambient: sdkworld.Vec3(document.Lighting.Ambient),
@@ -292,6 +287,10 @@ func rejectAliases(contents []byte) error {
 		return err
 	}
 
+	if err := validateVegetationPresence(&document); err != nil {
+		return err
+	}
+
 	return validateExtrasPresence(&document)
 }
 
@@ -348,10 +347,10 @@ func (builder *expander) expandScope(
 		result.contents = append(result.contents, transformLooseContent(content, prefix, transform, material, tagOverride))
 	}
 	for _, authored := range rooms {
-		room := transformRoom(authored, prefix, transform, material, tagOverride)
-		if err := appendScopedParticleEmitters(&result, authored.ParticleEmitters, room.ID, transform, room.ID); err != nil {
+		if err := appendRoomDecorations(&result, authored, joinIdentity(prefix, authored.ID), transform); err != nil {
 			return scopeResult{}, err
 		}
+		room := transformRoom(authored, prefix, transform, material, tagOverride)
 		if len(room.ID) > sdkworld.MaxIdentifierBytes {
 			return scopeResult{}, fmt.Errorf("expanded room identity %q is too long: %w", room.ID, ErrExpansion)
 		}
@@ -391,13 +390,8 @@ func (builder *expander) expandScope(
 		if err != nil {
 			return scopeResult{}, err
 		}
-		if len(result.solids)+len(expanded.solids) > sdkworld.MaxStaticSolids ||
-			len(
-				result.contents,
-			)+len(
-				expanded.contents,
-			) > sdkworld.MaxContents || len(result.particleEmitters)+len(expanded.particleEmitters) > worldparticles.MaxEmitters {
-			return scopeResult{}, ErrExpansion
+		if err := validateScopeMerge(&result, expanded); err != nil {
+			return scopeResult{}, err
 		}
 		result.solids = append(result.solids, expanded.solids...)
 		result.contents = append(result.contents, expanded.contents...)
@@ -448,9 +442,10 @@ func transformRoom(
 	roomID := joinIdentity(prefix, authored.ID)
 	room := Room{
 		ID: roomID, SourceRoom: authored.ID, Instance: prefix,
-		Sky:      authored.Sky,
-		Boundary: make([]worldsource.Edge, len(authored.Boundary)),
-		Floor:    transformPlane(authored.Floor, transform), Ceiling: transformPlane(authored.Ceiling, transform),
+		VegetationLayers: slices.Clone(authored.VegetationLayers),
+		Sky:              authored.Sky,
+		Boundary:         make([]worldsource.Edge, len(authored.Boundary)),
+		Floor:            transformPlane(authored.Floor, transform), Ceiling: transformPlane(authored.Ceiling, transform),
 		FloorMaterial: material(authored.FloorMaterial), CeilingMaterial: material(authored.CeilingMaterial),
 		Contents: make([]Content, len(authored.Contents)),
 		FloorUV:  authored.FloorUV, CeilingUV: authored.CeilingUV, WallUV: authored.WallUV,
@@ -619,4 +614,54 @@ func resolveScopeEndpoint(endpoint worldsource.Endpoint, direct, nested map[stri
 	}
 
 	return resolved, nil
+}
+
+// validateScopeMerge checks the complete nested resource counts before append.
+func validateScopeMerge(result *scopeResult, expanded scopeResult) error {
+	if len(result.solids)+len(expanded.solids) > sdkworld.MaxStaticSolids ||
+		len(result.contents)+len(expanded.contents) > sdkworld.MaxContents ||
+		len(result.particleEmitters)+len(expanded.particleEmitters) > worldparticles.MaxEmitters {
+		return ErrExpansion
+	}
+
+	return appendVegetationLayerCount(result, expanded.vegetationLayerCount)
+}
+
+func appendRoomDecorations(result *scopeResult, authored worldsource.Room, roomID string, transform affine) error {
+	if err := appendVegetationLayerCount(result, len(authored.VegetationLayers)); err != nil {
+		return err
+	}
+
+	return appendScopedParticleEmitters(result, authored.ParticleEmitters, roomID, transform, roomID)
+}
+
+func expandEnvironment(document worldsource.Document, expanded *Expanded) {
+	if document.Environment == nil {
+		return
+	}
+	expanded.Sky = document.Environment.Sky
+	expanded.Environment = &sdkworld.Environment{
+		Version: sdkworld.EnvironmentVersion, Preset: document.Environment.Preset,
+		Palette: document.Environment.Palette, Backdrop: document.Environment.Backdrop,
+	}
+	if document.Version >= worldsource.ExplicitEnvironmentVersion {
+		expanded.Environment.Version = sdkworld.ExplicitEnvironmentVersion
+		colors := sdkworld.DefaultEnvironmentColors()
+		if document.Environment.Colors != nil {
+			colors = *document.Environment.Colors
+		}
+		expanded.Environment.Appearance = sdkworld.CloneEnvironmentAppearance(
+			&sdkworld.EnvironmentAppearance{Lighting: *document.Environment.Lighting, Colors: colors},
+		)
+	}
+	if document.Environment.Sun != nil {
+		sun := *document.Environment.Sun
+		expanded.Environment.Sun = &sun
+	}
+	if document.Environment.TimeOfDay != nil {
+		expanded.Environment.TimeOfDay = new(*document.Environment.TimeOfDay)
+	}
+	if document.Environment.CloudAmount != nil {
+		expanded.Environment.CloudAmount = new(*document.Environment.CloudAmount)
+	}
 }

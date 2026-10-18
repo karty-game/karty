@@ -1,6 +1,6 @@
 # Project builds and staging
 
-Read the root instructions and `docs/repository-split.md`. This package owns
+Read the root instructions and `CONTRIBUTING.md`. This package owns
 compiler invocation, generated project files, cartridge/asset staging, and the
 browser shell in embedded `templates/index.html.tmpl` and
 `templates/launcher.js.tmpl`.

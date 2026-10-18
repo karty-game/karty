@@ -64,7 +64,7 @@ func TestEmbedProjectAssetsIncludesTypedSoundCatalog(t *testing.T) {
 		OutputSHA256: fmt.Sprintf("%x", sha256.Sum256(encoded)), OutputBytes: int64(len(encoded)),
 		Metadata: assetpipeline.AudioMetadata{Channels: metadata.Channels, SampleRate: metadata.SampleRate, Frames: metadata.Frames},
 	}}
-	if err := embedProjectAssets(directory, artifact, nil, sounds, nil, nil); err != nil {
+	if err := embedProjectAssets(t.Context(), directory, artifact, nil, sounds, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -102,7 +102,7 @@ func TestEmbedProjectAssetsRejectsChangedCachedPayload(t *testing.T) {
 		Name: "player", SourcePath: payload, OutputBytes: 7,
 		OutputSHA256: fmt.Sprintf("%x", sha256.Sum256([]byte("original"))),
 	}
-	if err := embedProjectAssets(directory, artifact, []assetpipeline.Texture{texture}, nil, nil, nil); err == nil {
+	if err := embedProjectAssets(t.Context(), directory, artifact, []assetpipeline.Texture{texture}, nil, nil, nil); err == nil {
 		t.Fatal("embedProjectAssets accepted a cache payload changed after validation")
 	}
 }
@@ -120,17 +120,23 @@ func TestEmbedProjectManifestIncludesAssetFeatures(t *testing.T) {
 	var config project.Config
 
 	config.Project.Name = "features"
+	config.Project.StorageID = "com.example/train"
 	config.Project.Resolution.Width = 320
 	config.Project.Resolution.Height = 180
 
 	features := []string{cartridge.FeatureSoundQOAv1, cartridge.FeatureTextureQOIv1}
-	if err := embedProjectManifest(artifact, config, "tinygo", nil, features); err != nil {
+	if err := embedProjectManifest(t.Context(), artifact, config, "tinygo", nil, features); err != nil {
 		t.Fatal(err)
 	}
 
 	wasm, err := os.ReadFile(artifact)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	identity, err := cartridge.ExtractSection(wasm, "karty.storage.v1")
+	if err != nil || string(identity) != config.Project.StorageID {
+		t.Fatal("stable save identity was not embedded", string(identity), err)
 	}
 
 	section, err := cartridge.ExtractSection(wasm, cartridge.ManifestSectionName)

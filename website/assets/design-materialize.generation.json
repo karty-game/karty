@@ -1,0 +1,72 @@
+{
+  "kind": "native material generation, not a game screenshot",
+  "generator": "scripts/generate-design-materialize.mjs",
+  "source": "samples/hangar/levels/hangar/brick.png",
+  "tool": {
+    "version": "materialize 2.0.0",
+    "sha256": "c1775d94d9bc6d3375b144e01a3c2db0cd3da845cb3d648e6f42e9b8fd45a318"
+  },
+  "arguments": [
+    "samples/hangar/levels/hangar/brick.png",
+    "--output",
+    "TEMP_OUTPUT",
+    "--only",
+    "height,normal,ao,metallic,smoothness",
+    "--normal-format",
+    "opengl",
+    "--format",
+    "png",
+    "--preset",
+    "brick",
+    "--verbose"
+  ],
+  "backend": "GPU: llvmpipe (LLVM 15.0.7, 256 bits) (Cpu, backend Gl)",
+  "environment": {
+    "MATERIALIZE_GPU_BACKEND": "opengl",
+    "LIBGL_ALWAYS_SOFTWARE": "1",
+    "EGL_PLATFORM": "surfaceless"
+  },
+  "note": "Unedited 128-pixel source and native map PNGs embedded in an SVG grid. The game pipeline separately normalizes materials to 256 pixels, packs channels and builds mip levels. No host rendering or final lighting is captured.",
+  "panels": [
+    {
+      "label": "Source colour",
+      "sha256": "2f1e2f376f5f9e82956e8ba73d1199ae72b469665ffe9425a966e65ed7d642fb",
+      "width": 128,
+      "height": 128
+    },
+    {
+      "label": "Normal",
+      "sha256": "c507a8249273d920952c9caf525f2fe90ee2304ec85aad6ef2f628dab3ec3b78",
+      "width": 128,
+      "height": 128
+    },
+    {
+      "label": "Height",
+      "sha256": "9db21d10635fe46a6938a530c167021abee4ff50b3d1f0f03136a6c49673f56e",
+      "width": 128,
+      "height": 128
+    },
+    {
+      "label": "Ambient occlusion",
+      "sha256": "e52cac55313a07ddd8c9a233b5215b935b85913f59c5cf35ed6b140da991f600",
+      "width": 128,
+      "height": 128
+    },
+    {
+      "label": "Metallic",
+      "sha256": "e2707b259069fae65f2e8f276936b643a7d249182e6878e6103d9f92a8aa46dd",
+      "width": 128,
+      "height": 128
+    },
+    {
+      "label": "Smoothness",
+      "sha256": "13023c1806f24ab7e34c0ed73700d2706745176b4b937fa5c99acd54e63ef4bb",
+      "width": 128,
+      "height": 128
+    }
+  ],
+  "svg": {
+    "file": "internal/guide/assets/design-materialize.svg",
+    "sha256": "03562889ab10166dbad8b62743a23d7289acfb7a5917e7ce90ed8544e4b42e8c"
+  }
+}

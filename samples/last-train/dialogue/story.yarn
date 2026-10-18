@@ -1,0 +1,261 @@
+title: Start
+---
+<<declare $mara = false>>
+<<declare $elias = false>>
+<<declare $iris = false>>
+<<declare $seal = false>>
+<<declare $map = false>>
+<<declare $trust = 0>>
+<<declare $knows_mara = false>>
+<<declare $knows_elias = false>>
+<<declare $knows_iris = false>>
+<<scene platform>>
+<<ensemble off>>
+<<frame wide>>
+<<portrait none>>
+Narrator: The last northbound train waits beneath a roof of rain. For a moment, you stand still and listen. #line:arrival
+Narrator: Westbridge, eleven forty-seven. A porter extinguishes the lamps one by one, leaving small islands of gold along the platform. #line:westbridge
+Narrator: In your coat pocket: a reservation for carriage three, a little change, and one ordinary ticket home. #line:your_ticket
+<<whistle>>
+Narrator: The whistle sounds. You step aboard just as the porter folds away his umbrella. #line:boarding
+<<pause 24>>
+<<travel carriage>>
+Narrator: Warmth, polished wood, the smell of wool drying by a heater. Your reflection trembles in the window as Westbridge slips away. #line:inside
+Narrator: You have barely settled into your seat when a conductor stops beside you. Her brass ticket case is clutched rather tightly. #line:knock
+<<frame medium>>
+<<expression mara worried>>
+<<portrait mara>>
+Mara: Forgive me. May I trouble you for a moment? #line:hello_mara
+You: Is something wrong? #line:your_question
+Mara: My name is Mara. I have worked this line for nine years, and I have never misplaced a ticket. #line:mara_introduction
+<<set $knows_mara = true>>
+<<gesture mara reach>>
+Narrator: Her thumb finds the small key hanging at her collar. She lets it go. #line:mara_key_gesture
+Mara: Until tonight. Three names on the manifest. One ticket missing from my locked case. Twelve minutes before the final stop. #line:manifest
+You: Surely one ticket cannot be worth stopping the train for. #line:ordinary_ticket
+Mara: Ordinarily, no. This one should not have been in my case at all. #line:not_ordinary
+<<pause 20>>
+Mara: I would rather hear the truth quietly than summon anyone. Will you speak to the others? #line:request
+<<jump Carriage>>
+===
+title: Carriage
+---
+<<scene carriage>>
+<<ensemble off>>
+<<frame wide>>
+<<portrait none>>
+<<if not $mara and not $elias and not $iris>>
+Narrator: Rain threads the glass. An elderly man studies a railway map; across the aisle, a blonde traveller turns a yellow envelope in her gloved hands. #line:carriage
+<<else>>
+Narrator: The wheels settle into their patient rhythm. Between the pools of lamplight, the other passengers wait. #line:carriage_return
+<<endif>>
+-> Ask Mara about the locked case. <<if not $mara>> #line:ask_mara
+    <<jump Mara>>
+-> Examine the older passenger's railway map. <<if not $elias>> #line:ask_elias
+    <<jump Elias>>
+-> Speak to the traveller about her envelope. <<if not $iris>> #line:ask_iris
+    <<jump Iris>>
+-> Suggest talking in the dining car. #line:gather
+    <<jump Dining>>
+===
+title: Mara
+---
+<<set $mara = true>>
+<<frame medium>>
+<<expression mara worried>>
+<<portrait mara>>
+Mara: Thank you. I am trying very hard not to make a scene. #line:mara_thanks
+Narrator: She sets the brass case between you. Its polished latch bears a small, cloudy mark. #line:brass_case
+You: Let us begin with the key. #line:ask_key
+Mara: The key never left my neck. The case was open only when I checked the departure register. #line:mara_key
+-> Was the ticket valuable? #line:valuable
+    Mara: Only to someone who remembers North Quay. We have not stopped there in twenty years. #line:quay
+    You: And yet you kept a ticket for it. #line:kept_ticket
+    Mara: My father's things. I suppose I have not quite finished sorting them. #line:fathers_things
+-> You sound more worried than angry. #line:worried
+    <<set $trust += 1>>
+    Mara: My father drove this line. He taught me that a timetable is a promise, not an excuse. #line:promise
+    <<gesture mara nod>>
+    Narrator: For a moment she looks past you, towards the dark window. #line:mara_window
+    Mara: It is an easy thing to remember, until somebody asks you to keep one. #line:keeping_promises
+Mara: There was a little wax on the brass latch. Yellow. I thought it came from the lamps. #line:wax
+You: I will ask the others before I decide what it means. #line:mara_leave
+<<jump Carriage>>
+===
+title: Elias
+---
+<<set $elias = true>>
+<<frame medium>>
+<<expression elias neutral>>
+<<portrait elias>>
+Elias: Is this your seat? Forgive me. I have spread half the county over it. #line:elias_hello
+Narrator: He gathers the edges of a railway map with careful fingers. One fold has almost worn through. #line:elias_map
+You: You know this line well? #line:know_line
+Elias: I used to keep its signals. Elias. Retired, though I have never acquired the habit of staying home. #line:elias_introduction
+<<set $knows_elias = true>>
+Elias: A modern map tells you where a train goes. An old one tells you what it has forgotten. #line:old_map
+-> Ask him to show you North Quay. #line:show_map
+    <<set $map = true>>
+    <<gesture elias reach>>
+    Elias: Here. A short platform, a signal box, and a bell that rang twice for a return journey. #line:return_bell
+    Narrator: His finger remains over the little station after he has finished speaking. #line:elias_finger
+    You: Someone you knew lived there? #line:someone_there
+    <<expression elias wistful>>
+    Elias: My daughter. Her last letter was posted there. We quarrelled. I never answered. #line:daughter
+    <<pause 24>>
+    Elias: One imagines there will be another letter. Then, after a while, one stops imagining. #line:another_letter
+-> Ask whether he opened the conductor's case. #line:accuse_elias
+    Elias: No. But I watched someone looking at its key as though it were the answer to a question. #line:watching
+    You: Did you see who? #line:who_watched
+    Elias: I did not wish to stare. It seemed a private sort of unhappiness. #line:private_unhappiness
+Elias: If you find a way to stop at North Quay, please tell me. I have been taking this train every Thursday for a year. #line:thursday
+Narrator: He smooths the map flat again, leaving the seat beside him empty. #line:elias_leave
+<<jump Carriage>>
+===
+title: Iris
+---
+<<set $iris = true>>
+<<frame medium>>
+<<expression iris guarded>>
+<<portrait iris>>
+Iris: Oh. I thought you were the conductor. #line:iris_hello
+Narrator: The blonde traveller pushes her round glasses up her nose. A yellow envelope disappears halfway into her coat. #line:iris_glasses
+You: Only another passenger. I am trying to understand what has upset her. #line:iris_approach
+Iris: My name is Iris. I am not very good at travelling, it seems. Or at beginning conversations. #line:iris_introduction
+<<set $knows_iris = true>>
+Narrator: Across the aisle, the older passenger bends over his map. She follows your glance, then looks away. #line:iris_glance
+Iris: This envelope belonged to my mother. Her instructions were rather inconvenient: find Elias, and take him home. #line:envelope
+-> Promise to listen before judging. #line:listen
+    <<set $trust += 1>>
+    <<set $seal = true>>
+    Iris: You will let me explain all of it? #line:all_of_it
+    You: All of it. #line:listen_promise
+    <<expression iris relieved>>
+    <<gesture iris reach>>
+    Narrator: She draws a slow breath and places something small and pale beside the envelope. #line:ticket_revealed
+    Iris: The seal broke against a brass latch. I borrowed the ticket when Mara turned to the register. #line:confession
+    Iris: It is a return ticket. The destination is North Quay, but the date is twenty years old. #line:old_ticket
+    You: You hoped it would make the train stop. #line:iris_hope
+    Iris: Mother kept saying she would go back. In the end, she asked me to go instead. #line:iris_mother
+-> Demand that she hand over the envelope. #line:demand
+    <<gesture iris recoil>>
+    Iris: No. Some things deserve to be opened by the person they were written for. #line:refusal
+    Narrator: Her hand closes over the flap. You have made the distance between you a little greater. #line:iris_distance
+Iris: I could ask him myself. But after all this time, what if he does not want to know who I am? #line:afraid
+You: Let me speak to Mara. You need not decide that alone. #line:iris_leave
+<<jump Carriage>>
+===
+title: Dining
+---
+<<travel dining>>
+<<frame wide>>
+<<ensemble on>>
+<<portrait none>>
+Narrator: You bring them together beneath the dining car's last lit lamp. The wheels begin their long descent toward the terminus. #line:dining
+Narrator: The conductor leaves the ticket case closed. The older passenger folds his map. The traveller keeps the envelope between both hands. #line:at_the_table
+<<pause 24>>
+You: Before we arrive, there is something we should decide together. #line:decision
+-> Explain the ticket, the map, and the unbroken promise. <<if $seal and $map>> #line:truth_choice
+    <<jump Truth>>
+-> Ask Mara for one unscheduled act of kindness. <<if $trust >= 2>> #line:kindness_choice
+    <<jump Kindness>>
+-> Insist that the timetable comes first. #line:timetable_choice
+    <<jump Timetable>>
+-> Return to the passenger carriage. #line:return_carriage
+    <<travel carriage>>
+    <<jump Carriage>>
+===
+title: Truth
+---
+You: This was never about the price of a ticket. It was about somebody finding the courage to use it. #line:truth_begin
+<<ensemble off>>
+<<frame medium>>
+<<expression iris relieved>>
+<<portrait iris>>
+Iris: My mother kept it because she always meant to come back. She asked me to make the journey for her. #line:mother
+<<expression iris offering>>
+<<gesture iris reach>>
+Narrator: She slides the envelope across the table. Elias looks at the handwriting before he touches it. #line:letter_crossing
+<<pause 30>>
+<<expression elias hopeful>>
+<<portrait elias>>
+Elias: You have her eyes. I thought that when you boarded. I was afraid to ask. #line:eyes
+<<expression iris relieved>>
+<<portrait iris>>
+Iris: So was I. #line:both_afraid
+<<expression elias reading>>
+<<ensemble on>>
+<<frame wide>>
+<<portrait none>>
+Narrator: The old man's hand rests beside hers. Neither of them moves it away. #line:hands
+<<pause 30>>
+<<ensemble off>>
+<<frame medium>>
+<<expression mara relieved>>
+<<portrait mara>>
+Mara: North Quay still has a platform. And, unless my ears deceive me, someone has repaired its bell. #line:platform_bell
+<<punch>>
+<<expression mara resolute>>
+<<gesture mara nod>>
+Mara: I believe that makes this a valid return. #line:valid_return
+<<travel platform>>
+<<ensemble off>>
+<<frame wide>>
+<<portrait none>>
+<<whistle>>
+Narrator: Two clear notes answer through the rain. A grandfather and granddaughter step down together, one carrying a letter, the other an old map. #line:truth_platform
+Narrator: Mara waits until the little station door has closed behind them. Only then does she raise her lamp. #line:truth_departure
+<<pause 30>>
+<<ending truth>>
+Narrator: THE RETURN JOURNEY — You found the truth, and gave it somewhere to arrive. #line:truth_ending
+<<stop>>
+===
+title: Kindness
+---
+You: I cannot explain every part of this. But I think we will regret passing that platform tonight. #line:kindness_begin
+<<ensemble off>>
+<<frame medium>>
+<<expression mara relieved>>
+<<portrait mara>>
+Mara: You have not solved my mystery. But perhaps a missing ticket is not tonight's most important thing. #line:kindness_mara
+Narrator: She puts the key back beneath her collar. #line:kindness_key
+<<expression iris offering>>
+<<portrait iris>>
+Iris: Mr Elias? There is a letter I think you should read. I can wait while you decide. #line:kindness_iris
+<<pause 30>>
+<<travel platform>>
+<<ensemble off>>
+<<frame wide>>
+<<portrait none>>
+<<whistle>>
+Narrator: The train sighs to a halt. Through the rain-streaked window, you see two figures sharing the light above the station door. #line:kindness_platform
+<<ending kindness>>
+Narrator: A LIGHT LEFT ON — The train stops at North Quay. Some answers can wait until morning. #line:kindness_ending
+<<stop>>
+===
+title: Timetable
+---
+You: We cannot change the route on the strength of a story. There are other people waiting for this train. #line:timetable_begin
+<<ensemble off>>
+<<frame medium>>
+<<expression mara worried>>
+<<portrait mara>>
+Mara: Of course. We have a schedule to keep. #line:timetable_mara
+<<gesture mara recoil>>
+Narrator: She closes the case. The little click seems unusually loud. #line:case_closed
+<<expression elias wistful>>
+<<portrait elias>>
+Elias: I understand. There is always next Thursday. #line:timetable_elias
+<<expression iris guarded>>
+<<portrait iris>>
+Narrator: The traveller slips the envelope back into her coat. She does not correct him. #line:iris_silent
+<<pause 30>>
+<<travel platform>>
+<<ensemble off>>
+<<frame wide>>
+<<portrait none>>
+Narrator: Beyond the window, a little platform drifts past without a name you can read. Its one lamp dwindles behind the train. #line:missed_platform
+<<ending timetable>>
+Narrator: THE EMPTY PLATFORM — The train arrives precisely on time. Far behind it, two notes ring out into the rain. #line:timetable_ending
+<<stop>>
+===

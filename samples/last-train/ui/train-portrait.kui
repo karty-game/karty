@@ -1,0 +1,55 @@
+<template>
+  <panel class="picture">
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "mara" && props.Renderer.Expression("mara") == "worried" {
+      <TrainImage source={ props.Renderer.Source("mara-worried") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "mara" && props.Renderer.Expression("mara") == "relieved" {
+      <TrainImage source={ props.Renderer.Source("mara-relieved") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "mara" && props.Renderer.Expression("mara") == "" {
+      <TrainImage source={ props.Renderer.Source("mara") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "elias" && props.Renderer.Expression("elias") == "wistful" {
+      <TrainImage source={ props.Renderer.Source("elias-wistful") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "elias" && props.Renderer.Expression("elias") == "hopeful" {
+      <TrainImage source={ props.Renderer.Source("elias-hopeful") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "elias" && props.Renderer.Expression("elias") == "" {
+      <TrainImage source={ props.Renderer.Source("elias") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "iris" && props.Renderer.Expression("iris") == "guarded" {
+      <TrainImage source={ props.Renderer.Source("iris-guarded") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "iris" && props.Renderer.Expression("iris") == "relieved" {
+      <TrainImage source={ props.Renderer.Source("iris-relieved") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "iris" && props.Renderer.Expression("iris") == "" {
+      <TrainImage source={ props.Renderer.Source("iris") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "mara" && props.Renderer.Expression("mara") == "resolute" {
+      <TrainImage source={ props.Renderer.Source("mara-resolute") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "elias" && props.Renderer.Expression("elias") == "reading" {
+      <TrainImage source={ props.Renderer.Source("elias-reading") } props={ TrainImageProps{} }/>
+    }
+    if props.Renderer.PortraitReady(props.Name) && props.Name == "iris" && props.Renderer.Expression("iris") == "offering" {
+      <TrainImage source={ props.Renderer.Source("iris-offering") } props={ TrainImageProps{} }/>
+    }
+  </panel>
+</template>
+<script setup lang="go">
+import "example.com/last-train/internal/stage"
+type TrainPortraitProps struct { Name string; Renderer *stage.Renderer }
+func setup(props TrainPortraitProps) {}
+</script>
+<style>
+.picture
+  width: 100%
+  height: 100%
+  padding: 0
+image
+  width: 100%
+  height: 100%
+  image-fit: contain
+</style>

@@ -1,0 +1,156 @@
+[check-hangar-schema]
+depends = ["build"]
+dir = "samples/hangar"
+run = "../../dist/karty schema --check"
+
+[generate-hangar-materials]
+description = "Regenerate Hangar's restrained industrial surface variants"
+run = "go run scripts/hangar-material-assets.go"
+
+[check-hangar-materials]
+description = "Verify Hangar surface variants match their handwritten generator"
+run = "go run scripts/hangar-material-assets.go -check"
+
+[generate-hangar-walk]
+description = "Compile Hangar's authored floors, portals and solids for bounded player stepping"
+depends = ["generate-hangar-ceiling-lights"]
+run = "go run scripts/hangar-walk-assets.go"
+
+[generate-hangar-ceiling-lights]
+description = "Regenerate suspended strip fixtures above Hangar's authored overhead lights"
+depends = ["generate-hangar-heroes"]
+run = "go run scripts/hangar-ceiling-lights.go"
+
+[check-hangar-ceiling-lights]
+description = "Verify ceiling fixtures remain aligned with their point sources and ceiling mounts"
+run = "go run scripts/hangar-ceiling-lights.go -check"
+
+[generate-hangar-heroes]
+description = "Regenerate the barrel hoop and reactor cap bevels with isolated bare-metal trim"
+depends = ["generate-hangar-effects"]
+run = "go run scripts/hangar-hero-assets.go"
+
+[check-hangar-heroes]
+description = "Verify bounded hero trim matches its owning handwritten generator"
+run = "go run scripts/hangar-hero-assets.go -check"
+
+[check-hangar-walk]
+description = "Verify Hangar player support data matches its authored geometry"
+run = "go run scripts/hangar-walk-assets.go -check"
+
+[generate-hangar-effects]
+description = "Reuse Particle Lab fire, smoke, discharge and acid recipes in confined Hangar placements"
+depends = ["generate-particle-lab"]
+run = "go run samples/hangar/generate-effects.go"
+
+[check-hangar-effects]
+description = "Check reused Hangar effect blocks, texture ownership and complete convex-sector confinement"
+run = ["go run samples/particle-lab/generate-library.go -check", "go run samples/hangar/generate-effects.go -check"]
+
+[generate-hangar-sounds]
+description = "Prepare mono reactor, computer and crate loops from retained CC0 recordings"
+run = "go run scripts/hangar-sound-assets.go"
+
+[check-hangar-sounds]
+description = "Verify Hangar sound loops match their retained recordings and processor"
+run = "go run scripts/hangar-sound-assets.go -check"
+
+[build-hangar-native]
+depends = ["build", "generate-hangar-materials", "generate-hangar-walk", "generate-hangar-sounds"]
+dir = "samples/hangar"
+run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
+
+[build-hangar-web]
+depends = ["build", "generate-hangar-materials", "generate-hangar-walk", "generate-hangar-sounds"]
+dir = "samples/hangar"
+run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
+
+[capture-hangar-particles]
+description = "Capture barrel and acid particle viewpoints in one passive native session"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --timeout 20s --width 960 --height 540 --batch particle-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-liquids]
+description = "Capture Hangar border foam and submerged fog/surface in one passive native session"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --timeout 20s --width 960 --height 540 --batch liquid-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-ceiling-lights]
+description = "Review the suspended strip fixtures from arrival, reactor and loading views"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --timeout 10s --width 960 --height 540 --batch ceiling-lights-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-machinery]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 7.5,5.3,1.7 --yaw 30 --pitch 2 --output dist/screenshots/animation-machinery.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-materials]
+description = "Review Hangar's wall layers and fixed decals at five detail viewpoints"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --batch materials-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-acid]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 27,23,1.8 --yaw -18 --pitch -36 --output dist/screenshots/animation-acid.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-pistons]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 4,15.8,1.7 --yaw -56 --pitch -8 --output dist/screenshots/animation-pistons.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-acid-overview]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 28.5,23,3 --yaw 12 --pitch -28 --output dist/screenshots/animation-acid-overview.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-acid-south]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 31,23,3 --yaw 180 --pitch -30 --output dist/screenshots/animation-acid-south.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-acid-east]
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 33,26,2 --yaw 80 --pitch -4 --output dist/screenshots/animation-acid-east.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[bake-hangar]
+description = "Refresh Hangar's authored offline lighting after material or light changes"
+depends = ["build", "generate-hangar-materials", "generate-hangar-ceiling-lights"]
+dir = "samples/hangar"
+run = "../../dist/karty bake --level levels.hangar"
+
+[capture-hangar-planar-reflections]
+description = "Review Hangar's planar acid reflection from three views and a dry metal control"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --timeout 10s --width 640 --height 360 --batch reflection-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-control]
+description = "Capture the acid control room, overlook and both stair approaches"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --batch acid-control-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-reactor]
+description = "Capture the reactor bands with the selected native host"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 4.1,16.5,1.7 --yaw 24 --pitch 3.4 --output dist/screenshots/emission-reactor.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-emission-acid]
+description = "Capture the emissive acid with the selected native host"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --position 27,23,1.8 --yaw -18 --pitch -36 --output dist/screenshots/emission-acid.png --host "${KARTY_HOST_NATIVE:-}"'
+
+[capture-hangar-pool]
+description = "Capture Hangar's deep pool and continuous exit ramps for visual review"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty screenshot levels.hangar --width 960 --height 540 --batch pool-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'

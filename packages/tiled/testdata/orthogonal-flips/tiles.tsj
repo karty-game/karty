@@ -1,0 +1,16 @@
+{
+  "name": "Non-square demonstration atlas",
+  "type": "tileset",
+  "version": "1.10",
+  "tiledversion": "1.11.2",
+  "tilewidth": 16,
+  "tileheight": 24,
+  "columns": 2,
+  "tilecount": 2,
+  "margin": 1,
+  "spacing": 1,
+  "image": "atlas.png",
+  "imagewidth": 35,
+  "imageheight": 26,
+  "tilerendersize": "grid"
+}

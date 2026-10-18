@@ -6,18 +6,18 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/karty-game/karty/internal/contextio"
+	"github.com/karty-game/karty/internal/process"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -34,6 +34,10 @@ const maxArchiveSize = uint64(1<<63 - 1)
 
 // InstallTinyGo downloads, verifies, and atomically installs TinyGo.
 func InstallTinyGo(ctx context.Context, options InstallTinyGoOptions) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	if options.Version == "" || options.Artifact.URL == "" || options.Artifact.SHA256 == "" {
 		return "", errTinyGoMetadata
 	}
@@ -77,7 +81,7 @@ func InstallTinyGo(ctx context.Context, options InstallTinyGoOptions) (string, e
 	}
 	defer os.RemoveAll(staging)
 
-	extractErr := extractTinyGo(staging, archive, options.Artifact.SHA256)
+	extractErr := extractTinyGo(ctx, staging, archive, options.Artifact.SHA256)
 	if extractErr != nil {
 		return "", extractErr
 	}
@@ -92,6 +96,10 @@ func InstallTinyGo(ctx context.Context, options InstallTinyGoOptions) (string, e
 	validateErr := validateTinyGo(ctx, filepath.Join(staging, "tinygo", "bin", executableName("tinygo")))
 	if validateErr != nil {
 		return "", validateErr
+	}
+
+	if err := ctx.Err(); err != nil {
+		return "", err
 	}
 
 	renameErr := os.Rename(staging, installDir)
@@ -143,7 +151,7 @@ func downloadURL(ctx context.Context, url string) (io.ReadCloser, error) {
 }
 
 func validateTinyGo(ctx context.Context, path string) error {
-	command := exec.CommandContext(ctx, path, "version")
+	command := process.CommandContext(ctx, path, "version")
 	if output, err := command.CombinedOutput(); err != nil {
 		return fmt.Errorf("validate downloaded TinyGo: %w\n%s", err, output)
 	}
@@ -151,36 +159,44 @@ func validateTinyGo(ctx context.Context, path string) error {
 	return nil
 }
 
-func extractTinyGo(destination string, source io.Reader, expectedSHA256 string) error {
-	contents, readErr := io.ReadAll(source)
+func extractTinyGo(ctx context.Context, destination string, source io.Reader, expectedSHA256 string) error {
+	contents, readErr := contextio.ReadAll(ctx, source)
 	if readErr != nil {
 		return fmt.Errorf("read TinyGo archive: %w", readErr)
 	}
 
-	actual := sha256.Sum256(contents)
+	actual, hashErr := contextio.Sum256(ctx, contents)
+	if hashErr != nil {
+		return hashErr
+	}
+
 	if hex.EncodeToString(actual[:]) != expectedSHA256 {
 		return fmt.Errorf("TinyGo archive checksum = %x, want %s: %w", actual, expectedSHA256, errTinyGoChecksum)
 	}
 
 	if bytes.HasPrefix(contents, []byte("PK\x03\x04")) {
-		return extractTinyGoZip(destination, contents)
+		return extractTinyGoZip(ctx, destination, contents)
 	}
 
-	return extractTinyGoTar(destination, contents)
+	return extractTinyGoTar(ctx, destination, contents)
 }
 
-func extractTinyGoTar(destination string, contents []byte) error {
-	gzipReader, err := gzip.NewReader(bytes.NewReader(contents))
+func extractTinyGoTar(ctx context.Context, destination string, contents []byte) error {
+	gzipReader, err := gzip.NewReader(contextio.Reader(ctx, bytes.NewReader(contents)))
 	if err != nil {
 		return fmt.Errorf("open TinyGo archive: %w", err)
 	}
 	defer gzipReader.Close()
 
-	return extractTinyGoTarEntries(destination, tar.NewReader(gzipReader))
+	return extractTinyGoTarEntries(ctx, destination, tar.NewReader(contextio.Reader(ctx, gzipReader)))
 }
 
-func extractTinyGoTarEntries(destination string, reader *tar.Reader) error {
+func extractTinyGoTarEntries(ctx context.Context, destination string, reader *tar.Reader) error {
 	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		header, nextErr := reader.Next()
 		if nextErr == io.EOF {
 			return nil
@@ -212,20 +228,24 @@ func extractTinyGoTarEntries(destination string, reader *tar.Reader) error {
 			continue
 		}
 
-		writeErr := writeArchiveFile(path, reader, header.Size, header.FileInfo().Mode())
+		writeErr := writeArchiveFile(ctx, path, reader, header.Size, header.FileInfo().Mode())
 		if writeErr != nil {
 			return writeErr
 		}
 	}
 }
 
-func extractTinyGoZip(destination string, contents []byte) error {
+func extractTinyGoZip(ctx context.Context, destination string, contents []byte) error {
 	archive, err := zip.NewReader(bytes.NewReader(contents), int64(len(contents)))
 	if err != nil {
 		return fmt.Errorf("open TinyGo ZIP archive: %w", err)
 	}
 
 	for _, entry := range archive.File {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		relative, valid := archiveRelativePath(entry.Name, "tinygo")
 		if !valid {
 			return fmt.Errorf("invalid TinyGo archive path: %s: %w", entry.Name, errInvalidTinyGoPath)
@@ -249,7 +269,7 @@ func extractTinyGoZip(destination string, contents []byte) error {
 			return openErr
 		}
 
-		copyErr := writeArchiveFile(path, input, int64(entry.UncompressedSize64), entry.Mode())
+		copyErr := writeArchiveFile(ctx, path, input, int64(entry.UncompressedSize64), entry.Mode())
 		closeErr := input.Close()
 
 		if copyErr != nil {
@@ -276,7 +296,7 @@ func archiveRelativePath(name, root string) (string, bool) {
 		!strings.HasPrefix(relative, ".."+string(filepath.Separator))
 }
 
-func writeArchiveFile(path string, source io.Reader, size int64, mode fs.FileMode) error {
+func writeArchiveFile(ctx context.Context, path string, source io.Reader, size int64, mode fs.FileMode) error {
 	if mkdirErr := os.MkdirAll(filepath.Dir(path), 0o750); mkdirErr != nil {
 		return mkdirErr
 	}
@@ -286,7 +306,7 @@ func writeArchiveFile(path string, source io.Reader, size int64, mode fs.FileMod
 		return openErr
 	}
 
-	_, copyErr := io.CopyN(file, source, size)
+	_, copyErr := contextio.CopyN(ctx, file, source, size)
 	closeErr := file.Close()
 
 	if copyErr != nil {

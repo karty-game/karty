@@ -1,7 +1,7 @@
 // world-camera-materials generates original, seamless sample albedo artwork.
 // Run from the CLI repository root through mise run generate-world-camera-materials.
 // Surface classifications and Materialize recipes live in the handwritten
-// samples/world-camera/levels/showcase/level.toml; see docs/sample-materials.md.
+// samples/world-camera/levels/showcase/level.toml.
 package main
 
 import (

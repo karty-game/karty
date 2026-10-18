@@ -17,7 +17,7 @@ pitch = 4.6
 output = 'dist/screenshots/daylight-look-back.png'
 
 [[views]]
-position = [0, 32, 1.7]
+position = [0, 32, 3.14]
 yaw = -20
 pitch = 10.3
 output = 'dist/screenshots/daylight-test-ground.png'

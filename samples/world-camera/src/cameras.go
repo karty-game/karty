@@ -259,7 +259,7 @@ func pathCamera(path []cameraPoint, progress float32) engine.CameraSettings {
 	settings := engine.CameraSettings{
 		Projection: engine.CameraProjectionPerspective,
 		Output:     engine.CameraOutputFull,
-		Position: engine.NewVec3D(
+		Position: engine.NewVec3(
 			from.x+(to.x-from.x)*amount,
 			from.y+(to.y-from.y)*amount,
 			from.z+(to.z-from.z)*amount,
@@ -283,7 +283,7 @@ func centeredIsometricCamera(angle, centerX, centerY float32) engine.CameraSetti
 	return engine.CameraSettings{
 		Projection: engine.CameraProjectionIsometric,
 		Output:     engine.CameraOutputFull,
-		Position:   engine.NewVec3D(x, y, 18),
+		Position:   engine.NewVec3(x, y, 18),
 		Yaw:        angle, Pitch: -0.6154797, FOVY: config.CameraFOVY, OrthoHeight: config.CameraOrthoHeight,
 		Near: config.CameraNear, Far: config.CameraFar, ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
 	}

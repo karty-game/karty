@@ -9,8 +9,10 @@ import (
 	"example.com/hangar/.karty/engine"
 )
 
-func lightGame() *Game {
+func lightGame(t *testing.T) *Game {
 	game := &Game{level: 9, torchEnabled: true}
+ if err:=game.World(9).Configure(engine.WorldSettings{Mode:engine.WorldSpatial,Gravity:engine.Vec3{Z:-9.81}});err!=nil{t.Fatal(err)}
+ t.Cleanup(game.stop)
 	game.fps = NewFPSController(&game.Game)
 	game.visit(0)
 	return game
@@ -35,8 +37,8 @@ func beamAngles(camera engine.CameraSettings, light engine.LightSettings) (float
 
 func TestTorchQuarterSecondAimAndIdle(t *testing.T) {
 	engine.FixtureBegin()
-	game := lightGame()
-	if !game.torch.Settings.Shadows || game.torch.Settings.Color != engine.NewVec3D(3, 2.7, 2.16) || game.torch.Settings.InnerAngle != .25 || game.torch.Settings.OuterAngle != .50 {
+	game := lightGame(t)
+	if !game.torch.Settings.Shadows || game.torch.Settings.Color != engine.NewVec3(3, 2.7, 2.16) || game.torch.Settings.InnerAngle != .25 || game.torch.Settings.OuterAngle != .50 {
 		t.Fatal("torch tuning changed", game.torch.Settings)
 	}
 	game.camera.Settings.Yaw, game.camera.Settings.Pitch = 0, 0
@@ -76,7 +78,7 @@ func TestTorchQuarterSecondAimAndIdle(t *testing.T) {
 
 func TestTorchYawWrapFrameGapAndAcceptedRotation(t *testing.T) {
 	engine.FixtureBegin()
-	game := lightGame()
+	game := lightGame(t)
 	start := math.Pi - .04
 	game.torchAim = lightAim{yaw: start, pitch: .4}
 	game.camera.Settings.Yaw, game.camera.Settings.Pitch = float32(-math.Pi+.04), .4
@@ -91,9 +93,9 @@ func TestTorchYawWrapFrameGapAndAcceptedRotation(t *testing.T) {
 	// Accepted camera rotation (for example a portal) carries the existing
 	// local beam through the new pose, then smoothing resumes from that aim.
 	local := game.torch.Settings
-	pose := engine.NewTransform3D(engine.NewVec3D(8, 9, 2))
+	pose := engine.NewTransform3D(engine.NewVec3(8, 9, 2))
 	pose.Yaw, pose.Pitch = .8, -.5
-	game.camera.ApplyAuthoritativeTransform(engine.InputEvent{Type: engine.EventAuthoritativeTransform, EntityID: game.camera.ID, Transform3D: pose})
+	engine.FixtureAcceptedPose(game.camera.ID,pose)
 	game.acceptTorchPose(pose)
 	beforeYaw, beforePitch := beamAngles(game.camera.Settings, local)
 	game.updateTorch(17)
@@ -112,8 +114,8 @@ func TestTorchYawWrapFrameGapAndAcceptedRotation(t *testing.T) {
 
 func TestTorchToggleAndCameraReplacement(t *testing.T) {
 	engine.FixtureBegin()
-	game := lightGame()
-	handheldOffset := engine.NewVec3D(.35, .20, -.30) // right, forward, up
+	game := lightGame(t)
+	handheldOffset := engine.NewVec3(.35, .20, -.30) // right, forward, up
 	if game.torch.Settings.Position != handheldOffset || game.torch.Settings.Parent != game.camera.ID || !game.torch.Settings.Enabled || !game.torch.Settings.Shadows || game.torch.World != game.level {
 		t.Fatal("torch is not attached to its level camera", game.torch)
 	}
@@ -163,8 +165,8 @@ func TestTorchToggleAndCameraReplacement(t *testing.T) {
 
 func TestPointBoltAcceptedPoseMovementReplacementAndFade(t *testing.T) {
 	engine.FixtureBegin()
-	game := lightGame()
-	game.camera.Settings.Position = engine.NewVec3D(7, 8, 2)
+	game := lightGame(t)
+	game.camera.Settings.Position = engine.NewVec3(7, 8, 2)
 	game.camera.Settings.Yaw = math.Pi / 2
 	game.camera.Settings.Pitch = 0
 	game.torchAim = lightAim{yaw: float64(game.camera.Settings.Yaw)}
@@ -214,13 +216,18 @@ func TestPointBoltAcceptedPoseMovementReplacementAndFade(t *testing.T) {
 func checkControllerCommands(t *testing.T, commands []byte, id uint32, vx, vy float32, cameraUpdate bool) {
 	t.Helper()
 	wantCount := uint32(1)
+	offset := 24
+	// Whole-game updates also animate the independent sector floor.
+	if len(commands) > offset && commands[offset] == 54 {
+		wantCount++
+		offset += 3 + int(binary.LittleEndian.Uint16(commands[offset+1:offset+3]))
+	}
 	if cameraUpdate {
 		wantCount++
 	}
 	if binary.LittleEndian.Uint32(commands[16:20]) != wantCount {
 		t.Fatalf("unexpected controller commands: %v", commands)
 	}
-	offset := 24
 	if cameraUpdate {
 		if commands[offset] != 28 {
 			t.Fatalf("expected camera settings before velocity: %v", commands)
@@ -244,11 +251,11 @@ func checkControllerCommands(t *testing.T, commands []byte, id uint32, vx, vy fl
 
 func TestControllerUsesPhysicsVelocityForWalkLookStopAndDescent(t *testing.T) {
 	engine.FixtureBegin()
-	game := lightGame()
+	game := lightGame(t)
 	defer game.stop()
 	controller := game.fps
 	settings := game.camera.Settings
-	settings.Position, settings.Yaw, settings.Pitch = engine.NewVec3D(9, -4, 1.7), 0, 0
+	settings.Position, settings.Yaw, settings.Pitch = engine.NewVec3(9, -4, 1.7), 0, 0
 	game.camera.Settings = settings // Host-accepted pose, with no new command.
 	controller.Key(engine.KeyW, true)
 	engine.FixtureBegin()
@@ -276,7 +283,7 @@ func TestControllerUsesPhysicsVelocityForWalkLookStopAndDescent(t *testing.T) {
 	controller.Reset()
 	controller.Key(engine.KeyW, true)
 	settings = game.camera.Settings
-	settings.Position, settings.Yaw = engine.NewVec3D(-5.7, 22, 2.9), math.Pi/2
+	settings.Position, settings.Yaw = engine.NewVec3(-5.7, 22, 2.9), math.Pi/2
 	game.camera.Settings = settings
 	engine.FixtureBegin()
 	controller.Update(engine.Frame{})
@@ -292,15 +299,15 @@ func TestControllerUsesPhysicsVelocityForWalkLookStopAndDescent(t *testing.T) {
 
 func TestControllerOnlyLiftsGroundedStairsAtCurrentXY(t *testing.T) {
 	engine.FixtureBegin()
-	game := lightGame()
+	game := lightGame(t)
 	defer game.stop()
 	settings := game.camera.Settings
-	settings.Position, settings.Yaw, settings.Pitch = engine.NewVec3D(19.68, 13.8, 1.9), math.Pi/2, 0
+	settings.Position, settings.Yaw, settings.Pitch = engine.NewVec3(46.32, 13.8, 1.9), -math.Pi/2, 0
 	game.camera.Settings = settings
 	game.fps.Key(engine.KeyW, true)
 	engine.FixtureBegin()
 	game.fps.Update(engine.Frame{})
-	checkControllerCommands(t, engine.FixtureCommands(), game.camera.ID, 3.3, 0, true)
+	checkControllerCommands(t, engine.FixtureCommands(), game.camera.ID, -3.3, 0, true)
 	position := game.camera.Settings.Position
 	if position.X != settings.Position.X || position.Y != settings.Position.Y || math.Abs(float64(position.Z-2.25)) > .00001 {
 		t.Fatalf("stair lift moved horizontally or changed wrong height: %v", position)
@@ -309,7 +316,7 @@ func TestControllerOnlyLiftsGroundedStairsAtCurrentXY(t *testing.T) {
 	game.camera.Settings = settings
 	engine.FixtureBegin()
 	game.fps.Update(engine.Frame{})
-	checkControllerCommands(t, engine.FixtureCommands(), game.camera.ID, 3.3, 0, false)
+	checkControllerCommands(t, engine.FixtureCommands(), game.camera.ID, -3.3, 0, false)
 	if game.camera.Settings.Position != settings.Position {
 		t.Fatal("airborne movement teleported toward a stair")
 	}
@@ -317,23 +324,23 @@ func TestControllerOnlyLiftsGroundedStairsAtCurrentXY(t *testing.T) {
 
 func TestControllerResetAndCameraChangeClearTransfer(t *testing.T) {
 	engine.FixtureBegin()
-	game := lightGame()
+	game := lightGame(t)
 	defer game.stop()
 	for _, cameraChange := range []bool{false, true} {
 		settings := game.camera.Settings
-		settings.Position, settings.Yaw, settings.Pitch = engine.NewVec3D(19.68, 13.8, 1.9), math.Pi/2, 0
+		settings.Position, settings.Yaw, settings.Pitch = engine.NewVec3(46.32, 13.8, 1.9), -math.Pi/2, 0
 		game.camera.Settings = settings
 		game.fps.Key(engine.KeyW, true)
 		engine.FixtureBegin()
 		game.fps.Update(engine.Frame{})
 		settings = game.camera.Settings
-		settings.Position.X, settings.Position.Z = 19.735, 2.20 // Accepted progress plus edge settling.
+		settings.Position.X, settings.Position.Z = 46.265, 2.20 // Accepted progress plus edge settling.
 		game.camera.Settings = settings
 		engine.FixtureBegin()
 		game.fps.Update(engine.Frame{})
-		checkControllerCommands(t, engine.FixtureCommands(), game.camera.ID, 3.3, 0, true)
+		checkControllerCommands(t, engine.FixtureCommands(), game.camera.ID, -3.3, 0, true)
 		if cameraChange {
-			game.fps.SetCamera(game.camera)
+			game.fps.SetCamera(game.camera,game.fps.body)
 		} else {
 			game.fps.Reset()
 		}
@@ -341,7 +348,7 @@ func TestControllerResetAndCameraChangeClearTransfer(t *testing.T) {
 		game.camera.Settings = settings
 		engine.FixtureBegin()
 		game.fps.Update(engine.Frame{})
-		checkControllerCommands(t, engine.FixtureCommands(), game.camera.ID, 3.3, 0, false)
+		checkControllerCommands(t, engine.FixtureCommands(), game.camera.ID, -3.3, 0, false)
 		if game.camera.Settings.Position != settings.Position {
 			t.Fatal("reset retained a provisional transfer lift")
 		}
@@ -350,17 +357,17 @@ func TestControllerResetAndCameraChangeClearTransfer(t *testing.T) {
 
 func TestControllerGravitySettlingEmitsNoPositionCommand(t *testing.T) {
 	engine.FixtureBegin()
-	game := lightGame()
+	game := lightGame(t)
 	defer game.stop()
 	settings := game.camera.Settings
-	settings.Position, settings.Yaw, settings.Pitch = engine.NewVec3D(.32, 22, 1.7), -math.Pi/2, 0
+	settings.Position, settings.Yaw, settings.Pitch = engine.NewVec3(.32, 22, 1.7), -math.Pi/2, 0
 	game.camera.Settings = settings
 	game.fps.Key(engine.KeyW, true)
 	engine.FixtureBegin()
 	game.fps.Update(engine.Frame{})
 	checkControllerCommands(t, engine.FixtureCommands(), game.camera.ID, -3.3, 0, true)
 	settings = game.camera.Settings
-	settings.Position = engine.NewVec3D(-.4, 22, 2.04) // Full footprint on first tread; gap still settling.
+	settings.Position = engine.NewVec3(-.4, 22, 2.04) // Full footprint on first tread; gap still settling.
 	game.camera.Settings = settings
 	engine.FixtureBegin()
 	game.fps.Update(engine.Frame{})
@@ -368,7 +375,7 @@ func TestControllerGravitySettlingEmitsNoPositionCommand(t *testing.T) {
 	if game.camera.Settings.Position != settings.Position {
 		t.Fatal("full-support settling teleported or froze gravity")
 	}
-	settings.Position = engine.NewVec3D(-.68, 22, 2.02)
+	settings.Position = engine.NewVec3(-.68, 22, 2.02)
 	game.camera.Settings = settings
 	engine.FixtureBegin()
 	game.fps.Update(engine.Frame{})
@@ -380,10 +387,10 @@ func TestControllerGravitySettlingEmitsNoPositionCommand(t *testing.T) {
 
 func TestControllerResumesGroundedCornerOnlyTowardHigherFloor(t *testing.T) {
 	engine.FixtureBegin()
-	game := lightGame()
+	game := lightGame(t)
 	defer game.stop()
 	settings := game.camera.Settings
-	settings.Position, settings.Yaw, settings.Pitch = engine.NewVec3D(.29, 22, 1.9), -math.Pi/2, 0
+	settings.Position, settings.Yaw, settings.Pitch = engine.NewVec3(.29, 22, 1.9), -math.Pi/2, 0
 	game.camera.Settings = settings
 	game.fps.Key(engine.KeyW, true)
 	engine.FixtureBegin()

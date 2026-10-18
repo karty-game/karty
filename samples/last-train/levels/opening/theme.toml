@@ -1,0 +1,17 @@
+extends = "dark"
+
+[images.carriage]
+asset = "carriage"
+slice = [0, 0, 0, 0]
+
+[images.mara]
+asset = "mara"
+slice = [0, 0, 0, 0]
+
+[images.mara-worried]
+asset = "mara-worried"
+slice = [0, 0, 0, 0]
+
+[images.platform]
+asset = "platform"
+slice = [0, 0, 0, 0]

@@ -35,6 +35,8 @@ type BakeOptions struct {
 	Bounces *int
 	Denoise *string
 	Workers int
+	// Incremental reuses only complete prebakes matching current inputs/options.
+	Incremental bool
 }
 
 // BakeReport describes one completed level. Artifacts remain generated cache
@@ -46,6 +48,7 @@ type BakeReport struct {
 	Duration  time.Duration
 	Stats     worldlightmapbake.Stats
 	Automatic bool
+	Reused    bool
 	// OutputBytes counts the manifest and image published by this bake, excluding older cache entries.
 	OutputBytes int64
 }
@@ -159,6 +162,17 @@ func loadBakeMaterials(directory string, definition manifest) ([]metadataTexture
 func bakeLevel(ctx context.Context, projectDirectory, directory string, definition manifest, options BakeOptions) (BakeReport, error) {
 	started := time.Now()
 
+	set, err := levelPackages(ctx, directory)
+	if err != nil {
+		return BakeReport{}, err
+	}
+	defer set.Close()
+
+	definition, err = resolveLevelPackages(ctx, directory, definition, set)
+	if err != nil {
+		return BakeReport{}, err
+	}
+
 	cache, err := prepareBakeDirectory(projectDirectory, directory)
 	if err != nil {
 		return BakeReport{}, err
@@ -204,6 +218,22 @@ func bakeLevel(ctx context.Context, projectDirectory, directory string, definiti
 	denoise := definition.Lightmap.denoise()
 	if options.Denoise != nil {
 		denoise = *options.Denoise
+	}
+
+	if err := ctx.Err(); err != nil {
+		return BakeReport{}, err
+	}
+
+	if options.Incremental && options.Workers >= 0 && options.Workers <= 64 {
+		if report, found := reuseBake(projectDirectory, directory, definition, document, layout, samples, bounces, denoise); found {
+			if err := ctx.Err(); err != nil {
+				return BakeReport{}, err
+			}
+
+			report.Duration = time.Since(started)
+
+			return report, nil
+		}
 	}
 
 	log.Info("Baking directional lightmap", "level_name", definition.Level.Name, "samples", samples, "bounces", bounces, "denoise", denoise)
@@ -262,6 +292,39 @@ func bakeLevel(ctx context.Context, projectDirectory, directory string, definiti
 		Automatic:   definition.Lightmap.Offline,
 		OutputBytes: int64(len(manifest) + len(encoded)),
 	}, nil
+}
+
+func reuseBake(projectDirectory, directory string, definition manifest, document world.Document,
+	layout worldlightmap.Layout, samples, bounces int, denoise string) (BakeReport, bool) {
+	// Explicit command overrides take precedence over the authored recipe for
+	// cache validation, exactly as they do for a fresh bake.
+	settings := *definition.Lightmap
+	settings.BakeSamples, settings.BakeBounces, settings.BakeDenoise = &samples, &bounces, &denoise
+	definition.Lightmap = &settings
+
+	entries := readAutomaticPrebake(projectDirectory, directory, definition, layout, document)
+	if len(entries) == 0 {
+		return BakeReport{}, false
+	}
+
+	header, err := worldlightmap.DecodePrebakeManifest(entries[0].Data)
+	if err != nil {
+		return BakeReport{}, false
+	}
+
+	cache, err := automaticBakePath(projectDirectory, directory)
+	if err != nil {
+		return BakeReport{}, false
+	}
+
+	cache = filepath.Join(projectDirectory, cache)
+
+	return BakeReport{
+		Name: definition.Level.Name, Manifest: filepath.Join(cache, automaticBakeManifest),
+		Image:     filepath.Join(cache, "lightmap-"+header.ImageSHA256+".qoi"),
+		Automatic: definition.Lightmap.Offline, Reused: true,
+		Stats: worldlightmapbake.Stats{Samples: header.Samples, Bounces: header.Bounces, Denoise: denoise},
+	}, true
 }
 
 // Cache identity follows the source directory, never an authored logical name.
@@ -346,7 +409,7 @@ func readAutomaticPrebake(
 ) (entries []level.SourceEntry) {
 	defer func() {
 		if len(entries) == 0 {
-			log.Info("Offline lightmap unavailable or stale; packaging without a prebake", "level_name", definition.Level.Name)
+			log.Info("Offline lightmap unavailable or stale", "level_name", definition.Level.Name)
 		}
 	}()
 

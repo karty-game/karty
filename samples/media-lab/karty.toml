@@ -7,7 +7,7 @@ width = 960
 height = 540
 
 [sdk]
-version = "0.0.12"
+version = "0.0.13"
 
 [[assets.texture]]
 name = "gallery.background"
@@ -51,7 +51,7 @@ source = "assets/sounds/music/loop.wav"
 profile = "music"
 
 [assets.music.transform]
-sample_rate = 24000
+sample_rate = 48000
 channels = "preserve"
 
 [[assets.sound]]
@@ -69,7 +69,7 @@ source = "assets/sounds/effects/machine-gun.wav"
 profile = "effect"
 
 [assets.sound.transform]
-sample_rate = 44100
+sample_rate = 48000
 channels = "mono"
 
 [[assets.video]]

@@ -1,0 +1,11 @@
+{
+  "cartridgeSha256": "6088b92c8d25c630a3bc4c2a690614108d73a33b7427bdde18045e19a60479e9",
+  "hostSha256": "ef8692416cab63c9d36fbcc2982a07029249e90e2a9c60efc2e7f7cc140f8508",
+  "width": 960,
+  "height": 540,
+  "worldScale": 1,
+  "antialiasing": false,
+  "backend": "Chromium SwiftShader",
+  "position": [12.25, 22.75],
+  "scope": "Actual three-light completion; software composition capture, not device performance evidence."
+}

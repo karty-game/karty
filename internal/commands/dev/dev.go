@@ -1,4 +1,4 @@
-// Package dev defines the build-and-serve development command.
+// Package dev defines the persistent build-and-serve development command.
 package dev
 
 import (
@@ -6,195 +6,195 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/karty-game/karty/internal/project"
-	"github.com/karty-game/karty/internal/sdk"
-	toolchainservice "github.com/karty-game/karty/internal/toolchain"
+	buildservice "github.com/karty-game/karty/internal/build"
+	"github.com/karty-game/karty/internal/devserver"
+	"github.com/karty-game/karty/internal/packages"
 	"github.com/urfave/cli/v3"
-)
-
-const (
-	defaultPort          = "4242"
-	airRuntimeDirectory  = ".karty/log"
-	airBuildLog          = "build-errors.log"
-	airWatchedExtensions = "go,kui,ui,json,toml,yaml,yml,png,jpg,jpeg,webp,wav,mpg"
 )
 
 type staticError string
 
-func (err staticError) Error() string {
-	return string(err)
-}
+func (err staticError) Error() string { return string(err) }
 
 const (
-	errUnsupportedTarget staticError = "unsupported dev target; only web is available (build native with `karty build --host /path/to/karty-host`, then run the staged host)"
-	errHostNotFound      staticError = "web host not found; build it with `mise run build-host-web` or pass --host /path/to/karty-host.wasm"
-	errHostNotFile       staticError = "web host is not a file"
-	errAirNotFound       staticError = "managed Air is unavailable; pass --air /path/to/air"
-	errInvalidPort       staticError = "dev port must be a number between 1 and 65534"
-	errPortInUse         staticError = "dev port is already in use"
+	defaultPort                        = "4242"
+	previewHeaderTimeout               = 10 * time.Second
+	previewWriteTimeout                = 30 * time.Second
+	previewIdleTimeout                 = 60 * time.Second
+	previewShutdownTimeout             = 3 * time.Second
+	errUnsupportedTarget   staticError = "unsupported dev target; only web is available (use karty build for native)"
+	errHostNotFound        staticError = "web host not found; pass --host /path/to/karty-host.wasm or use the project's managed SDK"
+	errHostNotFile         staticError = "web host is not a file"
+	errInvalidPort         staticError = "dev port must be a number between 0 and 65535"
 )
 
-// Command creates the development server command.
+// Command creates the development server command. It needs no external watcher.
 func Command() *cli.Command {
 	return &cli.Command{
-		Name:  "dev",
-		Usage: "build and serve a project for development",
+		Name: "dev", Usage: "watch, build and serve a project with live resource updates",
 		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "compiler", Value: "go", Usage: "development cartridge compiler: go or tinygo"},
 			&cli.StringFlag{Name: "target", Value: "web", Usage: "development target"},
 			&cli.StringFlag{Name: "host", Usage: "path to a pre-built host artifact"},
-			&cli.StringFlag{Name: "air", Usage: "path to an Air executable"},
 			&cli.StringFlag{Name: "go", Usage: "path to a Go executable"},
 			&cli.StringFlag{Name: "tinygo", Usage: "path to a TinyGo executable"},
 			&cli.StringFlag{Name: "wasm-tools", Usage: "path to a wasm-tools executable"},
-			&cli.StringFlag{Name: "bind", Value: "0.0.0.0", Usage: "HTTP bind address"},
-			&cli.StringFlag{Name: "port", Value: defaultPort, Usage: "HTTP port"},
-		},
-		Action: run,
+			&cli.StringFlag{Name: "bind", Value: "127.0.0.1", Usage: "HTTP bind address (use 0.0.0.0 to share on your network)"},
+			&cli.StringFlag{Name: "port", Value: defaultPort, Usage: "HTTP port (0 selects an available port)"},
+		}, Action: run,
 	}
 }
 
+type configuration struct {
+	directory string
+	address   string
+	build     buildservice.Options
+}
+
 func run(ctx context.Context, command *cli.Command) error {
-	target := command.String("target")
-	if target != "web" {
-		return fmt.Errorf("%q: %w", target, errUnsupportedTarget)
-	}
-
-	config, err := project.Load(".")
+	config, err := configure(command)
 	if err != nil {
 		return err
 	}
 
-	manifest, err := sdk.Resolve(config.SDK.Version)
-	if err != nil {
-		return err
+	return serveDevelopment(ctx, command, config)
+}
+
+func configure(command *cli.Command) (configuration, error) {
+	if command.String("target") != "web" {
+		return configuration{}, errUnsupportedTarget
+	}
+
+	compiler := command.String("compiler")
+	if compiler != "go" && compiler != "tinygo" {
+		return configuration{}, fmt.Errorf("development compiler must be go or tinygo: %w", os.ErrInvalid)
+	}
+
+	port, err := strconv.Atoi(command.String("port"))
+	if err != nil || port < 0 || port > 65535 {
+		return configuration{}, errInvalidPort
 	}
 
 	host, err := devHost(command.String("host"))
 	if err != nil {
-		return err
+		return configuration{}, err
 	}
 
-	_, err = toolchainservice.Ensure(ctx, manifest, toolchainservice.EnsureOptions{
-		GoOverride:        command.String("go"),
-		TinyGoOverride:    command.String("tinygo"),
-		WasmToolsOverride: command.String("wasm-tools"),
-		AirOverride:       command.String("air"),
-		NeedGo:            config.Project.Compiler == "go",
-		NeedTinyGo:        config.Project.Compiler != "go",
-		NeedWasmTools:     true,
-		NeedAir:           true,
+	directory, err := os.Getwd()
+	if err != nil {
+		return configuration{}, err
+	}
+
+	return configuration{directory: directory, address: net.JoinHostPort(command.String("bind"), strconv.Itoa(port)),
+		build: developmentOptions(host, compiler, command.String("go"), command.String("tinygo"), command.String("wasm-tools"))}, nil
+}
+
+func serveDevelopment(ctx context.Context, command *cli.Command, config configuration) error {
+	return serve(ctx, command, config, func(buildCtx context.Context, progress func(string)) error {
+		options := config.build
+		options.Progress = progress
+
+		return buildservice.RunWithOptions(buildCtx, config.directory, options)
 	})
+}
+
+func serve(ctx context.Context, command *cli.Command, config configuration, build func(context.Context, func(string)) error) error {
+	if ctx.Err() != nil {
+		return nil
+	}
+
+	workCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	listenerConfig := net.ListenConfig{}
+
+	listener, err := listenerConfig.Listen(workCtx, "tcp", config.address)
 	if err != nil {
-		return fmt.Errorf("prepare SDK toolchain: %w", err)
+		return err
 	}
+	defer listener.Close()
 
-	goPath := command.String("go")
-	if config.Project.Compiler == "go" && goPath == "" {
-		goPath, err = toolchainservice.Go(ctx, toolchainservice.GoOptions{Version: manifest.Tools.Go})
-		if err != nil {
-			return fmt.Errorf("resolve Go for dev: %w", err)
-		}
+	transport, err := devserver.NewServer()
+	if err != nil {
+		return err
 	}
+	defer transport.Close()
 
-	air, err := findAir(command.String("air"), manifest.Tools.Air)
+	server := &http.Server{Handler: transport, ReadHeaderTimeout: previewHeaderTimeout,
+		WriteTimeout: previewWriteTimeout, IdleTimeout: previewIdleTimeout,
+		BaseContext: func(net.Listener) context.Context { return workCtx }}
+	defer server.Close()
+
+	serving := make(chan error, 1)
+	go func() { serving <- server.Serve(listener); cancel() }()
+
+	stopped := make(chan struct{})
+	go func() {
+		defer close(stopped)
+
+		<-workCtx.Done()
+		transport.Close()
+
+		// The work context is already canceled. Give HTTP handlers a bounded
+		// cleanup window while the build worker joins its own canceled work.
+		cleanupCtx, stop := context.WithTimeout(context.WithoutCancel(workCtx), previewShutdownTimeout)
+		defer stop()
+
+		_ = server.Shutdown(cleanupCtx)
+		_ = server.Close()
+	}()
+
+	printAddress(command, listener.Addr().String())
+
+	err = devserver.Run(workCtx, transport, devserver.RunOptions{
+		Directory: config.directory,
+		Build:     build,
+		Log:       func(message string) { fmt.Fprintln(command.ErrWriter, message) },
+		WatchRoots: func(ctx context.Context) (map[string]string, error) {
+			return packages.FolderRoots(ctx, config.directory)
+		},
+	})
+
+	cancel()
+	<-stopped
+
+	serveErr := <-serving
+
 	if err != nil {
 		return err
 	}
 
-	port := command.String("port")
-
-	portNumber, err := strconv.Atoi(port)
-	if err != nil || portNumber < 1 || portNumber > 65534 {
-		return errInvalidPort
-	}
-
-	appAddress := net.JoinHostPort("127.0.0.1", strconv.Itoa(portNumber+1))
-
-	proxyAddress := net.JoinHostPort(command.String("bind"), port)
-	if err := ensurePortAvailable(ctx, command.String("bind"), portNumber); err != nil {
-		return err
-	}
-
-	if err := ensurePortAvailable(ctx, "127.0.0.1", portNumber+1); err != nil {
-		return err
-	}
-
-	currentExecutable, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("resolve karty executable: %w", err)
-	}
-
-	buildCommand := devBuildCommand(currentExecutable, host)
-
-	for _, option := range []struct{ name, value string }{
-		{name: "--go", value: goPath},
-		{name: "--tinygo", value: command.String("tinygo")},
-		{name: "--wasm-tools", value: command.String("wasm-tools")},
-	} {
-		if option.value != "" {
-			buildCommand = append(buildCommand, option.name, shellQuote(option.value))
-		}
-	}
-
-	serveCommand := strings.Join([]string{
-		shellQuote(currentExecutable),
-		"serve dist/web --addr", appAddress,
-	}, " ")
-
-	args := []string{
-		"-root", ".",
-		"-build.cmd", strings.Join(buildCommand, " "),
-		"-build.full_bin", serveCommand,
-		"-build.include_dir", "src,assets,levels,ui",
-		"-build.include_ext", airWatchedExtensions,
-		"-build.include_file", "karty.toml",
-		"-build.exclude_unchanged", "true",
-		"-build.poll", "true",
-		"-build.poll_interval", "500",
-		"-build.exclude_regex", generatedSourcePattern,
-		"-build.exclude_dir", ".karty,dist",
-		"-tmp_dir", airRuntimeDirectory,
-		"-build.log", airBuildLog,
-		"-build.stop_on_error", "false",
-		"-proxy.enabled", "true",
-		"-proxy.proxy_port", port,
-		"-proxy.app_port", strconv.Itoa(portNumber + 1),
-		"-proxy.app_start_timeout", "10000",
-		"-log.time", "false",
-	}
-
-	fmt.Fprintf(os.Stderr, "Karty dev watching src, assets, levels and ui, proxying at http://%s/\n", proxyAddress)
-
-	process := exec.CommandContext(context.WithoutCancel(ctx), air, args...)
-
-	process.Env = append(os.Environ(), "KARTY_AIR_PROXY=1")
-	prepareProcess(process)
-
-	process.Dir, err = os.Getwd()
-	if err != nil {
-		return fmt.Errorf("resolve project directory: %w", err)
-	}
-
-	process.Stdin = os.Stdin
-	process.Stdout = os.Stdout
-	process.Stderr = os.Stderr
-
-	if err := runProcess(ctx, process); err != nil && ctx.Err() == nil {
-		return fmt.Errorf("run air: %w", err)
+	if !errors.Is(serveErr, http.ErrServerClosed) {
+		return serveErr
 	}
 
 	return nil
 }
 
-// devHost returns only local overrides. Managed artifacts are resolved by each
-// build from the project SDK, including its separately cached wasm_exec.js.
+func printAddress(command *cli.Command, address string) {
+	fmt.Fprintf(command.Writer, "Karty dev watching project files at http://%s/\n", address)
+
+	if template := os.Getenv("VSCODE_PROXY_URI"); strings.Contains(template, "{{port}}") {
+		_, port, err := net.SplitHostPort(address)
+		if err == nil {
+			fmt.Fprintf(command.Writer, "Workspace preview: %s\n", strings.ReplaceAll(template, "{{port}}", port))
+		}
+	}
+}
+
+func developmentOptions(host, compiler, goPath, tinygo, wasmTools string) buildservice.Options {
+	return buildservice.Options{Target: "web", Compiler: compiler, Go: goPath, TinyGo: tinygo, WasmTools: wasmTools,
+		Host: host, Development: true, DevelopmentBakes: true, BundledRuntime: true}
+}
+
+// Managed hosts stay SDK-pinned; local overrides are validated before listening.
 func devHost(override string) (string, error) {
 	host, err := findHost(override)
 	if errors.Is(err, errHostNotFound) {
@@ -202,70 +202,6 @@ func devHost(override string) (string, error) {
 	}
 
 	return host, err
-}
-
-func devBuildCommand(executable, host string) []string {
-	command := []string{shellQuote(executable), "build", "--target", "web", "--development"}
-	if host != "" {
-		command = append(command, "--host", shellQuote(host))
-	}
-
-	return command
-}
-
-func runProcess(ctx context.Context, process *exec.Cmd) error {
-	if err := process.Start(); err != nil {
-		return err
-	}
-
-	wait := make(chan error, 1)
-	go func() {
-		wait <- process.Wait()
-	}()
-
-	select {
-	case err := <-wait:
-		return err
-	case <-ctx.Done():
-		interruptProcess(process)
-
-		timer := time.NewTimer(2 * time.Second)
-		defer timer.Stop()
-
-		select {
-		case <-wait:
-		case <-timer.C:
-			killProcess(process)
-			<-wait
-		}
-
-		return nil
-	}
-}
-
-func findAir(override, version string) (string, error) {
-	path, err := toolchainservice.Air(toolchainservice.AirOptions{Override: override, Version: version})
-	if err != nil {
-		return "", errAirNotFound
-	}
-
-	return path, nil
-}
-
-func shellQuote(value string) string {
-	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
-}
-
-func ensurePortAvailable(ctx context.Context, host string, port int) error {
-	address := net.JoinHostPort(host, strconv.Itoa(port))
-	listenerConfig := net.ListenConfig{}
-
-	listener, err := listenerConfig.Listen(ctx, "tcp", address)
-	if err != nil {
-		return fmt.Errorf("%s: %w", address, errPortInUse)
-	}
-
-	return listener.Close()
 }
 
 func findHost(explicit string) (string, error) {

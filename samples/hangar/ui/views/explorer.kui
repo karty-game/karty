@@ -33,6 +33,10 @@
             <button onClick={ barrel }>Burning barrel</button>
             <button onClick={ props.Hide }>Hide</button>
           </panel>
+          <panel class="row">
+            <button onClick={ underAcid }>Under acid</button>
+            <button onClick={ floatDemo }>Float demo</button>
+          </panel>
           <label class="help">{ props.Controls() }</label>
         </panel>
       }
@@ -75,6 +79,8 @@ func setup(props ExplorerProps) {
 	windows := func() { props.Visit(6) }
 	acidControl := func() { props.Visit(7) }
 	barrel := func() { props.Visit(8) }
+	underAcid := func() { props.Visit(9) }
+	floatDemo := func() { props.Visit(10) }
 }
 </script>
 
@@ -105,6 +111,7 @@ func setup(props ExplorerProps) {
   min-width: 112
 .help
   font-size: 11
+  max-width: 220
   color: #d5d5c6
 .views
   width: 260
@@ -125,4 +132,18 @@ button
 button:hover
   background: #445342
   color: #ffedb5
+@media (max-width: 900)
+  .screen
+    padding: 16
+  .title
+    font-size: 24
+  .camera-panel
+    top: 100
+    right: 0
+  .views
+    width: 260
+    height: 190
+    overflow: scroll
+  .eyebrow
+    font-size: 10
 </style>

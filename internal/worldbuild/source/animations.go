@@ -56,11 +56,35 @@ func validateAnimationMapping(node *yaml.Node, version uint16) error {
 			return worldsource.ErrVersion
 		}
 
+		if name == "fluids" {
+			if version < worldsource.FluidsVersion {
+				return worldsource.ErrVersion
+			}
+
+			if err := rejectFluidNulls(value); err != nil {
+				return err
+			}
+		}
+
 		switch name {
 		case "surface_amplitude", "opacity", "pixel_size":
 			if kind != "liquid" || value.Tag == "!!null" {
 				return worldsource.ErrContent
 			}
+		}
+	}
+
+	return nil
+}
+
+func rejectFluidNulls(node *yaml.Node) error {
+	if node.Tag == "!!null" {
+		return worldsource.ErrContent
+	}
+
+	for _, child := range node.Content {
+		if err := rejectFluidNulls(child); err != nil {
+			return err
 		}
 	}
 

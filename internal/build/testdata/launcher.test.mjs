@@ -140,7 +140,9 @@ function commands(frame) {
 
 const context = {
   setTimeout,
+  location: { href: "https://karty.test/proxy/4242/" },
   document: {
+    baseURI: "https://karty.test/proxy/4242/__karty_dev/generations/pinned/",
     documentElement: { dataset: {} },
     getElementById: (id) => elements.get(id),
     addEventListener() {},
@@ -157,6 +159,7 @@ const context = {
   TextDecoder,
   BigInt,
   crypto: globalThis.crypto,
+  performance: globalThis.performance,
   console: {
     log: () => {},
     warn: console.warn,
@@ -184,6 +187,7 @@ const context = {
       customSections: (module, name) => {
         if (!mock) return WebAssembly.Module.customSections(module, name);
         if (
+          name === "karty.storage.v1" ||
           name === "karty.ui.v1" ||
           name === "karty.videos.v1" ||
           name === "karty.audio-streams.v1" ||
@@ -262,6 +266,12 @@ const context = {
               }
               assert.equal(imports.wasi_snapshot_preview1.args_get(0, 0), 0);
               assert.equal(imports.wasi_snapshot_preview1.environ_get(0, 0), 0);
+              for (const clock of [0, 1]) {
+                assert.equal(imports.wasi_snapshot_preview1.clock_time_get(clock, 0n, 40), 0);
+                assert.ok(new DataView(memory.buffer).getBigUint64(40, true) > 0n);
+              }
+              assert.equal(imports.wasi_snapshot_preview1.clock_time_get(9, 0n, 40), 28);
+              assert.equal(imports.wasi_snapshot_preview1.clock_time_get(1, 0n, memory.buffer.byteLength), 21);
               new Uint8Array(memory.buffer, 100, 5).set(new TextEncoder().encode("hello"));
               view.setUint32(24, 100, true);
               view.setUint32(28, 5, true);
@@ -269,6 +279,32 @@ const context = {
               assert.equal(view.getUint32(32, true), 5);
               assert.equal(imports.wasi_snapshot_preview1.fd_write(1, memory.buffer.byteLength, 1, 32), 21);
               assert.equal(imports.wasi_snapshot_preview1.fd_write(99, 24, 1, 32), 8);
+              for (const fd of [0, 1, 2]) {
+                assert.equal(imports.wasi_snapshot_preview1.fd_fdstat_get(fd, 64), 0);
+                assert.equal(view.getUint8(64), 2);
+                assert.equal(view.getUint16(66, true), 0);
+                assert.equal(view.getBigUint64(72, true), fd === 0 ? 2n : 64n);
+                assert.equal(view.getBigUint64(80, true), 0n);
+                assert.equal(imports.wasi_snapshot_preview1.fd_fdstat_set_flags(fd, 4), 0);
+                assert.equal(imports.wasi_snapshot_preview1.fd_fdstat_set_flags(fd, 1), 58);
+              }
+              assert.equal(imports.wasi_snapshot_preview1.fd_fdstat_get(3, 64), 8);
+              assert.equal(imports.wasi_snapshot_preview1.fd_fdstat_get(1, memory.buffer.byteLength - 23), 21);
+              assert.equal(imports.wasi_snapshot_preview1.fd_fdstat_set_flags(99, 0), 8);
+              view.setUint32(32, 99, true);
+              assert.equal(imports.wasi_snapshot_preview1.fd_read(0, 24, 1, 32), 0);
+              assert.equal(view.getUint32(32, true), 0);
+              assert.equal(new TextDecoder().decode(new Uint8Array(memory.buffer, 100, 5)), "hello");
+              assert.equal(imports.wasi_snapshot_preview1.fd_read(1, 24, 1, 32), 8);
+              assert.equal(imports.wasi_snapshot_preview1.fd_read(0, memory.buffer.byteLength, 1, 32), 21);
+              view.setUint32(24, memory.buffer.byteLength - 1, true);
+              assert.equal(imports.wasi_snapshot_preview1.fd_read(0, 24, 1, 32), 21);
+              view.setUint32(24, 100, true);
+              assert.equal(imports.wasi_snapshot_preview1.fd_read(0, 24, 1, memory.buffer.byteLength), 21);
+              assert.equal(imports.wasi_snapshot_preview1.fd_read(0, 1024, 1025, 32), 28);
+              assert.equal(imports.wasi_snapshot_preview1.fd_close(0), 8);
+              assert.equal(imports.wasi_snapshot_preview1.fd_prestat_get(3, 0), 8);
+              assert.equal(imports.wasi_snapshot_preview1.fd_prestat_dir_name(3, 0, 10), 8);
               started = true;
             },
             karty_register: () => {
@@ -311,9 +347,41 @@ const context = {
             null,
             "absent streaming audio section must clear the global bundle",
           );
-          assert.equal(context.kartyAudioStreamBaseURL, "http://localhost/game.kart?v=@@CLIENT_HASH@@");
+          for (const name of ["kartyAudioStreamBaseURL", "kartyVideoBaseURL"])
+            assert.equal(
+              context[name],
+              "https://karty.test/proxy/4242/__karty_dev/generations/pinned/game.kart?v=@@CLIENT_HASH@@",
+              "media must resolve from the immutable generation's document base",
+            );
         }
         context.kartyHostLog = () => {};
+        new Uint8Array(memory.buffer, 1024, 4).set(new TextEncoder().encode("slot"));
+        assert.equal(imports.karty.access_save(1, 1024, 4, 2048, 3), -4, "missing storage is unavailable");
+        const saveCalls = [];
+        context.kartyHostAccessSave = (operation, key, bytes) => {
+          saveCalls.push([operation, key, bytes.length]);
+          if (operation === 1) bytes.set([7, 8, 9]);
+          return operation === 1 ? 3 : 0;
+        };
+        assert.equal(imports.karty.access_save(1, 1024, 4, 2048, 3), 3);
+        assert.deepEqual(Array.from(new Uint8Array(memory.buffer, 2048, 3)), [7, 8, 9]);
+        assert.equal(imports.karty.access_save(2, 1024, 4, 2048, 3), 0);
+        assert.equal(imports.karty.access_save(3, 1024, 4, 0, 0), 0);
+        for (const args of [
+          [0, 1024, 4, 0, 0],
+          [3, 1024, 4, 2048, 1],
+          [1, memory.buffer.byteLength, 4, 0, 0],
+          [1, 1024, 4, memory.buffer.byteLength, 1],
+          [2, 1024, 4, 0, 49153],
+          [1, 1024, 0, 0, 0],
+        ])
+          assert.equal(imports.karty.access_save(...args), -1, "invalid save range/op reached backend");
+        assert.deepEqual(saveCalls, [
+          [1, "slot", 3],
+          [2, "slot", 3],
+          [3, "slot", 0],
+        ]);
+        delete context.kartyHostAccessSave;
         context.kartyHostPlaySound = () => {};
         context.kartyHostPlaySFXFrom = () => {};
         const emitterCalls = [];
@@ -451,7 +519,7 @@ try {
     assert.equal(registered, false);
   }
   console.log(
-    `Launcher checks passed (${mock ? `fixture, sounds ${soundSections}` : "actual TinyGo cartridge"}; host rendering mocked).`,
+    `Launcher checks passed (${mock ? `fixture, sounds ${soundSections}` : `actual ${process.env.KARTY_TEST_COMPILER || "tinygo"} cartridge`}; host rendering mocked).`,
   );
 } finally {
   clearTimeout(timer);

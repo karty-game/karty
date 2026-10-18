@@ -3,6 +3,8 @@ tmp/
 node_modules/
 test-results/
 .vscode/mise-tools/
+.DS_Store
+Thumbs.db
 
 # Local contributor overrides
 go.work
@@ -12,6 +14,14 @@ go.work.sum
 .karty/
 .codex/
 .agents/
+
+# Local investigations and review notes. Public documentation lives in website/.
+/docs/
+/spike/
+/spikes/
+/concept-art/
+/website/validation/
+/scripts/stdlib-spike.sh
 
 # Per-level copies generated from the reusable Particle Lab asset library.
 samples/particle-lab/levels/*/textures/

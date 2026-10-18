@@ -1,0 +1,22 @@
+[project]
+name = "terrain"
+compiler = "tinygo"
+
+[project.resolution]
+width = 1280
+height = 720
+
+[project.camera]
+fov_y_degrees = 68
+near = 0.05
+far = 8192
+ortho_height = 60
+
+[project.debug]
+renderer = true
+
+[sdk]
+version = "0.0.13"
+
+[packages.controllers]
+folder = "../../packages/controllers"

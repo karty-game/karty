@@ -1,8 +1,8 @@
 # Hangar particle authoring
 
 Hangar reuses the reviewed industrial recipes from
-[Particle Lab's library](../particle-lab/effects/library.yaml). World source v11,
-`particles.version: 2` and the sample's published SDK 0.0.12 support these
+[Particle Lab's library](../particle-lab/effects/library.yaml). World source v17,
+`particles.version: 2` and the sample's selected SDK support these
 GPU particle presets. Smoke and acid vapour use the GPU particle alpha path.
 Version 2 preserves the KWP1 binary layout and adds no guest API commands.
 The reference fire remains a visual prototype awaiting appearance acceptance;
@@ -138,6 +138,5 @@ Compilation, actual WASM mounting, native graphics, browser graphics and manual
 visual review are separate checks; software graphics does not establish physical
 phone frame rate.
 
-See the [particle contract](../../docs/particles.md) and
-[alpha blending decision](../../docs/decisions/world-particles-v2.md) for field bounds
+See the selected SDK's `.karty/docs/particles.md` for field bounds
 and renderer limits.

@@ -14,7 +14,7 @@ func TestStepUpAnticipatesPlayerFootprint(t *testing.T) {
 		{"arrival threshold", 6, 9.68, 1.7, 0, .055, 2.05},
 		{"loading doorway", 19.68, 2, 1.9, .055, 0, 2.25},
 		{"original control stairs", .32, 22, 1.7, -.055, 0, 2.05},
-		{"west acid stairs", 19.68, 13.8, 1.9, .055, 0, 2.25},
+		{"west lift entrance stays level", 19.68, 13.8, 1.9, .055, 0, 1.9},
 		{"east acid stairs", 46.32, 13.8, 1.9, -.055, 0, 2.25},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -62,13 +62,13 @@ func TestStepUpRejectsLowHeadroomAndSolidOverlap(t *testing.T) {
 	// restore it. Source regeneration and normal route tests use authored data.
 	found := false
 	for index, cell := range walkCells {
-		if cell.name != "acid-control-west-step-0#0" {
+		if cell.name != "acid-control-east-step-0#0" {
 			continue
 		}
 		found = true
 		saved := walkCells[index].ceiling
 		walkCells[index].ceiling = 2
-		got := StepUp(19.68, 13.8, 1.9, 19.735, 13.8)
+		got := StepUp(46.32, 13.8, 1.9, 46.265, 13.8)
 		walkCells[index].ceiling = saved
 		if got != 1.9 {
 			t.Fatalf("headroom allowed lift: %v", got)
@@ -113,7 +113,7 @@ func TestStepUpAscendsCompleteAuthoredRoutes(t *testing.T) {
 		x, y, z, dx, dy, distance, height float32
 	}{
 		{"control deck", .4, 22, 1.7, -.055, 0, 7, 2.9},
-		{"west acid room", 19.5, 13.8, 1.9, .11, 0, 10, 5.1},
+
 		{"east acid room", 46.5, 13.8, 1.9, -.11, 0, 8, 5.1},
 	} {
 		t.Run(route.name, func(t *testing.T) {
@@ -152,14 +152,14 @@ func TestWalkerTransferCancelsSafely(t *testing.T) {
 		name            string
 		x, y, z, dx, dy float32
 	}{
-		{"stop", 19.8, 13.8, 2.25, 0, 0},
-		{"reverse", 19.8, 13.8, 2.25, -.055, 0},
-		{"sideways", 19.8, 13.8, 2.25, 0, .055},
-		{"lost target support", 19.4, 13.8, 2.25, .055, 0},
-		{"airborne", 19.8, 13.8, 2.3, .055, 0},
+		{"stop", 46.2, 13.8, 2.25, 0, 0},
+		{"reverse", 46.2, 13.8, 2.25, .055, 0},
+		{"sideways", 46.2, 13.8, 2.25, 0, -.055},
+		{"lost target support", 46.6, 13.8, 2.25, -.055, 0},
+		{"airborne", 46.2, 13.8, 2.3, -.055, 0},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			walker := Walker{active: true, floor: .4, dx: .055, lastX: test.x - .055, lastY: test.y}
+			walker := Walker{active: true, floor: .4, dx: -.055, lastX: test.x + .055, lastY: test.y}
 			if got := walker.StepUp(test.x, test.y, test.z, test.x+test.dx, test.y+test.dy); got != test.z || walker.active {
 				t.Fatalf("phase cancellation changed height or remained active: z=%v state=%+v", got, walker)
 			}
@@ -170,23 +170,23 @@ func TestWalkerTransferCancelsSafely(t *testing.T) {
 		t.Fatalf("completed transfer remained active: z=%v state=%+v", got, completed)
 	}
 	var walker Walker
-	z := walker.StepUp(19.68, 13.8, 1.9, 19.735, 13.8)
+	z := walker.StepUp(46.32, 13.8, 1.9, 46.265, 13.8)
 	for range 13 {
-		z = walker.StepUp(19.735, 13.8, z, 19.79, 13.8)
+		z = walker.StepUp(46.265, 13.8, z, 46.21, 13.8)
 	}
 	if walker.active {
 		t.Fatal("blocked authoritative XY held phase indefinitely")
 	}
 	for range 30 {
-		if got := walker.StepUp(19.735, 13.8, z, 19.79, 13.8); got != z || walker.active {
+		if got := walker.StepUp(46.265, 13.8, z, 46.21, 13.8); got != z || walker.active {
 			t.Fatal("stalled phase rearmed without grounded rise")
 		}
 	}
 }
 
 func TestWalkerMaintainsOnlySupportedGapAndTrueFloorLimit(t *testing.T) {
-	walker := Walker{active: true, floor: .4, dx: .055, lastX: 19.7, lastY: 13.8}
-	if got := walker.StepUp(19.8, 13.8, 2.27, 19.855, 13.8); got != 2.27 {
+	walker := Walker{active: true, floor: .4, dx: -.055, lastX: 46.3, lastY: 13.8}
+	if got := walker.StepUp(46.2, 13.8, 2.27, 46.145, 13.8); got != 2.27 {
 		t.Fatalf("holding lowered overshoot pose: %v", got)
 	}
 	for index, cell := range walkCells {
@@ -208,21 +208,21 @@ func TestWalkerMaintainsOnlySupportedGapAndTrueFloorLimit(t *testing.T) {
 
 func TestWalkerActiveTransferDoesNotAllocate(t *testing.T) {
 	if got := testing.AllocsPerRun(100, func() {
-		walker := Walker{active: true, floor: .4, dx: .055, lastX: 19.7, lastY: 13.8}
-		walker.StepUp(19.8, 13.8, 2.13, 19.855, 13.8)
+		walker := Walker{active: true, floor: .4, dx: -.055, lastX: 46.3, lastY: 13.8}
+		walker.StepUp(46.2, 13.8, 2.13, 46.145, 13.8)
 	}); got != 0 {
 		t.Fatalf("active transfer allocations = %v", got)
 	}
 }
 
 func TestWalkerSlowTouchAndTransferDeadline(t *testing.T) {
-	walker := Walker{active: true, floor: .4, dx: .00065, lastX: 19.8 - .00065, lastY: 13.8}
-	walker.StepUp(19.8, 13.8, 2.13, 19.8+.00065, 13.8)
+	walker := Walker{active: true, floor: .4, dx: -.00065, lastX: 46.2 + .00065, lastY: 13.8}
+	walker.StepUp(46.2, 13.8, 2.13, 46.2-.00065, 13.8)
 	if !walker.active || walker.stalled != 0 {
 		t.Fatalf("slow touch was treated as stalled: %+v", walker)
 	}
-	walker = Walker{active: true, floor: .4, dx: .055, lastX: 19.7, lastY: 13.8, age: 119}
-	if got := walker.StepUp(19.8, 13.8, 2.13, 19.855, 13.8); got != 2.13 || walker.active {
+	walker = Walker{active: true, floor: .4, dx: -.055, lastX: 46.3, lastY: 13.8, age: 119}
+	if got := walker.StepUp(46.2, 13.8, 2.13, 46.145, 13.8); got != 2.13 || walker.active {
 		t.Fatalf("expired transfer persisted: z=%v state=%+v", got, walker)
 	}
 }
@@ -232,7 +232,7 @@ func TestWalkerRetainsSupportAtActualSolverEdge(t *testing.T) {
 		name                   string
 		x, y, z, dx, dy, floor float32
 	}{
-		{"west acid", 19.699970245, 13.8, 2.149447, .11, 0, .4},
+
 		{"east acid", 46.300029755, 13.8, 2.149447, -.11, 0, .4},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -268,8 +268,8 @@ func TestWalkerAnticipatesActualSpeculativeRiserContact(t *testing.T) {
 	// Actual WASM stopped here: the body front is .068351 metre short of the
 	// next .2 riser, inside static CCD reach .02+.055=.075. Motion plus contact
 	// lookahead must find that floor before horizontal contact can stop it.
-	walker := Walker{active: true, floor: 1.8, dx: .055, lastX: 23.576649, lastY: 13.8}
-	got := walker.StepUp(23.631649, 13.8, 3.648467, 23.686649, 13.8)
+	walker := Walker{active: true, floor: 1.8, dx: -.055, lastX: 43.423351, lastY: 13.8}
+	got := walker.StepUp(43.368351, 13.8, 3.648467, 43.313351, 13.8)
 	if math.Abs(float64(got-3.85)) > .00001 || !walker.active || walker.floor != 2 {
 		t.Fatalf("speculative contact prevented next true riser: z=%v state=%+v", got, walker)
 	}

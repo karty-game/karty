@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty/internal/assetpipeline"
+	"github.com/karty-game/karty/internal/contextio"
 	"github.com/karty-game/karty/internal/project"
 )
 
@@ -48,7 +50,11 @@ func audioStreamAssetFile(typeName, prefix, sourceName, engineImport string, str
 }
 
 //nolint:wsl_v5,nlreturn // Catalog construction and hashing intentionally stay adjacent.
-func stageProjectAudioStreams(output, artifact string, streams []assetpipeline.AudioStream) error {
+func stageProjectAudioStreams(ctx context.Context, output, artifact string, streams []assetpipeline.AudioStream) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if len(streams) == 0 {
 		return nil
 	}
@@ -56,7 +62,7 @@ func stageProjectAudioStreams(output, artifact string, streams []assetpipeline.A
 		return cartridge.ErrAudioStreams
 	}
 	catalog := make([]cartridge.AudioStream, 0, len(streams))
-	directory, err := prepareMediaDirectory(output, ".kaud", ".audio-")
+	directory, err := prepareMediaDirectory(ctx, output, ".kaud", ".audio-")
 	if err != nil {
 		return err
 	}
@@ -80,7 +86,7 @@ func stageProjectAudioStreams(output, artifact string, streams []assetpipeline.A
 		}
 		stagedName := staged.Name()
 		rawDigest := sha256.New()
-		entry.Size, entry.SHA256, entry.Chunks, err = writeMediaEnvelope(
+		entry.Size, entry.SHA256, entry.Chunks, err = writeMediaEnvelope(ctx,
 			staged, io.TeeReader(source, rawDigest), cartridge.MediaKindQOAAudio,
 			stream.OutputBytes, cartridge.AudioStreamChunkSize,
 		)
@@ -93,6 +99,10 @@ func stageProjectAudioStreams(output, artifact string, streams []assetpipeline.A
 			_ = os.Remove(stagedName)
 			return errCachedAssetChanged
 		}
+		if err := ctx.Err(); err != nil {
+			_ = os.Remove(stagedName)
+			return err
+		}
 		if err := os.Rename(stagedName, filepath.Join(output, entry.Path())); err != nil {
 			_ = os.Remove(stagedName)
 			return err
@@ -103,7 +113,7 @@ func stageProjectAudioStreams(output, artifact string, streams []assetpipeline.A
 	if err != nil {
 		return err
 	}
-	wasm, err := os.ReadFile(artifact)
+	wasm, err := contextio.ReadFile(ctx, artifact)
 	if err != nil {
 		return err
 	}
@@ -111,17 +121,21 @@ func stageProjectAudioStreams(output, artifact string, streams []assetpipeline.A
 	if err != nil {
 		return err
 	}
-	//nolint:gosec // artifact is the fixed dist/raw/game.kart path owned by this build.
-	return os.WriteFile(artifact, wasm, 0o600)
+	// artifact is the fixed dist/raw/game.kart path owned by this build.
+	return contextio.WriteFile(ctx, artifact, wasm, 0o600)
 }
 
 //nolint:wsl_v5,nlreturn // Validation and staging intentionally remain one sequential operation.
-func stageAudioStreamFiles(target, artifact, raw string) error {
-	directory, err := prepareMediaDirectory(target, ".kaud", ".audio-")
+func stageAudioStreamFiles(ctx context.Context, target, artifact, raw string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	directory, err := prepareMediaDirectory(ctx, target, ".kaud", ".audio-")
 	if err != nil {
 		return err
 	}
-	wasm, err := os.ReadFile(artifact)
+	wasm, err := contextio.ReadFile(ctx, artifact)
 	if err != nil {
 		return err
 	}
@@ -142,7 +156,9 @@ func stageAudioStreamFiles(target, artifact, raw string) error {
 			continue
 		}
 		seen[stream.Path()] = true
-		if err := copyFile(filepath.Join(raw, stream.Path()), filepath.Join(directory, filepath.Base(stream.Path())), 0o600); err != nil {
+		if err := copyFile(
+			ctx, filepath.Join(raw, stream.Path()), filepath.Join(directory, filepath.Base(stream.Path())), 0o600,
+		); err != nil {
 			return err
 		}
 	}

@@ -11,7 +11,6 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-//nolint:paralleltest // t.Chdir changes the process working directory and cannot run in parallel.
 func TestCommandGeneratesBaseWithoutProjectOrSDK(t *testing.T) {
 	t.Chdir(t.TempDir())
 

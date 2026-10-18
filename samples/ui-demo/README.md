@@ -25,7 +25,7 @@ in the game. Try a control and watch the result.
 
 ## Run it
 
-[Set up once](../README.md#make-it-yours), then from this sample's folder:
+[Set up once](../README.md#run-a-sample), then from this sample's folder:
 
 ```sh
 ../../dist/karty dev
