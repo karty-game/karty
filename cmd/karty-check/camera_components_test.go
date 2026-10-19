@@ -259,7 +259,7 @@ const componentEngineFixture = `package engine
 var fixtureCommands []byte
 func FixtureBegin(){beginCommands(1)}
 func FixtureEntityRef(id uint32,level LevelHandle) EntityRef{return registerEntity(id,level,nil)}
-func FixtureAcceptedPose(id uint32,pose Transform3D){synchronizeEntity(InputEvent{Type:EventAuthoritativeTransform,EntityID:id,Transform3D:pose})}
+func FixtureAcceptedPose(id uint32,pose Transform3D){synchronizeEntity(&InputEvent{Type:EventAuthoritativeTransform,EntityID:id,Transform3D:pose})}
 func FixtureCommands()[]byte{finishCommands();return fixtureCommands}
 type FixtureAudioCall struct {Emitter,Sound,Level,Source uint32;X,Y,Z,Volume,Near,Far float32;Flags uint32}
 var fixtureAudioCalls []FixtureAudioCall
