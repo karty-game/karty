@@ -4,12 +4,16 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { startVillageServer } from "./willowbrook-server.mjs";
+import { assertQuestAnchors, checkQuestPixels } from "./check-willowbrook-quest.mjs";
+import { checkNavigation } from "./check-willowbrook-navigation.mjs";
 
 const portrait = process.argv.includes("--portrait");
 const artOnly = process.argv.includes("--art");
 const structures = process.argv.includes("--structures");
 const motion = process.argv.includes("--motion");
 const interactions = process.argv.includes("--interactions");
+const hideQuest = process.argv.includes("--hide-quest");
+const navigation = process.argv.includes("--navigation");
 const bridgeFixture = process.argv.includes("--bridge");
 const collision = process.argv.includes("--collision-house")
   ? "house"
@@ -18,21 +22,23 @@ const collision = process.argv.includes("--collision-house")
     : process.argv.includes("--collision-terrain")
       ? "terrain"
       : "";
-const fixture = collision
-  ? "collision-" + collision
-  : bridgeFixture
-    ? "bridge"
-    : portrait
-      ? "portrait"
-      : artOnly
-        ? "art"
-        : structures
-          ? "structures"
-          : motion
-            ? "motion"
-            : interactions
-              ? "interactions"
-              : "gameplay";
+const fixture = navigation
+  ? "navigation"
+  : collision
+    ? "collision-" + collision
+    : bridgeFixture
+      ? "bridge"
+      : portrait
+        ? "portrait"
+        : artOnly
+          ? "art"
+          : structures
+            ? "structures"
+            : motion
+              ? "motion"
+              : interactions
+                ? "interactions"
+                : "gameplay";
 const output = resolve(process.env.KARTY_WILLOWBROOK_OUTPUT || "dist/validation/willowbrook");
 await mkdir(output, { recursive: true });
 const projectDirectory = resolve(process.env.KARTY_WILLOWBROOK_PROJECT || "samples/willowbrook");
@@ -56,6 +62,7 @@ const levelFile = (await readdir(resolve(directory, "content"))).find((n) => n.e
 const report = {
   passed: false,
   fixture,
+  hideQuest,
   scope:
     "Actual Karty WASM and Ebiten 2D sprites in Chromium SwiftShader at full scale; synthetic keyboard/mouse/touch. No physical-device/FPS qualification.",
   hostSha256: await hash("karty-host.wasm"),
@@ -87,7 +94,7 @@ try {
     if (e.type() === "error") report.errors.push(e.text());
   });
   await page.addInitScript(
-    ({ art, heroHeight, motion, collision }) => {
+    ({ art, heroHeight, motion, collision, hideQuest }) => {
       const heroIDs = new Set(Array.from({ length: 12 }, (_, i) => art.textures["hero-" + String(i).padStart(2, "0")]));
       const assetNames = Object.fromEntries(Object.entries(art.textures).map(([name, id]) => [id, name]));
       const s = (globalThis.villageEvidence = {
@@ -107,6 +114,12 @@ try {
         inputResets: 0,
         frame: 0,
         riverImages: {},
+        questSprites: {},
+        pathQueries: [],
+        pathResults: [],
+        pointerDowns: [],
+        worldConfigurations: 0,
+        worldObstacles: 0,
         motion: motion ? { watched: {}, heroEvents: [], shadows: {} } : null,
         collisionPath: collision ? [] : null,
       });
@@ -121,6 +134,27 @@ try {
             let p = 24;
             for (let i = 0; i < v.getUint32(16, true); i++) {
               if (v.getUint8(p) === 14) s.inputResets++;
+              if (v.getUint8(p) === 13 && v.getUint8(p + 8) === 1 && s.camera.length === 3) {
+                const x = v.getFloat32(p + 11, true),
+                  y = v.getFloat32(p + 15, true);
+                s.pointerDowns.push({
+                  x: Math.fround(s.camera[0] + Math.fround((x - 640) / s.camera[2])),
+                  y: Math.fround(s.camera[1] + Math.fround((y - 360) / s.camera[2])),
+                });
+              }
+              if (v.getUint8(p) === 17) {
+                const data = p + 3;
+                const count = v.getUint16(data + 10, true);
+                s.pathResults.push({
+                  request: v.getUint32(data, true),
+                  status: v.getUint8(data + 8),
+                  expanded: v.getUint16(data + 12, true),
+                  points: Array.from({ length: count }, (_, index) => [
+                    v.getFloat32(data + 16 + index * 8, true),
+                    v.getFloat32(data + 20 + index * 8, true),
+                  ]),
+                });
+              }
               p += 3 + v.getUint16(p + 1, true);
             }
             return original(frame, batch);
@@ -146,10 +180,29 @@ try {
                 s.cameraUpdates++;
               }
               if (tag >= 27 && tag <= 35) s.world3D++;
+              if (tag === 58) {
+                const operation = v.getUint8(p);
+                if (operation === 1) s.worldConfigurations++;
+                if (operation === 2) s.worldObstacles++;
+                if (operation === 11)
+                  s.pathQueries.push({
+                    request: v.getUint32(p + 12, true),
+                    destination: [v.getFloat32(p + 28, true), v.getFloat32(p + 32, true)],
+                  });
+              }
               if (tag === 16) {
                 s.sprites++;
                 const asset = v.getUint32(p + 8, true);
                 const name = assetNames[asset] || "";
+                if (name === "clue-note" || name === "treasure-closed")
+                  s.questSprites[id] = {
+                    name,
+                    x: v.getFloat32(p + 12, true),
+                    y: v.getFloat32(p + 16, true),
+                    sx: 1,
+                    sy: 1,
+                    layer: 0,
+                  };
                 if (name === "riverbed" || name.startsWith("water-surface-")) {
                   s.riverImages[id] = {
                     name,
@@ -173,7 +226,16 @@ try {
                 s.destroyed++;
                 delete s.textByID[id];
                 delete s.riverImages[id];
+                delete s.questSprites[id];
               }
+              if (tag === 3 && s.questSprites[id])
+                Object.assign(s.questSprites[id], {
+                  x: v.getFloat32(p + 4, true),
+                  y: v.getFloat32(p + 8, true),
+                  sx: v.getFloat32(p + 16, true),
+                  sy: v.getFloat32(p + 20, true),
+                });
+              if (tag === 7 && s.questSprites[id]) s.questSprites[id].layer = v.getInt32(p + 4, true);
               if (tag === 3 && s.riverImages[id])
                 Object.assign(s.riverImages[id], {
                   x: v.getFloat32(p + 4, true),
@@ -191,6 +253,7 @@ try {
                 const asset = v.getUint32(p + 8, true);
                 if (id === s.hero && !s.heroTextures.includes(asset)) s.heroTextures.push(asset);
                 if (id === s.cache) s.cacheAsset = asset;
+                if (s.questSprites[id]) s.questSprites[id].name = assetNames[asset];
               }
               if (s.motion) {
                 const m = s.motion;
@@ -237,6 +300,11 @@ try {
                 s.textByID[id] = text;
                 s.latestText = text;
               }
+              // Negative control: preserve observed anchors but suppress drawing.
+              if (hideQuest && tag === 3 && s.questSprites[id]) {
+                v.setFloat32(p + 16, 0, true);
+                v.setFloat32(p + 20, 0, true);
+              }
               offset += 3 + len;
             }
             return original(batch);
@@ -244,7 +312,7 @@ try {
         },
       });
     },
-    { art, heroHeight, motion, collision: collision || bridgeFixture },
+    { art, heroHeight, motion, collision: collision || bridgeFixture || navigation, hideQuest },
   );
   const origin = `http://127.0.0.1:${server.address().port}`;
   await page.route("**/focus-check.html", (route) =>
@@ -343,18 +411,49 @@ try {
     // Let the eased camera settle before projecting a precise world target.
     await frames(30);
     report.target = point;
+    const before = await state();
     await clickWorld(point);
+    if (before.worldConfigurations) {
+      await game.waitForFunction((count) => villageEvidence.pathQueries.length > count, before.pathQueries.length, {
+        timeout: 3000,
+      });
+      const request = (await state()).pathQueries.at(-1).request;
+      await game.waitForFunction(
+        (request) => villageEvidence.pathResults.some((result) => result.request === request),
+        request,
+        { timeout: 15000 },
+      );
+      const result = (await state()).pathResults.find((result) => result.request === request);
+      assert.equal(result.status, 1, `ground route rejected: ${JSON.stringify({ point, result })}`);
+    }
     await arrive(point);
     await frames(8);
   };
   const initial = await state();
   assert.equal(initial.world3D, 0);
-  assert.ok(initial.camera.length === 3 && initial.sprites > 500);
+  assert.ok(initial.camera.length === 3 && initial.sprites > 1 && initial.sprites <= 384);
   assert.ok(Math.hypot(initial.position[0] - spawn.x, initial.position[1] - spawn.y) < 0.01);
-  report.checks.push(
-    "Tiled map instantiated as ordinary Karty 2D sprites; zero 3D camera/world commands; bounded startup batches",
+  assertQuestAnchors(
+    initial,
+    stations,
+    map.layers.findIndex((layer) => layer.name === "Scenery"),
   );
-  if (collision) {
+  report.checks.push(
+    "both signs and the chest spawn at authored map anchors on the scenery layer after runtime map loading",
+  );
+  const questPixels = async (index, opened = false) => {
+    const name = index < 2 ? "clue-note" : opened ? "treasure-open" : "treasure-closed";
+    const source = (await readFile(resolve(projectDirectory, "levels/village", name + ".png"))).toString("base64");
+    const result = await checkQuestPixels(game, stations[index], index, source);
+    (report.questPixels ??= []).push({ index, name, ...result });
+  };
+  if (interactions || fixture === "gameplay" || artOnly) await questPixels(0);
+  report.checks.push(
+    "Tiled static background chunks and dynamic scenery use at most 384 ordinary Karty 2D sprites at startup; zero 3D camera/world commands; bounded startup batches",
+  );
+  if (navigation) {
+    await checkNavigation({ game, page, state, frames, press, clickWorld, arrive, capture, report });
+  } else if (collision) {
     const radius = property(map.properties, "playerRadius", 7.5);
     const radiusY = property(map.properties, "playerRadiusY", radius);
     const blocked = async (side, key, predicate) => {
@@ -717,6 +816,7 @@ try {
     // sign's foot-only selection would miss this actual visible target.
     await clickWorld(stations[0], 52);
     await opened();
+    await questPixels(0);
     await page.keyboard.up("Shift");
     const firstRead = await state();
     assert.ok(
@@ -768,10 +868,12 @@ try {
     await page.keyboard.down("Shift");
     await clickWorld(stations[0], 12);
     await game.waitForFunction((text) => villageEvidence.texts.includes(text), stationTexts[0], { timeout: 20000 });
+    await questPixels(0);
     await capture("cottage-note");
     await press("Escape", 1);
     await clickWorld(stations[1], 12);
     await game.waitForFunction((text) => villageEvidence.texts.includes(text), stationTexts[1], { timeout: 30000 });
+    await questPixels(1);
     await capture("terrace");
     await press("Escape", 1);
     await clickWorld(stations[2], 20);
@@ -779,6 +881,10 @@ try {
     await page.keyboard.up("Shift");
     await frames(4);
     assert.equal((await state()).cacheAsset, art.textures["treasure-open"]);
+    // The approaching hero overlaps the chest. Walk to clear ground with
+    // normal pointer input before comparing its artwork; retain tree occlusion.
+    await walkTo({ x: stations[2].x + 16, y: stations[2].y + 96 });
+    await questPixels(2, true);
     await capture("treasure-found");
     report.checks.push(
       "actual clue taps route through Tiled collisions, stairs and bridge; cache swaps to open texture after ordered treasure hunt",
@@ -832,13 +938,13 @@ try {
     const cliff = objects.find((o) => o.name === "cliff-west");
     const cliffX = stair.x - 64;
     await walkTo({ x: cliffX, y: cliff.y + cliff.height + 48 });
-    await clickWorld({ x: cliffX, y: cliff.y - 48 });
-    await frames(110);
+    const upperGround = { x: cliffX, y: cliff.y - 48 };
+    await walkTo(upperGround);
     assert.ok(
-      (await state()).position[1] >= cliff.y + cliff.height,
-      "direct movement crossed the authored cliff collider",
+      Math.hypot((await state()).position[0] - upperGround.x, (await state()).position[1] - upperGround.y) < 2,
+      "ground click did not route around the cliff to the upper ground",
     );
-    report.checks.push("ordinary point movement stops at Tiled river and cliff collision objects");
+    report.checks.push("ordinary ground clicks reject blocked water and route around cliffs through the stairs");
     const moved = await state();
     assert.ok(moved.heroTextures.length >= 4 && moved.cameraUpdates > 30);
     report.checks.push(

@@ -49,6 +49,13 @@ func (model *Model) DisplayText() string {
 	return model.Text
 }
 
+// RevealCharacters returns the visible Unicode scalar count for a label whose
+// text remains the complete line. Keeping layout text fixed allows the renderer
+// to reveal glyphs without moving words or changing text alignment.
+func (model *Model) RevealCharacters() uint32 {
+	return uint32(utf8.RuneCountInString(model.DisplayText()))
+}
+
 // DisplayWords reveals complete words with their trailing whitespace. Wrapping
 // then uses each word's final width, so a growing fragment cannot jump lines.
 // The character cursor still controls pacing and punctuation pauses.

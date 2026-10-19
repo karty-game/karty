@@ -11,13 +11,17 @@ change the choices available in the dining car.
 
 ## Run it
 
-Complete the [sample setup](../README.md#run-a-sample), including the matching
-SDK 0.0.13 and host, then run from the CLI repository root:
+Complete the [sample setup](../README.md#run-a-sample), including
+SDK 0.0.14 and its matching host, then run from the CLI repository root:
 
 ```sh
 mise run build-last-train-web
 mise run serve-last-train
 ```
+
+Character reveal uses `UI.Reveal` from SDK 0.0.14. Build from this checkout,
+which pins KartUI v0.0.8 with its `reveal` compiler support. The CLI installs the
+matching SDK and host; `KARTY_HOME` selects their cache directory.
 
 The first build also installs the pinned .NET SDK for the Yarn compiler.
 
@@ -43,8 +47,8 @@ and current preferences.
 
 ## Story and saves
 
-This sample uses SDK/host **0.0.13** (API **0.0.11**) for persistent
-saves, plus the `dialogue` package and optional save storage:
+This sample uses SDK/host **0.0.14** (API **0.0.12**) for character
+reveal and persistent saves, plus the `dialogue` package and optional save storage:
 
 | Package                                       | Responsibility                                                                 |
 | --------------------------------------------- | ------------------------------------------------------------------------------ |
@@ -70,7 +74,8 @@ Characters change expression and hand/prop poses at authored beats, including
 Iris offering the envelope, Elias reading the letter and Mara touching her key.
 Desktop staging adds eased
 entrances and exits, steady single-character framing, short nod/recoil/reach reactions, a dining
-tableau, subtle background drift, platform rain and passing carriage lights.
+tableau and platform rain. Painted station and carriage backgrounds keep a fixed
+position, scale and rotation; there are no moving rectangle light overlays.
 Phone presentation uses a stable portrait container, expression changes, group portraits
 and sliding entrances; continuous ambience and gesture movement are currently
 desktop-only. The title's Motion button selects reduced motion and remembers
@@ -82,8 +87,10 @@ Narration has no speaker label and uses a warm italic serif face. Dialogue uses
 regular sans-serif type with a nameplate. Before introductions, nameplates and
 history use Conductor, Older passenger or Traveller; Yarn variables remember
 introductions per run. Choice labels also avoid revealing unknown names. The
-advance control uses `»` during reveal and `▾` when ready. Reveal is word by word,
-including final spaces, so growing fragments cannot jump between lines.
+advance control uses `»` during reveal and `▾` when ready. Text appears character
+by character while the renderer retains the complete line’s wrapping, shaping
+and alignment. Already visible glyphs stay fixed; the first activation finishes
+the line and the next advances it.
 
 ## Art and audio
 
@@ -127,6 +134,6 @@ Browser saves are local to an origin; they do not synchronize to native or
 another device. Browser checks write reports and artifact hashes under
 `dist/validation/last-train/`.
 
-The current candidate uses [binary dialogue resources and saves](../../packages/dialogue/docs/binary-runtime-v2.md).
+The dialogue package uses [binary dialogue resources and saves](../../packages/dialogue/docs/binary-runtime-v2.md).
 Rebuild and start a new run when upgrading from the earlier CSV/JSON candidate;
 lifetime preferences, motion settings and ending unlocks retain their format.

@@ -62,6 +62,12 @@ func TestCurrentAPIConsumers(t *testing.T) {
 		}
 	}
 
+	checkSampleSDKPins(t, root)
+}
+
+func checkSampleSDKPins(t *testing.T, root string) {
+	t.Helper()
+
 	manifests, err := filepath.Glob(filepath.Join(root, "samples", "*", "karty.toml"))
 	if err != nil {
 		t.Fatal(err)
@@ -73,8 +79,10 @@ func TestCurrentAPIConsumers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if config.SDK.Version != release.SDKVersion() {
-			t.Errorf("%s pins %s, want %s", manifest, config.SDK.Version, release.SDKVersion())
+		expected := release.SDKVersion()
+
+		if config.SDK.Version != expected {
+			t.Errorf("%s pins %s, want %s", manifest, config.SDK.Version, expected)
 		}
 	}
 }

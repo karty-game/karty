@@ -20,21 +20,40 @@ import (
 func New() *cli.Command {
 	return &cli.Command{
 		Name:    "karty",
-		Usage:   "build and run Karty projects",
+		Usage:   "create, build and preview games",
 		Version: release.Version,
 		Commands: []*cli.Command{
 			newcommand.Command(),
-			packagecmd.Command(),
+			dev.Command(),
+			build.Command(),
+			serve.Command(),
 			quality.Command("fmt"),
 			quality.Command("lint"),
-			sdkCommand(),
-			build.Command(),
-			bake.Command(),
-			screenshot.Command(),
 			schema.Command(),
-			dev.Command(),
-			serve.Command(),
-			toolchain.Command(),
+			packagecmd.Command(),
+			renderCommand(),
+			sdkCommand(),
+			// Preserve existing scripts without crowding the root help.
+			hidden(bake.Command()),
+			hidden(screenshot.Command()),
+			hidden(toolchain.Command()),
 		},
 	}
+}
+
+func renderCommand() *cli.Command {
+	return &cli.Command{
+		Name:  "render",
+		Usage: "bake lighting and take screenshots",
+		Commands: []*cli.Command{
+			bake.Command(),
+			screenshot.Command(),
+		},
+	}
+}
+
+func hidden(command *cli.Command) *cli.Command {
+	command.Hidden = true
+
+	return command
 }

@@ -142,7 +142,9 @@ func (game *Game) visit(index int) {
 	// Camera-local axes are right, forward and up: hold the torch low on the right.
 	game.torch.AttachTo(game.camera.Ref(), engine.NewVec3(.35, .20, -.30))
 	game.torch.SetEnabled(game.torchEnabled)
-	game.torch.SetShadows(true)
+	// Spotlight shadow maps require an ordinary Euclidean world. The loop
+	// keeps the live beam while leaving its shadows disabled.
+	game.torch.SetShadows(false)
 	game.torchAim = lightAim{yaw: float64(p.yaw), pitch: float64(p.pitch), cameraYaw: float64(p.yaw), cameraPitch: float64(p.pitch)}
 	game.fps.SetCamera(game.camera, body)
 	// The generated hook applies the host's accepted pose to camera.Settings.

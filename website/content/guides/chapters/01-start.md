@@ -11,9 +11,9 @@ karty dev
 The terminal wizard offers `blank`, `2d`, `fps`, `isometric`, and `ui`, plus optional
 Git initialization and GitHub Actions. Use `--yes --template 2d` for scripts.
 Use `--no-template` for just the base folders and an empty entry point.
-Current starters use SDK 0.0.13, which the CLI installs when needed.
+Current starters use SDK 0.0.14, which the CLI installs when needed.
 
-The SDK 0.0.13 2D, first-person and isometric starters use one reusable
+The SDK 0.0.14 2D, first-person and isometric starters use one reusable
 controllers package with different presets. They include its source under
 `packages/controllers/` so generated projects work without a published module.
 Keep that folder in Git. Blank and UI projects add controls only when needed.
@@ -36,5 +36,5 @@ reference for API names and supported features.
 
 Make one small game rule work before adding more art: collect an item, reach a
 goal, or restart after losing. For a 3D game, choose the first-person or isometric starter, then extend its
-room using the matching guide path. [Roman court & galleries](../world-camera/)
-shows how those camera views work in a larger world.
+room using the matching guide path. [Hangar](../hangar/)
+shows first-person exploration and connected rooms in a larger world.

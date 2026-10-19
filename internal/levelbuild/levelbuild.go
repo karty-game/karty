@@ -68,6 +68,7 @@ type worldSettings struct {
 }
 
 type textureEntry struct {
+	Generated              bool                 `toml:"-"`
 	Name                   string               `toml:"name"`
 	Source                 string               `toml:"source"`
 	Profile                string               `toml:"profile"`
@@ -475,7 +476,17 @@ func loadTextures(
 	assets *assetBuild,
 ) ([]level.SourceEntry, []metadataTexture, []assetpipeline.Texture, []string, error) {
 	sorted := slices.Clone(entries)
-	slices.SortFunc(sorted, func(left, right textureEntry) int { return strings.Compare(left.Name, right.Name) })
+	slices.SortFunc(sorted, func(left, right textureEntry) int {
+		if left.Generated != right.Generated {
+			if left.Generated {
+				return 1
+			}
+
+			return -1
+		}
+
+		return strings.Compare(left.Name, right.Name)
+	})
 	result := make([]level.SourceEntry, 0, len(sorted))
 	metadata := make([]metadataTexture, 0, len(sorted))
 	processedTextures := make([]assetpipeline.Texture, 0, len(sorted))
@@ -521,7 +532,12 @@ func loadProcessedTexture(
 ) ([]byte, int, int, *assetpipeline.Texture, error) {
 	// Level sources are confined to the level directory, even though processing
 	// and its cache belong to the encompassing project.
-	if _, err := readConfinedFile(directory, entry.Source, asset.MaxSourceAssetBytes); err != nil {
+	sourceDirectory := directory
+	if entry.Generated {
+		sourceDirectory = assets.projectRoot
+	}
+
+	if _, err := readConfinedFile(sourceDirectory, entry.Source, asset.MaxSourceAssetBytes); err != nil {
 		return nil, 0, 0, nil, err
 	}
 
@@ -535,7 +551,7 @@ func loadProcessedTexture(
 		return nil, 0, 0, nil, fmt.Errorf("profile %q: %w", profileName, ErrSource)
 	}
 
-	absoluteSource := filepath.Join(directory, filepath.FromSlash(entry.Source))
+	absoluteSource := filepath.Join(sourceDirectory, filepath.FromSlash(entry.Source))
 
 	relativeSource, err := filepath.Rel(assets.projectRoot, absoluteSource)
 	if err != nil || relativeSource == ".." || strings.HasPrefix(relativeSource, ".."+string(filepath.Separator)) {
@@ -778,6 +794,10 @@ func readLevelManifest(directory string, assets *assetBuild) (manifest, error) {
 	}
 
 	if err := validateTerrainSettings(definition, assets); err != nil {
+		return manifest{}, err
+	}
+
+	if err := appendProcessorTextures(directory, &definition, assets); err != nil {
 		return manifest{}, err
 	}
 

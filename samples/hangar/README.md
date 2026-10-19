@@ -10,8 +10,9 @@ box physics, animated machinery, particles and spatial audio.
 
 ## Run it
 
-The sample's [karty.toml](karty.toml) selects its SDK. Its liquid volumes, box
-physics and solid renderers use that SDK's matching public host.
+The sample's [karty.toml](karty.toml) pins SDK 0.0.14. Its matching public host
+supports the reciprocal physics portal loop. The CLI installs and verifies the
+host and its matching `wasm_exec.js` when building.
 After [sample setup](../README.md#run-a-sample), run from the CLI repository root
 to build a browser preview:
 
@@ -83,6 +84,19 @@ keep the view open. The sample controller anticipates these risers with the full
 and keeps the higher window sills impassable. Its generated floor/portal support
 in `internal/fps/walk_world.generated.go` comes from the same compiled authored
 world rather than a second handwritten stair map.
+
+### Portal loop
+
+The three-metre opening in extraction's north wall leads directly into the
+window bay left of arrival, through its west wall. Walk through in either
+direction: the non-Euclidean connection turns your heading by a quarter turn
+and aligns the floors, closing a loop through the level. From the bay, the
+south-east passage returns to arrival. The view through the opening shows the
+destination room before you cross; no interaction key is needed.
+
+Both endpoints and their `non_euclidean: true` connection live in
+`levels/hangar/world.yaml`. The host resolves camera movement and physics;
+`generate-hangar-walk` excludes transformed links from local step assistance.
 
 ### Crates
 
@@ -161,21 +175,21 @@ world compiler and SDK formats, and retains authored floor and ceiling planes,
 including slopes. The host resolves continuous ramp motion without positional
 step assistance; collision-solid clearance still requires flat caps. Transformed portals are ineligible for local step
 assistance. Runtime support queries allocate no memory.
+`mise run check-hangar-fps-allocations` verifies the elevator and stepping helpers
+with actual TinyGo WASM heap counters, including checks that native Go misses.
 
 ### Torch
 
 **F** toggles a warm camera-mounted torch; its **Torch on/off** button also works
 on touch devices. The torch sits 0.35 world units to the camera's right, 0.20
-forward and 0.30 below it, giving its beam and shadows a handheld perspective.
+forward and 0.30 below it, giving its beam a handheld perspective.
 The wider beam follows your position immediately while its direction eases
 behind turns with a 0.25-second smoothing time constant.
 Changing landmarks or stopping the game removes the torch; it keeps its on/off
 setting across landmarks. The torch adds live illumination alongside the
-existing baked room lighting. Opaque walls and static solids, including
-machine bodies, cast approximate height-aware shadows from its beam.
-These affect the torch's contribution while the baked room lighting remains
-visible. Transparent acid, sprite artwork and animated parts do not cast torch
-shadows.
+existing baked room lighting. Torch shadows are disabled because spotlight
+shadow maps require ordinary Euclidean portals. The non-Euclidean loop keeps
+the live beam and the room lighting.
 
 ### World and materials
 
@@ -335,6 +349,7 @@ mise run generate-particle-lab
 mise run generate-hangar-effects
 mise run check-hangar-effects
 mise run check-hangar-schema
+mise run check-hangar-fps-allocations
 mise run build-hangar-web
 ```
 
@@ -367,10 +382,10 @@ their authored state.
 From the sample's folder, capture the included viewpoints in one native session:
 
 ```sh
-../../dist/karty screenshot hangar --batch screenshots.toml
+../../dist/karty render screenshot hangar --batch screenshots.toml
 ```
 
-Each capture prints its image path. Use `karty screenshot --help` to choose
+Each capture prints its image path. Use `karty render screenshot --help` to choose
 your own angle.
 
 ## Reusable controller

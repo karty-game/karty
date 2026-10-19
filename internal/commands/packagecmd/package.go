@@ -13,17 +13,17 @@ import (
 )
 
 func Command() *cli.Command {
-	return &cli.Command{Name: "package", Usage: "share local Go, prefab and texture packages", Commands: []*cli.Command{
+	return &cli.Command{Name: "package", Usage: "share and reuse game packages", Commands: []*cli.Command{
 		{
 			Name:      "export",
-			Usage:     "export a package folder to a deterministic .kpkg archive",
+			Usage:     "save a package as a .kpkg file",
 			ArgsUsage: "<folder>",
 			Flags:     []cli.Flag{&cli.StringFlag{Name: "output", Aliases: []string{"o"}, Required: true, Usage: "new .kpkg output file"}},
 			Action:    exportPackage,
 		},
 		{
 			Name:      "import",
-			Usage:     "add a local archive or linked development folder to this project",
+			Usage:     "add a package to this project",
 			ArgsUsage: "<archive.kpkg|folder>",
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
@@ -33,7 +33,7 @@ func Command() *cli.Command {
 			},
 			Action: importPackage,
 		},
-		{Name: "restore", Usage: "recreate package caches and development links from karty.toml", Action: restorePackages},
+		{Name: "restore", Usage: "restore this project's packages", Action: restorePackages},
 	}}
 }
 

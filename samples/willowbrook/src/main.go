@@ -28,6 +28,7 @@ type Game struct {
 	facing, pose int
 	phase        float64
 	quest        treasureQuest
+	navigation   village.NavigationRequest
 }
 
 //go:wasmexport karty_register
@@ -37,6 +38,7 @@ func main() {
 		OnStart: g.start, OnLevelReady: g.ready, OnUpdate: g.update,
 		OnKeyDown: func(k engine.Key) { g.key(k, true) }, OnKeyUp: func(k engine.Key) { g.key(k, false) },
 		OnInputReset: g.resetInput, OnPointer: g.pointer,
+		OnPathResult:  g.pathResult,
 		OnLevelFailed: func(e engine.LevelFailed) { g.label.SetText("Village loading failed: " + e.Diagnostic) },
 	})
 }
@@ -76,7 +78,16 @@ func (g *Game) ready(e engine.LevelReady) {
 		return
 	}
 	g.level = e.Handle
-	g.view = tiledView{game: &g.Game, level: e.Handle, levelMap: village.Level}
+	g.configureNavigation()
+	compiledRender, ok := processed.Read("tiled.compile", "internal/village/village.render.bin")
+	if !ok {
+		panic("compiled Tiled render map is missing")
+	}
+	renderMap, err := tiled.Decode(compiledRender)
+	if err != nil {
+		panic(err)
+	}
+	g.view = tiledView{game: &g.Game, level: e.Handle, levelMap: renderMap}
 	g.camera = engine.Camera2DSettings{Zoom: float32(village.Zoom()), WorldMinLayer: 0, WorldMaxLayer: 100000000}
 	g.focus = village.CameraFocus(g.position)
 	g.follow(true)
@@ -153,12 +164,13 @@ func (g *Game) pointer(p engine.PointerInput) {
 		return
 	}
 	if p.Phase == engine.PointerDown && g.loaded {
+		g.controller.CancelTarget()
 		g.cancelQuestWalk()
 		if g.selectQuest(float64(p.X), float64(p.Y)) {
 			return
 		}
 		q := g.camera.ScreenToWorld(engine.NewVec2(float32(p.X), float32(p.Y)), 1280, 720)
-		g.controller.SetTarget(controllers.Vec2{X: float64(q.X), Y: float64(q.Y)})
+		g.requestPath(village.Point{X: float64(q.X), Y: float64(q.Y)})
 	}
 }
 func (g *Game) update(engine.Frame) {

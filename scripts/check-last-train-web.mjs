@@ -95,10 +95,25 @@ try {
       const buttons = await buttonBands(page);
       await page.waitForFunction(() => {
         const d = trainDialogue();
-        return d.display?.length > 35 && d.display.length < d.text.length;
+        return (
+          typeof d.revealCount === "number" &&
+          d.display?.length > 35 &&
+          d.display.length < d.text.length &&
+          !/\s$/.test(d.display) &&
+          !/\s/.test(d.text[d.display.length])
+        );
       });
       const partial = await state(page);
-      assert.ok(/\s$/.test(partial.display), "reveal displayed a partial word");
+      assert.ok(!/\s$/.test(partial.display), "character reveal waited for a complete word");
+      report.revealCounts = await page.evaluate(() => {
+        const dialogue = trainDialogue();
+        return trainProbe.revealUpdates.filter((entry) => entry.text === dialogue.text).map((entry) => entry.count);
+      });
+      assert.ok(report.revealCounts.includes(1), "first character was not independently revealed");
+      assert.ok(
+        report.revealCounts.some((count, index, values) => index > 0 && count === values[index - 1] + 1),
+        "reveal did not advance one Unicode scalar at a time",
+      );
       const partialImage = await canvasImage(page);
       assert.equal((await state(page)).revealing, true);
       await click(page, buttons[0].x, buttons[0].y);
@@ -172,16 +187,18 @@ try {
           const partialBounds = narrationBounds(a),
             bounds = narrationBounds(b);
           let ink = 0,
+            fullInk = 0,
             moved = 0;
           for (let y = bounds.top; y < bounds.bottom; y++)
             for (let x = bounds.left; x < bounds.right; x++) {
               const at = (y * a.width + x) * 4;
+              if ([212, 195, 166].every((v, c) => Math.abs(b.data[at + c] - v) < 8)) fullInk++;
               if ([212, 195, 166].every((v, c) => Math.abs(a.data[at + c] - v) < 8)) {
                 ink++;
                 if ([0, 1, 2].some((c) => Math.abs(a.data[at + c] - b.data[at + c]) > 12)) moved++;
               }
             }
-          return { ink, moved, bounds, partialBounds };
+          return { ink, fullInk, moved, bounds, partialBounds };
         },
         { partialImage, fullImage },
       );
@@ -192,6 +209,7 @@ try {
       );
       assert.ok(report.wrapping.ink > 20, "no revealed narration ink observed");
       assert.equal(report.wrapping.moved, 0, "already revealed text changed pixel position");
+      assert.ok(report.wrapping.fullInk > report.wrapping.ink, "unrevealed glyphs were already painted");
       for (const [name, url] of [
         ["reading-partial", partialImage],
         ["reading-narration", fullImage],
@@ -241,7 +259,7 @@ try {
       );
       await capture(page, "reading-history", false);
       report.checks.push(
-        "narration without a nameplate, distinct prose typography, icon prompts, fixed revealed-word pixels, introductions before names and anonymous history",
+        "narration without a nameplate, distinct prose typography, icon prompts, fixed revealed-character pixels, introductions before names and anonymous history",
       );
     }, process.argv.includes("--phone-only"));
   if (audioOnly)
@@ -700,7 +718,15 @@ async function fixture(run, phone = false) {
         if (at !== bytes.length) fail();
         return result;
       };
-      globalThis.trainProbe = { instances: {}, sprites: {}, textures: {}, packs: {}, requests: [], frame: 0 };
+      globalThis.trainProbe = {
+        instances: {},
+        revealUpdates: [],
+        sprites: {},
+        textures: {},
+        packs: {},
+        requests: [],
+        frame: 0,
+      };
       let update;
       Object.defineProperty(globalThis, "kartyClientUpdate", {
         configurable: true,
@@ -729,10 +755,19 @@ async function fixture(run, phone = false) {
       globalThis.trainDialogue = () => {
         const v = Object.values(trainProbe.instances).find((v) => v.name === "dialogue.dialogue");
         const narration = v?.visible[1] === false;
+        const element = narration ? 6 : 4;
+        const full = v?.values[element]?.text;
+        const count = v?.reveals?.[element];
         return {
           speaker: narration ? "" : v?.values[1]?.text,
           text: v?.values[narration ? 5 : 3]?.text,
-          display: v?.values[narration ? 6 : 4]?.text,
+          display:
+            count === undefined
+              ? full
+              : Array.from(full || "")
+                  .slice(0, count)
+                  .join(""),
+          revealCount: count,
           prompt: v?.values[11]?.text,
           enabled: v?.values[11]?.enabled,
           narration,
@@ -905,6 +940,7 @@ async function fixture(run, phone = false) {
                   slot: tag === 23 ? view.getUint32(p + 8, true) : 0,
                   handle: tag === 23 ? view.getUint32(p + 16, true) : view.getUint32(p + 4, true),
                   values: {},
+                  reveals: {},
                   visible: {},
                 };
               }
@@ -914,6 +950,13 @@ async function fixture(run, phone = false) {
                   text: text(p + 11, view.getUint16(p + 9, true)),
                   enabled: view.getUint8(p + 8) === 1,
                 };
+              if (tag === 59 && instance) {
+                const element = view.getUint32(p + 4, true),
+                  count = view.getUint32(p + 8, true);
+                instance.reveals[element] = count;
+                if (trainProbe.revealUpdates.length < 4096)
+                  trainProbe.revealUpdates.push({ element, count, text: instance.values[element]?.text });
+              }
               if (tag === 26 && instance) instance.visible[view.getUint32(p + 4, true)] = view.getUint8(p + 8) === 1;
               if (tag === 19 || tag === 25) remove(view.getUint32(p, true));
               at = p + size;
@@ -970,6 +1013,7 @@ async function state(page) {
       text: dialogue.text,
       display: dialogue.display,
       narration: dialogue.narration,
+      revealCount: dialogue.revealCount,
       prompt: dialogue.prompt,
       revealing: dialogue.prompt === "»",
       paused: dialogue.enabled === false,

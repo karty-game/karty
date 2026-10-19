@@ -168,7 +168,7 @@ func manifest(levelMap *tiled.Map, aliases map[string]string) {
 	ids := map[string]int{}
 	for i, name := range names {
 		ids[name] = i + 1
-		fmt.Fprintf(&level, "  {name = %q, source = %q},\n", name, name+".png")
+		fmt.Fprintf(&level, "  { name = %q, source = %q },\n", name, name+".png")
 	}
 	level.WriteString("]\n[level]\nname = \"levels.village\"\nkind = \"tiled\"\n")
 	must(os.WriteFile(filepath.Join(target, "level.toml"), []byte(level.String()), 0644))

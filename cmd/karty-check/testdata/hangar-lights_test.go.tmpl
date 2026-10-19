@@ -38,7 +38,7 @@ func beamAngles(camera engine.CameraSettings, light engine.LightSettings) (float
 func TestTorchQuarterSecondAimAndIdle(t *testing.T) {
 	engine.FixtureBegin()
 	game := lightGame(t)
-	if !game.torch.Settings.Shadows || game.torch.Settings.Color != engine.NewVec3(3, 2.7, 2.16) || game.torch.Settings.InnerAngle != .25 || game.torch.Settings.OuterAngle != .50 {
+	if game.torch.Settings.Shadows || game.torch.Settings.Color != engine.NewVec3(3, 2.7, 2.16) || game.torch.Settings.InnerAngle != .25 || game.torch.Settings.OuterAngle != .50 {
 		t.Fatal("torch tuning changed", game.torch.Settings)
 	}
 	game.camera.Settings.Yaw, game.camera.Settings.Pitch = 0, 0
@@ -116,7 +116,7 @@ func TestTorchToggleAndCameraReplacement(t *testing.T) {
 	engine.FixtureBegin()
 	game := lightGame(t)
 	handheldOffset := engine.NewVec3(.35, .20, -.30) // right, forward, up
-	if game.torch.Settings.Position != handheldOffset || game.torch.Settings.Parent != game.camera.ID || !game.torch.Settings.Enabled || !game.torch.Settings.Shadows || game.torch.World != game.level {
+	if game.torch.Settings.Position != handheldOffset || game.torch.Settings.Parent != game.camera.ID || !game.torch.Settings.Enabled || game.torch.Settings.Shadows || game.torch.World != game.level {
 		t.Fatal("torch is not attached to its level camera", game.torch)
 	}
 	game.key(engine.KeyF, true)
@@ -133,7 +133,7 @@ func TestTorchToggleAndCameraReplacement(t *testing.T) {
 	if oldCamera.ID != 0 || oldTorch.ID != 0 || oldBolt.ID != 0 || game.bolt.light != nil {
 		t.Fatal("old view retained dynamic entities")
 	}
-	if game.torch.Settings.Position != handheldOffset || game.torch.Settings.Enabled || !game.torch.Settings.Shadows || game.torch.Settings.Parent != game.camera.ID {
+	if game.torch.Settings.Position != handheldOffset || game.torch.Settings.Enabled || game.torch.Settings.Shadows || game.torch.Settings.Parent != game.camera.ID {
 		t.Fatal("replacement camera lost torch state")
 	}
 	game.key(engine.KeyF, true)

@@ -112,7 +112,7 @@ intact. Previously successful operations are retained if a later call fails.
 view, err := karty2d.New(level, backend, func(key string) (uint32, bool) {
     id, ok := textureIDs[key] // Produced by the game's ordinary author generator.
     return id, ok
-}, karty2d.Options{Wind: true})
+}, karty2d.Options{Wind: true, MaxLiveSprites: engine.MaxEntityRefs - 64})
 
 ready, err := view.Update(karty2d.Bounds{
     MinX: left, MinY: top, MaxX: right, MaxY: bottom,
@@ -132,6 +132,11 @@ entries cannot starve behind repeated prefix rebuilding. It uses full rotated
 image bounds, including every animation frame and optional wind margin. Static
 sprites do not receive state updates when the camera moves; only residency or
 changed animation/effect states trigger backend calls.
+
+Offscreen sprites are retired before replacements are admitted, within the
+same lifecycle budget. Set `MaxLiveSprites` to the backend's available capacity;
+the example reserves 64 SDK entity references for the hero, HUD and other game
+objects. The lifecycle call budget does not limit the total live population.
 
 Options default to 128 lifecycle calls and 256 changed animation calls per
 update, with at most 8,192 live sprites. Both call budgets accept values from
@@ -179,3 +184,57 @@ browser/device rendering are separate integration checks.
 The [compiled map v1 decision](docs/binary-map-v1.md) records the binary layout,
 allocation bounds and source/runtime API boundary. The root package and
 `karty2d` have no JSON dependency; `source` is for build tools.
+
+## Static background chunks
+
+`assets.BakeStaticLayers` optionally composes selected background tile layers
+into separate transparent images of at most 1024×1024 pixels. `ChunkOptions`
+selects logical chunk size and integer source-pixel density. Downsampling is
+rejected; existing high-resolution tile detail survives. The callback stores
+each unique image and the returned placements can replace those layers in a
+render-only map. Repeated patterns and identical pixel content share images.
+Chunks are processed sequentially, so a repeated map does not allocate one
+large atlas. Original gameplay/collision metadata stays unchanged.
+
+Never select an actor/Y-sorted layer: keep scenery, foreground masks, animated
+tiles and wind-driven sprites separate. Objects, animation, wind, fractional
+geometry, rotation and layer opacity in selected layers return errors. PNG
+alpha, painter order and all orthogonal tile flips are retained.
+
+Import's source/pixel bounds apply; output is limited to 1,024 placements and
+256 MiB of unique RGBA pixels, with a separate 1 GiB cumulative raster-work bound
+and bounded spatial-plan references. Chunking reduces ordinary sprite entities
+by trading reusable small textures for bounded composed images; it does not add
+a renderer batching API. [Willowbrook](../../samples/willowbrook/README.md) shows
+authoring, generated chunk metadata, stale-placement detection and an unchanged
+dynamic sprite backend.
+
+## Build static background layers
+
+To merge static tile backgrounds during `karty build`, add a `tiled-build.json`
+input beside the map:
+
+```json
+{
+  "version": 1,
+  "map": "internal/village/village.tmj",
+  "level": "village",
+  "staticLayers": ["Ground", "Paths"],
+  "chunkSize": 256,
+  "pixelScale": 4
+}
+```
+
+Include that file, the map/tilesets and the selected layers' original PNGs in
+`build.processors.inputs`. Paths are relative to the project. Chunk size is in
+world pixels; `pixelScale` retains source detail rather than downsampling.
+Select only integer-aligned, opaque, nonanimated background tile layers.
+
+The processor returns the usual `village.bin` plus `village.render.bin` with
+merged backgrounds and unchanged dynamic scenery/gameplay metadata. Load the
+render map for drawing and resolve its image keys through
+`processed.TextureID("tiled.compile", key)` after checking authored texture IDs.
+The CLI packages generated images as level textures under ignored `.karty/`
+outputs. Keep only the original PNGs, map, tilesets and configuration in Git.
+See the [version 1 build contract](../../website/content/design/processor-textures-v1.md)
+for bounds, identity and transaction rules.

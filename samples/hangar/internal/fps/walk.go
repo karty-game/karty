@@ -72,7 +72,9 @@ func (walker *Walker) StepUp(px, py, pz, x, y float32) float32 {
 	}
 	feet := pz - playerHeight
 	root := -1
-	for index, cell := range walkCells {
+	// TinyGo can heap-copy a fixed array for range; index the shared graph.
+	for index := range len(walkCells) {
+		cell := walkCells[index]
 		if cell.floorAt(px, py) <= feet+groundTolerance && cell.ceilingAt(px, py) >= pz && cellContains(cell, px, py) {
 			root = index
 			break
@@ -284,7 +286,8 @@ func edgeTouchesBox(a, b walkPoint, x, y, r float32) bool {
 }
 
 func clearSolids(x, y, feet, head float32) bool {
-	for _, solid := range walkSolids {
+	for index := range len(walkSolids) {
+		solid := &walkSolids[index]
 		if solid.top <= feet+.001 || solid.bottom >= head {
 			continue
 		}

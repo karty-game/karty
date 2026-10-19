@@ -1,0 +1,15 @@
+[generate-roman-court-materials]
+description = "Regenerate retained Roman court regression textures"
+run = "go run ./cmd/roman-court-materials"
+
+[generate-roman-court-fixtures]
+description = "Regenerate retained Roman court basin and torch geometry"
+run = "go run ./cmd/roman-court-fixtures"
+
+[generate-outdoor-lighting-fixture]
+description = "Regenerate retained outdoor lighting and vegetation regression inputs"
+run = "go run scripts/outdoor-lighting-fixture.go"
+
+[check-camera-components]
+description = "Verify retained camera behavior and typed hook lifecycle fixtures"
+run = "go test -timeout=9s ./cmd/karty-check -run '^TestCameraComponents$' -count=1 -v"

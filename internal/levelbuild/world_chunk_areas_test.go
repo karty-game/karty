@@ -72,11 +72,11 @@ func TestChunkAreasRejectCompleteInvalidSelection(t *testing.T) {
 	}
 }
 
-func TestWorldCameraSampleChunkAreasKeepWholeCourtyard(t *testing.T) {
+func TestRomanCourtFixtureChunkAreasKeepWholeCourtyard(t *testing.T) {
 	t.Parallel()
 
-	sample := filepath.Join("..", "..", "samples", "world-camera")
-	root := testfixture.WorldCameraGeometry(t, sample)
+	sample := filepath.Join("..", "..", "testdata", "roman-court")
+	root := testfixture.RomanCourtGeometry(t, sample)
 	path := filepath.Join(root, "levels", "showcase", "level.toml")
 
 	contents, err := os.ReadFile(path)
@@ -162,10 +162,10 @@ func TestWorldCameraSampleChunkAreasKeepWholeCourtyard(t *testing.T) {
 		t.Fatalf("authored areas lost courtyard sectors or columns: counts=%v courtyard=%d", counts, courtyardChunk)
 	}
 
-	checkWorldCameraChunkLightmapPages(t, sampleDefinition, document)
+	checkRomanCourtChunkLightmapPages(t, sampleDefinition, document)
 }
 
-func checkWorldCameraChunkLightmapPages(t *testing.T, definition manifest, document world.Document) {
+func checkRomanCourtChunkLightmapPages(t *testing.T, definition manifest, document world.Document) {
 	t.Helper()
 
 	options, err := chunkOptions(definition)

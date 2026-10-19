@@ -18,7 +18,7 @@ import (
 	"github.com/karty-game/karty/internal/toolchain"
 )
 
-var errCheckMode = errors.New("select exactly one of --web, --browser, --watcher, --allocations, --ui, --world-camera, or --client-hooks")
+var errCheckMode = errors.New("select exactly one of --web, --browser, --watcher, --allocations, --ui, or --client-hooks")
 
 func main() {
 	web := flag.Bool("web", false, "execute staged browser launcher with TinyGo and Go clients under Node")
@@ -26,7 +26,6 @@ func main() {
 	watcher := flag.Bool("watcher", false, "check native development watcher, publication and generated-file exclusions")
 	allocations := flag.Bool("allocations", false, "check actual TinyGo guest allocation counters")
 	checkUI := flag.Bool("ui", false, "scaffold and execute the UI template in native WASM and Chromium")
-	worldCamera := flag.Bool("world-camera", false, "build the packaged world sample twice and verify native/browser camera switching")
 	clientHooks := flag.Bool("client-hooks", false, "execute a crafted current SDK hook/action fixture through native WASM and Chromium")
 	nativeOnly := flag.Bool("native-only", false, "with --client-hooks, run deterministic native builds and the WASM lifecycle check")
 
@@ -38,7 +37,7 @@ func main() {
 	}
 
 	if *clientHooks {
-		if *web || *browser || *watcher || *allocations || *checkUI || *worldCamera {
+		if *web || *browser || *watcher || *allocations || *checkUI {
 			fmt.Fprintln(os.Stderr, errCheckMode)
 			os.Exit(1)
 		}
@@ -57,7 +56,7 @@ func main() {
 	}
 
 	if *checkUI {
-		if *web || *browser || *watcher || *allocations || *worldCamera {
+		if *web || *browser || *watcher || *allocations {
 			fmt.Fprintln(os.Stderr, errCheckMode)
 			os.Exit(1)
 		}
@@ -70,24 +69,20 @@ func main() {
 		return
 	}
 
-	if err := run(context.Background(), *web, *browser, *watcher, *allocations, *worldCamera); err != nil {
+	if err := run(context.Background(), *web, *browser, *watcher, *allocations); err != nil {
 		fmt.Fprintln(os.Stderr, "karty-check:", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, web, browser, watcher, allocations, worldCamera bool) error {
-	if err := validateCheckMode(web, browser, watcher, allocations, worldCamera); err != nil {
+func run(ctx context.Context, web, browser, watcher, allocations bool) error {
+	if err := validateCheckMode(web, browser, watcher, allocations); err != nil {
 		return err
 	}
 
 	root, err := os.Getwd()
 	if err != nil {
 		return err
-	}
-
-	if worldCamera {
-		return runWorldCamera(ctx, root)
 	}
 
 	if watcher {

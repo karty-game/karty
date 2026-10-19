@@ -33,7 +33,7 @@ func (g *Game) throwFireball() {
 	g.nextFireball = (g.nextFireball + 1) % len(g.fireballs)
 	g.fireCooldown = 18
 	g.refresh()
-	bolt.position, bolt.direction = g.position(), dungeon.FacingDirection(g.facing)
+	bolt.position, bolt.direction = g.position(), g.aim
 	bolt.facing = uint8(g.facing % dungeon.WalkDirections)
 	// Begin just ahead of the body, retaining segment clearance at close walls.
 	blocked := false

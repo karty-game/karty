@@ -6,10 +6,10 @@
     <panel class="text-area">
     if !props.Model.Narration() {
       <label class="line-space">{ props.Model.Text }</label>
-      <label class="line">{ props.Model.DisplayWords() }</label>
+      <label class="line" reveal={ props.Model.RevealCharacters() }>{ props.Model.Text }</label>
     } else {
       <label class="prose-space">{ props.Model.Text }</label>
-      <label class="prose">{ props.Model.DisplayWords() }</label>
+      <label class="prose" reveal={ props.Model.RevealCharacters() }>{ props.Model.Text }</label>
     }
     </panel>
     <panel class="rule"/>

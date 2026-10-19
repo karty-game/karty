@@ -455,7 +455,7 @@ func readAutomaticPrebake(
 	expectedProducer, err := worldlightmap.OfflineProducer(definition.Lightmap.denoise(), definition.Lightmap.maxRayDistance())
 	if err != nil || pair.Manifest.Producer != expectedProducer {
 		log.Info(
-			"Offline lightmap denoiser differs from level settings; run karty bake",
+			"Offline lightmap denoiser differs from level settings; run karty render bake",
 			"level_name",
 			definition.Level.Name,
 			"expected",

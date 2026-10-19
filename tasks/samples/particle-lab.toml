@@ -34,7 +34,7 @@ run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
 description = "Capture the empty particle test room using the actual native host"
 depends = ["build"]
 dir = "samples/particle-lab"
-run = '../../dist/karty screenshot levels.lab --timeout 20s --width 960 --height 540 --batch room-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+run = '../../dist/karty render screenshot levels.lab --timeout 20s --width 960 --height 540 --batch room-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
 
 [serve-particle-lab]
 description = "Serve the built particle lab on loopback port 4245"
@@ -46,4 +46,4 @@ run = '../../dist/karty serve --addr "127.0.0.1:4245" dist/web'
 description = "Capture the independent smoke recipes with the native host"
 depends = ["build"]
 dir = "samples/particle-lab"
-run = '../../dist/karty screenshot levels.smoke --timeout 20s --width 960 --height 540 --batch smoke-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
+run = '../../dist/karty render screenshot levels.smoke --timeout 20s --width 960 --height 540 --batch smoke-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'

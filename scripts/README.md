@@ -30,8 +30,9 @@ separate checks; record which ones passed.
 
 ## Asset and template generation
 
-Keep generators with the assets or templates they own. The sample material
-artwork generator is `cmd/world-camera-materials`. Last Train's Foley and score
+Keep generators with the assets or templates they own. The Roman court regression
+fixture uses `cmd/roman-court-materials` and `cmd/roman-court-fixtures`; the
+outdoor lighting fixture uses `scripts/outdoor-lighting-fixture.go`. Last Train's Foley and score
 have separate generation tasks; score rendering requires Python, FluidSynth
 and a soundfont. See its [audio sources](../samples/last-train/assets/audio/README.md).
 Terrain's retained authoring tools and artwork sources live in
@@ -49,7 +50,7 @@ mise run export-controllers-starter -- /path/to/template/packages/controllers
 
 Add `--check` to verify an existing copy without rewriting it. SDK template
 revision 0.0.4 includes a copy in each of its three genre starters. The
-`check-controller-starters` task requires the matching SDK 0.0.13 candidate,
+`check-controller-starters` task requires the released SDK 0.0.13,
 compiler and web host.
 
 Website generation, browser checks and sample capture tools live in

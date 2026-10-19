@@ -35,7 +35,7 @@ func ResolveNativeHost(ctx context.Context, override string, manifest sdk.Manife
 // Command creates a native, one-shot world screenshot command.
 func Command() *cli.Command {
 	return &cli.Command{
-		Name: "screenshot", Usage: "render a level with the local native host, save a PNG and exit", ArgsUsage: "<level>",
+		Name: "screenshot", Usage: "save a level screenshot as a PNG", ArgsUsage: "<level>",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "position", Value: "0,0,1.7", Usage: "camera eye position as X,Y,Z in world units"},
 			&cli.Float64Flag{Name: "yaw", Usage: "yaw in degrees; zero looks along +Y"},
@@ -53,7 +53,7 @@ func Command() *cli.Command {
 
 func run(ctx context.Context, command *cli.Command) error {
 	if command.NArg() != 1 {
-		return fmt.Errorf("usage: karty screenshot [options] <level>: %w", os.ErrInvalid)
+		return fmt.Errorf("usage: %s [options] <level>: %w", command.FullName(), os.ErrInvalid)
 	}
 
 	config, err := project.Load(".")

@@ -64,7 +64,7 @@ func TestPreparationDiscoversSamplesAndLeavesStandaloneProjectsAlone(t *testing.
 	t.Parallel()
 
 	root := t.TempDir()
-	samples := []string{"first-demo", "new-demo"}
+	samples := []string{"first-demo", "new-demo", "last-train"}
 
 	for _, sample := range samples {
 		path := filepath.Join(root, "samples", sample, "karty.toml")
@@ -118,33 +118,38 @@ func TestPreparationDiscoversSamplesAndLeavesStandaloneProjectsAlone(t *testing.
 	}
 }
 
-func TestPreparationRetainsDeclaredCandidateSamples(t *testing.T) {
+func TestPreparationRetainsCurrentSamplePins(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
-	for _, name := range []string{"crate-room", "hangar", "particle-lab", "willowbrook", "vigil"} {
+	for _, name := range []string{"crate-room", "hangar", "particle-lab", "willowbrook", "vigil", "last-train"} {
 		path := filepath.Join(root, "samples", name, "karty.toml")
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
 
-		if err := os.WriteFile(path, []byte("[sdk]\nversion = '"+release.SDKVersion()+"'\n"), 0o600); err != nil {
+		version := release.SDKVersion()
+
+		if err := os.WriteFile(path, []byte("[sdk]\nversion = '"+version+"'\n"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
 
 	if err := run(root, true); err != nil {
-		t.Fatalf("declared candidate pins rejected: %v", err)
+		t.Fatalf("current sample pins rejected: %v", err)
 	}
 
 	if err := run(root, false); err != nil {
 		t.Fatal(err)
 	}
 
-	for _, name := range []string{"crate-room", "hangar", "particle-lab", "willowbrook", "vigil"} {
+	for _, name := range []string{"crate-room", "hangar", "particle-lab", "willowbrook", "vigil", "last-train"} {
 		data, err := os.ReadFile(filepath.Join(root, "samples", name, "karty.toml"))
-		if err != nil || !strings.Contains(string(data), release.SDKVersion()) {
-			t.Fatalf("%s candidate pin changed: %s, %v", name, data, err)
+
+		version := release.SDKVersion()
+
+		if err != nil || !strings.Contains(string(data), version) {
+			t.Fatalf("%s current pin changed: %s, %v", name, data, err)
 		}
 	}
 }

@@ -285,31 +285,8 @@ func checkHangarBarrelSmoke(t *testing.T, particles *worldparticles.Document) {
 	}
 }
 
-func TestDocumentedParticleCycleAndOnceExamplesCompile(t *testing.T) {
+func TestParticleCycleAndOnceFixturesCompile(t *testing.T) {
 	t.Parallel()
-
-	data, err := os.ReadFile(filepath.Join("..", "..", "..", "docs", "particles.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var examples []string
-
-	remaining := string(data)
-	for {
-		_, after, found := strings.Cut(remaining, "```yaml\n")
-		if !found {
-			break
-		}
-
-		example, rest, _ := strings.Cut(after, "```")
-		examples = append(examples, strings.TrimSpace(example))
-		remaining = rest
-	}
-
-	if len(examples) != 3 {
-		t.Fatalf("documented particle examples changed: %d", len(examples))
-	}
 
 	const room = `
 rooms:
@@ -324,24 +301,16 @@ rooms:
     ceiling_material: wall
 `
 
-	cycle := examples[0]
-	once := strings.Replace(cycle, "name: acid-sparkle", "name: vent-sparks", 1)
-	once = strings.Replace(once, "capacity: 48", "capacity: 24", 1)
-	once = strings.Replace(
-		once,
-		"      emission: {rate: 12, duration_seconds: 3}",
-		"      "+strings.ReplaceAll(examples[1], "\n", "\n      "),
-		1,
-	)
-	once, _, _ = strings.Cut(once, "  emitters:")
-	once += "  emitters:\n    " + strings.ReplaceAll(examples[2], "\n", "\n    ")
-
 	for _, test := range []struct {
-		input string
 		mode  string
 		count int
-	}{{cycle, "cycle", 36}, {once, "once", 24}} {
-		input := test.input + room
+	}{{"cycle", 36}, {"once", 24}} {
+		data, err := os.ReadFile(filepath.Join("testdata", "particle-"+test.mode+".world.yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		input := string(data) + room
 
 		value, err := schema.Parse([]byte(input))
 		if err != nil {
@@ -349,12 +318,12 @@ rooms:
 		}
 
 		if err := schema.Validate(value, schema.Level(value, []string{"wall", "acid-sparkle"})); err != nil {
-			t.Fatalf("documented %s schema: %v", test.mode, err)
+			t.Fatalf("particle %s schema: %v", test.mode, err)
 		}
 
 		expanded, err := source.Decode([]byte(input))
 		if err != nil {
-			t.Fatalf("documented %s YAML: %v", test.mode, err)
+			t.Fatalf("particle %s YAML: %v", test.mode, err)
 		}
 
 		textures := map[string]uint32{"wall": 1, "acid-sparkle": 2}
@@ -366,12 +335,12 @@ rooms:
 
 		particles, err := geometry.CompileParticles(expanded, &compiledWorld, textures)
 		if err != nil {
-			t.Fatalf("documented %s envelope: %v", test.mode, err)
+			t.Fatalf("particle %s envelope: %v", test.mode, err)
 		}
 
 		births, err := worldparticles.BirthSchedule(particles.Presets[0])
 		if err != nil || len(births) != test.count || particles.Emitters[0].Playback.Mode != test.mode {
-			t.Fatalf("documented %s schedule: %v, %v", test.mode, births, err)
+			t.Fatalf("particle %s schedule: %v, %v", test.mode, births, err)
 		}
 	}
 }

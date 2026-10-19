@@ -1185,7 +1185,9 @@ rooms:
       - { id: edge-2, start: { x: 30.00, y: 38.00 }, end: { x: 32.00, y: 38.00 }, material: olive }
       - { id: edge-3, start: { x: 32.00, y: 38.00 }, end: { x: 36.00, y: 42.00 }, material: olive }
       - { id: edge-4, start: { x: 36.00, y: 42.00 }, end: { x: 36.00, y: 46.00 }, material: olive }
-      - { id: edge-5, start: { x: 36.00, y: 46.00 }, end: { x: 25.00, y: 46.00 }, material: olive }
+      - { id: edge-5, start: { x: 36.00, y: 46.00 }, end: { x: 31.00, y: 46.00 }, material: olive }
+      - { id: loop-portal, start: { x: 31.00, y: 46.00 }, end: { x: 28.00, y: 46.00 }, material: steel }
+      - { id: loop-west, start: { x: 28.00, y: 46.00 }, end: { x: 25.00, y: 46.00 }, material: olive }
       - { id: edge-6, start: { x: 25.00, y: 46.00 }, end: { x: 22.00, y: 43.00 }, material: olive }
       - { id: edge-7, start: { x: 22.00, y: 43.00 }, end: { x: 22.00, y: 38.00 }, material: olive }
   - id: service
@@ -1293,7 +1295,9 @@ rooms:
       - { id: edge-8, start: { x: -0.45, y: 10.00 }, end: { x: -12.00, y: 10.00 }, material: brick }
       - { id: edge-9, start: { x: -12.00, y: 10.00 }, end: { x: -12.00, y: 9.00 }, material: brick }
       - { id: edge-10, start: { x: -12.00, y: 9.00 }, end: { x: -12.00, y: 6.00 }, material: brick }
-      - { id: edge-11, start: { x: -12.00, y: 6.00 }, end: { x: -12.00, y: -6.00 }, material: brick }
+      - { id: edge-11, start: { x: -12.00, y: 6.00 }, end: { x: -12.00, y: 1.00 }, material: brick }
+      - { id: loop-portal, start: { x: -12.00, y: 1.00 }, end: { x: -12.00, y: -2.00 }, material: steel }
+      - { id: loop-south, start: { x: -12.00, y: -2.00 }, end: { x: -12.00, y: -6.00 }, material: brick }
   - id: bay-access
     floor: { c: 0.20 }
     ceiling: { c: 2.70 }
@@ -2170,6 +2174,11 @@ rooms:
       - { id: edge-2, start: { x: 40.38, y: 15.55 }, end: { x: 40.00, y: 15.55 }, material: steel }
       - { id: edge-3, start: { x: 40.00, y: 15.55 }, end: { x: 40.00, y: 12.00 }, material: steel }
 connections:
+  # Fold the distant extraction exit back into the room left of arrival.
+  - id: extraction-to-arrival-bay
+    a: { room: extraction, edge: loop-portal }
+    b: { room: window-bay, edge: loop-portal }
+    non_euclidean: true
   - id: passage-0
     a: { room: arrival, edge: edge-4 }
     b: { room: inspection-alcove, edge: edge-3 }
@@ -5682,7 +5691,7 @@ solids:
     bottom_material: steel
     collision: true
   - id: extraction-platform
-    footprint: [{ x: 27.000, y: 44.400 }, { x: 32.000, y: 44.400 }, { x: 32.000, y: 45.900 }, { x: 27.000, y: 45.900 }]
+    footprint: [{ x: 32.000, y: 44.400 }, { x: 35.500, y: 44.400 }, { x: 35.500, y: 45.900 }, { x: 32.000, y: 45.900 }]
     bottom: { c: 0.000 }
     top: { c: 0.240 }
     side_material: hazard
@@ -8043,7 +8052,7 @@ contents:
         { texture: reactor-sign, facing: fixed, alpha: cutout, width: 2.40, height: 1.50, origin_x: 0.5, origin_y: 0.5 }
   - id: exit-sign
     kind: actor
-    position: { x: 31.000, y: 45.940, z: 2.700 }
+    position: { x: 33.750, y: 45.940, z: 2.700 }
     actor:
       yaw_degrees: 0.0
       sprite:

@@ -53,11 +53,11 @@ func TestSampleBuildBakesBeforeWebPackaging(t *testing.T) {
 		failure []string
 		cdnURL  string
 	}{
-		{name: "offline", levels: []string{"a", "z"}, want: [][]string{{"bake", "--incremental", "--level", "a"}, {"bake", "--incremental", "--level", "z"}, {"build", "--target", "web"}}},
+		{name: "offline", levels: []string{"a", "z"}, want: [][]string{{"render", "bake", "--incremental", "--level", "a"}, {"render", "bake", "--incremental", "--level", "z"}, {"build", "--target", "web"}}},
 		{name: "no bake", want: [][]string{{"build", "--target", "web"}}},
-		{name: "CDN", cdnURL: "../runtime/" + release.SDKVersion() + "/host.wasm", levels: []string{"a"}, want: [][]string{{"bake", "--incremental", "--level", "a"}, {"build", "--target", "web", "--cdn", "../runtime/" + release.SDKVersion() + "/host.wasm"}}},
-		{name: "failed bake", levels: []string{"broken", "z"}, want: [][]string{{"bake", "--incremental", "--level", "broken"}}, failure: []string{"bake", "--incremental", "--level", "broken"}},
-		{name: "failed build", levels: []string{"a"}, want: [][]string{{"bake", "--incremental", "--level", "a"}, {"build", "--target", "web"}}, failure: []string{"build", "--target", "web"}},
+		{name: "CDN", cdnURL: "../runtime/" + release.SDKVersion() + "/host.wasm", levels: []string{"a"}, want: [][]string{{"render", "bake", "--incremental", "--level", "a"}, {"build", "--target", "web", "--cdn", "../runtime/" + release.SDKVersion() + "/host.wasm"}}},
+		{name: "failed bake", levels: []string{"broken", "z"}, want: [][]string{{"render", "bake", "--incremental", "--level", "broken"}}, failure: []string{"render", "bake", "--incremental", "--level", "broken"}},
+		{name: "failed build", levels: []string{"a"}, want: [][]string{{"render", "bake", "--incremental", "--level", "a"}, {"build", "--target", "web"}}, failure: []string{"build", "--target", "web"}},
 	} {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
@@ -150,11 +150,9 @@ func TestSampleBakeLevelsMatchCurrentProjects(t *testing.T) {
 	for name, want := range map[string][]string{
 		"hangar":       {"hangar"},
 		"crate-room":   {"room"},
-		"world-camera": nil, // Chunk lightmaps are baked during the normal build.
 		"ui-demo":      nil,
 		"media-lab":    nil,
 		"particle-lab": nil,
-		"environment":  nil,
 	} {
 		names, err := sampleBakeLevels(filepath.Join("..", "..", "..", "samples", name))
 		if err != nil || !slices.Equal(names, want) {

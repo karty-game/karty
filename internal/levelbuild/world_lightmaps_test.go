@@ -210,7 +210,7 @@ func TestRomanBuildLightmapSemanticLayout(t *testing.T) {
 
 	selected = geometrySDK(selected)
 
-	root := testfixture.WorldCameraGeometry(t, filepath.Join("..", "..", "samples", "world-camera"))
+	root := testfixture.RomanCourtGeometry(t, filepath.Join("..", "..", "testdata", "roman-court"))
 
 	artifacts, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
 	if err != nil {

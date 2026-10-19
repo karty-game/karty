@@ -48,7 +48,10 @@ controls its scenes and handles those events. `view` holds the displayed line,
 progressive reveal, choices and history. The package automatically supplies
 `NovelFrame`, `NovelDialogue`/`NovelDialogueProps`, and
 `NovelHistory`/`NovelHistoryProps` to the game's generated KartUI bindings.
-No separate UI package or engine-specific bindings are distributed.
+No separate UI package or engine-specific bindings are distributed. The packaged
+UI requires SDK 0.0.14 and its matching host for full-layout character reveal
+(`UI.Reveal`), plus a CLI compiler using KartUI v0.0.8 or newer. The portable
+runtime and model remain independent of engine bindings.
 
 Supply your game's artwork, fonts and command handlers. Use the full interface
 or just the runtime/model with your own UI. Profile/run storage is independent;

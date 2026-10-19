@@ -6,10 +6,16 @@ steps, and find the hidden cache across the bridge.
 
 ![Willowbrook's Tiled village.](preview.jpg)
 
-WASD or arrows walk; Shift runs. Tap the ground to stroll directly toward it.
+WASD or arrows walk; Shift runs. Tap the ground to find a route around obstacles.
 Tap a note or cache to find a walkable route and inspect it, or approach with
 the keyboard and press E or Space. R restarts the hunt. Losing focus cancels
 held input and automatic walking.
+
+Ground clicks use the SDK's shared `World.FindPath` solver with the authored
+collision geometry. A 24-pixel grid covers the village within the engine's
+4,096-cell bound; returned routes still pass the game's collision checks.
+New clicks replace the route, and keyboard movement cancels it. Quest clicks
+retain their finer approach search so signs can be inspected from nearby.
 
 Noticeboards show a nearby **READ [E]** prompt, and the chest shows **OPEN [E]**.
 Tap the painted sign face, nearby prompt or highlighted journal action; the
@@ -26,7 +32,7 @@ mise run build-willowbrook-web
 mise run serve-willowbrook
 ```
 
-The sample uses SDK 0.0.13 with Camera2D and its matching public host.
+The sample uses SDK 0.0.14 with Camera2D and its matching public host.
 No engine source is imported by the sample. `KARTY_HOST_WEB` selects a contributor
 host override; native packaging uses `mise run build-willowbrook-native`.
 
@@ -51,6 +57,14 @@ Run asset authoring first if the tile PNGs are absent.
 - Gameplay contains the spawn, two clues, treasure, and named traversal areas.
   Custom properties hold clue order and text. Map properties hold camera zoom,
   follow offset, movement speeds and character dimensions.
+
+Ground/Paths tiles and their source images are compiled into background chunks
+by the normal build. The authored `internal/village/tiled-build.json` selects
+those layers and their source resolution. Chunk images, render-map records and
+texture IDs stay under ignored `.karty/processed`; they are packaged with the
+level automatically. Map or source-image edits are picked up on the next build.
+Run `mise run author-willowbrook` only when changing the reusable source-image
+extraction or metadata-driven foreground masks.
 
 Changing a house, path, collision or clue requires editing the map. Ordinary
 asset generation and builds preserve the TMJ and TSJ. There is no scene-placement
@@ -77,6 +91,21 @@ scenery band so stone cheeks and front posts cover the correct parts of it.
 Move the base, matching foreground and collision objects together when editing.
 `check-willowbrook` checks their alignment. Regeneration does not replace them
 with tread or plank strips.
+
+Ground and Paths are baked separately into 135 chunk placements covering
+256×256 world pixels each. Each 1024×1024 image retains the original four source
+pixels per world pixel; there is no downsampling. The 117 identical ground
+chunks share one image, and eighteen path chunks use eighteen more images: 76 MiB
+of decoded RGBA pixels across the complete map, with compressed PNG downloads.
+
+This replaces 7,828 individual tile entities. The complete render map has 332
+entries; all 197 other sprites retain their original transforms, layer/Y sorting,
+animation and wind. This is build-time image composition using ordinary
+sprites, not a new GPU batching API. The shared chunker bounds unique output
+pixels and cumulative raster work, and rejects moving or actor content in
+selected static layers. The build processor compiles both the unchanged gameplay
+map and its render map from the same current sources; there are no checked-in
+chunk images or placement binaries to refresh.
 
 The asset importer derives atlas rectangles from tileset dimensions, spacing
 and margins. The cartridge resolves image keys to bundled textures and uses
@@ -137,6 +166,7 @@ mise run check-willowbrook-web -- --collision-house
 mise run check-willowbrook-web -- --collision-tree
 mise run check-willowbrook-web -- --collision-terrain
 mise run check-willowbrook-web -- --interactions
+mise run check-willowbrook-web -- --navigation
 ```
 
 The browser checker passively observes normal submitted commands. It verifies
@@ -156,6 +186,9 @@ diagonal sliding at the annex. Native regressions cover the solid body and root
 areas of every authored house/tree footprint and the complete quest routes.
 The bridge fixture drives both landings, both off-center plank lanes in either
 direction, rail stops and diagonal deflections using actual held input.
+The navigation fixture checks ground-click detours, stairs, bridge crossings,
+wall-contact recovery, replacement destinations and portrait touch through the
+actual host pathfinder.
 
 For checks during concurrent authoring, use
 `mise run build-controllers-willowbrook-snapshot` and set

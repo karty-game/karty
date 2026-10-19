@@ -99,3 +99,15 @@ position = [48, 19, 1.9]
 yaw = 180
 pitch = 0
 output = 'dist/screenshots/acid-control-east-access.png'
+
+[[views]]
+position = [29.5, 43, 1.7]
+yaw = 0
+pitch = 0
+output = 'dist/screenshots/extraction-loop.png'
+
+[[views]]
+position = [-9, -0.5, 2.1]
+yaw = -90
+pitch = 0
+output = 'dist/screenshots/arrival-bay-loop.png'

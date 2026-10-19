@@ -66,7 +66,7 @@ func TestCompileVegetationResolvesRoomOwnershipAndCeiling(t *testing.T) {
 func TestEnvironmentVegetationLivesOnlyOnGroundWithIndependentDensities(t *testing.T) {
 	t.Parallel()
 
-	directory := filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight")
+	directory := filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight")
 
 	expanded, err := source.Load(directory, "world.yaml")
 	if err != nil {
@@ -130,7 +130,7 @@ func TestEnvironmentVegetationLivesOnlyOnGroundWithIndependentDensities(t *testi
 func TestEnvironmentTrailStaysClearAndShouldersThinTheVegetation(t *testing.T) {
 	t.Parallel()
 
-	directory := filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight")
+	directory := filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight")
 
 	expanded, err := source.Load(directory, "world.yaml")
 	if err != nil {
@@ -194,7 +194,7 @@ func assertEnvironmentShoulderDensity(t *testing.T, shoulder, outer source.Room)
 func TestEnvironmentTreesHaveTwoSeededCandidatesInEachSelectedSector(t *testing.T) {
 	t.Parallel()
 
-	directory := filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight")
+	directory := filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight")
 
 	expanded, err := source.Load(directory, "world.yaml")
 	if err != nil {
@@ -398,7 +398,7 @@ func checkEnvironmentVegetationNormals(t *testing.T, name string) {
 func environmentVegetationTexture(t *testing.T, name string) image.Image {
 	t.Helper()
 
-	directory := filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight")
+	directory := filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight")
 
 	file, err := os.Open(filepath.Join(directory, name+".png"))
 	if err != nil {

@@ -24,9 +24,9 @@ var defaultConfig []byte
 
 // Command creates fmt or lint. Configuration precedence is explicit, project, Karty.
 func Command(name string) *cli.Command {
-	usage := "format handwritten Go files using golangci-lint"
+	usage := "format your Go code"
 	if name == "lint" {
-		usage = "lint Go packages for the Karty WASI target using golangci-lint"
+		usage = "check your Go code for problems"
 	}
 
 	flags := []cli.Flag{

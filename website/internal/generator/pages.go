@@ -229,13 +229,14 @@ func designTopics() []guideLink {
 		{Name: "SDK versions and toolchains", URL: "sdk-and-toolchain.html"},
 		{Name: "Asset pipeline", URL: "asset-pipeline.html"},
 		{Name: "Packages", URL: "packages.html"},
+		{Name: "Processor textures", URL: "processor-textures-v1.html"},
 	}
 }
 
 func designPages() ([]guidePage, error) {
 	pages := make([]guidePage, 0, len(designTopics())+1)
 
-	for _, name := range []string{"index", "why", "architecture", "sdk-and-toolchain", "asset-pipeline", "packages"} {
+	for _, name := range []string{"index", "why", "architecture", "sdk-and-toolchain", "asset-pipeline", "packages", "processor-textures-v1"} {
 		contents, err := website.Files.ReadFile("content/design/" + name + ".md")
 		if err != nil {
 			return nil, err

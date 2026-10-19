@@ -27,8 +27,6 @@ func samplePriority(name string) int {
 		"vigil",
 		"willowbrook",
 		"last-train",
-		"environment",
-		"world-camera",
 		"ui-demo",
 		"media-lab",
 		"particle-lab",
@@ -212,7 +210,7 @@ func buildSampleWithRunner(directory, cli, cdnURL string, run func(string, strin
 	}
 
 	for _, name := range levels {
-		if err = run(directory, cli, "bake", "--incremental", "--level", name); err != nil {
+		if err = run(directory, cli, "render", "bake", "--incremental", "--level", name); err != nil {
 			return err
 		}
 	}

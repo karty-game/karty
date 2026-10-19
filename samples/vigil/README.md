@@ -18,7 +18,7 @@ cd samples/vigil
 ../../dist/karty dev
 ```
 
-Open the preview address printed by the CLI. SDK 0.0.13 and its matching public
+Open the preview address printed by the CLI. SDK 0.0.14 and its matching public
 host supply navigation, sprites and foreground occluder fading. For packaging,
 run `mise run build-vigil-web` or `mise run build-vigil-native` from the repository
 root. Run those builds sequentially because they share generated UI staging.

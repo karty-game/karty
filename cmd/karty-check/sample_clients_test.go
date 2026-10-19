@@ -17,7 +17,7 @@ import (
 )
 
 func currentSamples() []string {
-	return []string{"ui-demo", "media-lab", "world-camera", "hangar", "environment", "crate-room", "vigil"}
+	return []string{"ui-demo", "media-lab", "hangar", "crate-room", "vigil"}
 }
 
 // Read source and metadata only; never build a sample's assets or run its baker.
@@ -93,10 +93,10 @@ func TestSampleClients(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			directory := prepareSampleClient(t, name, manifest, bindings)
+			directory := prepareSampleClient(t, name, bindings)
 
 			packages := []string{"./src"}
-			if name == "hangar" || name == "environment" {
+			if name == "hangar" {
 				packages = append(packages, "./internal/fps")
 			}
 
@@ -116,7 +116,7 @@ func TestSampleClients(t *testing.T) {
 	}
 }
 
-func prepareSampleClient(t *testing.T, name string, manifest sdk.Manifest, bindings map[string][]byte) string {
+func prepareSampleClient(t *testing.T, name string, bindings map[string][]byte) string {
 	t.Helper()
 	source, config, views := sampleUISources(t, name)
 	directory := t.TempDir()
@@ -144,9 +144,7 @@ func prepareSampleClient(t *testing.T, name string, manifest sdk.Manifest, bindi
 		[]byte(componentEngineFixture+"\nfunc FixtureUIID()uint32{if activeUI==nil{return 0};return activeUI.id}\n"),
 	)
 
-	if name != "world-camera" {
-		writeComponentFixture(t, directory, ".karty/engine/hook_fixture.go", []byte(cameraHookEngineFixture))
-	}
+	writeComponentFixture(t, directory, ".karty/engine/hook_fixture.go", []byte(cameraHookEngineFixture))
 
 	writeComponentFixture(t, directory, ".karty/config/project.go", []byte(componentConfigFixture))
 
@@ -199,22 +197,8 @@ const (SoundEmberCrackle engine.SoundID=1; SoundFireballCast engine.SoundID=2; S
 		}
 	case "crate-room":
 		copyComponentFixture(t, "testdata/crate-room-layout_test.go.tmpl", directory, "src/layout_test.go")
-	case "environment":
-		copyComponentFixture(t, "testdata/environment-movement_test.go.tmpl", directory, "src/movement_test.go")
-
-		files, err := filepath.Glob(filepath.Join(source, "internal/fps/*.go"))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		for _, file := range files {
-			copyComponentFixture(t, file, directory, filepath.Join("internal/fps", filepath.Base(file)))
-		}
 	case "ui-demo":
 		prepareFlightTests(t, directory, views)
-	case "world-camera":
-		prepareCameraHooksFixture(t, directory, source, manifest)
-		copyComponentFixture(t, "testdata/world-camera-components_test.go.tmpl", directory, "src/components_test.go")
 	case "media-lab":
 		writeComponentFixture(t, directory, ".karty/assets/media.go", []byte(`package assets
 import "example.com/media-lab/.karty/engine"

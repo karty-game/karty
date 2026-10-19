@@ -3,21 +3,21 @@
 [Play the demos](https://karty-game.github.io/karty/main/) or choose a project
 below to explore its source, controls and authoring tools.
 
-| Sample                                          | What it demonstrates                                                        |
-| ----------------------------------------------- | --------------------------------------------------------------------------- |
-| [Hangar](hangar/README.md)                      | First-person movement, physics, baked lighting, machinery and spatial audio |
-| [Physics lab: crate room](crate-room/README.md) | Shooting and pushing physics crates, with desktop and touch controls        |
-| [Terrain: coastal cove](terrain/README.md)      | Imported terrain, coastal vegetation and static structures                  |
-| [Vigil](vigil/README.md)                        | Dimetric exploration, pathfinding, animated sprites and occluder fading     |
-| [Willowbrook](willowbrook/README.md)            | A 2D treasure hunt with Tiled maps, following camera and touch controls     |
-| [Last Train](last-train/README.md)              | Yarn Spinner dialogue, three endings, persistent saves and reusable UI      |
-| [Orbital flight deck](ui-demo/README.md)        | KartUI menus, tabs, settings, tooltips and inventory                        |
-| [Media lab](media-lab/README.md)                | Images, overlapping sound effects, looping music and video playback         |
-| [Particle lab](particle-lab/README.md)          | Reusable fire and smoke recipes                                             |
+| Sample                                          | What it demonstrates                                                            |
+| ----------------------------------------------- | ------------------------------------------------------------------------------- |
+| [Hangar](hangar/README.md)                      | First-person movement, a portal loop, physics, baked lighting and spatial audio |
+| [Physics lab: crate room](crate-room/README.md) | Shooting and pushing physics crates, with desktop and touch controls            |
+| [Terrain: coastal cove](terrain/README.md)      | Imported terrain, coastal vegetation and static structures                      |
+| [Vigil](vigil/README.md)                        | Dimetric exploration, pathfinding, animated sprites and occluder fading         |
+| [Willowbrook](willowbrook/README.md)            | A 2D treasure hunt with Tiled maps, following camera and touch controls         |
+| [Last Train](last-train/README.md)              | Yarn Spinner dialogue, three endings, persistent saves and reusable UI          |
+| [Orbital flight deck](ui-demo/README.md)        | KartUI menus, tabs, settings, tooltips and inventory                            |
+| [Media lab](media-lab/README.md)                | Images, overlapping sound effects, looping music and video playback             |
+| [Particle lab](particle-lab/README.md)          | Reusable fire and smoke recipes                                                 |
 
 ## Run a sample
 
-These sources use [SDK 0.0.13](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.0.13).
+These sources use [SDK 0.0.14](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.0.14).
 The CLI installs the pinned SDK and matching hosts as needed. See
 [contributor setup](../CONTRIBUTING.md#local-setup) for toolchain and cache settings.
 

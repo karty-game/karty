@@ -75,3 +75,39 @@ func TestRevealIsUnicodeSafeSkippableAndTransient(t *testing.T) {
 		t.Fatal("skip did not finish line")
 	}
 }
+
+func TestCharacterRevealExposesEveryUnicodePrefixWithoutWaitingForWords(t *testing.T) {
+	m := New()
+	if err := m.Line("characters", "Iris: Café 東京."); err != nil {
+		t.Fatal(err)
+	}
+	m.Reveal()
+	previous := ""
+	count := 0
+	for frame := 0; frame < 200 && m.Revealing; frame++ {
+		if !m.StepReveal() {
+			continue
+		}
+		count++
+		visible := m.DisplayText()
+		if !strings.HasPrefix(visible, previous) || utf8.RuneCountInString(visible) != count || m.RevealCharacters() != uint32(count) {
+			t.Fatal("typewriter skipped characters or split UTF-8", previous, visible, count, m.RevealCharacters())
+		}
+		if count == 1 && visible != "C" {
+			t.Fatal("first character waited for a complete word", visible)
+		}
+		previous = visible
+	}
+	if count != len([]rune(m.Text)) || m.Revealing || m.DisplayText() != m.Text {
+		t.Fatal("character reveal failed to complete", count, m)
+	}
+	m.Reveal()
+	if m.RevealCharacters() != 0 {
+		t.Fatal("new reveal retained characters")
+	}
+	m.StepReveal()
+	m.FinishReveal()
+	if m.RevealCharacters() != uint32(utf8.RuneCountInString(m.Text)) {
+		t.Fatal("skip left part of a line hidden")
+	}
+}

@@ -18,23 +18,23 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-func TestEnvironmentSampleCompilesAndOwnsSun(t *testing.T) {
+func TestOutdoorLightingFixtureCompilesAndOwnsSun(t *testing.T) {
 	t.Parallel()
 
-	entries, err := os.ReadDir(filepath.Join("..", "..", "..", "samples", "environment", "levels"))
+	entries, err := os.ReadDir(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if len(entries) != 1 || entries[0].Name() != "daylight" {
-		t.Fatal("environment lab must contain only the daylight level", entries)
+		t.Fatal("outdoor lighting fixture must contain only the daylight level", entries)
 	}
 
 	materials := environmentMaterials()
 
 	preset := "daylight"
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", preset), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", preset), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func TestEnvironmentSampleCompilesAndOwnsSun(t *testing.T) {
 func TestEnvironmentCompileOwnsTimeAndCloudControls(t *testing.T) {
 	t.Parallel()
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight"), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +117,7 @@ func TestEnvironmentCompileOwnsTimeAndCloudControls(t *testing.T) {
 func TestEnvironmentFurnitureGlazingAndRoofKeepWalkwaysClear(t *testing.T) {
 	t.Parallel()
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight"), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,7 +204,7 @@ func environmentMaterials() map[string]uint32 {
 func TestEnvironmentFieldCellsPreserveOpenGroundAndChunkOwnership(t *testing.T) {
 	t.Parallel()
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight"), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -312,7 +312,7 @@ func environmentBodyOverlaps(footprint []world.Vec2, position world.Vec2, radius
 func TestEnvironmentBalancedLightmapDensityFitsChunkPages(t *testing.T) {
 	t.Parallel()
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight"), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -322,7 +322,7 @@ func TestEnvironmentBalancedLightmapDensityFitsChunkPages(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	manifest, err := os.ReadFile(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight", "level.toml"))
+	manifest, err := os.ReadFile(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight", "level.toml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -427,7 +427,7 @@ func TestEnvironmentBalancedLightmapDensityFitsChunkPages(t *testing.T) {
 func TestEnvironmentBuildingRoofsSeparateExposedSurfacesAtEveryCorner(t *testing.T) {
 	t.Parallel()
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight"), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -485,7 +485,7 @@ func TestEnvironmentBuildingRoofsSeparateExposedSurfacesAtEveryCorner(t *testing
 func TestEnvironmentExteriorFacadeStopsRaysOutsideWindowApertures(t *testing.T) {
 	t.Parallel()
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight"), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -567,7 +567,7 @@ func environmentFacadeStopsRay(document *world.Document, sampleX, sampleZ float6
 func TestEnvironmentOnlyFurniturePrefabsAndWindowGlassRemain(t *testing.T) {
 	t.Parallel()
 
-	contents, err := os.ReadFile(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight", "world.yaml"))
+	contents, err := os.ReadFile(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight", "world.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -666,7 +666,7 @@ func assertChairBevels(t *testing.T, chair world.SolidPrefab) {
 func TestEnvironmentStoneBoundaryClosesExposedEdgesWithoutSurfaceOverlaps(t *testing.T) {
 	t.Parallel()
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight"), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -732,7 +732,7 @@ func TestEnvironmentStoneBoundaryClosesExposedEdgesWithoutSurfaceOverlaps(t *tes
 func TestEnvironmentFacadeFootingCoversTheExteriorFloorGap(t *testing.T) {
 	t.Parallel()
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight"), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -788,7 +788,7 @@ func environmentSolidBounds(solid world.Solid) [4]float64 {
 func TestEnvironmentPassageAndWindowMasksHaveOnePhysicalEnvelope(t *testing.T) {
 	t.Parallel()
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight"), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1124,7 +1124,7 @@ func environmentTerrainHeight(positionX, positionY float64) float64 {
 func TestEnvironmentTerrainPortalEdgesAreContinuousAndEntryIsFlush(t *testing.T) {
 	t.Parallel()
 
-	expanded, err := source.Load(filepath.Join("..", "..", "..", "samples", "environment", "levels", "daylight"), "world.yaml")
+	expanded, err := source.Load(filepath.Join("..", "..", "..", "testdata", "outdoor-lighting", "levels", "daylight"), "world.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}

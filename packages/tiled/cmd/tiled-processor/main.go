@@ -45,28 +45,35 @@ func run(input io.Reader, output io.Writer) error {
 	if len(names) == 0 {
 		return fmt.Errorf("Tiled processor requires a .tmj input")
 	}
-	response := []byte{'K', 'P', 'R', '1', 0, 0, 0, 0}
-	binary.LittleEndian.PutUint32(response[4:], uint32(len(names)))
-	total := 0
+
+	compiled := memoryFS{}
+	options, err := readBuildOptions(files)
+	if err != nil {
+		return err
+	}
 	for _, name := range names {
-		m, err := source.Load(files, name)
+		level, err := source.Load(files, name)
 		if err != nil {
 			return fmt.Errorf("%s: %w", name, err)
 		}
-		encoded, err := tiled.Encode(m)
+		encoded, err := tiled.Encode(level)
 		if err != nil {
 			return err
 		}
-		if len(encoded) > maxBytes-total {
-			return fmt.Errorf("compiled Tiled maps exceed processor bounds")
+		if err := setOutput(compiled, strings.TrimSuffix(name, ".tmj")+".bin", encoded); err != nil {
+			return err
 		}
-		total += len(encoded)
-		name = strings.TrimSuffix(name, ".tmj") + ".bin"
-		response = binary.LittleEndian.AppendUint16(response, uint16(len(name)))
-		response = binary.LittleEndian.AppendUint32(response, uint32(len(encoded)))
-		response = append(response, name...)
-		response = append(response, encoded...)
+		if option, ok := options[name]; ok {
+			if err := compileStaticMap(files, compiled, name, level, option); err != nil {
+				return err
+			}
+		}
 	}
+	response, err := encodeResponse(compiled)
+	if err != nil {
+		return err
+	}
+
 	_, err = output.Write(response)
 	return err
 }

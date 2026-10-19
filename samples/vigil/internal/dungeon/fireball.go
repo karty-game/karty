@@ -12,6 +12,17 @@ func FacingDirection(facing int) Point {
 	return Point{x / length, y / length}
 }
 
+// AimDirection retains the last accepted movement heading when standing still.
+// Sprite rows quantize screen angles; they cannot reconstruct the original
+// ground direction, especially for diagonals in the dimetric projection.
+func AimDirection(previous, movement Point) Point {
+	length := math.Hypot(movement.X, movement.Y)
+	if length == 0 {
+		return previous
+	}
+	return Point{movement.X / length, movement.Y / length}
+}
+
 // FireballStep stops at the first obstruction instead of sliding or tunnelling.
 // Reusing player clearance conservatively keeps the light out of solid props.
 func FireballStep(from, direction Point) (Point, bool) {

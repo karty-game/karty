@@ -1,5 +1,8 @@
-dist/
-tmp/
+# Keep module boundaries so Go excludes generated output and scratch sources.
+**/dist/*
+!/dist/go.mod
+**/tmp/*
+!/tmp/go.mod
 node_modules/
 test-results/
 .vscode/mise-tools/
@@ -18,7 +21,8 @@ go.work.sum
 # Local investigations and review notes. Public documentation lives in website/.
 /docs/
 /spike/
-/spikes/
+/spikes/*
+!/spikes/go.mod
 /concept-art/
 /website/validation/
 /scripts/stdlib-spike.sh

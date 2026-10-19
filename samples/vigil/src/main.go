@@ -22,6 +22,7 @@ type Game struct {
 	watch                engine.TransformSubscription
 	nav                  dungeon.Navigation
 	focus                dungeon.Point
+	aim                  dungeon.Point
 	height               float64
 	controller           *controllers.Planar
 	held, help           bool
@@ -109,6 +110,7 @@ func (g *Game) ready(e engine.LevelReady) {
 	})
 	g.camera.SetLayer(-10)
 	g.facing = 4
+	g.aim = dungeon.FacingDirection(g.facing)
 	g.updateHeroPose(dungeon.WalkTextureCount+4, dungeon.Spawn)
 	if !g.createMovementRoot() {
 		return
@@ -179,7 +181,8 @@ func (g *Game) update(f engine.Frame) {
 	next := dungeon.Move(p, delta)
 	moved := dungeon.Distance(p, next) > .00001
 	if moved {
-		g.facing = dungeon.Facing(next.X-p.X, next.Y-p.Y)
+		g.aim = dungeon.AimDirection(g.aim, dungeon.Point{X: next.X - p.X, Y: next.Y - p.Y})
+		g.facing = dungeon.Facing(g.aim.X, g.aim.Y)
 		s := g.shadow.Transform3D
 		s.Position.X = float32(next.X)
 		s.Position.Y = float32(next.Y)
@@ -448,6 +451,7 @@ func (g *Game) restart() {
 	g.hero, g.shadow = nil, nil
 	g.halo.SetPose(engine.NewVec3(float32(dungeon.Spawn.X), float32(dungeon.Spawn.Y), 1.63), 0, 0)
 	g.walk, g.facing = dungeon.WalkCycle{}, 4
+	g.aim = dungeon.FacingDirection(g.facing)
 	g.vision.HeroFrame = dungeon.WalkTextureCount + 4
 	g.vision.HeroOffset = dungeon.Point{}
 	g.updateHeroPose(dungeon.WalkTextureCount+4, dungeon.Spawn)

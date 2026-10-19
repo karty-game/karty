@@ -170,7 +170,7 @@ func TestAuthoredDataCannotClaimGeneratedWorldMaterials(t *testing.T) {
 func TestWorldMaterialSolidsBuildAndCapabilityGate(t *testing.T) {
 	t.Parallel()
 
-	root := testfixture.WorldCameraGeometry(t, filepath.Join("..", "..", "samples", "world-camera"))
+	root := testfixture.RomanCourtGeometry(t, filepath.Join("..", "..", "testdata", "roman-court"))
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {

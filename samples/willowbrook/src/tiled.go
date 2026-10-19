@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"example.com/willowbrook/.karty/engine"
+	"example.com/willowbrook/.karty/processed"
 	"github.com/karty-game/tiled"
 	"github.com/karty-game/tiled/karty2d"
 )
@@ -25,8 +26,14 @@ func (v *tiledView) build(camera engine.Camera2DSettings) bool {
 		view, err := karty2d.New(
 			v.levelMap,
 			backend,
-			func(key string) (uint32, bool) { id, ok := textureIDs[key]; return id, ok },
-			karty2d.Options{Wind: true},
+			func(key string) (uint32, bool) {
+				if id, ok := textureIDs[key]; ok {
+					return id, true
+				}
+				return processed.TextureID("tiled.compile", key)
+			},
+			// Leave room for the hero, shadow, quest sprites and journal entities.
+			karty2d.Options{Wind: true, MaxLiveSprites: engine.MaxEntityRefs - 64},
 		)
 		if err != nil {
 			panic(err)

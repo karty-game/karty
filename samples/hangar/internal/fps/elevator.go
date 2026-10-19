@@ -18,7 +18,8 @@ func ElevatorFloor(frame uint64) float32 {
 
 // SetFloorZ keeps local step support in sync with host sector topology.
 func SetFloorZ(id string, z float32) {
-	for index := range walkCells {
+	// Avoid TinyGo copying the complete fixed array during each update.
+	for index := range len(walkCells) {
 		if walkCells[index].name == id {
 			walkCells[index].floor = z
 			return

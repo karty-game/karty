@@ -13,7 +13,7 @@ import (
 func Command() *cli.Command {
 	return &cli.Command{
 		Name:  "schema",
-		Usage: "refresh world YAML editor schemas with level materials, textures and prefabs",
+		Usage: "update editor suggestions for level files",
 		Flags: []cli.Flag{&cli.BoolFlag{Name: "check", Usage: "also validate world YAML without processing assets or compiling code"}},
 		Action: func(ctx context.Context, command *cli.Command) error {
 			if command.NArg() != 0 {

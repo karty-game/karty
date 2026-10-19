@@ -15,11 +15,11 @@ import (
 func Command() *cli.Command {
 	return &cli.Command{
 		Name:  "toolchain",
-		Usage: "manage tools pinned by the current project SDK",
+		Usage: "manage build tools for this project",
 		Commands: []*cli.Command{
 			{
 				Name:   "install",
-				Usage:  "install tools for the current project SDK",
+				Usage:  "install this project's build tools",
 				Action: install,
 			},
 		},

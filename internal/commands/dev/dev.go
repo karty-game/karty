@@ -38,7 +38,7 @@ const (
 // Command creates the development server command. It needs no external watcher.
 func Command() *cli.Command {
 	return &cli.Command{
-		Name: "dev", Usage: "watch, build and serve a project with live resource updates",
+		Name: "dev", Usage: "preview your game as you edit",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "compiler", Value: "go", Usage: "development cartridge compiler: go or tinygo"},
 			&cli.StringFlag{Name: "target", Value: "web", Usage: "development target"},

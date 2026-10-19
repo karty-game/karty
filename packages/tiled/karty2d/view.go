@@ -71,6 +71,7 @@ type View struct {
 	hasBounds         bool
 	cursor, remaining int
 	pending           bool
+	evicting          bool
 	animationCursor   int
 	live              int
 	closing           bool
@@ -236,9 +237,14 @@ func (v *View) Update(bounds Bounds, elapsedMS int64) (bool, error) {
 		v.hasBounds = true
 		v.remaining = len(v.entries)
 		v.pending = false
+		v.evicting = true
 	}
-	changes, visited := 0, 0
-	for v.remaining > 0 && changes < v.options.ResidencyBudget && visited < len(v.entries) {
+	changes, err := v.evictInvisible()
+	if err != nil {
+		return false, err
+	}
+	visited := 0
+	for !v.evicting && v.remaining > 0 && changes < v.options.ResidencyBudget && visited < len(v.entries) {
 		e := &v.entries[v.cursor]
 		visible := bounds.intersects(e.bounds)
 		if visible && e.handle == 0 {
@@ -257,19 +263,12 @@ func (v *View) Update(bounds Bounds, elapsedMS int64) (bool, error) {
 			} else {
 				v.pending = true
 			}
-		} else if !visible && e.handle != 0 {
-			if err := v.backend.Destroy(e.handle); err != nil {
-				return false, err
-			}
-			e.handle = 0
-			v.live--
-			changes++
 		}
 		v.cursor = (v.cursor + 1) % len(v.entries)
 		v.remaining--
 		visited++
 	}
-	if v.remaining == 0 && v.pending {
+	if !v.evicting && v.remaining == 0 && v.pending {
 		v.remaining = len(v.entries)
 		v.pending = false
 		if v.live == v.options.MaxLiveSprites {
@@ -279,7 +278,31 @@ func (v *View) Update(bounds Bounds, elapsedMS int64) (bool, error) {
 	if err := v.animate(elapsedMS); err != nil {
 		return false, err
 	}
-	return v.remaining == 0, nil
+	return !v.evicting && v.remaining == 0, nil
+}
+
+// Finish retiring the previous view before admitting its replacement. Backends
+// can have a tighter capacity than the union of two individually valid views.
+func (v *View) evictInvisible() (int, error) {
+	changes := 0
+	for v.evicting && v.remaining > 0 && changes < v.options.ResidencyBudget {
+		e := &v.entries[v.cursor]
+		if e.handle != 0 && !v.bounds.intersects(e.bounds) {
+			if err := v.backend.Destroy(e.handle); err != nil {
+				return changes, err
+			}
+			e.handle = 0
+			v.live--
+			changes++
+		}
+		v.cursor = (v.cursor + 1) % len(v.entries)
+		v.remaining--
+	}
+	if v.evicting && v.remaining == 0 {
+		v.evicting = false
+		v.remaining = len(v.entries)
+	}
+	return changes, nil
 }
 
 func (v *View) animate(milliseconds int64) error {

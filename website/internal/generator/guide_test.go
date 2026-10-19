@@ -142,7 +142,7 @@ func checkGuideImages(t *testing.T, output string, html []byte) {
 		}
 	}
 
-	for _, name := range []string{"ui-demo", "world-camera", "hangar", "media-lab"} {
+	for _, name := range []string{"ui-demo", "hangar", "media-lab"} {
 		original, err := os.ReadFile(filepath.Join("..", "..", "..", "samples", name, "preview.jpg"))
 		if err != nil {
 			t.Fatal(err)
@@ -259,7 +259,7 @@ func TestGeneratePreservesUnrelatedFiles(t *testing.T) {
 func TestGenerateRejectsLinkedDirectoriesAndFiles(t *testing.T) {
 	t.Parallel()
 
-	for _, target := range []string{"parent", "guide.md", "index.html", "fps.html", "isometric.md", ".guide.md.tmp", "assets", "assets/world-camera.jpg"} {
+	for _, target := range []string{"parent", "guide.md", "index.html", "fps.html", "isometric.md", ".guide.md.tmp", "assets", "assets/hangar.jpg"} {
 		t.Run(target, func(t *testing.T) {
 			t.Parallel()
 

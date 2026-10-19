@@ -43,10 +43,10 @@ func TestCompiledBandCoverageFastPaths(t *testing.T) {
 	}
 }
 
-func TestWorldCameraCorridorUsesCompiledFrameRegions(t *testing.T) {
+func TestRomanCourtCorridorUsesCompiledFrameRegions(t *testing.T) {
 	t.Parallel()
 
-	directory := filepath.Join("..", "..", "samples", "world-camera", "levels", "showcase")
+	directory := filepath.Join("..", "..", "testdata", "roman-court", "levels", "showcase")
 
 	encoded, err := os.ReadFile(filepath.Join(directory, "level.toml"))
 	if err != nil {

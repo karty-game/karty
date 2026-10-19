@@ -11,9 +11,11 @@ checkpoints normalize that name in the current line and history on restore. `Set
 accepts at most 32 choices with unique IDs from 0 to 65,535 and enabled flags. Complete lines
 appear immediately by default. Call `Reveal()` after `Line` for optional paced
 text, then `StepReveal()` once per 60 Hz update. `DisplayText()` returns a
-Unicode-safe prefix with short punctuation pauses. `DisplayWords()` exposes only
-complete words including their trailing spaces, preserving word wrapping while
-the same cursor supplies pacing. The novel UI uses this complete-word reveal. `FinishReveal()` completes
+Unicode-safe character prefix with short punctuation pauses. `RevealCharacters()`
+returns its Unicode scalar count for a renderer that retains full-line layout.
+The novel UI binds the complete `Text` plus that independent count, keeping
+wrapping and shaping fixed while characters appear. `DisplayWords()` remains
+available for custom older interfaces that prefer complete words. `FinishReveal()` completes
 the line without advancing the script. The game decides when the next click
 continues. `AdvanceLabel()` supplies icon prompts (`»` for reveal, `▾` for advance, `…`
 for a pause). `Paused` disables the advance action during authored pauses. These transient

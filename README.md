@@ -27,7 +27,7 @@ for your development machine, extract it, and put `karty` on your `PATH`.
 See [supported platforms](https://karty-game.github.io/karty/main/guide/share.html)
 for developer tool requirements.
 
-This checkout's starters and samples use [SDK 0.0.13](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.0.13).
+This checkout's starters and samples use [SDK 0.0.14](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.0.14).
 The CLI downloads the pinned SDK and matching hosts when needed. See
 [contributor setup](CONTRIBUTING.md#local-setup) for working from source.
 
@@ -57,6 +57,30 @@ karty build --target native
 Share the complete `dist/web/` or `dist/native/` directory. Keep your source and
 `karty.toml` in Git; the CLI recreates `.karty/` and `dist/`. Your project's
 `.karty/docs/` contains the reference for its exact SDK.
+
+## CLI commands
+
+Run `karty --help` for an overview, or append `--help` to any command for its
+options.
+
+| Command                       | Purpose                                   |
+| ----------------------------- | ----------------------------------------- |
+| `karty new`                   | Create a game project                     |
+| `karty dev`                   | Preview your game as you edit             |
+| `karty build`                 | Build your game for web or desktop        |
+| `karty serve`                 | Preview a built web game                  |
+| `karty fmt` / `karty lint`    | Format and check your Go code             |
+| `karty schema`                | Update editor suggestions for level files |
+| `karty package`               | Share and reuse game packages             |
+| `karty render bake`           | Bake level lighting                       |
+| `karty render screenshot`     | Save level screenshots as PNGs            |
+| `karty sdk current`           | Show this CLI's default SDK version       |
+| `karty sdk install VERSION`   | Install an SDK version                    |
+| `karty sdk toolchain install` | Install this project's build tools        |
+
+Rendering commands live under `render`; SDK and toolchain management live under
+`sdk`. The earlier `karty bake`, `karty screenshot` and `karty toolchain install`
+spellings remain available for existing scripts, but are hidden from root help.
 
 ## Explore Karty
 

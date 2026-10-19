@@ -45,7 +45,8 @@ func TestReusableTilesAndGroundedAnimation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if config.Width > 512 || config.Height > 512 {
+		limit := 512
+		if config.Width > limit || config.Height > limit {
 			t.Fatalf("oversized scene texture: %s %dx%d", file, config.Width, config.Height)
 		}
 	}
@@ -98,6 +99,16 @@ func TestTiledLevelHasOnlyReusableImages(t *testing.T) {
 	}
 	if strings.Contains(string(data), "[world]") || !strings.Contains(string(data), `kind = "tiled"`) {
 		t.Fatal("2D map still depends on 3D world geometry")
+	}
+	if strings.Contains(string(data), `name = "static-`) {
+		t.Fatal("build-generated chunk images returned to the authored level catalog")
+	}
+	chunks, err := filepath.Glob(filepath.Join(root, "levels/village/static-*.png"))
+	if err != nil || len(chunks) != 0 {
+		t.Fatal("build-generated chunk images are present in authored source", chunks, err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "internal/village/static-chunks.bin")); !os.IsNotExist(err) {
+		t.Fatal("compiled chunk placements are present in authored source", err)
 	}
 	for _, name := range []string{"cottage", "tree", "cliff", "fence", "clue-note", "treasure-closed", "treasure-open"} {
 		f, err := os.Open(filepath.Join(root, "levels/village", name+".png"))

@@ -7,7 +7,7 @@ width = 1280
 height = 720
 
 [sdk]
-version = "0.0.13"
+version = "0.0.14"
 
 [packages.tiled]
 folder = "../../packages/tiled"
@@ -17,4 +17,9 @@ folder = "../../packages/controllers"
 
 [[build.processors]]
 use = "tiled.compile"
-inputs = ["internal/village/village.tmj", "internal/village/village.tsj"]
+inputs = [
+  "internal/village/village.tmj",
+  "internal/village/village.tsj",
+  "internal/village/tiled-build.json",
+  "levels/village/dual-*.png",
+]

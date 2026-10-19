@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "map": "internal/village/village.tmj",
+  "level": "village",
+  "staticLayers": ["Ground", "Paths"],
+  "chunkSize": 256,
+  "pixelScale": 4
+}

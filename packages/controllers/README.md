@@ -16,11 +16,11 @@ The portable module requires Go 1.27 and also builds with the SDK's TinyGo.
 
 ## Choose a preset
 
-| Constructor                                   | Includes                                                                                                | Example consumers                        |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| `NewFirstPerson(DefaultFirstPersonOptions())` | Keyboard/mouse look, walking/running, pitch clamp, mouse capture requests, two independent touch sticks | Hangar, Environment, Terrain, Crate Room |
-| `NewTopDown2D(DefaultTopDown2DOptions())`     | Screen-axis movement, pointer targets, following camera and zoom                                        | Willowbrook                              |
-| `NewIsometric(DefaultIsometricOptions())`     | Camera-relative movement, following 3D camera, ground picking and orthographic zoom                     | Vigil                                    |
+| Constructor                                   | Includes                                                                                                | Example consumers           |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `NewFirstPerson(DefaultFirstPersonOptions())` | Keyboard/mouse look, walking/running, pitch clamp, mouse capture requests, two independent touch sticks | Hangar, Terrain, Crate Room |
+| `NewTopDown2D(DefaultTopDown2DOptions())`     | Screen-axis movement, pointer targets, following camera and zoom                                        | Willowbrook                 |
+| `NewIsometric(DefaultIsometricOptions())`     | Camera-relative movement, following 3D camera, ground picking and orthographic zoom                     | Vigil                       |
 
 Constructors return a controller and an error. Start with the default options,
 change the fields you need, then construct. `Configure` validates changes before

@@ -48,9 +48,7 @@ func run(root string, check bool) error {
 			return err
 		}
 
-		sampleVersion := release.SDKVersion()
-
-		updated, err := pinSample(original, sampleVersion)
+		updated, err := pinSample(original, version)
 		if err != nil {
 			return fmt.Errorf("%s: %w", path, err)
 		}

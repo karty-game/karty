@@ -8,11 +8,6 @@ import (
 	"github.com/karty-game/controllers"
 )
 
-// The trail uses existing village landmarks rather than a line of markers.
-var questPlaces = village.QuestStations
-
-var questClues = village.QuestMessages
-
 type questJournalLayout struct {
 	top, height, actionOffset, actionHeight float32
 }
@@ -47,7 +42,7 @@ type treasureQuest struct {
 func (g *Game) startQuest() {
 	g.quest.pending = -1
 	g.quest.lastNearby = -2
-	g.quest.message = questClues[0]
+	g.quest.message = village.QuestMessages[0]
 	layout := journalLayout(false)
 	g.quest.plate = g.NewVector2D(engine.Rectangle(288, layout.height), engine.NewVec2(496, layout.top))
 	g.quest.plate.SetFill(engine.RGBA(245, 235, 197, 230))
@@ -71,7 +66,7 @@ func (g *Game) startQuest() {
 	g.quest.prompt = g.NewText2D("", engine.NewVec2(0, 0))
 	g.quest.prompt.SetSize(11)
 	g.quest.prompt.SetColor(engine.RGBA(48, 66, 47, 255))
-	for i, p := range questPlaces {
+	for i, p := range village.QuestStations {
 		asset := clueNoteTexture
 		width, height := village.QuestVisualSize(i)
 		if i == 2 {
@@ -87,7 +82,7 @@ func (g *Game) startQuest() {
 
 func (g *Game) restartQuest() {
 	g.quest.stage = 0
-	g.quest.message = questClues[0]
+	g.quest.message = village.QuestMessages[0]
 	g.quest.journalOpen = false
 	g.quest.cache.UpdateLevelAsset(engine.LevelTexture(g.level, treasureClosedTexture))
 	g.updateQuest()
@@ -96,16 +91,17 @@ func (g *Game) restartQuest() {
 func (g *Game) cancelQuestWalk() {
 	g.quest.route = nil
 	g.quest.pending = -1
+	g.navigation.Cancel()
 }
 
 func (g *Game) nearQuest(i int) bool {
-	return village.CanInteract(g.position, questPlaces[i])
+	return village.CanInteract(g.position, village.QuestStations[i])
 }
 
 func (g *Game) nearbyQuest() int {
 	nearest, distance := -1, math.Inf(1)
-	for i := range questPlaces {
-		p := questPlaces[i]
+	for i := range village.QuestStations {
+		p := village.QuestStations[i]
 		d := math.Hypot(p.X-g.position.X, p.Y-g.position.Y)
 		if d < distance && g.nearQuest(i) {
 			nearest, distance = i, d
@@ -132,7 +128,7 @@ func (g *Game) inspectQuest(i int) {
 	g.cancelQuestWalk()
 	if i == g.quest.stage {
 		g.quest.stage++
-		g.quest.message = questClues[g.quest.stage]
+		g.quest.message = village.QuestMessages[g.quest.stage]
 		if g.quest.stage == 3 {
 			g.quest.cache.UpdateLevelAsset(engine.LevelTexture(g.level, treasureOpenTexture))
 		}
@@ -145,7 +141,7 @@ func (g *Game) inspectQuest(i int) {
 	} else {
 		// Revisiting a panel shows its own inscription; quest progression and
 		// the compact objective remain unchanged.
-		g.quest.message = questClues[i+1]
+		g.quest.message = village.QuestMessages[i+1]
 	}
 	g.quest.journalOpen = true
 	g.updateQuest()
@@ -207,7 +203,7 @@ func (g *Game) updateQuest() {
 		fill := engine.RGBA(245, 235, 197, 0)
 		if nearby >= 0 {
 			fill = engine.RGBA(220, 201, 147, 255)
-			p := questPlaces[nearby]
+			p := village.QuestStations[nearby]
 			_, height := village.QuestVisualSize(nearby)
 			g.quest.promptPlate.Set(engine.NewVec2(float32(p.X-33), float32(p.Y-height-22)), engine.NewVec2(1, 1), 0)
 			g.quest.promptPlate.SetLayer(g.mapLayer(village.ActorLayer, p.Y) + 3)
@@ -254,7 +250,7 @@ func (g *Game) selectQuest(x, y float64) bool {
 		}
 		return true
 	}
-	for i, p := range questPlaces {
+	for i, p := range village.QuestStations {
 		screen := g.camera.WorldToScreen(engine.NewVec2(float32(p.X), float32(p.Y)), 1280, 720)
 		sx, sy, zoom := float64(screen.X), float64(screen.Y), float64(g.camera.Zoom)
 		_, height := village.QuestVisualSize(i)
@@ -282,9 +278,13 @@ func (g *Game) selectQuest(x, y float64) bool {
 }
 
 func (g *Game) advanceQuestWalk() {
-	for len(g.quest.route) > 0 && math.Hypot(g.quest.route[0].X-g.position.X, g.quest.route[0].Y-g.position.Y) < 4 {
-		g.quest.route = g.quest.route[1:]
+	tolerance := 4.0
+	if g.quest.pending < 0 {
+		// Smoothed engine routes may pass close to an obstacle corner. Reach
+		// their waypoints before turning; quest-grid routes retain their margin.
+		tolerance = .5
 	}
+	g.quest.route = village.AdvanceRoute(g.quest.route, g.position, tolerance)
 	if len(g.quest.route) > 0 {
 		g.controller.SetTarget(controllers.Vec2{X: g.quest.route[0].X, Y: g.quest.route[0].Y})
 	}

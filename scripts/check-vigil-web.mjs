@@ -30,6 +30,7 @@ if (
     "portrait",
     "props",
     "fireball",
+    "aim",
     "occlusion",
     "occlusion-wall",
     "occlusion-portrait",
@@ -64,6 +65,7 @@ if (!materialsOnly && !fixture) {
         "occlusion-wall",
         "occlusion-portrait",
         "fireball",
+        "aim",
         "input",
         "route",
         "route-gallery",
@@ -83,11 +85,12 @@ if (!materialsOnly && !fixture) {
   const gallery = JSON.parse(await readFile(resolve(output, "route-gallery/report.json"), "utf8"));
   const portrait = JSON.parse(await readFile(resolve(output, "portrait/report.json"), "utf8"));
   const props = JSON.parse(await readFile(resolve(output, "props/report.json"), "utf8"));
+  const aim = JSON.parse(await readFile(resolve(output, "aim/report.json"), "utf8"));
   const fireball = JSON.parse(await readFile(resolve(output, "fireball/report.json"), "utf8"));
   const occlusion = JSON.parse(await readFile(resolve(output, "occlusion/report.json"), "utf8"));
   const occlusionWall = JSON.parse(await readFile(resolve(output, "occlusion-wall/report.json"), "utf8"));
   const occlusionPortrait = JSON.parse(await readFile(resolve(output, "occlusion-portrait/report.json"), "utf8"));
-  for (const extra of [gallery, occlusion, occlusionWall, occlusionPortrait]) {
+  for (const extra of [aim, gallery, occlusion, occlusionWall, occlusionPortrait]) {
     assert.equal(extra.cartridgeSha256, route.cartridgeSha256);
     assert.equal(extra.hostSha256, route.hostSha256);
   }
@@ -113,6 +116,7 @@ if (!materialsOnly && !fixture) {
         ...portrait.checks,
         ...props.checks,
         ...fireball.checks,
+        ...aim.checks,
         ...occlusion.checks,
         ...occlusionWall.checks,
         ...occlusionPortrait.checks,
@@ -128,7 +132,7 @@ if (!materialsOnly && !fixture) {
       ...occlusionWall.captures.map((name) => "occlusion-wall/" + name),
       ...occlusionPortrait.captures.map((name) => "occlusion-portrait/" + name),
     ],
-    fixtures: { input, route, gallery, portrait, props, fireball, occlusion, occlusionPortrait },
+    fixtures: { input, route, gallery, portrait, props, fireball, aim, occlusion, occlusionPortrait },
     passed:
       input.passed &&
       route.passed &&
@@ -136,6 +140,7 @@ if (!materialsOnly && !fixture) {
       portrait.passed &&
       props.passed &&
       fireball.passed &&
+      aim.passed &&
       occlusion.passed &&
       occlusionWall.passed &&
       occlusionPortrait.passed,
@@ -151,6 +156,7 @@ const routesOnly = fixture === "route" || routeGalleryOnly;
 const portraitOnly = fixture === "portrait";
 const propsOnly = fixture === "props";
 const fireballOnly = fixture === "fireball";
+const aimOnly = fixture === "aim";
 const occlusionOnly = ["occlusion", "occlusion-wall", "occlusion-portrait"].includes(fixture);
 const occlusionWallOnly = fixture === "occlusion-wall";
 const occlusionPortraitOnly = fixture === "occlusion-portrait";
@@ -173,8 +179,8 @@ const output = resolve(
           ? "portrait"
           : propsOnly
             ? "props"
-            : fireballOnly
-              ? "fireball"
+            : fireballOnly || aimOnly
+              ? fixture
               : occlusionOnly
                 ? fixture
                 : "",
@@ -728,7 +734,51 @@ try {
     await page.keyboard.up(key);
     await frames(4);
   };
-  if (occlusionOnly) {
+  if (aimOnly) {
+    const cases = [["w"], ["w", "d"], ["d"], ["s", "d"], ["s"], ["s", "a"], ["a"], ["w", "a"]];
+    report.aimDirections = [];
+    const project = ([x, y]) => [(x - y) / Math.SQRT2, (-0.5 * (x + y)) / Math.SQRT2];
+    for (const [index, keys] of cases.entries()) {
+      for (const key of keys) await page.keyboard.down(key);
+      await frames(6);
+      const movement = await page.evaluate(() => {
+        const last = vigil.positions.at(-1),
+          previous = vigil.positions.at(-2);
+        return last.map((value, axis) => value - previous[axis]);
+      });
+      const standing = index % 2 === 0;
+      if (standing) {
+        for (const key of keys) await page.keyboard.up(key);
+        await frames(4);
+      }
+      const previousBolts = await page.evaluate(() => Object.keys(vigil.fireballs));
+      await page.keyboard.down("f");
+      await frames(4);
+      await page.keyboard.up("f");
+      if (!standing) for (const key of keys) await page.keyboard.up(key);
+      await frames(4);
+      const bolt = await page.evaluate((previous) => {
+        const entry = Object.entries(vigil.fireballs).find(([id]) => !previous.includes(id));
+        return entry?.[1];
+      }, previousBolts);
+      assert.ok(bolt && !bolt.impacted, `no travelling fireball for ${keys}`);
+      const start = bolt.positions[0];
+      const end = bolt.positions.find((position) => Math.hypot(position[0] - start[0], position[1] - start[1]) > 0.05);
+      assert.ok(end, `no projectile travel observed for ${keys}`);
+      const projectile = end.slice(0, 2).map((value, axis) => value - start[axis]);
+      const a = project(movement),
+        b = project(projectile);
+      assert.ok(Math.hypot(...a) > 0.001 && Math.hypot(...b) > 0.001, `empty direction sample for ${keys}`);
+      const errorDegrees = (Math.abs(Math.atan2(a[0] * b[1] - a[1] * b[0], a[0] * b[0] + a[1] * b[1])) * 180) / Math.PI;
+      assert.ok(errorDegrees < 0.1, `${keys} projectile deviated ${errorDegrees} degrees from accepted movement`);
+      report.aimDirections.push({ keys, standing, movement, projectile, errorDegrees });
+      // The next cast must follow the ordinary eighteen-update spell cooldown.
+      await frames(6);
+    }
+    report.checks.push(
+      "actual WASM fireball trajectories match all eight accepted keyboard headings, both moving and after release",
+    );
+  } else if (occlusionOnly) {
     const project = (goal) =>
       page.evaluate(([x, y]) => {
         const rect = document.querySelector("canvas").getBoundingClientRect(),

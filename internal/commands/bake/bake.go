@@ -29,7 +29,7 @@ var (
 func Command() *cli.Command {
 	return &cli.Command{
 		Name:  "bake",
-		Usage: "bake static directional lighting and diffuse radiosity in the current project",
+		Usage: "bake level lighting",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "level", Usage: "level directory or logical name (default: all enabled levels)"},
 			&cli.IntFlag{Name: "samples", DefaultText: "level bake_samples or 16", Usage: "hemisphere samples per texel"},

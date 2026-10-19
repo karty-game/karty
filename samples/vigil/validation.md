@@ -1,7 +1,7 @@
 # Checking Vigil
 
 Run these tasks from the CLI repository root with the sample's matching
-SDK 0.0.13 and public host installed. Browser checks also require
+SDK 0.0.14 and public host installed. Browser checks also require
 `mise run install-browser`. Set `KARTY_HOST_WEB` and `KARTY_HOST_NATIVE` when
 using locally prepared hosts.
 

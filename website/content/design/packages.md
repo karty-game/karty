@@ -71,7 +71,7 @@ isometric input and camera behavior in one install. Choose a preset, customize
 its options, route your game hooks to it and apply its results through your
 SDK bindings. There is no separate camera or input package to assemble.
 
-Hangar, Environment, Terrain and Crate Room share first-person movement and
+Hangar, Terrain and Crate Room share first-person movement and
 look calculations. Willowbrook uses top-down movement and camera following;
 Vigil uses the isometric movement basis, following camera, ground picking and
 zoom. Each game retains its collision rules, navigation, artwork and gameplay.
@@ -82,7 +82,7 @@ module tag is not assumed. Its package README contains setup and adapter
 examples. This adds no engine API or SDK requirement beyond the consuming
 game's existing APIs.
 
-SDK 0.0.13's `2d`, `fps` and `isometric` starters include the
+SDK 0.0.14's `2d`, `fps` and `isometric` starters include the
 same package source under `packages/controllers/`. Their `karty.toml` links that
 folder, so a generated project builds without a published controller module.
 Keep the folder in Git. Blank and UI starters add no player controls.
@@ -211,3 +211,7 @@ JSON, CSV, XML, gob and known YAML/TOML decoders.
 
 See the [compiled Tiled map contract](https://github.com/karty-game/karty/blob/main/packages/tiled/docs/binary-map-v1.md)
 and [dialogue/save compatibility](https://github.com/karty-game/karty/blob/main/packages/dialogue/docs/binary-runtime-v2.md).
+
+Processors may declare [generated level textures](processor-textures-v1.md).
+The CLI stages these under `.karty/` and packages them without writing generated
+artwork into project source directories.

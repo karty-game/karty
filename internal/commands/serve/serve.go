@@ -26,7 +26,7 @@ const (
 func Command() *cli.Command {
 	return &cli.Command{
 		Name:      "serve",
-		Usage:     "serve a built web target",
+		Usage:     "preview a built web game",
 		ArgsUsage: "[directory]",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "dir", Value: "dist/web", Usage: "web target directory"},

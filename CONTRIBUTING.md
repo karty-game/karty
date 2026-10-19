@@ -38,7 +38,7 @@ go work edit -replace=github.com/karty-game/karty-sdk=../karty-sdk
 Use `GOWORK=off` to check the public dependencies pinned in `go.mod`.
 Root tasks enable `GOEXPERIMENT=simd`; use `mise exec -- go ...` for ad hoc Go
 commands. Tests prepare the SDK selected by `internal/release`; an uncached
-published bundle needs a download. This checkout selects SDK 0.0.13 and its
+published bundle needs a download. This checkout selects SDK 0.0.14 and its
 matching public hosts. `KARTY_HOME` selects the SDK/toolchain cache root.
 
 For build, browser, or development-flow changes, run the relevant integration
@@ -83,6 +83,11 @@ Root `docs/`, `spike/`, `spikes/`, `concept-art/` and `website/validation/` hold
 local investigations and are ignored. Keep public documentation in
 `website/content/`. Builds and tests must not depend on ignored files; promote
 required fixtures into `testdata/`. Leave local `.codex/` and `.agents/` alone.
+
+Keep `tmp/go.mod`, `dist/go.mod` and `spikes/go.mod` when clearing scratch files
+or build output.
+These module boundaries keep temporary Go sources out of root commands such as
+`go mod tidy` and `go test ./...`; Git ignore rules do not affect Go package discovery.
 
 ## Preparing a CLI release
 

@@ -17,10 +17,11 @@ type fakeBackend struct {
 	created                             []SpriteState
 	updates, destroys                   int
 	failCreate, failUpdate, failDestroy bool
+	capacity, peak                      int
 }
 
 func (b *fakeBackend) Create(s SpriteState) (Handle, error) {
-	if b.failCreate {
+	if b.failCreate || (b.capacity > 0 && len(b.live) >= b.capacity) {
 		return 0, errBackend
 	}
 	if b.live == nil {
@@ -29,6 +30,7 @@ func (b *fakeBackend) Create(s SpriteState) (Handle, error) {
 	b.next++
 	b.live[b.next] = s
 	b.created = append(b.created, s)
+	b.peak = max(b.peak, len(b.live))
 	return b.next, nil
 }
 func (b *fakeBackend) Update(h Handle, s SpriteState) error {
@@ -139,9 +141,6 @@ func TestViewResidencyCapEvictsBeforeRetryingMissingVisibleSprites(t *testing.T)
 	v := view(t, []tiled.Sprite{sprite(100, 0), sprite(0, 0)}, b, Options{MaxLiveSprites: 1})
 	if !update(t, v, Bounds{-1, -1, 33, 49}, 0) {
 		t.Fatal("initial pass")
-	}
-	if update(t, v, Bounds{99, -1, 133, 49}, 100) {
-		t.Fatal("new sprite was not retried after old retirement")
 	}
 	if !update(t, v, Bounds{99, -1, 133, 49}, 100) || v.LiveCount() != 1 || b.destroys != 1 || len(b.created) != 2 {
 		t.Fatal("residency replacement failed")
@@ -368,5 +367,49 @@ func TestViewCullingUsesDiagonalShiftAndExchangedDimensions(t *testing.T) {
 	update(t, v, Bounds{110, 110, 115, 115}, 1)
 	if v.LiveCount() != 0 {
 		t.Fatal("unpainted nominal rectangle retained")
+	}
+}
+
+func TestViewRetiresBeforeAdmissionWithoutTransientBackendOverflow(t *testing.T) {
+	const capacity = 16
+	var sprites []tiled.Sprite
+	// New-region entries come first, before the old residents in the rolling scan.
+	for _, x := range []float64{2000, 0} {
+		for i := range capacity {
+			sprites = append(sprites, sprite(x+float64(i*40), 0))
+		}
+	}
+	backend := &fakeBackend{capacity: capacity}
+	v := view(t, sprites, backend, Options{ResidencyBudget: 7, MaxLiveSprites: 2 * capacity})
+	for frame := 0; frame < 8; frame++ {
+		if update(t, v, Bounds{-10, -10, 700, 100}, int64(frame*16)) {
+			break
+		}
+	}
+	if v.LiveCount() != capacity {
+		t.Fatal("old region was not resident", v.LiveCount())
+	}
+	settled := false
+	for frame := 0; frame < 12; frame++ {
+		before := len(backend.created) + backend.destroys
+		// Changing bounds during the eviction pass must retain rolling progress.
+		settled = update(t, v, Bounds{1990 - float64(frame), -10, 2700, 100}, int64(200+frame*16))
+		if len(backend.created)+backend.destroys-before > 7 {
+			t.Fatal("lifecycle budget exceeded")
+		}
+		if settled {
+			break
+		}
+	}
+	if !settled || v.LiveCount() != capacity || backend.destroys != capacity || len(backend.created) != 2*capacity ||
+		backend.peak > capacity {
+		t.Fatal(
+			"replacement failed or transiently exceeded capacity",
+			settled,
+			v.LiveCount(),
+			backend.destroys,
+			len(backend.created),
+			backend.peak,
+		)
 	}
 }

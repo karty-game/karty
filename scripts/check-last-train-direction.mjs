@@ -36,8 +36,10 @@ export async function runDirectionChecks(context) {
     const rain = phone ? null : await visibleMotion(page);
     if (rain) {
       assert.ok(rain.changedPixels > 40, "platform environment did not visibly animate");
-      assert.ok(rain.transformedEntities > 0, "no actual sprite transforms during ambient motion");
-      report.checks.push(`${prefix}: actual rendered platform motion (${rain.changedPixels} changed pixels)`);
+      assert.equal(rain.backgroundTransforms, 0, "rain motion moved the station architecture");
+      report.checks.push(
+        `${prefix}: rendered rain changes (${rain.changedPixels} pixels) while station architecture stays fixed`,
+      );
     } else {
       report.checks.push(
         `${prefix}: responsive phone platform composition (continuous ambience uses desktop sprite stage only)`,
@@ -162,8 +164,20 @@ async function visibleMotion(page) {
       old && ["x", "y", "rotation", "scaleX", "scaleY", "alpha"].some((key) => Math.abs(value[key] - old[key]) > 0.0001)
     );
   }).length;
+  const backgrounds = Object.entries(before.sprites).filter(([, value]) =>
+    /train\.(platform|carriage|dining)$/.test(value.asset),
+  );
+  assert.ok(backgrounds.length > 0, "no architectural background was sampled");
+  let backgroundTransforms = 0;
+  for (const [id, value] of backgrounds) {
+    const current = after.sprites[id];
+    assert.ok(current && current.asset === value.asset, "background changed owner during an ambient sample");
+    for (const key of ["x", "y", "rotation", "scaleX", "scaleY"])
+      if (current[key] !== value[key]) backgroundTransforms++;
+  }
+  assert.equal(backgroundTransforms, 0, "painted architecture translated, rotated or zoomed during an ambient sample");
   const changedPixels = await imageDifference(page, before.image, after.image);
-  return { changedPixels, transformedEntities };
+  return { changedPixels, transformedEntities, backgroundTransforms };
 }
 
 async function imageDifference(page, a, b) {

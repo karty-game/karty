@@ -147,14 +147,13 @@ jobs:
 Change the native `--platform`, artifact name, and artifact path together.
 For Linux or macOS artifacts, upload a tar archive of the folder to
 [preserve the host's executable permission](https://github.com/actions/upload-artifact/tree/v7.0.0#permission-loss).
-For offline lighting, add `karty bake` before the builds. Material generation
+For offline lighting, add `karty render bake` before the builds. Material generation
 uses Mesa software OpenGL when the runner has no GPU; the libraries above
 provide its EGL backend. Packaging a game in CI does not test its graphics,
 input, or sound on the destination platform.
 
 Choose a sample to extend:
 
-- [Roman court & galleries](../world-camera/): cameras, portals, typed hooks, and chunks.
-- [The Hangar](../hangar/): static objects, detailed materials, baked lights, and a torch.
+- [The Hangar](../hangar/): a portal loop, detailed materials, baked lights, and a torch.
 - [Orbital flight deck](../ui-demo/): menus and reusable KartUI components.
 - [Media lab](../media-lab/): sound, music, and video.

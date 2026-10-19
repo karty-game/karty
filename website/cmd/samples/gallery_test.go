@@ -52,8 +52,6 @@ func TestGalleryExplainsEachPublishedSample(t *testing.T) {
 		"vigil",
 		"willowbrook",
 		"last-train",
-		"environment",
-		"world-camera",
 		"ui-demo",
 		"media-lab",
 		"particle-lab",
@@ -108,7 +106,7 @@ func TestGalleryExplainsEachPublishedSample(t *testing.T) {
 	}
 }
 
-func TestGalleryPrioritizesPublicSamplesAndRetainsHiddenProjects(t *testing.T) {
+func TestGalleryPrioritizesPublicSamples(t *testing.T) {
 	t.Parallel()
 
 	root := filepath.Join("..", "..", "..")
@@ -125,8 +123,6 @@ func TestGalleryPrioritizesPublicSamplesAndRetainsHiddenProjects(t *testing.T) {
 		"vigil",
 		"willowbrook",
 		"last-train",
-		"environment",
-		"world-camera",
 		"ui-demo",
 		"media-lab",
 		"particle-lab",
@@ -154,26 +150,12 @@ func TestGalleryPrioritizesPublicSamplesAndRetainsHiddenProjects(t *testing.T) {
 	previous := -1
 
 	for _, name := range want {
-		if name == "environment" || name == "world-camera" {
-			continue
-		}
-
 		position := strings.Index(page, `src="`+name+`/preview.jpg"`)
 		if position <= previous {
 			t.Fatalf("%s missing or out of order in rendered gallery", name)
 		}
 
 		previous = position
-	}
-
-	for _, hidden := range []string{"environment", "world-camera"} {
-		if strings.Contains(page, `href="`+hidden+`/"`) {
-			t.Fatalf("hidden sample %s remains in the gallery", hidden)
-		}
-
-		if err := requireFile(filepath.Join(root, "samples", hidden, "karty.toml")); err != nil {
-			t.Fatalf("hidden sample source was removed: %v", err)
-		}
 	}
 }
 

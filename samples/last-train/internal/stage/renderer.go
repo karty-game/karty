@@ -7,6 +7,7 @@ import (
 
 	"example.com/last-train/.karty/engine"
 	"example.com/last-train/internal/art"
+	"example.com/last-train/internal/presentation"
 	"github.com/karty-game/dialogue"
 )
 
@@ -36,7 +37,6 @@ type Renderer struct {
 	background  sprite
 	actors      [3]sprite
 	rain        [36]particle
-	lights      [2]particle
 	expressions [3]string
 }
 
@@ -53,13 +53,6 @@ func New(game *engine.Game, motion *dialogue.Stage, packs *art.Loader) *Renderer
 		e.SetLayer(-70)
 		e.SetAlpha(0)
 		r.rain[i].entity = e
-	}
-	for i := range r.lights {
-		e := game.NewVector2D(engine.Rectangle(1, 1), engine.NewVec2(0, 0))
-		e.SetFill(engine.RGBA(255, 219, 158, 255))
-		e.SetLayer(-90)
-		e.SetAlpha(0)
-		r.lights[i].entity = e
 	}
 	r.Draw()
 	return r
@@ -119,7 +112,7 @@ func (r *Renderer) Draw() {
 	if scene == "" {
 		scene = "platform"
 	}
-	r.background.apply(r.game, r.Art.Texture(scene), frame.Background, 720, -100)
+	r.background.apply(r.game, r.Art.Texture(scene), presentation.ArchitecturalBackground(frame.Background), 720, -100)
 	for i, name := range names {
 		texture := name
 		if r.expressions[i] != "" {
@@ -133,10 +126,7 @@ func (r *Renderer) Draw() {
 		}
 	}
 	for i, p := range frame.Rain {
-		r.rain[i].apply(p, true)
-	}
-	for i, p := range frame.Lights {
-		r.lights[i].apply(p, false)
+		r.rain[i].apply(p)
 	}
 }
 
@@ -164,17 +154,13 @@ func (s *sprite) apply(game *engine.Game, asset engine.LevelTextureRef, t dialog
 	s.last = t
 	s.initialized = true
 }
-func (p *particle) apply(next dialogue.StageParticle, rain bool) {
+func (p *particle) apply(next dialogue.StageParticle) {
 	if p.initialized && next == p.last {
 		return
 	}
 	if next.Alpha > 0 {
-		sx, sy := next.Width*width, next.Height*height
-		if rain {
-			sx = sy / 25
-			sy = sx
-		}
-		p.entity.Set(engine.NewVec2(next.X*width, next.Y*height), engine.NewVec2(sx, sy), 0)
+		scale := next.Height * height / 25
+		p.entity.Set(engine.NewVec2(next.X*width, next.Y*height), engine.NewVec2(scale, scale), 0)
 	}
 	if !p.initialized || next.Alpha != p.last.Alpha {
 		p.entity.SetAlpha(next.Alpha)

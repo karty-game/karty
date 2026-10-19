@@ -19,9 +19,9 @@ import (
 func Command() *cli.Command {
 	return &cli.Command{
 		Name:        "new",
-		Usage:       "create a blank, 2D, first-person, isometric or UI project",
+		Usage:       "create a game project",
 		ArgsUsage:   "[name]",
-		Description: "In a terminal, choose a starter and optional Git/GitHub Actions setup. Use --yes to accept defaults without prompts. SDK downloads happen only when needed; compilers are prepared by dev/build.",
+		Description: "Choose a starter and optional Git setup. Use --yes to skip questions.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "sdk", Value: release.SDKVersion(), Usage: "exact Karty SDK version"},
 			&cli.StringFlag{

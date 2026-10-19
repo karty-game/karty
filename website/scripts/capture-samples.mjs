@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const samples = ["hangar", "vigil", "environment", "world-camera", "ui-demo", "media-lab", "particle-lab"];
+const samples = ["hangar", "vigil", "ui-demo", "media-lab", "particle-lab"];
 const captures = process.argv.length > 2 ? process.argv.slice(2) : samples;
 if (captures.some((name) => !samples.includes(name))) {
   throw new Error(`Choose ${samples.join(", ")}.`);
@@ -95,7 +95,7 @@ try {
         })(),
       );
     });
-    const settings = name === "environment" ? "?aa=false&worldScale=0.5" : "";
+    const settings = "";
     await page.goto(`http://127.0.0.1:${server.address().port}/${name}/${settings}`);
     await page.waitForFunction(() => document.documentElement.dataset.kartyState === "running", null, {
       timeout: 30000,
@@ -134,11 +134,6 @@ try {
     });
 
     // Use the composed menu for UI and a representative scene for each other demo.
-    if (name === "world-camera") {
-      await click(130, 66);
-      await frames(30);
-      await page.keyboard.press("Escape");
-    }
     if (name === "hangar") {
       await page.keyboard.down("V");
       await frames(4);
@@ -147,12 +142,6 @@ try {
       await page.keyboard.press("H");
     }
     if (name === "media-lab") await click(400, 220);
-    if (name === "environment") {
-      await page.keyboard.down("V");
-      await frames(4);
-      await page.keyboard.up("V");
-      await frames(4);
-    }
     await frames(30);
     if (errors.length) throw new Error(`${name}: ${errors.join("; ")}`);
     const wasmResponses = await Promise.all(hosts);

@@ -2,7 +2,7 @@
 description = "Prepare reusable Tiled images and metadata-driven foreground masks without changing the map"
 depends = ["restore-willowbrook-packages"]
 dir = "samples/willowbrook"
-run = ["GOWORK=off go run ./cmd/author", "gofmt -w src/textures.generated.go"]
+run = ["GOWORK=off go run ./cmd/author", "gofmt -w src/textures.generated.go", "taplo format levels/village/level.toml"]
 
 [check-willowbrook]
 description = "Check village stair/bridge traversal, cliffs, prop collision and following-camera projection"
@@ -23,6 +23,11 @@ run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
 [check-willowbrook-web]
 description = "Play the real village WASM in Chromium and verify 2D camera, portrait touch, treasure routes and structure overlap"
 run = "node scripts/check-willowbrook-web.mjs"
+
+[check-willowbrook-residency-web]
+description = "Replay camera clicks and verify bounded sprite residency in actual browser WASM"
+depends = ["build-willowbrook-web"]
+run = "node scripts/check-willowbrook-residency-web.mjs"
 
 [serve-willowbrook]
 description = "Serve an immutable Willowbrook snapshot on loopback port 39718"

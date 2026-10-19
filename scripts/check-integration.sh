@@ -5,5 +5,6 @@ mise run smoke
 mise run check-web
 mise run check-browser
 mise run check-ui
+mise run check-hangar-fps-allocations
 mise run check-guest-allocations
 mise run check-dev

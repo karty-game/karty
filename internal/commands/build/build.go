@@ -13,7 +13,7 @@ import (
 func Command() *cli.Command {
 	return &cli.Command{
 		Name:  "build",
-		Usage: "build the client cartridge in the current project",
+		Usage: "build your game for web or desktop",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "compiler", Usage: "cartridge compiler: go or tinygo (development defaults to go)"},
 			&cli.StringFlag{Name: "go", Usage: "path to a Go executable"},

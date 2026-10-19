@@ -26,7 +26,7 @@ import (
 	"github.com/karty-game/karty/internal/testfixture"
 )
 
-func TestWorldCameraSampleProcessedTextures(t *testing.T) {
+func TestRomanCourtFixtureProcessedTextures(t *testing.T) {
 	t.Parallel()
 
 	selected, err := sdk.Resolve(release.SDKVersion())
@@ -35,7 +35,7 @@ func TestWorldCameraSampleProcessedTextures(t *testing.T) {
 	}
 
 	selected = geometrySDK(selected)
-	root := testfixture.WorldCameraGeometry(t, filepath.Join("..", "..", "samples", "world-camera"))
+	root := testfixture.RomanCourtGeometry(t, filepath.Join("..", "..", "testdata", "roman-court"))
 	first, err := levelbuild.BuildAllWithAssets(context.Background(), root, 4, "", selected)
 	if err != nil {
 		t.Fatal(err)
@@ -179,10 +179,10 @@ rooms:
 	}
 }
 
-func TestWorldCameraSampleLevelCompiles(t *testing.T) {
+func TestRomanCourtFixtureLevelCompiles(t *testing.T) {
 	t.Parallel()
 
-	root := testfixture.WorldCameraGeometry(t, filepath.Join("..", "..", "samples", "world-camera"))
+	root := testfixture.RomanCourtGeometry(t, filepath.Join("..", "..", "testdata", "roman-court"))
 	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
@@ -223,13 +223,13 @@ func TestWorldCameraSampleLevelCompiles(t *testing.T) {
 		t.Fatalf("sample world v%d = %d sectors, %d contents", document.Version, len(document.Sectors), len(document.Contents))
 	}
 
-	checkWorldCameraMaterials(t, document, envelope)
-	checkWorldCameraPortals(t, document)
-	checkWorldCameraBasin(t, document)
-	checkWorldCameraActors(t, document)
+	checkRomanCourtMaterials(t, document, envelope)
+	checkRomanCourtPortals(t, document)
+	checkRomanCourtBasin(t, document)
+	checkRomanCourtActors(t, document)
 }
 
-func checkWorldCameraMaterials(t *testing.T, document sdkworld.Document, envelope level.Envelope) {
+func checkRomanCourtMaterials(t *testing.T, document sdkworld.Document, envelope level.Envelope) {
 	t.Helper()
 
 	// Material IDs follow the level's sorted texture names: ceiling, character,
@@ -237,7 +237,7 @@ func checkWorldCameraMaterials(t *testing.T, document sdkworld.Document, envelop
 	// authored material, but every source boundary must retain the wall texture.
 	for _, sector := range document.Sectors {
 		if sector.Instance == "roman-court" {
-			checkWorldCameraCourtMaterials(t, sector)
+			checkRomanCourtCourtMaterials(t, sector)
 
 			continue
 		}
@@ -286,7 +286,7 @@ func checkOpaquePattern(t *testing.T, materialID uint32, texture image.Image) {
 	}
 }
 
-func checkWorldCameraColumns(t *testing.T, document sdkworld.Document) {
+func checkRomanCourtColumns(t *testing.T, document sdkworld.Document) {
 	t.Helper()
 	if document.StaticSolids == nil || document.StaticSolids.Version != 1 || len(document.StaticSolids.Items) != 355 {
 		t.Fatal("court lacks eight independent solid shafts")
@@ -347,9 +347,9 @@ func checkWorldCameraColumns(t *testing.T, document sdkworld.Document) {
 	}
 }
 
-func checkWorldCameraPortals(t *testing.T, document sdkworld.Document) {
+func checkRomanCourtPortals(t *testing.T, document sdkworld.Document) {
 	t.Helper()
-	checkWorldCameraColumns(t, document)
+	checkRomanCourtColumns(t, document)
 
 	type portalRef struct{ sector, wall int }
 	findPortal := func(instance, room, edge string) portalRef {
@@ -387,7 +387,7 @@ func checkWorldCameraPortals(t *testing.T, document sdkworld.Document) {
 	assertTarget(hallCourt, courtEntrance)
 }
 
-func checkWorldCameraActors(t *testing.T, document sdkworld.Document) {
+func checkRomanCourtActors(t *testing.T, document sdkworld.Document) {
 	t.Helper()
 
 	actors := make(map[string]sdkworld.Content)
@@ -449,7 +449,7 @@ func checkWorldCameraActors(t *testing.T, document sdkworld.Document) {
 	}
 }
 
-func checkWorldCameraCourtMaterials(t *testing.T, sector sdkworld.Sector) {
+func checkRomanCourtCourtMaterials(t *testing.T, sector sdkworld.Sector) {
 	t.Helper()
 	floor, ceiling := uint32(11), uint32(9)
 	if sector.Ceiling.C == 12 {
@@ -471,7 +471,7 @@ func checkWorldCameraCourtMaterials(t *testing.T, sector sdkworld.Sector) {
 }
 
 // Verify basin relief comes from retained volumes while the underlying bays stay flat.
-func checkWorldCameraBasin(t *testing.T, document sdkworld.Document) {
+func checkRomanCourtBasin(t *testing.T, document sdkworld.Document) {
 	t.Helper()
 	for _, sample := range []struct{ x, height float64 }{
 		{-5, 0}, {-5.4, .10}, {-5.7, .44}, {-6.0, .36}, {-7.7, .36},

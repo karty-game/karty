@@ -14,11 +14,7 @@ for (const name of requested) assert.ok(available.includes(name), `unknown sampl
 const names = requested.length ? requested : available;
 const output = resolve("dist/validation/api-migration");
 await mkdir(output, { recursive: true });
-const sdkArchiveSHA256 = process.env.KARTY_HOME
-  ? await hash(resolve(process.env.KARTY_HOME, "sdks/0.0.13/sdk.zip"))
-  : undefined;
 const report = {
-  sdkArchiveSHA256,
   passed: false,
   builds: [],
   scope: "Actual public CLI web builds; browser execution is a separate check.",
@@ -34,7 +30,9 @@ try {
       throw error;
     }
     const sdk = config.match(/\[sdk\]\s*version\s*=\s*["']([^"']+)/)?.[1];
-    assert.equal(sdk, "0.0.13", `${name} uses a retired SDK`);
+    // Maintained samples select the released SDK and its matching host.
+    const expectedSDK = "0.0.14";
+    assert.equal(sdk, expectedSDK, `${name} must use SDK ${expectedSDK}`);
     console.log(`Building ${name} against SDK ${sdk}`);
     const args = ["build", "--target", "web"];
     if (process.env.KARTY_HOST_WEB) args.push("--host", process.env.KARTY_HOST_WEB);
@@ -56,6 +54,9 @@ try {
     report.builds.push({
       name,
       sdk,
+      sdkArchiveSHA256: process.env.KARTY_HOME
+        ? await hash(resolve(process.env.KARTY_HOME, "sdks", sdk, "sdk.zip"))
+        : undefined,
       cartridgeSHA256: await hash(resolve(directory, "dist/web/game.kart")),
       hostSHA256: await hash(resolve(directory, "dist/web/karty-host.wasm")),
     });
