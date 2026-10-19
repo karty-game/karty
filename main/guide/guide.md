@@ -15,9 +15,9 @@ karty dev
 The terminal wizard offers `blank`, `2d`, `fps`, `isometric`, and `ui`, plus optional
 Git initialization and GitHub Actions. Use `--yes --template 2d` for scripts.
 Use `--no-template` for just the base folders and an empty entry point.
-Current starters use SDK 0.0.13, which the CLI installs when needed.
+Current starters use SDK 0.0.14, which the CLI installs when needed.
 
-The SDK 0.0.13 2D, first-person and isometric starters use one reusable
+The SDK 0.0.14 2D, first-person and isometric starters use one reusable
 controllers package with different presets. They include its source under
 `packages/controllers/` so generated projects work without a published module.
 Keep that folder in Git. Blank and UI projects add controls only when needed.
@@ -40,8 +40,8 @@ reference for API names and supported features.
 
 Make one small game rule work before adding more art: collect an item, reach a
 goal, or restart after losing. For a 3D game, choose the first-person or isometric starter, then extend its
-room using the matching guide path. [Roman court & galleries](../world-camera/)
-shows how those camera views work in a larger world.
+room using the matching guide path. [Hangar](../hangar/)
+shows first-person exploration and connected rooms in a larger world.
 
 ## Build one room
 
@@ -129,11 +129,11 @@ resolution if you change it. This camera stays still. Add [first-person
 controls](fps.html) to walk around, or an [isometric camera](isometric.html) to
 view the room from above.
 
-![Roman court and galleries connects textured rooms with open passages.](assets/world-camera.jpg)
+![Hangar connects industrial rooms with open passages.](assets/hangar.jpg)
 
 Add a second room only after you can explore the first. A connection names an
-edge in each room and opens a portal between them; see the court sample for
-complete connections.
+edge in each room and opens a portal between them; see Hangar
+for complete connections, including a non-Euclidean portal loop.
 
 ## Give surfaces a material
 
@@ -275,7 +275,7 @@ bake_samples = 16
 bake_bounces = 1
 ```
 
-For this room, run `karty bake`, then `karty dev`. Rebake after changing geometry,
+For this room, run `karty render bake`, then `karty dev`. Rebake after changing geometry,
 textures, UVs, or baked lights. Restart an existing preview after baking.
 Begin at low density; increase it only when shadow detail needs it.
 
@@ -288,7 +288,7 @@ its surroundings by itself; add a light for that effect.
 
 Larger levels can opt into chunks. For chunked levels, `karty build` produces
 missing bakes; `karty dev` previews with a matching bake or live lighting.
-Learn that workflow in [Roman court & galleries](../world-camera/) after the
+See [Hangar](../hangar/) for a larger level with baked lighting after the
 single-room version works.
 
 ## Turn movement into an interaction
@@ -345,8 +345,8 @@ so losing focus does not leave the player moving.
 
 Tags identify actors; they do not automatically create proximity events. Query
 actors after the level is ready, and keep trigger checks in your game. For
-longer scripted interactions, the court sample uses typed actions and
-`StartAuthoredSequence`; start with a direct Go handler first.
+longer scripted interactions, use typed actions and `StartAuthoredSequence`;
+start with a direct Go handler first.
 
 ## Add sound and video
 
@@ -791,15 +791,14 @@ jobs:
 Change the native `--platform`, artifact name, and artifact path together.
 For Linux or macOS artifacts, upload a tar archive of the folder to
 [preserve the host's executable permission](https://github.com/actions/upload-artifact/tree/v7.0.0#permission-loss).
-For offline lighting, add `karty bake` before the builds. Material generation
+For offline lighting, add `karty render bake` before the builds. Material generation
 uses Mesa software OpenGL when the runner has no GPU; the libraries above
 provide its EGL backend. Packaging a game in CI does not test its graphics,
 input, or sound on the destination platform.
 
 Choose a sample to extend:
 
-- [Roman court & galleries](../world-camera/): cameras, portals, typed hooks, and chunks.
-- [The Hangar](../hangar/): static objects, detailed materials, baked lights, and a torch.
+- [The Hangar](../hangar/): a portal loop, detailed materials, baked lights, and a torch.
 - [Orbital flight deck](../ui-demo/): menus and reusable KartUI components.
 - [Media lab](../media-lab/): sound, music, and video.
 
@@ -809,10 +808,10 @@ Use sprites for image artwork, vectors for shapes, and text for instructions
 and scores. This example draws all three and lets you collect a circle with
 keyboard movement.
 
-Start with the SDK 0.0.13 `2d` starter, which includes controllers 0.1.0:
+Start with the SDK 0.0.14 `2d` starter, which includes controllers 0.1.0:
 
 ```sh
-karty new --yes --sdk 0.0.13 --template 2d my-game
+karty new --yes --sdk 0.0.14 --template 2d my-game
 ```
 
 Keep `packages/controllers/` in Git. For an existing project, import the package
@@ -960,10 +959,10 @@ Its components work with both 2D and 3D games.
 
 The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.
 
-Create the SDK 0.0.13 starter:
+Create the SDK 0.0.14 starter:
 
 ```sh
-karty new --yes --sdk 0.0.13 --template fps my-game
+karty new --yes --sdk 0.0.14 --template fps my-game
 cd my-game
 karty dev
 ```
@@ -1128,10 +1127,10 @@ remap this starter's Q/E controls before wiring the interaction hook.
 
 The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.
 
-Create the SDK 0.0.13 starter:
+Create the SDK 0.0.14 starter:
 
 ```sh
-karty new --yes --sdk 0.0.13 --template isometric my-game
+karty new --yes --sdk 0.0.14 --template isometric my-game
 cd my-game
 karty dev
 ```
@@ -1142,7 +1141,7 @@ import the package as described in [reusable packages](../design/packages.html).
 Use the room and material files from [one room](levels.html); the isometric
 starter also supplies its `player` solid prefab in `world.yaml`.
 
-![A diagonal isometric view over the Roman court sample.](assets/isometric.jpg)
+![A diagonal isometric view over connected rooms.](assets/isometric.jpg)
 
 ### Connect the isometric preset
 

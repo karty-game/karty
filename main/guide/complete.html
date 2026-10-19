@@ -1304,12 +1304,12 @@ pre code {
 cd my-game
 karty dev
 </code></pre>
-<p>The terminal wizard offers <code>blank</code>, <code>2d</code>, <code>fps</code>, <code>isometric</code>, and <code>ui</code>, plus optional Git initialization and GitHub Actions. Use <code class="command-flag">--yes --template 2d</code> for scripts. Use <code class="command-flag">--no-template</code> for just the base folders and an empty entry point. Current starters use SDK 0.0.13, which the CLI installs when needed.</p>
-<p>The SDK 0.0.13 2D, first-person and isometric starters use one reusable controllers package with different presets. They include its source under <code>packages/controllers/</code> so generated projects work without a published module. Keep that folder in Git. Blank and UI projects add controls only when needed.</p>
+<p>The terminal wizard offers <code>blank</code>, <code>2d</code>, <code>fps</code>, <code>isometric</code>, and <code>ui</code>, plus optional Git initialization and GitHub Actions. Use <code class="command-flag">--yes --template 2d</code> for scripts. Use <code class="command-flag">--no-template</code> for just the base folders and an empty entry point. Current starters use SDK 0.0.14, which the CLI installs when needed.</p>
+<p>The SDK 0.0.14 2D, first-person and isometric starters use one reusable controllers package with different presets. They include its source under <code>packages/controllers/</code> so generated projects work without a published module. Keep that folder in Git. Blank and UI projects add controls only when needed.</p>
 <p>Open the address printed by the preview. Change a color or a movement speed in <code>src/main.go</code>, save, and try it again. The first setup downloads tools; later builds reuse them.</p>
 <figure class="journey"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" role="img" aria-label="Create with karty new → Preview with karty dev → Build a 2D or 3D scene → Build with karty build → Share the output folder"><rect x="20" y="12" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="37" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Create with karty new</text><path d="M200 56V72M195 67L200 72L205 67" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="76" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="101" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Preview with karty dev</text><path d="M200 120V136M195 131L200 136L205 131" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="140" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="165" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Build a 2D or 3D scene</text><path d="M200 184V200M195 195L200 200L205 195" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="204" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="229" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Build with karty build</text><path d="M200 248V264M195 259L200 264L205 259" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="268" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="293" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Share the output folder</text></svg></figure>
 <p>Keep <code>karty.toml</code>, your Go source, and source assets in Git. The CLI recreates <code>.karty/</code> and <code>dist/</code>. Your project pins an exact SDK; use its <code>.karty/docs/</code> reference for API names and supported features.</p>
-<p>Make one small game rule work before adding more art: collect an item, reach a goal, or restart after losing. For a 3D game, choose the first-person or isometric starter, then extend its room using the matching guide path. <a href="../world-camera/">Roman court &amp; galleries</a> shows how those camera views work in a larger world.</p>
+<p>Make one small game rule work before adding more art: collect an item, reach a goal, or restart after losing. For a 3D game, choose the first-person or isometric starter, then extend its room using the matching guide path. <a href="../hangar/">Hangar</a> shows first-person exploration and connected rooms in a larger world.</p>
 <h2 id="build-one-room">Build one room</h2>
 <p>A level has a manifest, world geometry, and its own textures. Create <code>levels/room/</code>, add a tileable <code>surface.png</code>, and save this as <code>level.toml</code>:</p>
 <pre><code class="language-toml">[level]
@@ -1373,8 +1373,8 @@ func main() {
 }
 </code></pre>
 <p>Run <code>karty dev</code> to view the room. Match the viewport to your <code>karty.toml</code> resolution if you change it. This camera stays still. Add <a href="fps.html">first-person controls</a> to walk around, or an <a href="isometric.html">isometric camera</a> to view the room from above.</p>
-<figure><img src="assets/world-camera.jpg" alt="Roman court and galleries connects textured rooms with open passages." loading="lazy"><figcaption>Roman court and galleries connects textured rooms with open passages.</figcaption></figure>
-<p>Add a second room only after you can explore the first. A connection names an edge in each room and opens a portal between them; see the court sample for complete connections.</p>
+<figure><img src="assets/hangar.jpg" alt="Hangar connects industrial rooms with open passages." loading="lazy"><figcaption>Hangar connects industrial rooms with open passages.</figcaption></figure>
+<p>Add a second room only after you can explore the first. A connection names an edge in each room and opens a portal between them; see Hangar for complete connections, including a non-Euclidean portal loop.</p>
 <h2 id="give-surfaces-a-material">Give surfaces a material</h2>
 <p>Use a small tileable image first. The texture&#39;s <code>name</code> is the material name used by floors, ceilings, and boundary edges. Texture paths are relative to <code>level.toml</code>.</p>
 <p>Add this at the top level of <code>world.yaml</code> to repeat the image every two metres:</p>
@@ -1460,10 +1460,10 @@ page_size = 512
 bake_samples = 16
 bake_bounces = 1
 </code></pre>
-<p>For this room, run <code>karty bake</code>, then <code>karty dev</code>. Rebake after changing geometry, textures, UVs, or baked lights. Restart an existing preview after baking. Begin at low density; increase it only when shadow detail needs it.</p>
+<p>For this room, run <code>karty render bake</code>, then <code>karty dev</code>. Rebake after changing geometry, textures, UVs, or baked lights. Restart an existing preview after baking. Begin at low density; increase it only when shadow detail needs it.</p>
 <p>Eligible steady sources bake automatically. Moving lights and lights linked to a changing emission pulse stay live. Keep the live set small; the current live authored point-light table holds at most 50. A glowing material does not light its surroundings by itself; add a light for that effect.</p>
 <figure><img src="assets/live-light.svg" alt="Illustration of a moving lamp and the light patch that follows it." loading="lazy"><figcaption>Illustration of a moving lamp and the light patch that follows it.</figcaption></figure>
-<p>Larger levels can opt into chunks. For chunked levels, <code>karty build</code> produces missing bakes; <code>karty dev</code> previews with a matching bake or live lighting. Learn that workflow in <a href="../world-camera/">Roman court &amp; galleries</a> after the single-room version works.</p>
+<p>Larger levels can opt into chunks. For chunked levels, <code>karty build</code> produces missing bakes; <code>karty dev</code> previews with a matching bake or live lighting. See <a href="../hangar/">Hangar</a> for a larger level with baked lighting after the single-room version works.</p>
 <h2 id="turn-movement-into-an-interaction">Turn movement into an interaction</h2>
 <p>Use typed hooks for startup, frames, input, and level results. Match each level result to the request that created it. Handle <code>OnLevelFailed</code> with a message the player can read.</p>
 <p>These snippets extend a controller with a loaded <code>camera</code>. Add these fields to your <code>Game</code>:</p>
@@ -1494,7 +1494,7 @@ if err != nil {
 }
 </code></pre>
 <p>Draw <code>status</code> in your HUD; invalidate it when the value changes if using KartUI. Reset <code>won</code> when starting again. Reset held controls in <code>OnInputReset</code> so losing focus does not leave the player moving.</p>
-<p>Tags identify actors; they do not automatically create proximity events. Query actors after the level is ready, and keep trigger checks in your game. For longer scripted interactions, the court sample uses typed actions and <code>StartAuthoredSequence</code>; start with a direct Go handler first.</p>
+<p>Tags identify actors; they do not automatically create proximity events. Query actors after the level is ready, and keep trigger checks in your game. For longer scripted interactions, use typed actions and <code>StartAuthoredSequence</code>; start with a direct Go handler first.</p>
 <h2 id="add-sound-and-video">Add sound and video</h2>
 <p>Put a short WAV effect in <code>assets/sounds/</code>. The CLI converts it to QOA and generates a typed sound ID. Declare music and video in <code>karty.toml</code>:</p>
 <pre><code class="language-toml">[[assets.sound]]
@@ -1742,18 +1742,17 @@ jobs:
           path: dist/native/windows-arm64/
           if-no-files-found: error
 </code></pre>
-<p>Change the native <code class="command-flag">--platform</code>, artifact name, and artifact path together. For Linux or macOS artifacts, upload a tar archive of the folder to <a href="https://github.com/actions/upload-artifact/tree/v7.0.0#permission-loss">preserve the host&#39;s executable permission</a>. For offline lighting, add <code>karty bake</code> before the builds. Material generation uses Mesa software OpenGL when the runner has no GPU; the libraries above provide its EGL backend. Packaging a game in CI does not test its graphics, input, or sound on the destination platform.</p>
+<p>Change the native <code class="command-flag">--platform</code>, artifact name, and artifact path together. For Linux or macOS artifacts, upload a tar archive of the folder to <a href="https://github.com/actions/upload-artifact/tree/v7.0.0#permission-loss">preserve the host&#39;s executable permission</a>. For offline lighting, add <code>karty render bake</code> before the builds. Material generation uses Mesa software OpenGL when the runner has no GPU; the libraries above provide its EGL backend. Packaging a game in CI does not test its graphics, input, or sound on the destination platform.</p>
 <p>Choose a sample to extend:</p>
 <ul>
-<li><a href="../world-camera/">Roman court &amp; galleries</a>: cameras, portals, typed hooks, and chunks.</li>
-<li><a href="../hangar/">The Hangar</a>: static objects, detailed materials, baked lights, and a torch.</li>
+<li><a href="../hangar/">The Hangar</a>: a portal loop, detailed materials, baked lights, and a torch.</li>
 <li><a href="../ui-demo/">Orbital flight deck</a>: menus and reusable KartUI components.</li>
 <li><a href="../media-lab/">Media lab</a>: sound, music, and video.</li>
 </ul>
 <h2 id="draw-a-2d-game">Draw a 2D game</h2>
 <p>Use sprites for image artwork, vectors for shapes, and text for instructions and scores. This example draws all three and lets you collect a circle with keyboard movement.</p>
-<p>Start with the SDK 0.0.13 <code>2d</code> starter, which includes controllers 0.1.0:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.13 --template 2d my-game
+<p>Start with the SDK 0.0.14 <code>2d</code> starter, which includes controllers 0.1.0:</p>
+<pre><code class="language-sh">karty new --yes --sdk 0.0.14 --template 2d my-game
 </code></pre>
 <p>Keep <code>packages/controllers/</code> in Git. For an existing project, import the package using the <a href="../design/packages.html">reusable packages guide</a> first.</p>
 <h3 id="add-a-sprite">Add a sprite</h3>
@@ -1865,8 +1864,8 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 <p><a href="ui.html">KartUI</a> is optional when you need menus or reusable screen layouts. Its components work with both 2D and 3D games.</p>
 <h2 id="make-a-first-person-game">Make a first-person game</h2>
 <p>The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.</p>
-<p>Create the SDK 0.0.13 starter:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.13 --template fps my-game
+<p>Create the SDK 0.0.14 starter:</p>
+<pre><code class="language-sh">karty new --yes --sdk 0.0.14 --template fps my-game
 cd my-game
 karty dev
 </code></pre>
@@ -2004,13 +2003,13 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 <p>The interaction guide uses E by default. Use F for interactions here, or remap this starter&#39;s Q/E controls before wiring the interaction hook.</p>
 <h2 id="make-an-isometric-game">Make an isometric game</h2>
 <p>The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.</p>
-<p>Create the SDK 0.0.13 starter:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.13 --template isometric my-game
+<p>Create the SDK 0.0.14 starter:</p>
+<pre><code class="language-sh">karty new --yes --sdk 0.0.14 --template isometric my-game
 cd my-game
 karty dev
 </code></pre>
 <p>The starter includes controllers 0.1.0 in <code>packages/controllers/</code> and declares that folder in <code>karty.toml</code>. Keep it in Git. If extending an existing project, import the package as described in <a href="../design/packages.html">reusable packages</a>. Use the room and material files from <a href="levels.html">one room</a>; the isometric starter also supplies its <code>player</code> solid prefab in <code>world.yaml</code>.</p>
-<figure><img src="assets/isometric.jpg" alt="A diagonal isometric view over the Roman court sample." loading="lazy"><figcaption>A diagonal isometric view over the Roman court sample.</figcaption></figure>
+<figure><img src="assets/isometric.jpg" alt="A diagonal isometric view over connected rooms." loading="lazy"><figcaption>A diagonal isometric view over connected rooms.</figcaption></figure>
 <h3 id="connect-the-isometric-preset">Connect the isometric preset</h3>
 <p>The complete <code>src/main.go</code> below is the starter&#39;s SDK adapter. Change its module imports if your project has a different name. Keep the viewport and project resolution at 960 by 540. Constructors validate their options; <code>Reset</code> clears held controls when focus changes.</p>
 <pre><code class="language-go">package main

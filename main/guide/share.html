@@ -1319,11 +1319,10 @@ jobs:
           path: dist/native/windows-arm64/
           if-no-files-found: error
 </code></pre>
-<p>Change the native <code class="command-flag">--platform</code>, artifact name, and artifact path together. For Linux or macOS artifacts, upload a tar archive of the folder to <a href="https://github.com/actions/upload-artifact/tree/v7.0.0#permission-loss">preserve the host&#39;s executable permission</a>. For offline lighting, add <code>karty bake</code> before the builds. Material generation uses Mesa software OpenGL when the runner has no GPU; the libraries above provide its EGL backend. Packaging a game in CI does not test its graphics, input, or sound on the destination platform.</p>
+<p>Change the native <code class="command-flag">--platform</code>, artifact name, and artifact path together. For Linux or macOS artifacts, upload a tar archive of the folder to <a href="https://github.com/actions/upload-artifact/tree/v7.0.0#permission-loss">preserve the host&#39;s executable permission</a>. For offline lighting, add <code>karty render bake</code> before the builds. Material generation uses Mesa software OpenGL when the runner has no GPU; the libraries above provide its EGL backend. Packaging a game in CI does not test its graphics, input, or sound on the destination platform.</p>
 <p>Choose a sample to extend:</p>
 <ul>
-<li><a href="../world-camera/">Roman court &amp; galleries</a>: cameras, portals, typed hooks, and chunks.</li>
-<li><a href="../hangar/">The Hangar</a>: static objects, detailed materials, baked lights, and a torch.</li>
+<li><a href="../hangar/">The Hangar</a>: a portal loop, detailed materials, baked lights, and a torch.</li>
 <li><a href="../ui-demo/">Orbital flight deck</a>: menus and reusable KartUI components.</li>
 <li><a href="../media-lab/">Media lab</a>: sound, music, and video.</li>
 </ul>

@@ -52,5 +52,5 @@ so losing focus does not leave the player moving.
 
 Tags identify actors; they do not automatically create proximity events. Query
 actors after the level is ready, and keep trigger checks in your game. For
-longer scripted interactions, the court sample uses typed actions and
-`StartAuthoredSequence`; start with a direct Go handler first.
+longer scripted interactions, use typed actions and `StartAuthoredSequence`;
+start with a direct Go handler first.

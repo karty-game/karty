@@ -1259,10 +1259,10 @@ page_size = 512
 bake_samples = 16
 bake_bounces = 1
 </code></pre>
-<p>For this room, run <code>karty bake</code>, then <code>karty dev</code>. Rebake after changing geometry, textures, UVs, or baked lights. Restart an existing preview after baking. Begin at low density; increase it only when shadow detail needs it.</p>
+<p>For this room, run <code>karty render bake</code>, then <code>karty dev</code>. Rebake after changing geometry, textures, UVs, or baked lights. Restart an existing preview after baking. Begin at low density; increase it only when shadow detail needs it.</p>
 <p>Eligible steady sources bake automatically. Moving lights and lights linked to a changing emission pulse stay live. Keep the live set small; the current live authored point-light table holds at most 50. A glowing material does not light its surroundings by itself; add a light for that effect.</p>
 <figure><img src="assets/live-light.svg" alt="Illustration of a moving lamp and the light patch that follows it." loading="lazy"><figcaption>Illustration of a moving lamp and the light patch that follows it.</figcaption></figure>
-<p>Larger levels can opt into chunks. For chunked levels, <code>karty build</code> produces missing bakes; <code>karty dev</code> previews with a matching bake or live lighting. Learn that workflow in <a href="../world-camera/">Roman court &amp; galleries</a> after the single-room version works.</p>
+<p>Larger levels can opt into chunks. For chunked levels, <code>karty build</code> produces missing bakes; <code>karty dev</code> previews with a matching bake or live lighting. See <a href="../hangar/">Hangar</a> for a larger level with baked lighting after the single-room version works.</p>
 </div>
         
       </main>

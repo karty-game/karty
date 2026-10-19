@@ -1141,6 +1141,8 @@ pre code {
             
             <li><a href="packages.html" aria-current="false">Packages</a></li>
             
+            <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
+            
           </ul>
            
           <p>On this page</p>
@@ -1176,6 +1178,8 @@ pre code {
               <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
               
               <li><a href="packages.html" aria-current="false">Packages</a></li>
+              
+              <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
               
             </ul>
                
@@ -1217,7 +1221,7 @@ pre code {
 <h2 id="the-project-chooses-its-sdk">The project chooses its SDK</h2>
 <p>A project&#39;s manifest contains an exact version, for example:</p>
 <pre><code class="language-toml">[sdk]
-version = &#34;0.0.13&#34;
+version = &#34;0.0.14&#34;
 </code></pre>
 <p>The version above is an example pin, rather than a request for the latest SDK. The bundle supplies generated Go bindings, starter templates, asset processing rules, tool versions and reference documentation. Compatible native and web hosts are separate downloads selected through that release&#39;s metadata.</p>
 <p>The build copies the matching reference into <code>.karty/docs/</code>. Read it for the APIs and authoring features your project supports. A newer website example may use a capability your pinned SDK does not have.</p>
@@ -1227,14 +1231,15 @@ version = &#34;0.0.13&#34;
 <h2 id="prepare-the-build-tools">Prepare the build tools</h2>
 <p>Install the version declared by your project, then prepare its tools:</p>
 <pre><code class="language-sh"># Use the version from your game&#39;s [sdk] table.
-karty sdk install 0.0.13
+karty sdk install 0.0.14
 
 # Run this from the game project.
-karty toolchain install
+karty sdk toolchain install
 </code></pre>
-<p>The toolchain includes Go, TinyGo, wasm-tools and, for SDKs with generated world materials, Materialize. Install the SDK&#39;s required Go version yourself and make it available on <code>PATH</code>, or select it with <code>KARTY_GO</code>. Karty checks the version; <code>toolchain install</code> does not download Go. It downloads and verifies the managed TinyGo, wasm-tools and Materialize artifacts selected by the SDK.</p>
+<p>The toolchain includes Go, TinyGo, wasm-tools and, for SDKs with generated world materials, Materialize. Install the SDK&#39;s required Go version yourself and make it available on <code>PATH</code>, or select it with <code>KARTY_GO</code>. Karty checks the version; <code>sdk toolchain install</code> does not download Go. It downloads and verifies the managed TinyGo, wasm-tools and Materialize artifacts selected by the SDK.</p>
 <p>Builds prepare the tools they need, so explicit installation is useful when setting up a machine or CI cache. <code>karty dev</code> defaults to the standard Go compiler for its feedback loop. Regular builds follow <code>project.compiler</code>, which defaults to TinyGo. Both produce a WebAssembly cartridge for a compatible host; the compiler does not choose the destination&#39;s host executable.</p>
 <p>Players need the packaged game files, not your compiler or CLI.</p>
+<p>SDK setup commands share the <code>karty sdk</code> group: <code>current</code> prints the SDK selected by this CLI, <code>install VERSION</code> caches an exact release, and <code>toolchain install</code> prepares tools for the current project&#39;s SDK pin. Run <code>karty sdk --help</code> to explore them. The earlier <code>karty toolchain install</code> spelling remains available for existing scripts.</p>
 <h2 id="upgrade-deliberately">Upgrade deliberately</h2>
 <p>To move a game to another SDK, install that released version, change <code>[sdk]</code> in <code>karty.toml</code>, and rebuild. Review the regenerated <code>.karty/docs/</code>, update code and sources for any changed contracts, then test the packaged game on its target platforms. Commit the pin with those source changes. Generated files under <code>.karty/</code> are recreated by the build.</p>
 <p>SDK bundles and runtime downloads are verified before reuse. Tool versions and checksums also participate in asset cache identity, so changed processing inputs rebuild rather than silently reusing an older result.</p>

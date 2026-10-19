@@ -30,7 +30,7 @@ bake_samples = 16
 bake_bounces = 1
 ```
 
-For this room, run `karty bake`, then `karty dev`. Rebake after changing geometry,
+For this room, run `karty render bake`, then `karty dev`. Rebake after changing geometry,
 textures, UVs, or baked lights. Restart an existing preview after baking.
 Begin at low density; increase it only when shadow detail needs it.
 
@@ -43,5 +43,5 @@ its surroundings by itself; add a light for that effect.
 
 Larger levels can opt into chunks. For chunked levels, `karty build` produces
 missing bakes; `karty dev` previews with a matching bake or live lighting.
-Learn that workflow in [Roman court & galleries](../world-camera/) after the
+See [Hangar](../hangar/) for a larger level with baked lighting after the
 single-room version works.

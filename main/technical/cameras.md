@@ -77,4 +77,4 @@ Use accepted poses for movement, as described in [Transform 3D](transforms.html#
 `Destroy` removes the camera; level release also removes it. Camera count and
 viewport bounds are in `.karty/docs/cameras.md`.
 
-[World camera projections](https://github.com/karty-game/karty/blob/main/samples/world-camera/src/cameras.go) · [Isometric guide](../guide/isometric.html)
+[Hangar camera setup](https://github.com/karty-game/karty/blob/main/samples/hangar/src/main.go) · [Isometric guide](../guide/isometric.html)

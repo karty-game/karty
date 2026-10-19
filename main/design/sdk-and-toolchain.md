@@ -10,7 +10,7 @@ A project's manifest contains an exact version, for example:
 
 ```toml
 [sdk]
-version = "0.0.13"
+version = "0.0.14"
 ```
 
 The version above is an example pin, rather than a request for the latest SDK.
@@ -40,16 +40,16 @@ Install the version declared by your project, then prepare its tools:
 
 ```sh
 # Use the version from your game's [sdk] table.
-karty sdk install 0.0.13
+karty sdk install 0.0.14
 
 # Run this from the game project.
-karty toolchain install
+karty sdk toolchain install
 ```
 
 The toolchain includes Go, TinyGo, wasm-tools and, for SDKs with generated world
 materials, Materialize. Install the SDK's required Go version yourself and make
 it available on `PATH`, or select it with `KARTY_GO`. Karty checks the version;
-`toolchain install` does not download Go. It downloads and verifies the managed
+`sdk toolchain install` does not download Go. It downloads and verifies the managed
 TinyGo, wasm-tools and Materialize artifacts selected by the SDK.
 
 Builds prepare the tools they need, so explicit installation is useful when
@@ -59,6 +59,12 @@ which defaults to TinyGo. Both produce a WebAssembly cartridge for a compatible
 host; the compiler does not choose the destination's host executable.
 
 Players need the packaged game files, not your compiler or CLI.
+
+SDK setup commands share the `karty sdk` group: `current` prints the SDK selected
+by this CLI, `install VERSION` caches an exact release, and `toolchain install`
+prepares tools for the current project's SDK pin. Run `karty sdk --help` to
+explore them. The earlier `karty toolchain install` spelling remains available
+for existing scripts.
 
 ## Upgrade deliberately
 

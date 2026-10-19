@@ -2,10 +2,10 @@
 
 The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.
 
-Create the SDK 0.0.13 starter:
+Create the SDK 0.0.14 starter:
 
 ```sh
-karty new --yes --sdk 0.0.13 --template isometric my-game
+karty new --yes --sdk 0.0.14 --template isometric my-game
 cd my-game
 karty dev
 ```
@@ -16,7 +16,7 @@ import the package as described in [reusable packages](../design/packages.html).
 Use the room and material files from [one room](levels.html); the isometric
 starter also supplies its `player` solid prefab in `world.yaml`.
 
-![A diagonal isometric view over the Roman court sample.](assets/isometric.jpg)
+![A diagonal isometric view over connected rooms.](assets/isometric.jpg)
 
 ## Connect the isometric preset
 

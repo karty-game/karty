@@ -62,4 +62,4 @@ requiring a watch. Local proposals do not notify. Physical entities use
 A zero-valued `Transform3D` has zero scale. Use the constructor for visible
 objects. World authoring fields named `yaw_degrees` use degrees.
 
-[Camera 3D](cameras.html#camera-3d) · [World camera transform handling](https://github.com/karty-game/karty/blob/main/samples/world-camera/src/cameras.go)
+[Camera 3D](cameras.html#camera-3d) · [Hangar camera movement](https://github.com/karty-game/karty/blob/main/samples/hangar/src/fps_controller.go)

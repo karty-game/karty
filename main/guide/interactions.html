@@ -1268,7 +1268,7 @@ if err != nil {
 }
 </code></pre>
 <p>Draw <code>status</code> in your HUD; invalidate it when the value changes if using KartUI. Reset <code>won</code> when starting again. Reset held controls in <code>OnInputReset</code> so losing focus does not leave the player moving.</p>
-<p>Tags identify actors; they do not automatically create proximity events. Query actors after the level is ready, and keep trigger checks in your game. For longer scripted interactions, the court sample uses typed actions and <code>StartAuthoredSequence</code>; start with a direct Go handler first.</p>
+<p>Tags identify actors; they do not automatically create proximity events. Query actors after the level is ready, and keep trigger checks in your game. For longer scripted interactions, use typed actions and <code>StartAuthoredSequence</code>; start with a direct Go handler first.</p>
 </div>
         
       </main>
