@@ -1,10 +1,16 @@
 # Karty
 
-Build retro-inspired 2D and 3D games. Karty handles live reloading, asset preparation, and packaging.
+Build retro-inspired 2D and 3D games.
+Karty handles live reloading, asset preparation, and packaging.
 
 [Play the demos](https://karty-game.github.io/karty/main/) ·
 [Getting Started](https://karty-game.github.io/karty/main/guide/) ·
 [CLI releases](https://github.com/karty-game/karty/releases/latest)
+
+> [!WARNING]
+> Karty is under active development. APIs, project formats and features may change.
+
+## Features
 
 - 🐹 **Your game, written in Go.** Build game logic with Go’s simplicity, speed and
   type safety, powered by [Ebitengine](https://ebitengine.org/) and
@@ -22,8 +28,7 @@ Build retro-inspired 2D and 3D games. Karty handles live reloading, asset prepar
 - 🚀 **From terminal to playable.** Create projects, preview changes and package
   releases from the CLI, locally or in CI.
 
-> [!WARNING]
-> Karty is under active development. APIs, project formats and features may change.
+## Samples
 
 | [FPS](https://karty-game.github.io/karty/main/hangar/)                                                                                                | [Isometric Adventure](https://karty-game.github.io/karty/main/vigil/)                                                                               |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
