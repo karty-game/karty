@@ -9,10 +9,10 @@ const viewpointCount = 11
 
 type Game struct {
 	engine.Game
-	camera   *engine.EntityCamera3D
+	camera   *engine.Camera3D
 	level    engine.LevelHandle
 	fps      *FPSController
-	status   *engine.EntityText2D
+	status   *engine.Text2D
 	view     int
 	viewHeld bool
 }
@@ -42,14 +42,14 @@ func (game *Game) start() {
 	game.fps = NewFPSController(&game.Game)
 	game.fps.SceneContains = func(x, y float32) bool { return y > 80 }
 	game.status = game.NewText2D("Loading cove terrain...", engine.NewVec2(22, 18))
-	game.status.SetSize(20)
+	game.status.SetFontSize(20)
 	game.status.SetColor(engine.RGBA(245, 241, 223, 255))
 	game.status.SetLayer(30)
 	help := game.NewText2D(
 		"Coastal vegetation · WASD / mouse · Shift run · V views (11) · R reset · Touch: left move / right look",
 		engine.NewVec2(22, 48),
 	)
-	help.SetSize(14)
+	help.SetFontSize(14)
 	help.SetLayer(30)
 	game.RequestLevel("levels.ground")
 }
@@ -72,16 +72,16 @@ func (game *Game) visit(index int) {
 		game.camera.Destroy()
 	}
 	position, yaw, pitch, name := coveViewpoint(index)
-	game.camera = game.NewCamera3D(game.level, engine.CameraSettings{
+	game.camera = game.NewCamera3D(game.level, engine.Camera3DSettings{
 		Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
 		Movement: engine.CameraMovementUnrestricted,
 		Position: position, Yaw: yaw, Pitch: pitch,
-		FOVY: config.CameraFOVY, Near: config.CameraNear, Far: config.CameraFar,
+		VerticalFOV: config.CameraFOVY, NearClip: config.CameraNear, FarClip: config.CameraFar,
 		OrthoHeight: config.CameraOrthoHeight, ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
 	})
 	game.camera.SetLayer(-10)
 	body, err := game.World(game.level).
-		AttachBody(game.camera.Ref(), engine.BodySettings{Kind: engine.BodyDynamic, Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(.3, .3, .85), Offset: engine.NewVec3(0, 0, -.85)}, Rotate: false, Forces: engine.BodyForces{GravityScale: 1, Buoyancy: false}, Mass: 80, Friction: .5})
+		AttachBody(game.camera.Ref(), engine.BodySettings{Kind: engine.BodyDynamic, Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(.3, .3, .85), Offset: engine.NewVec3(0, 0, -.85)}, AllowRotation: false, Forces: engine.BodyForceSettings{GravityScale: 1, Buoyancy: false}, Mass: 80, Friction: .5})
 	if err != nil {
 		panic(err)
 	}

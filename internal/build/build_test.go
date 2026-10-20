@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/karty-game/karty-sdk/format/cartridge"
+	"github.com/karty-game/karty-sdk/format/textureatlas"
 	"github.com/karty-game/karty/internal/build"
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/scaffold"
@@ -249,7 +250,21 @@ func assertTextureFileCount(t *testing.T, distribution string, expected int) {
 		t.Fatal(err)
 	}
 
-	if len(assets) != expected {
+	entries := make([]textureatlas.Entry, len(assets))
+	for i, entry := range assets {
+		entries[i] = textureatlas.Entry{Name: entry.Name, Bytes: entry.Bytes}
+	}
+
+	atlas, found, atlasErr := textureatlas.ReadEntries(entries)
+	if atlasErr != nil {
+		t.Fatal(atlasErr)
+	}
+
+	if found {
+		if len(assets) != len(atlas.Pages)+1 || len(atlas.Layout.Regions) != expected {
+			t.Fatal("atlas must package only pages/layout while preserving logical texture count")
+		}
+	} else if len(assets) != expected {
 		t.Errorf("embedded texture count = %d, want %d", len(assets), expected)
 	}
 

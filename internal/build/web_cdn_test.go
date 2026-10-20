@@ -3,9 +3,11 @@ package build
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -196,7 +198,36 @@ func TestCDNStagesLocalRuntimeAndExcludesBundledHostFromSummary(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if report.Files != 4 || report.Bytes >= 1<<20 || report.HostURL != cdn.URL {
+	pointer, _, _ := readWebReleaseTest(t, web)
+	wantFiles := []string{
+		"game.kart", "index.html", "karty.js", "wasm_exec.js", "karty-web.js",
+		"karty-web-status.js", "karty-sw.js", "karty-latest.json", pointer.Manifest,
+	}
+	slices.Sort(wantFiles)
+
+	var stagedFiles []string
+
+	if err := fs.WalkDir(os.DirFS(web), ".", func(name string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+
+		if !entry.IsDir() {
+			stagedFiles = append(stagedFiles, name)
+		}
+
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	slices.Sort(stagedFiles)
+
+	if !slices.Equal(stagedFiles, wantFiles) {
+		t.Fatalf("unexpected CDN distribution files: got %v, want %v", stagedFiles, wantFiles)
+	}
+
+	if report.Files != len(stagedFiles) || report.Bytes >= 1<<20 || report.HostURL != cdn.URL {
 		t.Fatalf("CDN summary includes the absent host: %+v", report)
 	}
 }

@@ -82,7 +82,7 @@ module tag is not assumed. Its package README contains setup and adapter
 examples. This adds no engine API or SDK requirement beyond the consuming
 game's existing APIs.
 
-SDK 0.0.14's `2d`, `fps` and `isometric` starters include the
+SDK 0.0.15's `2d`, `fps` and `isometric` starters include the
 same package source under `packages/controllers/`. Their `karty.toml` links that
 folder, so a generated project builds without a published controller module.
 Keep the folder in Git. Blank and UI starters add no player controls.
@@ -186,7 +186,7 @@ which writes ordinary level texture inputs. From the repository root, run
 Use the SDK and matching public host selected by those samples.
 
 Game code imports `github.com/karty-game/tiled` and its `karty2d` subpackage.
-The game supplies a small create/update/destroy Sprite2D backend using its own
+The game supplies a small create/update/destroy SpriteRenderer2D backend using its own
 generated bindings and mounted textures. The shared view handles bounded
 residency, authored animation and optional wind; the game owns its camera,
 input, collision rules, actors and HUD. Static sprites stay in world coordinates

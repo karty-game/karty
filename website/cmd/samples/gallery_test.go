@@ -55,6 +55,7 @@ func TestGalleryExplainsEachPublishedSample(t *testing.T) {
 		"ui-demo",
 		"media-lab",
 		"particle-lab",
+		"effect-lab",
 	}
 	if !slices.Equal(names, expected) {
 		t.Fatalf("discovered sample projects: %v", names)
@@ -126,6 +127,7 @@ func TestGalleryPrioritizesPublicSamples(t *testing.T) {
 		"ui-demo",
 		"media-lab",
 		"particle-lab",
+		"effect-lab",
 	}
 	if !slices.Equal(names, want) {
 		t.Fatalf("gallery order: %v", names)
@@ -149,7 +151,11 @@ func TestGalleryPrioritizesPublicSamples(t *testing.T) {
 	page := string(contents)
 	previous := -1
 
-	for _, name := range want {
+	for index, name := range want {
+		if cards[index].Preview.Hidden {
+			continue
+		}
+
 		position := strings.Index(page, `src="`+name+`/preview.jpg"`)
 		if position <= previous {
 			t.Fatalf("%s missing or out of order in rendered gallery", name)

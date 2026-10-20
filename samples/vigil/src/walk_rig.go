@@ -10,12 +10,12 @@ import (
 func (g *Game) createMovementRoot() bool {
 	pose := engine.NewTransform3D(engine.NewVec3(float32(dungeon.Spawn.X), float32(dungeon.Spawn.Y), .025))
 	pose.Pitch = math.Pi / 2
-	g.shadow = g.NewWorldSprite(engine.LevelTexture(g.level, shadowTexture), pose, engine.WorldSprite{
-		Facing: engine.WorldSpriteFacingFixed, Alpha: engine.WorldSpriteAlphaBlend,
-		Size: engine.NewVec2(1.1, 1.1), Origin: engine.NewVec2(.5, .5),
+	g.shadow = g.NewSprite3D(engine.LevelTexture(g.level, shadowTexture), pose, engine.SpriteRenderer3D{
+		Facing: engine.WorldSpriteFacingFixed, AlphaMode: engine.WorldSpriteAlphaBlend,
+		Size: engine.NewVec2(1.1, 1.1), Anchor: engine.NewVec2(.5, .5),
 	})
 	var err error
-	g.watch, err = g.WatchTransform(g.shadow.Ref(), func(transform engine.Transform3D) {
+	g.watch, err = g.WatchPose(g.shadow.Ref(), func(transform engine.Transform3D) {
 		if g.resetPending && math.Abs(float64(transform.Position.X)-dungeon.Spawn.X) < .0001 &&
 			math.Abs(float64(transform.Position.Y)-dungeon.Spawn.Y) < .0001 {
 			g.resetPending = false
@@ -41,9 +41,9 @@ func (g *Game) updateHeroPose(pose int, root dungeon.Point) {
 	asset := engine.LevelTexture(g.level, uint32(texture))
 	origin := engine.NewVec2(data.OriginX, data.OriginY)
 	if g.hero == nil {
-		g.hero = g.NewWorldSprite(asset, transform, engine.WorldSprite{
-			Facing: engine.WorldSpriteFacingUpright, Alpha: engine.WorldSpriteAlphaCutout,
-			Size: engine.NewVec2(pilgrimProjectedSize, float32(pilgrimProjectedSize/math.Cos(math.Pi/6))), Origin: origin,
+		g.hero = g.NewSprite3D(asset, transform, engine.SpriteRenderer3D{
+			Facing: engine.WorldSpriteFacingUpright, AlphaMode: engine.WorldSpriteAlphaCutout,
+			Size: engine.NewVec2(pilgrimProjectedSize, float32(pilgrimProjectedSize/math.Cos(math.Pi/6))), Anchor: origin,
 		})
 		g.hero.SetTags("pilgrim", "camera-occlusion-focus")
 		g.heroTransform = transform
@@ -57,8 +57,8 @@ func (g *Game) updateHeroPose(pose int, root dungeon.Point) {
 		g.heroTransform = transform
 	}
 	if texture != g.lastTexture {
-		sprite := g.hero.WorldSprite
-		sprite.Asset, sprite.Origin = asset, origin
+		sprite := g.hero.Settings()
+		sprite.Asset, sprite.Anchor = asset, origin
 		g.hero.SetSprite(sprite)
 		g.lastTexture = texture
 	}

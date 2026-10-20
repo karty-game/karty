@@ -31,9 +31,9 @@ func (game *Game) createCrates() {
 	for index, box := range freightStacks {
 		transform := engine.NewTransform3D(engine.NewVec3(box.x, box.y, box.z))
 		transform.Scale = engine.NewVec3(box.width, box.depth, box.height)
-		crate := game.NewWorldSolid(game.level, transform, engine.SolidRenderer{Prefab: "cargo-crate"})
+		crate := game.NewSolid3D(game.level, transform, engine.SolidRenderer{Prefab: "cargo-crate"})
 		if _, err := game.World(game.level).
-			AttachBody(crate.Ref(), engine.BodySettings{Kind: engine.BodyDynamic, Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(box.width/2, box.depth/2, box.height/2)}, Rotate: true, Forces: engine.BodyForces{GravityScale: 1, Buoyancy: true}, Mass: box.mass, Friction: .5, Restitution: .02}); err != nil {
+			AttachBody(crate.Ref(), engine.BodySettings{Kind: engine.BodyDynamic, Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(box.width/2, box.depth/2, box.height/2)}, AllowRotation: true, Forces: engine.BodyForceSettings{GravityScale: 1, Buoyancy: true}, Mass: box.mass, Friction: .5, Restitution: .02}); err != nil {
 			panic(err)
 		}
 

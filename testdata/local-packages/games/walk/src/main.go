@@ -12,8 +12,8 @@ type Game struct {
 	engine.Game
 	controller *fps.Controller
 	input      *controls.Input[engine.Key]
-	camera     *engine.EntityCamera3D
-	label      *engine.EntityText2D
+	camera     *engine.Camera3D
+	label      *engine.Text2D
 	level      engine.LevelHandle
 	request    engine.RequestID
 	paused     bool
@@ -68,9 +68,9 @@ func (game *Game) replaceCamera() {
 	if game.camera != nil {
 		game.camera.Destroy()
 	}
-	game.camera = game.NewCamera3D(game.level, engine.CameraSettings{
+	game.camera = game.NewCamera3D(game.level, engine.Camera3DSettings{
 		Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-		Position: engine.NewVec3(4, 4, 1.7), FOVY: 1.05, Near: .05, Far: 60,
+		Position: engine.NewVec3(4, 4, 1.7), VerticalFOV: 1.05, NearClip: .05, FarClip: 60,
 		OrthoHeight: 10, ViewportWidth: 960, ViewportHeight: 540,
 	})
 	game.camera.SetLayer(-10)
@@ -78,10 +78,10 @@ func (game *Game) replaceCamera() {
 	if err := world.Configure(engine.WorldSettings{Mode: engine.WorldSpatial, Gravity: engine.Vec3{Z: -9.81}}); err != nil {
 		panic(err)
 	}
-	settings := engine.DynamicBox()
+	settings := engine.DynamicBoxSettings()
 	settings.Collider = engine.BoxCollider{HalfExtents: engine.Vec3{X: .3, Y: .3, Z: .85}, Offset: engine.Vec3{Z: -.85}}
 	settings.Mass = 80
-	settings.Rotate = false
+	settings.AllowRotation = false
 	settings.Forces.Buoyancy = false
 	physics, err := world.AttachBody(game.camera.Ref(), settings)
 	if err != nil {
@@ -181,14 +181,14 @@ func (game *Game) stop() {
 // This is the complete SDK bridge; it lives in the consumer, not the library.
 type cameraBody struct {
 	physics *engine.Body
-	camera  *engine.EntityCamera3D
+	camera  *engine.Camera3D
 }
 
 func (body cameraBody) Heading() (float32, float32) {
-	return body.camera.Settings.Yaw, body.camera.Settings.Pitch
+	return body.camera.Settings().Yaw, body.camera.Settings().Pitch
 }
 func (body cameraBody) Look(yaw, pitch float32) {
-	settings := body.camera.Settings
+	settings := body.camera.Settings()
 	settings.Yaw, settings.Pitch = yaw, pitch
 	body.camera.SetSettings(settings)
 }

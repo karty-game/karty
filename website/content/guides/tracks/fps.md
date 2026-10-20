@@ -2,10 +2,10 @@
 
 The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.
 
-Create the SDK 0.0.14 starter:
+Create the SDK 0.0.15 starter:
 
 ```sh
-karty new --yes --sdk 0.0.14 --template fps my-game
+karty new --yes --sdk 0.0.15 --template fps my-game
 cd my-game
 karty dev
 ```
@@ -37,8 +37,8 @@ import (
 type Game struct {
 	engine.Game
 	request                        engine.RequestID
-	camera                         *engine.EntityCamera3D
-	label                          *engine.EntityText2D
+	camera                         *engine.Camera3D
+	label                          *engine.Text2D
 	controller *controllers.FirstPerson
 	fpsReady bool
 }
@@ -66,12 +66,12 @@ func main() {
 			if event.RequestID != game.request {
 				return
 			}
-			game.camera = game.NewCamera3D(event.Handle, engine.CameraSettings{
+			game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
 				Projection: engine.CameraProjectionPerspective,
 				Output:     engine.CameraOutputFull,
 				Position:   engine.NewVec3(2, 2, 1.7),
-				Yaw:        0, Pitch: 0, FOVY: 1.05,
-				Near: 0.05, Far: 100, OrthoHeight: 10,
+				Yaw:        0, Pitch: 0, VerticalFOV: 1.05,
+				NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
 				ViewportWidth: 960, ViewportHeight: 540,
 			})
 			game.camera.SetLayer(-1)
@@ -126,7 +126,7 @@ func (game *Game) pointerFPS(pointer engine.PointerInput) {
 func (game *Game) updateFPS() {
 	if game.camera == nil || !game.fpsReady { return }
 	// Settings contains the last host-accepted pose automatically.
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	motion := game.controller.Step(settings.Yaw, settings.Pitch)
 	if motion.X == 0 && motion.Y == 0 && motion.Yaw == settings.Yaw && motion.Pitch == settings.Pitch { return }
 	settings.Yaw, settings.Pitch = motion.Yaw, motion.Pitch

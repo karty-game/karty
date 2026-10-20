@@ -13,11 +13,13 @@ below to explore its source, controls and authoring tools.
 | [Last Train](last-train/README.md)              | Yarn Spinner dialogue, three endings, persistent saves and reusable UI          |
 | [Orbital flight deck](ui-demo/README.md)        | KartUI menus, tabs, settings, tooltips and inventory                            |
 | [Media lab](media-lab/README.md)                | Images, overlapping sound effects, looping music and video playback             |
+| [Retro effect lab](effect-lab/README.md)        | FPS material/light room and development-host effect comparisons                 |
 | [Particle lab](particle-lab/README.md)          | Reusable fire and smoke recipes                                                 |
 
 ## Run a sample
 
-These sources use [SDK 0.0.14](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.0.14).
+These sources target candidate SDK 0.0.15. Its build-time image atlases require
+the matching candidate host; released SDK 0.0.14 hosts cannot load those bundles.
 The CLI installs the pinned SDK and matching hosts as needed. See
 [contributor setup](../CONTRIBUTING.md#local-setup) for toolchain and cache settings.
 

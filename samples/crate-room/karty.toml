@@ -13,7 +13,7 @@ far = 80
 ortho_height = 24
 
 [sdk]
-version = "0.0.14"
+version = "0.0.15"
 
 [packages.controllers]
 folder = "../../packages/controllers"

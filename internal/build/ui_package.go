@@ -12,8 +12,13 @@ import (
 )
 
 // writeUIPackage retains inspectable Go and only replaces files owned by this generator.
-func writeUIPackage(directory, module string, views []uicompiler.Component) error {
-	files, err := codegen.UIPackageFiles(views, module)
+func writeUIPackage(directory, module string, views []uicompiler.Component, generatorVersion ...int) error {
+	version := 2
+	if len(generatorVersion) > 0 {
+		version = generatorVersion[0]
+	}
+
+	files, err := codegen.UIPackageFilesForVersion(views, module, version)
 	if err != nil {
 		return err
 	}

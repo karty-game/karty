@@ -31,8 +31,8 @@ func (g *Game) bindAudioReceiver() {
 	// accepted physical player root; stereo belongs to the screen's right axis.
 	// The painted hero has per-frame registration offsets, so use its shadow.
 	if g.shadow != nil && g.camera != nil {
-		yaw := float64(g.camera.Settings.Yaw)
-		g.SetAudioReceiver(g.shadow.Ref(), engine.AudioReceiverOptions{
+		yaw := float64(g.camera.Settings().Yaw)
+		g.SetAudioListener(g.shadow.Ref(), engine.AudioListenerOptions{
 			Right: engine.NewVec2(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
 		})
 	}
@@ -96,5 +96,5 @@ func (g *Game) resetAudio() {
 func (g *Game) stopAudio() {
 	g.resetAudio()
 	g.StopMusic(250)
-	g.ClearAudioReceiver()
+	g.ClearAudioListener()
 }

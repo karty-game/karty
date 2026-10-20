@@ -14,12 +14,12 @@ type Game struct {
 	engine.Game
 	request              engine.RequestID
 	level                engine.LevelHandle
-	camera               *engine.EntityCamera3D
-	hero, shadow         *engine.EntityWorldSprite
+	camera               *engine.Camera3D
+	hero, shadow         *engine.Sprite3D
 	heroTransform        engine.Transform3D
-	halo                 *engine.EntityLight3D
+	halo                 *engine.Light3D
 	hud                  *engine.UI
-	watch                engine.TransformSubscription
+	watch                engine.PoseSubscription
 	nav                  dungeon.Navigation
 	focus                dungeon.Point
 	aim                  dungeon.Point
@@ -41,13 +41,13 @@ type Game struct {
 	walk                 dungeon.WalkCycle
 	lastPosition         dungeon.Point
 	vision               dungeon.Vision
-	fog                  [dungeon.MaxFog]*engine.EntitySprite2D
+	fog                  [dungeon.MaxFog]*engine.Sprite2D
 	fogBounds            [dungeon.MaxFog]dungeon.Box
 	fogUsed, fogReady    int
-	curtain              *engine.EntityVector2D
+	curtain              *engine.Shape2D
 	frame                uint64
-	shrines              [3]*engine.EntityWorldSprite
-	shrineLights         [3]*engine.EntityLight3D
+	shrines              [3]*engine.Sprite3D
+	shrineLights         [3]*engine.Light3D
 	lit                  [3]bool
 	status, area, prompt string
 }
@@ -98,15 +98,15 @@ func (g *Game) ready(e engine.LevelReady) {
 		panic(err)
 	}
 	g.lastPosition = dungeon.Spawn
-	g.curtain = g.NewVector2D(engine.Rectangle(dungeon.FogRight-dungeon.FogLeft, 720), engine.NewVec2(dungeon.FogLeft, 0))
+	g.curtain = g.NewShape2D(engine.Rectangle(dungeon.FogRight-dungeon.FogLeft, 720), engine.NewVec2(dungeon.FogLeft, 0))
 	g.curtain.SetFill(engine.ColorBlack)
 	g.curtain.SetLayer(-8)
 	g.focus = dungeon.Point{dungeon.Spawn.X + 1.6, dungeon.Spawn.Y + 1.6}
-	g.camera = g.NewCamera3D(e.Handle, engine.CameraSettings{
+	g.camera = g.NewCamera3D(e.Handle, engine.Camera3DSettings{
 		Projection: engine.CameraProjectionIsometric, Output: engine.CameraOutputFull,
 		Position: engine.NewVec3(float32(g.focus.X-18), float32(g.focus.Y-18), 14.696938),
-		Yaw:      math.Pi / 4, Pitch: -math.Pi / 6, FOVY: 1.05, OrthoHeight: float32(g.height),
-		Near: .05, Far: 100, ViewportWidth: 1280, ViewportHeight: 720,
+		Yaw:      math.Pi / 4, Pitch: -math.Pi / 6, VerticalFOV: 1.05, OrthoHeight: float32(g.height),
+		NearClip: .05, FarClip: 100, ViewportWidth: 1280, ViewportHeight: 720,
 	})
 	g.camera.SetLayer(-10)
 	g.facing = 4
@@ -134,7 +134,7 @@ func (g *Game) position() dungeon.Point {
 	if g.resetPending {
 		return dungeon.Spawn
 	}
-	return dungeon.Point{float64(g.shadow.Position.X), float64(g.shadow.Position.Y)}
+	return dungeon.Point{float64(g.shadow.Transform().Position.X), float64(g.shadow.Transform().Position.Y)}
 }
 
 func (g *Game) update(f engine.Frame) {
@@ -183,7 +183,7 @@ func (g *Game) update(f engine.Frame) {
 	if moved {
 		g.aim = dungeon.AimDirection(g.aim, dungeon.Point{X: next.X - p.X, Y: next.Y - p.Y})
 		g.facing = dungeon.Facing(g.aim.X, g.aim.Y)
-		s := g.shadow.Transform3D
+		s := g.shadow.Transform()
 		s.Position.X = float32(next.X)
 		s.Position.Y = float32(next.Y)
 		if err := g.shadow.Ref().SetPose(s); err != nil {
@@ -239,7 +239,7 @@ func (g *Game) update(f engine.Frame) {
 	if f.Number%7 == 0 {
 		for i, lit := range g.lit {
 			if lit {
-				s := g.shrines[i].WorldSprite
+				s := g.shrines[i].Settings()
 				s.Asset = engine.LevelTexture(g.level, uint32(flameTexture+int(f.Number/7)%3))
 				g.shrines[i].SetSprite(s)
 			}
@@ -389,9 +389,9 @@ func (g *Game) interact() {
 	g.lit[i] = true
 	p := dungeon.Shrines[i]
 	t := engine.NewTransform3D(engine.NewVec3(float32(p.X), float32(p.Y), 1.205))
-	g.shrines[i] = g.NewWorldSprite(engine.LevelTexture(g.level, flameTexture), t, engine.WorldSprite{
-		Facing: engine.WorldSpriteFacingUpright, Alpha: engine.WorldSpriteAlphaBlend,
-		Size: engine.NewVec2(.4, float32(.7/math.Cos(math.Pi/6))), Origin: engine.NewVec2(.5, 1),
+	g.shrines[i] = g.NewSprite3D(engine.LevelTexture(g.level, flameTexture), t, engine.SpriteRenderer3D{
+		Facing: engine.WorldSpriteFacingUpright, AlphaMode: engine.WorldSpriteAlphaBlend,
+		Size: engine.NewVec2(.4, float32(.7/math.Cos(math.Pi/6))), Anchor: engine.NewVec2(.5, 1),
 	})
 	g.shrineLights[i].SetEnabled(true)
 	g.lightShrineAudio(i, p)
@@ -430,7 +430,7 @@ func (g *Game) resetInput() {
 func (g *Game) zoom(factor float64) {
 	g.height = g.controller.ZoomBy(factor)
 	if g.camera != nil {
-		s := g.camera.Settings
+		s := g.camera.Settings()
 		s.OrthoHeight = float32(g.height)
 		g.camera.SetSettings(s)
 	}

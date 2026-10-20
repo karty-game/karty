@@ -58,7 +58,7 @@ func compileAuthoredActions(ctx context.Context, directory, module string, manif
 		return nil, fmt.Errorf("authored actions require a supporting SDK bundle (SDK 0.0.9): %w", err)
 	}
 
-	result, err := actionbuild.Compile(directory, module, declarations, levels, contract)
+	result, err := actionbuild.Compile(directory, module, declarations, levels, contract, manifest.Compatibility.ProjectCodegen)
 	if err != nil {
 		return nil, err
 	}

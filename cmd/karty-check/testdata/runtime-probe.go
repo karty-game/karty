@@ -9,10 +9,10 @@ import (
 type Game struct {
 	engine.Game
 
-	player                    *engine.EntitySprite2D
-	entities                  []*engine.EntitySprite2D
-	label                     *engine.EntityText2D
-	marker                    *engine.EntityVector2D
+	player                    *engine.Sprite2D
+	entities                  []*engine.Sprite2D
+	label                     *engine.Text2D
+	marker                    *engine.Shape2D
 	left, right               bool
 	leftRequest, rightRequest engine.RequestID
 	leftHandle, rightHandle   engine.LevelHandle
@@ -30,15 +30,15 @@ func main() {
 // Initialize is called when the game is first started to set up the initial state.
 func (game *Game) Initialize() {
 	game.player = game.NewSprite2D(assets.TextureSpritesPlayer, engine.NewVec2(48, 48))
-	panel := game.NewVector2D(engine.Rectangle(360, 56), engine.NewVec2(16, 216))
+	panel := game.NewShape2D(engine.Rectangle(360, 56), engine.NewVec2(16, 216))
 	panel.SetFill(engine.RGBA(25, 45, 80, 255))
 	panel.SetLayer(-1)
 	game.label = game.NewText2D("Arrow keys move; click to place", engine.NewVec2(28, 232))
-	game.label.SetSize(20)
-	game.marker = game.NewVector2D(engine.Circle(12), engine.NewVec2(304, 80))
+	game.label.SetFontSize(20)
+	game.marker = game.NewShape2D(engine.Circle(12), engine.NewVec2(304, 80))
 	game.marker.SetFill(engine.RGBA(255, 170, 60, 180))
 	game.marker.SetStroke(engine.ColorWhite, 2)
-	axis := game.NewVector2D(engine.Line(engine.NewVec2(72, 24)), engine.NewVec2(256, 120))
+	axis := game.NewShape2D(engine.Line(engine.NewVec2(72, 24)), engine.NewVec2(256, 120))
 	axis.SetStroke(engine.RGBA(100, 220, 255, 255), 3)
 
 	for i := 0; i < 10; i++ {
@@ -74,9 +74,9 @@ func (game *Game) onKey(key engine.Key, down bool) {
 }
 
 func (game *Game) placePlayer(event engine.PointerEvent) {
-	game.player.Translate(event.X-game.player.Position.X, event.Y-game.player.Position.Y)
+	game.player.Translate(event.X-game.player.Position().X, event.Y-game.player.Position().Y)
 	game.label.SetText("Player moved to pointer")
-	game.marker.Translate(event.X-game.marker.Position.X, event.Y-game.marker.Position.Y)
+	game.marker.Translate(event.X-game.marker.Position().X, event.Y-game.marker.Position().Y)
 }
 
 func (game *Game) levelReleased(event engine.LevelReleased) {

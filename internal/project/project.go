@@ -13,6 +13,7 @@ import (
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
+	"golang.org/x/mod/modfile"
 )
 
 type staticError string
@@ -149,11 +150,8 @@ func ModulePath(directory string) (string, error) {
 		return "", fmt.Errorf("read project module: %w", err)
 	}
 
-	for line := range strings.SplitSeq(string(contents), "\n") {
-		fields := strings.Fields(line)
-		if len(fields) == 2 && fields[0] == "module" {
-			return fields[1], nil
-		}
+	if module := modfile.ModulePath(contents); module != "" {
+		return module, nil
 	}
 
 	return "", errMissingModule

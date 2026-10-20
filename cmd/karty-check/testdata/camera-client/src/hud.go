@@ -35,7 +35,7 @@ func (hud *cameraHUD) Refresh(game *cameraController) bool {
 	for _, field := range [...]struct {
 		name  string
 		value float32
-	}{{"\nFOVy(rad)=", settings.FOVY}, {" ortho=", settings.OrthoHeight}, {"\nnear=", settings.Near}, {" far=", settings.Far}, {" path=", game.path}} {
+	}{{"\nFOVy(rad)=", settings.VerticalFOV}, {" ortho=", settings.OrthoHeight}, {"\nnear=", settings.NearClip}, {" far=", settings.FarClip}, {" path=", game.path}} {
 		text = append(text, field.name...)
 		text = strconv.AppendFloat(text, float64(field.value), 'g', -1, 32)
 	}
@@ -50,7 +50,7 @@ func (hud *cameraHUD) Refresh(game *cameraController) bool {
 	return false
 }
 
-func appendCameraPose(text []byte, name string, settings engine.CameraSettings) []byte {
+func appendCameraPose(text []byte, name string, settings engine.Camera3DSettings) []byte {
 	text = append(text, name...)
 	for _, field := range [...]struct {
 		name  string

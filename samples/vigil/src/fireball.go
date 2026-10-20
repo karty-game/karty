@@ -13,9 +13,9 @@ const fireballImpactFrames = 24
 // The fixed four-slot pool bounds each bolt to one light, three flame cards
 // and six impact sparks. Reset/stop and slot replacement release them all.
 type fireball struct {
-	light     *engine.EntityLight3D
-	flame     [3]*engine.EntityWorldSprite
-	sparks    [6]*engine.EntityWorldSprite
+	light     *engine.Light3D
+	flame     [3]*engine.Sprite3D
+	sparks    [6]*engine.Sprite3D
 	position  dungeon.Point
 	direction dungeon.Point
 	facing    uint8
@@ -55,9 +55,9 @@ func (g *Game) throwFireball() {
 			size = 1.2 - float32(i-1)*.3
 			texture = uint32(fireTrailTexture) + uint32(bolt.facing)
 		}
-		bolt.flame[i] = g.NewWorldSprite(engine.LevelTexture(g.level, texture), engine.NewTransform3D(position), engine.WorldSprite{
-			Facing: engine.WorldSpriteFacingUpright, Alpha: engine.WorldSpriteAlphaBlend,
-			Size: engine.NewVec2(size, size/float32(math.Cos(math.Pi/6))), Origin: engine.NewVec2(.5, .5),
+		bolt.flame[i] = g.NewSprite3D(engine.LevelTexture(g.level, texture), engine.NewTransform3D(position), engine.SpriteRenderer3D{
+			Facing: engine.WorldSpriteFacingUpright, AlphaMode: engine.WorldSpriteAlphaBlend,
+			Size: engine.NewVec2(size, size/float32(math.Cos(math.Pi/6))), Anchor: engine.NewVec2(.5, .5),
 		})
 	}
 	if blocked {
@@ -71,12 +71,12 @@ func (g *Game) impactFireball(bolt *fireball) {
 	// A world anchor lets the short reverberant tail outlive the visual bolt.
 	g.playWorldSound(assets.SoundFireballImpact, bolt.position, .95, .55, 1, 14, 55)
 	for i := range bolt.sparks {
-		bolt.sparks[i] = g.NewWorldSprite(
+		bolt.sparks[i] = g.NewSprite3D(
 			engine.LevelTexture(g.level, fireEmberTexture),
 			engine.NewTransform3D(engine.NewVec3(float32(bolt.position.X), float32(bolt.position.Y), .95)),
-			engine.WorldSprite{
-				Facing: engine.WorldSpriteFacingUpright, Alpha: engine.WorldSpriteAlphaBlend,
-				Size: engine.NewVec2(.2, float32(.2/math.Cos(math.Pi/6))), Origin: engine.NewVec2(.5, .5),
+			engine.SpriteRenderer3D{
+				Facing: engine.WorldSpriteFacingUpright, AlphaMode: engine.WorldSpriteAlphaBlend,
+				Size: engine.NewVec2(.2, float32(.2/math.Cos(math.Pi/6))), Anchor: engine.NewVec2(.5, .5),
 			},
 		)
 	}
@@ -126,7 +126,7 @@ func (bolt *fireball) draw() {
 	if bolt.fading > 0 {
 		fade = float32(bolt.fading) / 12
 	}
-	settings := bolt.light.Settings
+	settings := bolt.light.Settings()
 	settings.Position = engine.NewVec3(float32(bolt.position.X), float32(bolt.position.Y), .95)
 	flicker := float32(.96 + .04*math.Sin(float64(bolt.age)*1.7))
 	settings.Color = engine.NewVec3(3.1*fade*flicker, .86*fade*flicker, .12*fade)
@@ -139,7 +139,7 @@ func (bolt *fireball) draw() {
 		if err := flame.Ref().SetPose(engine.NewTransform3D(p)); err != nil {
 			panic(err)
 		}
-		s := flame.WorldSprite
+		s := flame.Settings()
 		size := .44 * fade * flicker
 		if i > 0 {
 			size = (1.2 - float32(i-1)*.3) * fade * (2 - flicker)
@@ -152,7 +152,7 @@ func (bolt *fireball) draw() {
 func (bolt *fireball) drawImpact() {
 	t := float64(bolt.impact-1) / fireballImpactFrames
 	fade := 1 - t
-	settings := bolt.light.Settings
+	settings := bolt.light.Settings()
 	settings.Position = engine.NewVec3(float32(bolt.position.X), float32(bolt.position.Y), .95)
 	// A brief hotter, wider flash distinguishes impact from ordinary expiry.
 	pulse := float32(2.1 * fade * fade * fade)
@@ -185,8 +185,8 @@ func (bolt *fireball) drawImpact() {
 		if err := flame.Ref().SetPose(engine.NewTransform3D(p)); err != nil {
 			panic(err)
 		}
-		s := flame.WorldSprite
-		s.Asset = engine.LevelTexture(bolt.light.World, texture)
+		s := flame.Settings()
+		s.Asset = engine.LevelTexture(bolt.light.Level(), texture)
 		s.Size = engine.NewVec2(size, height)
 		flame.SetSprite(s)
 	}
@@ -201,7 +201,7 @@ func (bolt *fireball) drawImpact() {
 		if err := spark.Ref().SetPose(engine.NewTransform3D(p)); err != nil {
 			panic(err)
 		}
-		s := spark.WorldSprite
+		s := spark.Settings()
 		s.Size = engine.NewVec2(size, height)
 		spark.SetSprite(s)
 	}

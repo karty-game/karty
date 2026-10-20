@@ -6,11 +6,65 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io/fs"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/karty-game/karty/internal/assetusage"
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
+
+func TestSelectedSDKTextureSetterRetainsReferences(t *testing.T) {
+	t.Parallel()
+
+	manifest, err := sdk.Resolve(release.SDKVersion())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, compiler := range []string{"go", "tinygo"} {
+		t.Run(compiler, func(t *testing.T) {
+			t.Parallel()
+
+			files, err := sdk.ClientFiles(manifest, compiler)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			directory := usageProject(t, `package main
+import "example.com/game/.karty/engine"
+func main() {
+    sprite := new(engine.Game).NewSprite2D("sprites.unused", engine.Vec2{})
+    sprite.SetTexture("sprites.player")
+}
+`)
+			if err := os.Remove(filepath.Join(directory, ".karty", "engine", "engine.go")); err != nil {
+				t.Fatal(err)
+			}
+
+			for name, data := range files {
+				path := filepath.Join(directory, ".karty", filepath.FromSlash(name))
+				if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+					t.Fatal(err)
+				}
+
+				if err := os.WriteFile(path, data, 0o600); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			result := assetusage.AnalyzeWithOptions(
+				directory, "example.com/game", []string{"sprites.player", "sprites.unused", "sprites.dead"}, nil,
+				assetusage.Options{Compiler: compiler},
+			)
+			if result.KeepAll || result.Live["sprites.player"] == "" || result.Live["sprites.unused"] == "" ||
+				result.Live["sprites.dead"] != "" {
+				t.Fatalf("selected SDK texture references: %+v", result)
+			}
+		})
+	}
+}
 
 // A locally repackaged SDK retains the latest API and SFC templates.
 func TestLocalUIScreenReachabilityPatchSDK(t *testing.T) {

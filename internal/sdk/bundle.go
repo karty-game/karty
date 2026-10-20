@@ -103,11 +103,11 @@ func readBundleContext(ctx context.Context, version string, data []byte) (Manife
 	}
 
 	if (compatibility.UISchema != 9 && compatibility.UISchema != 10 && compatibility.UISchema != 11) ||
-		(compatibility.ProjectCodegen != 1 && compatibility.ProjectCodegen != 2) {
+		(compatibility.ProjectCodegen != 1 && compatibility.ProjectCodegen != 2 && compatibility.ProjectCodegen != ReviewedProjectCodegen) {
 		return Manifest{}, bundleError("SDK requires unsupported bundle, UI schema or project generator; upgrade Karty")
 	}
 
-	if compatibility.ProjectCodegen == authoredActionProjectCodegen {
+	if compatibility.ProjectCodegen >= authoredActionProjectCodegen {
 		if _, err := fs.ReadFile(tree, "contracts/actions-v1.schema.json"); err != nil {
 			if canceled := ctx.Err(); canceled != nil {
 				return Manifest{}, canceled
@@ -418,6 +418,9 @@ func readBundleFileContext(ctx context.Context, path string) ([]byte, error) {
 }
 
 const authoredActionProjectCodegen = 2
+
+// ReviewedProjectCodegen selects explicit setters and authored entity lookup.
+const ReviewedProjectCodegen = 3
 const tomlBundleFormat = 2
 const semanticVersionParts = 3
 

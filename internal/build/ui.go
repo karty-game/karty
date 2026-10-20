@@ -18,7 +18,7 @@ func embedUIAssets(ctx context.Context,
 	directory, artifact string,
 	entries []project.Texture,
 	layouts []project.Layout,
-	themeSource string,
+	themeSource, compiler string,
 ) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -43,7 +43,7 @@ func embedUIAssets(ctx context.Context,
 		return err
 	}
 
-	usage := assetusage.AnalyzeUIWithComponents(directory, module, names, views)
+	usage := assetusage.AnalyzeUIWithOptions(directory, module, names, views, assetusage.Options{Compiler: compiler})
 
 	assets := make([]cartridge.Asset, 0, len(entries))
 	theme := uicompiler.DefaultTheme()

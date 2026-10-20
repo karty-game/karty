@@ -556,6 +556,9 @@
               return;
             }
             state("running");
+            // Downloads start after initial level publication and presentation.
+            // Their failure must never interrupt a running game.
+            Promise.resolve(globalThis.KartyWebRuntime?.startPrefetch()).catch(() => {});
             if (element("loading")) {
               element("loading").setAttribute("aria-busy", "false");
               element("loading").hidden = true;

@@ -18,14 +18,14 @@ func TestCameraAndControlsUseConfiguredCanvas(t *testing.T) {
 			config.ResolutionWidth, config.ResolutionHeight)
 	}
 
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	if settings.ViewportWidth != config.ResolutionWidth || settings.ViewportHeight != config.ResolutionHeight {
 		t.Fatalf("camera viewport %dx%d differs from configured %dx%d", settings.ViewportWidth, settings.ViewportHeight,
 			config.ResolutionWidth, config.ResolutionHeight)
 	}
 
-	if settings.FOVY != config.CameraFOVY || settings.OrthoHeight != config.CameraOrthoHeight ||
-		settings.Near != config.CameraNear || settings.Far != config.CameraFar {
+	if settings.VerticalFOV != config.CameraFOVY || settings.OrthoHeight != config.CameraOrthoHeight ||
+		settings.NearClip != config.CameraNear || settings.FarClip != config.CameraFar {
 		t.Fatalf("camera ignores authored project settings: %+v", settings)
 	}
 }

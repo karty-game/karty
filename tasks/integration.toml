@@ -32,6 +32,14 @@ run = "bash scripts/smoke.sh"
 [check-web]
 run = "go run ./cmd/karty-check --web"
 
+[check-web-delivery]
+description = "Execute generated web releases, updates, background downloads and offline caches in Chromium"
+env = { KARTY_WEB_DELIVERY_FIXTURES = "{{config_root}}/../dist/validation/web-delivery-fixtures" }
+run = [
+  "go test -timeout=9s ./internal/build -run '^TestWebDeliveryFixtures$' -count=1",
+  "node scripts/check-web-delivery.mjs --fixtures dist/validation/web-delivery-fixtures --output dist/validation/web-delivery/results.json",
+]
+
 [check-browser]
 run = "go run ./cmd/karty-check --browser"
 

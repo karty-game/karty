@@ -16,7 +16,7 @@ func TestResourceProducersAndShippedTemplatesExcludeJSONAndReflection(t *testing
 	for _, directory := range []string{"../levelbuild", ".", "../assetpipeline"} {
 		t.Run(directory, func(t *testing.T) {
 			t.Parallel()
-			checkProducerImports(t, os.DirFS(directory))
+			checkProducerImports(t, os.DirFS(directory), directory == ".")
 		})
 	}
 
@@ -26,7 +26,7 @@ func TestResourceProducersAndShippedTemplatesExcludeJSONAndReflection(t *testing
 	})
 }
 
-func checkProducerImports(t *testing.T, source fs.FS) {
+func checkProducerImports(t *testing.T, source fs.FS, buildPackage bool) {
 	t.Helper()
 
 	err := fs.WalkDir(source, ".", func(path string, entry fs.DirEntry, err error) error {
@@ -62,7 +62,11 @@ func checkProducerImports(t *testing.T, source fs.FS) {
 				return err
 			}
 
-			if name == "encoding/json" || strings.HasPrefix(name, "encoding/json/") || name == "reflect" {
+			// Version 1 release discovery is HTTP metadata, separate from the
+			// binary cartridge/KLD resource format. Its sole Go JSON producer
+			// is specified in website/content/design/web-delivery-v1.md.
+			jsonDiscovery := buildPackage && path == "web_release.go"
+			if name == "reflect" || (!jsonDiscovery && (name == "encoding/json" || strings.HasPrefix(name, "encoding/json/"))) {
 				t.Errorf("resource producer %s imports %s", path, name)
 			}
 		}
@@ -92,7 +96,10 @@ func checkShippedTemplates(t *testing.T, source fs.FS) {
 		}
 
 		for _, call := range []string{"JSON.parse", "JSON.stringify"} {
-			if strings.Contains(string(data), call) {
+			// Only the release worker reads/writes JSON discovery and cache
+			// metadata; game resource templates keep their binary contract.
+			// See website/content/design/web-delivery-v1.md.
+			if path != "web-service-worker.js.tmpl" && strings.Contains(string(data), call) {
 				t.Errorf("shipped template %s contains %s", path, call)
 			}
 		}

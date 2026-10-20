@@ -54,7 +54,7 @@ func TestWalkNormalizationAndOrbitIsolation(t *testing.T) {
 	controller.orbitLeft = true
 	engine.FixtureBegin()
 	controller.Update()
-	if count := commandCount(); count != 1 || controller.fps != before || controller.orbitCamera.Settings.Yaw >= .9 {
+	if count := commandCount(); count != 1 || controller.fps != before || controller.orbitCamera.Settings().Yaw >= .9 {
 		t.Fatal("orbit changed the FPS baseline", count, controller)
 	}
 }
@@ -77,7 +77,7 @@ func TestAcceptedPoseDrivesMarkerAndHUD(t *testing.T) {
 	accepted := engine.NewTransform3D(engine.NewVec3(7, 2, 3))
 	accepted.Yaw = math.Pi / 2
 	accepted.Pitch = math.Pi / 6
-	engine.FixtureAcceptedPose(controller.camera.ID,accepted)
+	engine.FixtureAcceptedPose(uint32(controller.camera.ID()),accepted)
 	engine.FixtureBegin()
 	controller.OnTransformChanged(accepted)
 	commands := engine.FixtureCommands()
@@ -98,7 +98,7 @@ func TestAcceptedPoseDrivesMarkerAndHUD(t *testing.T) {
 	controller.isometric = true
 	hud.Refresh(&controller)
 	controller.onOrbitMoved = func() { hud.Refresh(&controller) }
-	controller.orbitCamera.Settings.Position.X = 12
+	engine.FixtureCameraSettings(controller.orbitCamera).Position.X = 12
 	engine.FixtureBegin()
 	controller.OnOrbitTransformChanged(engine.Transform3D{})
 	if count := commandCount(); count != 0 || !strings.Contains(hud.cameraInfo, "ISO\nx=12") || controller.fps.Position != accepted.Position {
@@ -145,20 +145,20 @@ func TestDisposedActorsAndFreshBindings(t *testing.T) {
 func TestFPSMouseRunAndReset(t *testing.T) {
 	engine.FixtureBegin()
 	game := &Game{cameraController: controllerFixture()}
-	original := game.camera.Settings
+	original := game.camera.Settings()
 	game.onPointer(engine.PointerInput{Kind: engine.PointerMouse, Phase: engine.PointerMove, Captured: true, DeltaX: 20, DeltaY: -12})
 	game.Update()
-	if game.camera.Settings.Yaw <= original.Yaw || game.camera.Settings.Pitch <= original.Pitch {
+	if game.camera.Settings().Yaw <= original.Yaw || game.camera.Settings().Pitch <= original.Pitch {
 		t.Fatal("mouse look did not change both angles")
 	}
-	looked := game.camera.Settings
+	looked := game.camera.Settings()
 	game.Update()
-	if game.camera.Settings != looked {
+	if game.camera.Settings() != looked {
 		t.Fatal("mouse displacement was consumed more than once")
 	}
 	game.forward, game.strafeRight, game.runLeft = true, true, true
 	game.Update()
-	next := game.camera.Settings
+	next := game.camera.Settings()
 	if distance := math.Hypot(float64(next.Position.X-looked.Position.X), float64(next.Position.Y-looked.Position.Y)); math.Abs(distance-.08) > 1e-6 {
 		t.Fatal("sprint diagonal speed", distance)
 	}
@@ -173,28 +173,28 @@ func TestIsometricPanZoomAndFPSIsolation(t *testing.T) {
 	engine.FixtureBegin()
 	game := &Game{cameraController: controllerFixture()}
 	game.isometric = true
-	fps := game.camera.Settings
-	original := game.orbitCamera.Settings
+	fps := game.camera.Settings()
+	original := game.orbitCamera.Settings()
 	game.forward, game.strafeRight = true, true
 	game.Update()
-	if game.camera.Settings != fps || game.orbitCamera.Settings.Position == original.Position {
+	if game.camera.Settings() != fps || game.orbitCamera.Settings().Position == original.Position {
 		t.Fatal("pan moved player or did not move isometric camera")
 	}
 	game.Stop()
 	game.Zoom(.5)
-	if game.orbitCamera.Settings.OrthoHeight != 15 {
+	if game.orbitCamera.Settings().OrthoHeight != 15 {
 		t.Fatal("zoom did not scale projection")
 	}
 	game.Zoom(.001)
-	if game.orbitCamera.Settings.OrthoHeight != 8 {
+	if game.orbitCamera.Settings().OrthoHeight != 8 {
 		t.Fatal("zoom lower bound")
 	}
 	game.Zoom(100)
-	if game.orbitCamera.Settings.OrthoHeight != 60 {
+	if game.orbitCamera.Settings().OrthoHeight != 60 {
 		t.Fatal("zoom upper bound")
 	}
 	game.ResetOrbit()
-	if game.orbitCamera.Settings != original || game.camera.Settings != fps {
+	if game.orbitCamera.Settings() != original || game.camera.Settings() != fps {
 		t.Fatal("reset did not restore independent orbit")
 	}
 }
@@ -209,7 +209,7 @@ func TestTouchWalkLookPinchAndRelease(t *testing.T) {
 	touch(1, engine.PointerMove, 90, 50)
 	touch(2, engine.PointerMove, 270, 80)
 	game.Update()
-	if game.camera.Settings.Position == game.fps.Position || game.camera.Settings.Pitch == game.fps.Pitch {
+	if game.camera.Settings().Position == game.fps.Position || game.camera.Settings().Pitch == game.fps.Pitch {
 		t.Fatal("simultaneous touch movement/look missing")
 	}
 	touch(1, engine.PointerUp, 90, 50)
@@ -223,7 +223,7 @@ func TestTouchWalkLookPinchAndRelease(t *testing.T) {
 	touch(2, engine.PointerDown, 200, 100)
 	touch(2, engine.PointerMove, 250, 100)
 	game.Update()
-	if game.orbitCamera.Settings.OrthoHeight >= 30 || game.offsetX == 0 {
+	if game.orbitCamera.Settings().OrthoHeight >= 30 || game.offsetX == 0 {
 		t.Fatal("pinch scale/pan missing")
 	}
 	game.Stop()
@@ -245,7 +245,7 @@ func TestLowerScreenJoystickWithControls(t *testing.T) {
 	// The HUD stays visible, and the thumb may sit below the game rectangle
 	// when a landscape scene is presented on a portrait phone.
 	touch(engine.PointerDown, 50, 220)
-	if game.pointers[0].id != 1 || game.moveStick.base == nil || game.moveStick.base.Alpha != 1 {
+	if game.pointers[0].id != 1 || game.moveStick.base == nil || game.moveStick.base.Alpha() != 1 {
 		t.Fatal("lower-screen touch did not activate the visible joystick")
 	}
 	touch(engine.PointerMove, 54, 216)
@@ -256,8 +256,8 @@ func TestLowerScreenJoystickWithControls(t *testing.T) {
 	if length := math.Hypot(float64(game.touchMove), float64(game.touchStrafe)); math.Abs(length-1) > 1e-6 {
 		t.Fatal("diagonal joystick was not normalized", length)
 	}
-	thumb := game.moveStick.thumb.Position
-	base := game.moveStick.base.Position
+	thumb := game.moveStick.thumb.Position()
+	base := game.moveStick.base.Position()
 	if base.Y >= 180 || base.Y-moveStickRadius < 0 || base.X-moveStickRadius < 0 {
 		t.Fatal("portrait joystick indicator was clipped outside the scene", base)
 	}
@@ -265,13 +265,13 @@ func TestLowerScreenJoystickWithControls(t *testing.T) {
 		t.Fatal("visible thumb exceeded the joystick radius", length)
 	}
 	game.Hooks().OnInputReset()
-	if game.touchMove != 0 || game.touchStrafe != 0 || game.moveStick.base.Alpha != 0 || game.pointers[0].id != 0 {
+	if game.touchMove != 0 || game.touchStrafe != 0 || game.moveStick.base.Alpha() != 0 || game.pointers[0].id != 0 {
 		t.Fatal("input reset retained joystick movement or overlay")
 	}
 	touch(engine.PointerDown, 50, 160)
 	touch(engine.PointerMove, 50, 100)
 	touch(engine.PointerUp, 50, 100)
-	if game.touchMove != 0 || game.moveStick.base.Alpha != 0 {
+	if game.touchMove != 0 || game.moveStick.base.Alpha() != 0 {
 		t.Fatal("touch release retained joystick movement or overlay")
 	}
 }

@@ -16,6 +16,30 @@ type cancelCopyReader struct {
 	reads  int
 }
 
+func TestFileHashConfinesArtifactReads(t *testing.T) {
+	t.Parallel()
+
+	directory := t.TempDir()
+
+	path := filepath.Join(directory, "karty.js")
+	if err := os.WriteFile(path, []byte("hello"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if hash, err := fileHash(t.Context(), path); err != nil || hash != "2cf24dba5fb0a30e" {
+		t.Fatalf("regular artifact hash = %q, %v", hash, err)
+	}
+
+	escape := filepath.Join(t.TempDir(), "escape.js")
+	if err := os.Symlink(path, escape); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := fileHash(t.Context(), escape); err == nil {
+		t.Fatal("artifact hashing followed a symlink outside its directory")
+	}
+}
+
 func (reader *cancelCopyReader) Read(destination []byte) (int, error) {
 	reader.reads++
 	n := copy(destination, "partial replacement bytes")

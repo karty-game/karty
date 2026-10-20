@@ -193,12 +193,12 @@ func TestGeneratedPathsKeepUnrelatedTopicsSeparate(t *testing.T) {
 	}
 
 	landing := string(readGenerated(t, output, "index.html"))
-	if strings.Count(landing, `class="path"`) != 3 || strings.Contains(landing, "CameraSettings") {
+	if strings.Count(landing, `class="path"`) != 3 || strings.Contains(landing, "Camera3DSettings") {
 		t.Fatal("landing does not offer three focused game paths")
 	}
 
 	flat := string(readGenerated(t, output, "2d.html"))
-	if strings.Contains(flat, "CameraSettings") || strings.Contains(flat, `href="lighting.html"`) ||
+	if strings.Contains(flat, "Camera3DSettings") || strings.Contains(flat, `href="lighting.html"`) ||
 		strings.Contains(flat, `href="levels.html"`) {
 		t.Fatal("2D path includes unrelated world setup")
 	}
@@ -208,7 +208,7 @@ func TestGeneratedPathsKeepUnrelatedTopicsSeparate(t *testing.T) {
 		t.Fatal("2D path is missing relevant next steps")
 	}
 
-	for _, required := range []string{"NewSprite2D", "NewVector2D", "NewText2D", "assets/2d-scene.jpg"} {
+	for _, required := range []string{"NewSprite2D", "NewShape2D", "NewText2D", "assets/2d-scene.jpg"} {
 		if !strings.Contains(flat, required) {
 			t.Fatalf("2D path is missing drawing guidance: %s", required)
 		}
@@ -600,7 +600,12 @@ func compileUIExamples(t *testing.T, directory, markdown string) map[string][]by
 		t.Fatalf("guide KartUI examples: %v", err)
 	}
 
-	generated, err := codegen.UIPackageFiles(views, "example.com/my-game")
+	manifest, err := sdk.Resolve(release.SDKVersion())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	generated, err := codegen.UIPackageFilesForVersion(views, "example.com/my-game", manifest.Compatibility.ProjectCodegen)
 	if err != nil {
 		t.Fatal(err)
 	}

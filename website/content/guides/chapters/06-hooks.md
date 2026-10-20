@@ -20,8 +20,8 @@ updateGoal := func(position engine.Vec3) {
     dx, dy := position.X-6, position.Y-6
     game.nearGoal = dx*dx+dy*dy < 1
 }
-updateGoal(game.camera.Settings.Position)
-_, err := game.WatchTransform(game.camera.Ref(), func(pose engine.Transform3D) {
+updateGoal(game.camera.Settings().Position)
+_, err := game.WatchPose(game.camera.Ref(), func(pose engine.Transform3D) {
     // The host has applied collision and portal movement.
     updateGoal(pose.Position)
 })
@@ -30,7 +30,7 @@ if err != nil {
 }
 ```
 
-Propose movement from `camera.Settings`, which the SDK keeps synchronized automatically
+Propose movement from `camera.Settings()`, which the SDK keeps synchronized automatically
 with the accepted pose. Do not accumulate a separate guessed player position.
 
 The position check defines a one-metre trigger around `(6, 6)`. Call this method

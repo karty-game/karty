@@ -32,6 +32,12 @@ const (
 
 var ErrPackage = errors.New("invalid Karty package")
 
+// ValidPath reports whether a slash-separated name meets the portable path
+// constraints used by package reads and generated writes.
+func ValidPath(name string) bool {
+	return validPath(name)
+}
+
 func validPath(name string) bool {
 	if !fs.ValidPath(name) || name == "." || len(name) > 1024 || strings.ContainsAny(name, `\:<>"|?*`) ||
 		strings.Count(name, "/") > MaxPathDepth {

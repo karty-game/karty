@@ -517,9 +517,9 @@ func (g *game) applyAudio() {
 		g.StopMusic(250)
 	}
 	if g.model.Ambience && g.model.Scene != "platform" {
-		g.PlayEnvironment(engine.EnvironmentLane0, assets.EnvironmentNightTrain, engine.StreamOptions{Loop: true, CrossfadeMS: 400})
+		g.PlayAmbience(engine.AmbienceChannel0, assets.EnvironmentNightTrain, engine.StreamOptions{Loop: true, CrossfadeMS: 400})
 	} else {
-		g.StopEnvironment(engine.EnvironmentLane0, 250)
+		g.StopAmbience(engine.AmbienceChannel0, 250)
 	}
 }
 func (g *game) music() {
@@ -622,7 +622,7 @@ func main() {
 	g := &game{}
 	engine.Run(engine.Hooks{OnStart: g.start, OnUpdate: g.update, OnLevelReady: g.levelReady, OnLevelFailed: g.levelFailed, OnStop: func() {
 		g.StopMusic(0)
-		g.StopEnvironment(engine.EnvironmentLane0, 0)
+		g.StopAmbience(engine.AmbienceChannel0, 0)
 		if g.screen != nil {
 			g.screen.Close()
 		}

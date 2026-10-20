@@ -3,7 +3,7 @@ package main
 import "example.com/client-hooks-check/.karty/engine"
 
 var game engine.Game
-var camera *engine.EntityCamera3D
+var camera *engine.Camera3D
 var mounted int
 var level engine.LevelHandle
 var completed bool
@@ -17,16 +17,16 @@ func main() {
 		OnLevelReady: func(event engine.LevelReady) {
 			mounted++
 			level = event.Handle
-			camera = game.NewCamera3D(level, engine.CameraSettings{
+			camera = game.NewCamera3D(level, engine.Camera3DSettings{
 				Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-				Position: engine.NewVec3(2, 1, 1), FOVY: 1, OrthoHeight: 4, Near: .05, Far: 10,
+				Position: engine.NewVec3(2, 1, 1), VerticalFOV: 1, OrthoHeight: 4, NearClip: .05, FarClip: 10,
 				ViewportWidth: 160, ViewportHeight: 120,
 			})
 			// Transform acceptance belongs to the hook contract; material rendering
 			// and baking have their own small GPU fixtures.
 			camera.SetAlpha(0)
-			if _, err := game.WatchTransform(camera.Ref(), func(pose engine.Transform3D) {
-				if camera.Settings.Position != pose.Position {
+			if _, err := game.WatchPose(camera.Ref(), func(pose engine.Transform3D) {
+				if camera.Settings().Position != pose.Position {
 					panic("unsynchronized transform hook")
 				}
 				if inputMoved && pose.Position.X == 2.25 {
@@ -52,7 +52,7 @@ func main() {
 		OnKeyDown: func(key engine.Key) {
 			if key == engine.KeyA && mounted == 2 && completed {
 				actor.SetTags("key-hook")
-				position := camera.Settings.Position
+				position := camera.Settings().Position
 				position.X += .25
 				inputMoved = true
 				if err := camera.Ref().SetPose(engine.NewTransform3D(position)); err != nil {
@@ -77,7 +77,7 @@ func main() {
 
 //karty:condition fixture.ready
 func ready(context engine.ActionContext, actor engine.EntityRef) (bool, error) {
-	return actor.ID != 0, nil
+	return actor.ID() != 0, nil
 }
 
 //karty:action fixture.complete

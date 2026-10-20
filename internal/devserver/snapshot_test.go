@@ -121,6 +121,41 @@ func TestRuntimeIdentityAllowsOnlyLevelContentChanges(t *testing.T) {
 	}
 }
 
+func TestRuntimeIdentityIgnoresReleaseDiscoveryMetadata(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	fixtureBuild(t, root, []byte("level"), []byte("code"), nil)
+
+	first := captureFixture(t, root, 1)
+	if err := os.Mkdir(filepath.Join(root, "karty-releases"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	for name, contents := range map[string]string{
+		"karty-latest.json":           "new release pointer",
+		"karty-releases/release.json": "new release manifest",
+	} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(contents), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	second := captureFixture(t, root, 2)
+	if first.Generation.ID != second.Generation.ID || first.Generation.RuntimeIdentity != second.Generation.RuntimeIdentity {
+		t.Fatal("unused release discovery metadata must not change development snapshots")
+	}
+
+	if err := os.WriteFile(filepath.Join(root, "karty-web.js"), []byte("changed runtime bootstrap"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	third := captureFixture(t, root, 3)
+	if second.Generation.RuntimeIdentity == third.Generation.RuntimeIdentity {
+		t.Fatal("runtime bootstrap changes must still restart the development runtime")
+	}
+}
+
 func TestCaptureConfinesAndVerifiesArtifacts(t *testing.T) {
 	t.Parallel()
 

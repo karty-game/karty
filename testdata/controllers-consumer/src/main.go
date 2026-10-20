@@ -23,11 +23,11 @@ func main() {
 		panic(err)
 	}
 	game := &engine.Game{}
-	var marker *engine.EntityVector2D
+	var marker *engine.Shape2D
 	position, focus := controllers.Vec2{}, controllers.Vec2{}
 	engine.Run(engine.Hooks{
 		OnStart: func() {
-			marker = game.NewVector2D(engine.Circle(12), engine.NewVec2(640, 360))
+			marker = game.NewShape2D(engine.Circle(12), engine.NewVec2(640, 360))
 			marker.SetFill(engine.RGBA(220, 180, 100, 255))
 		},
 		OnKeyDown: func(k engine.Key) {
@@ -54,7 +54,7 @@ func main() {
 			camera := iso.CameraPosition(focus)
 			ground, ok := iso.ScreenToGround(controllers.Vec2{X: 640, Y: 360}, focus, 1280, 720)
 			if ok {
-				marker.Set(engine.NewVec2(float32(640+ground.X+camera.X), float32(360+ground.Y)), engine.NewVec2(1, 1), 0)
+				marker.SetTransform(engine.NewVec2(float32(640+ground.X+camera.X), float32(360+ground.Y)), engine.NewVec2(1, 1), 0)
 			}
 		},
 	})

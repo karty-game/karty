@@ -103,7 +103,7 @@ async function checkRuntime(prefix, options = {}) {
   assert.ok((await canvas.screenshot()).length > 1024, "Ebiten canvas did not produce a useful screenshot");
   assert.deepEqual(errors, [], `browser page errors: ${errors.join("; ")}`);
 
-  const launcher = prefix + "karty.js?v=";
+  const launcher = prefix + "karty.js";
   const launcherRequests = requests.filter((path) => path.startsWith(launcher)).length;
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => document.documentElement.dataset.kartyState === "running", null, { timeout: 9000 });
@@ -111,7 +111,7 @@ async function checkRuntime(prefix, options = {}) {
   assert.equal(
     requests.filter((path) => path.startsWith(launcher)).length,
     launcherRequests,
-    "versioned launcher missed browser cache",
+    "unchanged launcher missed verified delivery cache",
   );
   await context.close();
 }
@@ -127,10 +127,13 @@ async function checkFailure(prefix, expected) {
 try {
   await checkRuntime("/", { viewport: { width: 1280, height: 720 } });
   await checkRuntime("/proxy/4242/", { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-  await checkFailure("/missing-script/", /Could not load script/);
-  await checkFailure("/missing-asset/", /asset section is missing or duplicated/);
+  await checkFailure("/missing-script/", /Could not download karty\.js \(404\)/);
+  await checkFailure(
+    "/missing-asset/",
+    /(?:Integrity check failed|Decoded size exceeds release bounds) for game\.kart/,
+  );
   assert.ok(
-    requests.some((path) => path.startsWith("/proxy/4242/karty.js?v=")),
+    requests.some((path) => path.split("?")[0] === "/proxy/4242/karty.js"),
     "subpath launcher URL escaped its prefix",
   );
   for (const artifact of levelArtifacts) {

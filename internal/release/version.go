@@ -6,7 +6,7 @@ package release
 var Version = "dev" //nolint:gochecknoglobals // Go linker flags require a variable for the release build identity.
 
 // CurrentSDK is the SDK required by current projects, templates and samples.
-const CurrentSDK = "0.0.14"
+const CurrentSDK = "0.0.15"
 
 // SDKVersion returns the unprefixed version used by manifests and project files.
 func SDKVersion() string { return CurrentSDK }

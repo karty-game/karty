@@ -222,7 +222,7 @@ func setup(title string) {}
 	}
 
 	config.Assets.UI[0].Keep = true
-	if err := embedUIAssets(t.Context(), root, artifact, config.Assets.UI, config.Assets.Layouts, ""); err != nil {
+	if err := embedUIAssets(t.Context(), root, artifact, config.Assets.UI, config.Assets.Layouts, "", "go"); err != nil {
 		t.Fatal(err)
 	}
 

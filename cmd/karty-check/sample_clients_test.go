@@ -93,7 +93,7 @@ func TestSampleClients(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			directory := prepareSampleClient(t, name, bindings)
+			directory := prepareSampleClient(t, name, bindings, manifest.Compatibility.ProjectCodegen)
 
 			packages := []string{"./src"}
 			if name == "hangar" {
@@ -116,7 +116,7 @@ func TestSampleClients(t *testing.T) {
 	}
 }
 
-func prepareSampleClient(t *testing.T, name string, bindings map[string][]byte) string {
+func prepareSampleClient(t *testing.T, name string, bindings map[string][]byte, version int) string {
 	t.Helper()
 	source, config, views := sampleUISources(t, name)
 	directory := t.TempDir()
@@ -159,7 +159,7 @@ func prepareSampleClient(t *testing.T, name string, bindings map[string][]byte) 
 		}
 	}
 
-	files, err := codegen.UIPackageFiles(views, module)
+	files, err := codegen.UIPackageFilesForVersion(views, module, version)
 	if err != nil {
 		t.Fatal(err)
 	}

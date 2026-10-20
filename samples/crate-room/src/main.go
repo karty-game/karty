@@ -14,10 +14,10 @@ const crateCount = 80
 
 type Game struct {
 	engine.Game
-	camera                                             *engine.EntityCamera3D
+	camera                                             *engine.Camera3D
 	cameraBody                                         *engine.Body
 	crateBodies                                        [crateCount]*engine.Body
-	crates                                             [crateCount]*engine.EntityWorldSolid
+	crates                                             [crateCount]*engine.Solid3D
 	level                                              engine.LevelHandle
 	keys                                               [256]bool
 	moveID, lookID, shootID                            uint32
@@ -26,8 +26,8 @@ type Game struct {
 	mouseHeld, pendingShot, pendingBlast, pendingReset bool
 	cooldown                                           uint8
 	shots, blasts                                      uint64
-	status                                             *engine.EntityText2D
-	moveThumb                                          *engine.EntityVector2D
+	status                                             *engine.Text2D
+	moveThumb                                          *engine.Shape2D
 }
 
 //go:wasmexport karty_register
@@ -60,45 +60,45 @@ func (game *Game) start() {
 	}
 
 	game.status = game.NewText2D("Loading crate room...", engine.NewVec2(22, 22))
-	game.status.SetSize(19)
+	game.status.SetFontSize(19)
 	game.status.SetColor(engine.RGBA(237, 221, 177, 255))
 	game.status.SetLayer(30)
 	help := game.NewText2D("WASD / drag MOVE · Mouse / drag LOOK · Shoot · B blast · R reset", engine.NewVec2(22, 52))
-	help.SetSize(14)
+	help.SetFontSize(14)
 	help.SetLayer(35)
 	// Controls are cartridge entities and consume the public multi-touch input.
 	game.pad(110, height-104, "MOVE")
 	game.pad(width-110, height-104, "LOOK")
-	game.moveThumb = game.NewVector2D(engine.Circle(25), engine.NewVec2(110, height-104))
+	game.moveThumb = game.NewShape2D(engine.Circle(25), engine.NewVec2(110, height-104))
 	game.moveThumb.SetFill(engine.RGBA(233, 191, 113, 210))
 	game.moveThumb.SetLayer(31)
 	game.button(width-252, height-220, 210, 75, "SHOOT")
 	game.button(width-252, height-310, 210, 75, "BLAST")
 	game.button(width-170, 20, 150, 55, "RESET")
-	crossX := game.NewVector2D(engine.Line(engine.NewVec2(18, 0)), engine.NewVec2(width/2-9, height/2))
+	crossX := game.NewShape2D(engine.Line(engine.NewVec2(18, 0)), engine.NewVec2(width/2-9, height/2))
 	crossX.SetStroke(engine.RGBA(255, 235, 184, 235), 2)
 	crossX.SetLayer(35)
-	crossY := game.NewVector2D(engine.Line(engine.NewVec2(0, 18)), engine.NewVec2(width/2, height/2-9))
+	crossY := game.NewShape2D(engine.Line(engine.NewVec2(0, 18)), engine.NewVec2(width/2, height/2-9))
 	crossY.SetStroke(engine.RGBA(255, 235, 184, 235), 2)
 	crossY.SetLayer(35)
 	game.RequestLevel("levels.crate-room")
 }
 func (game *Game) pad(x, y float32, label string) {
-	base := game.NewVector2D(engine.Circle(86), engine.NewVec2(x, y))
+	base := game.NewShape2D(engine.Circle(86), engine.NewVec2(x, y))
 	base.SetFill(engine.RGBA(12, 24, 35, 165))
 	base.SetStroke(engine.RGBA(225, 184, 110, 190), 2)
 	base.SetLayer(30)
 	text := game.NewText2D(label, engine.NewVec2(x-30, y-10))
-	text.SetSize(18)
+	text.SetFontSize(18)
 	text.SetLayer(32)
 }
 func (game *Game) button(x, y, w, h float32, label string) {
-	base := game.NewVector2D(engine.Rectangle(w, h), engine.NewVec2(x, y))
+	base := game.NewShape2D(engine.Rectangle(w, h), engine.NewVec2(x, y))
 	base.SetFill(engine.RGBA(19, 32, 43, 210))
 	base.SetStroke(engine.RGBA(220, 180, 109, 220), 2)
 	base.SetLayer(30)
 	text := game.NewText2D(label, engine.NewVec2(x+20, y+20))
-	text.SetSize(22)
+	text.SetFontSize(22)
 	text.SetLayer(31)
 }
 func (game *Game) ready(event engine.LevelReady) {
@@ -109,14 +109,14 @@ func (game *Game) ready(event engine.LevelReady) {
 	}
 	game.camera = game.NewCamera3D(
 		game.level,
-		engine.CameraSettings{
+		engine.Camera3DSettings{
 			Projection:     engine.CameraProjectionPerspective,
 			Output:         engine.CameraOutputFull,
 			Position:       engine.NewVec3(.2, -10, 1.67),
-			FOVY:           config.CameraFOVY,
+			VerticalFOV:    config.CameraFOVY,
 			OrthoHeight:    config.CameraOrthoHeight,
-			Near:           config.CameraNear,
-			Far:            config.CameraFar,
+			NearClip:       config.CameraNear,
+			FarClip:        config.CameraFar,
 			ViewportWidth:  config.ResolutionWidth,
 			ViewportHeight: config.ResolutionHeight,
 		},
@@ -128,7 +128,7 @@ func (game *Game) ready(event engine.LevelReady) {
 	}
 
 	for i := range game.crates {
-		game.crates[i] = game.NewWorldSolid(game.level, crateTransform(i), engine.SolidRenderer{Prefab: "crate"})
+		game.crates[i] = game.NewSolid3D(game.level, crateTransform(i), engine.SolidRenderer{Prefab: "crate"})
 		game.crateBodies[i], err = game.World(game.level).AttachBody(game.crates[i].Ref(), crateBox())
 		if err != nil {
 			panic(err)
@@ -142,22 +142,22 @@ func crateTransform(i int) engine.Transform3D {
 }
 func crateBox() engine.BodySettings {
 	return engine.BodySettings{
-		Kind:        engine.BodyDynamic,
-		Collider:    engine.BoxCollider{HalfExtents: engine.NewVec3(.5, .5, .5)},
-		Rotate:      true,
-		Forces:      engine.BodyForces{GravityScale: 1, Buoyancy: true},
-		Mass:        16,
-		Friction:    .5,
-		Restitution: .08,
+		Kind:          engine.BodyDynamic,
+		Collider:      engine.BoxCollider{HalfExtents: engine.NewVec3(.5, .5, .5)},
+		AllowRotation: true,
+		Forces:        engine.BodyForceSettings{GravityScale: 1, Buoyancy: true},
+		Mass:          16,
+		Friction:      .5,
+		Restitution:   .08,
 	}
 }
 func playerBox() engine.BodySettings {
 	return engine.BodySettings{
-		Kind:     engine.BodyDynamic,
-		Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(.3, .3, .9), Offset: engine.NewVec3(0, 0, -.75)},
-		Rotate:   false,
-		Forces:   engine.BodyForces{GravityScale: 1, Buoyancy: true},
-		Mass:     80,
+		Kind:          engine.BodyDynamic,
+		Collider:      engine.BoxCollider{HalfExtents: engine.NewVec3(.3, .3, .9), Offset: engine.NewVec3(0, 0, -.75)},
+		AllowRotation: false,
+		Forces:        engine.BodyForceSettings{GravityScale: 1, Buoyancy: true},
+		Mass:          80,
 	}
 }
 func (game *Game) key(key engine.Key, down bool) {
@@ -256,7 +256,7 @@ func (game *Game) pointer(p engine.PointerInput) {
 		if p.ID == game.moveID {
 			game.moveID = 0
 			game.controller.EndTouch(p.ID)
-			game.moveThumb.Set(engine.NewVec2(110, height-104), engine.NewVec2(1, 1), 0)
+			game.moveThumb.SetTransform(engine.NewVec2(110, height-104), engine.NewVec2(1, 1), 0)
 		}
 		if p.ID == game.lookID {
 			game.lookID = 0
@@ -283,7 +283,7 @@ func (game *Game) action(x, y float32) bool {
 func (game *Game) move(x, y float32) {
 	game.controller.MoveTouch(game.moveID, x, y)
 	stick := game.controller.Sticks[0]
-	game.moveThumb.Set(engine.NewVec2(110+stick.DX, height-104+stick.DY), engine.NewVec2(1, 1), 0)
+	game.moveThumb.SetTransform(engine.NewVec2(110+stick.DX, height-104+stick.DY), engine.NewVec2(1, 1), 0)
 }
 func (game *Game) resetInput() {
 	game.keys = [256]bool{}
@@ -292,7 +292,7 @@ func (game *Game) resetInput() {
 	game.mouseHeld = false
 	game.pendingShot, game.pendingBlast = false, false
 	if game.moveThumb != nil {
-		game.moveThumb.Set(engine.NewVec2(110, height-104), engine.NewVec2(1, 1), 0)
+		game.moveThumb.SetTransform(engine.NewVec2(110, height-104), engine.NewVec2(1, 1), 0)
 	}
 }
 func (game *Game) update(engine.Frame) {
@@ -304,7 +304,7 @@ func (game *Game) update(engine.Frame) {
 		game.reset()
 		return
 	}
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	motion := game.controller.Step(settings.Yaw, settings.Pitch)
 	if motion.Yaw != settings.Yaw || motion.Pitch != settings.Pitch {
 		settings.Yaw, settings.Pitch = motion.Yaw, motion.Pitch
@@ -327,7 +327,7 @@ func (game *Game) update(engine.Frame) {
 	}
 }
 func (game *Game) fire(blast bool) {
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	sy, cy := math.Sincos(float64(settings.Yaw))
 	sp, cp := math.Sincos(float64(settings.Pitch))
 	ray := engine.RayImpulse{
@@ -356,7 +356,7 @@ func (game *Game) reset() {
 	if err := game.cameraBody.Detach(); err != nil {
 		panic(err)
 	}
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	settings.Position = engine.NewVec3(.2, -10, 1.67)
 	settings.Yaw, settings.Pitch = 0, 0
 	game.camera.SetSettings(settings)

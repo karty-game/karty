@@ -39,14 +39,17 @@ type watchedFile struct {
 // that preserve inode/size/mtime are still detected within the verification age.
 // os.Root confines every read even if a symlink changes during a scan.
 type Watcher struct {
-	mutex           sync.Mutex
-	root            *os.Root
-	directory       string
-	files           map[string]watchedFile
-	now             func() time.Time
-	additionalRoots func(context.Context) (map[string]string, error)
-	children        map[string]*Watcher
-	lastBytes       int64
+	mutex                sync.Mutex
+	root                 *os.Root
+	directory            string
+	files                map[string]watchedFile
+	now                  func() time.Time
+	additionalRoots      func(context.Context) (map[string]string, error)
+	children             map[string]*Watcher
+	lastBytes            int64
+	directories          map[string]bool
+	newNotifications     func() (*watchNotifications, error)
+	verificationInterval time.Duration
 }
 
 func NewWatcher(directory string) (*Watcher, error) {
@@ -96,14 +99,20 @@ type sourceChange struct {
 }
 
 type watchScan struct {
-	watcher *Watcher
-	files   map[string]watchedFile
-	bytes   int64
-	now     time.Time
-	buffer  []byte
+	watcher     *Watcher
+	files       map[string]watchedFile
+	bytes       int64
+	now         time.Time
+	buffer      []byte
+	directories map[string]bool
+	forceHash   bool
 }
 
 func (watcher *Watcher) Scan(ctx context.Context) (string, error) {
+	return watcher.scan(ctx, false)
+}
+
+func (watcher *Watcher) scan(ctx context.Context, forceHash bool) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
@@ -111,7 +120,13 @@ func (watcher *Watcher) Scan(ctx context.Context) (string, error) {
 	watcher.mutex.Lock()
 	defer watcher.mutex.Unlock()
 
-	scan := watchScan{watcher: watcher, files: make(map[string]watchedFile), now: watcher.now()}
+	scan := watchScan{
+		watcher:     watcher,
+		files:       make(map[string]watchedFile),
+		now:         watcher.now(),
+		directories: make(map[string]bool),
+		forceHash:   forceHash,
+	}
 	if err := scan.walk(ctx, ".", 0, make(map[string]bool)); err != nil {
 		return "", err
 	}
@@ -140,18 +155,19 @@ func (watcher *Watcher) Scan(ctx context.Context) (string, error) {
 	}
 
 	if watcher.additionalRoots != nil {
-		if err := watcher.scanAdditional(ctx, hash, scan.bytes, len(scan.files)); err != nil {
+		if err := watcher.scanAdditional(ctx, hash, scan.bytes, len(scan.files), forceHash); err != nil {
 			return "", err
 		}
 	}
 
 	watcher.files = scan.files
 	watcher.lastBytes = scan.bytes
+	watcher.directories = scan.directories
 
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-func (watcher *Watcher) scanAdditional(ctx context.Context, hash io.Writer, total int64, count int) error {
+func (watcher *Watcher) scanAdditional(ctx context.Context, hash io.Writer, total int64, count int, forceHash bool) error {
 	roots, err := watcher.additionalRoots(ctx)
 	if err != nil {
 		return err
@@ -214,7 +230,7 @@ func (watcher *Watcher) scanAdditional(ctx context.Context, hash io.Writer, tota
 			watcher.children[alias] = child
 		}
 
-		digest, err := child.Scan(ctx)
+		digest, err := child.scan(ctx, forceHash)
 		if err != nil {
 			return fmt.Errorf("watch package %s: %w", alias, err)
 		}
@@ -255,6 +271,8 @@ func (scan *watchScan) walk(ctx context.Context, relative string, depth int, anc
 	}
 
 	ancestors[resolved] = true
+
+	scan.directories[resolved] = true
 	defer delete(ancestors, resolved)
 
 	entries, err := fs.ReadDir(scan.watcher.root.FS(), relative)
@@ -339,7 +357,7 @@ func (scan *watchScan) read(ctx context.Context, name string, info fs.FileInfo) 
 	scan.bytes += info.Size()
 
 	cached, exists := scan.watcher.files[name]
-	if !exists || !sameWatchFile(cached.info, info) || scan.now.Sub(cached.hashedAt) >= maxWatchHashAge {
+	if scan.forceHash || !exists || !sameWatchFile(cached.info, info) || scan.now.Sub(cached.hashedAt) >= maxWatchHashAge {
 		var err error
 
 		cached, err = scan.hashFile(ctx, name, info)
@@ -432,45 +450,107 @@ func hashWatchContentsBuffer(ctx context.Context, reader io.Reader, buffer []byt
 }
 
 func (watcher *Watcher) changes(ctx context.Context, interval time.Duration, output chan sourceChange) {
-	defer close(output)
-
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
+	watcher.changesWithTicks(ctx, ticker.C, output)
+}
+
+func (watcher *Watcher) changesWithTicks(ctx context.Context, ticks <-chan time.Time, output chan sourceChange) {
+	defer close(output)
+
 	previous := ""
 
+	openNotifications := watcher.newNotifications
+	if openNotifications == nil {
+		openNotifications = newWatchNotifications
+	}
+
+	notifications, _ := openNotifications()
+	defer func() {
+		if notifications != nil {
+			_ = notifications.Close()
+		}
+	}()
+
+	dirty := true
+
+	verificationInterval := watcher.verificationInterval
+	if verificationInterval <= 0 {
+		verificationInterval = maxWatchHashAge
+	}
+
+	var verified time.Time
+
 	for {
-		digest, err := watcher.Scan(ctx)
-		if ctx.Err() != nil {
-			return
-		}
+		forceHash := time.Since(verified) >= verificationInterval
+		if dirty || notifications == nil || forceHash {
+			scanStarted := time.Now()
 
-		key := digest
-		if err != nil {
-			key = "error:" + err.Error()
-		}
-
-		if key != previous {
-			previous = key
-			change := sourceChange{digest: digest, err: err}
-			// Only the newest source state matters; the build owner cancels and
-			// joins obsolete work before starting another generation.
-			select {
-			case <-output:
-			default:
-			}
-
-			select {
-			case output <- change:
-			case <-ctx.Done():
+			change, retry := watcher.scanChange(ctx, &notifications, forceHash)
+			if ctx.Err() != nil {
 				return
 			}
+
+			dirty = retry
+
+			if change.err == nil && forceHash {
+				verified = scanStarted
+			}
+
+			key := change.digest
+			if change.err != nil {
+				key = "error:" + change.err.Error()
+			}
+
+			if key != previous && !publishSourceChange(ctx, output, change) {
+				return
+			}
+
+			previous = key
 		}
 
-		select {
-		case <-ticker.C:
-		case <-ctx.Done():
+		if !waitWatchPoll(ctx, ticks, &notifications, &dirty) {
 			return
 		}
+	}
+}
+
+func (watcher *Watcher) scanChange(ctx context.Context, notifications **watchNotifications, forceHash bool) (sourceChange, bool) {
+	digest, err := watcher.scan(ctx, forceHash)
+
+	change := sourceChange{digest: digest, err: err}
+	if err != nil {
+		return change, true
+	}
+
+	if *notifications == nil {
+		return change, false
+	}
+
+	dirty, err := (*notifications).sync(ctx, watcher)
+	if err != nil {
+		_ = (*notifications).Close()
+		*notifications = nil
+
+		return change, true
+	}
+
+	return change, dirty
+}
+
+func publishSourceChange(ctx context.Context, output chan sourceChange, change sourceChange) bool {
+	// Only the newest source state matters; the build owner cancels and joins
+	// obsolete work before starting another generation.
+	select {
+	case <-output:
+	default:
+	}
+
+	select {
+	case output <- change:
+		return true
+	case <-ctx.Done():
+		return false
 	}
 }

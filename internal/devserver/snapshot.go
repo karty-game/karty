@@ -51,6 +51,7 @@ type Generation struct {
 type Snapshot struct {
 	Generation Generation
 	files      map[string][]byte
+	checksums  map[string]string
 	size       int64
 	ui         UIResource
 }
@@ -81,7 +82,7 @@ func Capture(ctx context.Context, directory string, revision uint64) (*Snapshot,
 	}
 	defer confined.Close()
 
-	snapshot := &Snapshot{files: make(map[string][]byte)}
+	snapshot := &Snapshot{files: make(map[string][]byte), checksums: make(map[string]string)}
 
 	err = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -109,6 +110,13 @@ func Capture(ctx context.Context, directory string, revision uint64) (*Snapshot,
 			return err
 		}
 
+		// Discovery metadata is unused by development, which bypasses the worker.
+		// Retained manifests must not accumulate in each immutable dev snapshot.
+		slashName := filepath.ToSlash(name)
+		if releaseDiscoveryFile(slashName) {
+			return nil
+		}
+
 		if len(snapshot.files) >= maxSnapshotFiles {
 			return ErrSnapshot
 		}
@@ -122,7 +130,14 @@ func Capture(ctx context.Context, directory string, revision uint64) (*Snapshot,
 			return ErrSnapshot
 		}
 
-		snapshot.files[filepath.ToSlash(name)] = data
+		checksum, err := digestContext(ctx, data)
+		if err != nil {
+			return err
+		}
+
+		name = filepath.ToSlash(name)
+		snapshot.files[name] = data
+		snapshot.checksums[name] = checksum
 		snapshot.size += int64(len(data))
 
 		return nil
@@ -136,6 +151,10 @@ func Capture(ctx context.Context, directory string, revision uint64) (*Snapshot,
 	}
 
 	return snapshot, nil
+}
+
+func releaseDiscoveryFile(name string) bool {
+	return name == "karty-latest.json" || strings.HasPrefix(name, "karty-releases/")
 }
 
 func readSnapshotFile(ctx context.Context, root *os.Root, path string, remaining int64) ([]byte, error) {
@@ -199,12 +218,7 @@ func (snapshot *Snapshot) identify(ctx context.Context, revision uint64) error {
 			return fmt.Errorf("level %s: %w", entry.Name, ErrSnapshot)
 		}
 
-		checksum, err := digestContext(ctx, data)
-		if err != nil {
-			return err
-		}
-
-		if checksum != entry.ContentSHA256 {
+		if snapshot.checksums[artifact] != entry.ContentSHA256 {
 			return fmt.Errorf("level %s: %w", entry.Name, ErrSnapshot)
 		}
 
@@ -230,12 +244,11 @@ func (snapshot *Snapshot) identify(ctx context.Context, revision uint64) error {
 	identity := sha256.New()
 
 	for _, name := range names {
-		checksum, err := digestContext(ctx, snapshot.files[name])
-		if err != nil {
+		if err := ctx.Err(); err != nil {
 			return err
 		}
 
-		_, _ = fmt.Fprintf(identity, "%s\x00%s\n", name, checksum)
+		_, _ = fmt.Fprintf(identity, "%s\x00%s\n", name, snapshot.checksums[name])
 	}
 
 	id := hex.EncodeToString(identity.Sum(nil))
@@ -295,6 +308,12 @@ func (snapshot *Snapshot) runtimeIdentity(ctx context.Context, manifest cartridg
 	// Content-addressed KLDs carry both parent levels and subordinate chunks.
 	files := map[string][]byte{"game.kart": wasm, "karty.js": launcher, "index.html": index}
 	for name, data := range snapshot.files {
+		// Delivery manifests bind the whole build, including changed levels.
+		// Development bypasses the worker and retains level-only hot updates.
+		if name == "karty-latest.json" || strings.HasPrefix(name, "karty-releases/") {
+			continue
+		}
+
 		if name == snapshot.ui.Artifact {
 			continue
 		}

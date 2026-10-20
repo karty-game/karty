@@ -23,7 +23,7 @@ func (g *Game) updateVision(p dungeon.Point) {
 	}
 	for i, b := range g.vision.Fog[:g.vision.Count] {
 		if i >= g.fogUsed || b != g.fogBounds[i] {
-			g.fog[i].Set(
+			g.fog[i].SetTransform(
 				engine.NewVec2(float32(b.X+(b.W+.5)/2), float32(b.Y+b.D/2)),
 				engine.NewVec2(float32((b.W+.5)/2), float32(b.D/2)),
 				0,
@@ -38,7 +38,7 @@ func (g *Game) updateVision(p dungeon.Point) {
 		g.fog[i].SetAlpha(0)
 	}
 	g.fogUsed = g.vision.Count
-	if g.curtain.Alpha != 0 {
+	if g.curtain.Alpha() != 0 {
 		g.curtain.SetAlpha(0)
 	}
 }

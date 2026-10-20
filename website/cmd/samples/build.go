@@ -30,6 +30,7 @@ func samplePriority(name string) int {
 		"ui-demo",
 		"media-lab",
 		"particle-lab",
+		"effect-lab",
 	}
 	if index := slices.Index(sampleOrder[:], name); index >= 0 {
 		return index

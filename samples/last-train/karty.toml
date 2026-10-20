@@ -8,7 +8,7 @@ width = 1280
 height = 720
 
 [sdk]
-version = "0.0.14"
+version = "0.0.15"
 
 [[build.processors]]
 use = "dialogue.compile"

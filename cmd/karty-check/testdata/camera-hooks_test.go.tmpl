@@ -16,18 +16,18 @@ func TestGameHooksMountFeedbackAndRemount(t *testing.T) {
 	if game.camera == nil || game.orbitCamera == nil || game.cameraInfo == "" {
 		t.Fatal("mount did not bind camera behaviors")
 	}
-	game.onActorQuery(engine.ActorQueryResult{RequestID: game.markerQuery, Handle: 9, Actors: []engine.EntityRef{engine.FixtureEntityRef(1000110, 9)}})
-	game.onActorQuery(engine.ActorQueryResult{RequestID: game.spinQuery, Handle: 9, Actors: []engine.EntityRef{engine.FixtureEntityRef(1000111, 9)}})
+	game.onActorQuery(engine.EntityQueryResult{RequestID: game.markerQuery, Handle: 9, Entities: []engine.EntityRef{engine.FixtureEntityRef(1000110, 9)}})
+	game.onActorQuery(engine.EntityQueryResult{RequestID: game.spinQuery, Handle: 9, Entities: []engine.EntityRef{engine.FixtureEntityRef(1000111, 9)}})
 	pose := engine.NewTransform3D(engine.NewVec3(7, 2, 3))
-	engine.FixtureFrame(engine.Frame{Number: 2, Events: []engine.InputEvent{{Type: engine.EventAuthoritativeTransform, EntityID: game.camera.ID, Transform3D: pose}}})
+	engine.FixtureFrame(engine.Frame{Number: 2, Events: []engine.InputEvent{{Type: engine.EventAuthoritativeTransform, EntityID: uint32(game.camera.ID()), Transform3D: pose}}})
 	if game.fps.Position.X != 7 || !strings.Contains(game.cameraInfo, "x=7") || game.marker.lastPose != pose {
 		t.Fatal("component hooks did not receive synchronized feedback")
 	}
-	oldCamera := game.camera.ID
+	oldCamera := uint32(game.camera.ID())
 	game.reload()
 	// Query results arriving while release is pending must not revive actor refs.
-	game.onActorQuery(engine.ActorQueryResult{RequestID: game.markerQuery, Handle: 9, Actors: []engine.EntityRef{engine.FixtureEntityRef(1000110, 9)}})
-	if game.marker.actor.ID != 0 || game.spinner.actor.ID != 0 {
+	game.onActorQuery(engine.EntityQueryResult{RequestID: game.markerQuery, Handle: 9, Entities: []engine.EntityRef{engine.FixtureEntityRef(1000110, 9)}})
+	if uint32(game.marker.actor.ID()) != 0 || uint32(game.spinner.actor.ID()) != 0 {
 		t.Fatal("release retained an actor")
 	}
 	engine.FixtureFrame(engine.Frame{Number: 3, Events: []engine.InputEvent{{Type: engine.EventAuthoritativeTransform, EntityID: oldCamera, Transform3D: pose}}})
@@ -40,12 +40,12 @@ func TestGameHooksMountFeedbackAndRemount(t *testing.T) {
 	}
 	engine.FixtureFrame(engine.Frame{Number: 4, Events: []engine.InputEvent{{Type: engine.EventLevelReleased, RequestID: uint32(game.release), Handle: 9}}})
 	engine.FixtureFrame(engine.Frame{Number: 5, Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(game.request), Handle: 19, Bytes: []byte(`{"name":"levels.camera-showcase"}`)}}})
-	game.onActorQuery(engine.ActorQueryResult{RequestID: game.markerQuery, Handle: 19, Actors: []engine.EntityRef{engine.FixtureEntityRef(1000120, 19)}})
-	if game.camera.ID == oldCamera || game.marker.actor.ID != 1000120 {
+	game.onActorQuery(engine.EntityQueryResult{RequestID: game.markerQuery, Handle: 19, Entities: []engine.EntityRef{engine.FixtureEntityRef(1000120, 19)}})
+	if uint32(game.camera.ID()) == oldCamera || uint32(game.marker.actor.ID()) != 1000120 {
 		t.Fatal("remount retained old behavior targets")
 	}
-	game.onActorQuery(engine.ActorQueryResult{RequestID: game.markerQuery, Handle: 9, Actors: []engine.EntityRef{engine.FixtureEntityRef(1000110, 9)}})
-	if game.marker.actor.ID != 1000120 {
+	game.onActorQuery(engine.EntityQueryResult{RequestID: game.markerQuery, Handle: 9, Entities: []engine.EntityRef{engine.FixtureEntityRef(1000110, 9)}})
+	if uint32(game.marker.actor.ID()) != 1000120 {
 		t.Fatal("old mount query replaced live marker")
 	}
 }

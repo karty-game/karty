@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -65,7 +66,7 @@ func CreateTemplateContext(ctx context.Context, destination, name string, manife
 
 	version := templateVersion(selection, manifest)
 
-	gameTemplate := filepath.Join("templates", selection, version)
+	gameTemplate := path.Join("templates", selection, version)
 	if err := fs.WalkDir(tree, gameTemplate, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -80,10 +81,7 @@ func CreateTemplateContext(ctx context.Context, destination, name string, manife
 			return err
 		}
 
-		relative, err := filepath.Rel(gameTemplate, path)
-		if err != nil {
-			return err
-		}
+		relative := strings.TrimPrefix(path, gameTemplate+"/")
 
 		data := struct {
 			Name     string
@@ -95,7 +93,7 @@ func CreateTemplateContext(ctx context.Context, destination, name string, manife
 			return renderErr
 		}
 
-		target := filepath.Join(destination, relative)
+		target := filepath.Join(destination, filepath.FromSlash(relative))
 
 		mkdirErr := os.MkdirAll(filepath.Dir(target), 0o750)
 		if mkdirErr != nil {
@@ -139,7 +137,7 @@ func CreateTemplateContext(ctx context.Context, destination, name string, manife
 	if err := addUIPackage(
 		destination,
 		modulePath,
-		manifest.API.Version,
+		manifest.Compatibility.ProjectCodegen,
 		config.Assets.UI,
 		config.Assets.Layouts,
 		config.Assets.Theme.Source,
@@ -220,7 +218,8 @@ func ValidateTemplate(ctx context.Context, manifest sdk.Manifest, selection stri
 }
 
 func addUIPackage(
-	directory, module, _ string,
+	directory, module string,
+	version int,
 	assets []project.Texture,
 	layouts []project.Layout,
 	theme string,
@@ -231,7 +230,7 @@ func addUIPackage(
 		return err
 	}
 
-	files, err := codegen.UIPackageFiles(views, module)
+	files, err := codegen.UIPackageFilesForVersion(views, module, version)
 	if err != nil {
 		return err
 	}

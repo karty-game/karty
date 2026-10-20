@@ -41,7 +41,7 @@ func (g *Game) requestPath(target village.Point) {
 	}
 	from, to := navigationPoint(start), navigationPoint(goal)
 	request, err := g.World(g.level).FindPath(engine.NavigationAgent{
-		From: engine.NewVec3(from.X, from.Y, 0),
+		Position: engine.NewVec3(from.X, from.Y, 0),
 		Radius: engine.NewVec2(float32(village.Radius/village.NavigationScale),
 			float32(village.RadiusY/village.NavigationScale)),
 		Height: 1,

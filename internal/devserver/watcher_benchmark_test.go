@@ -1,6 +1,7 @@
 package devserver
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -59,6 +60,36 @@ func BenchmarkWatcherLargeProject(bench *testing.B) {
 	if err != nil {
 		bench.Fatal(err)
 	}
+
+	bench.Run("idle-notification-loop", func(bench *testing.B) {
+		ctx, cancel := context.WithCancel(bench.Context())
+		defer cancel()
+
+		ticks := make(chan time.Time)
+		changes := make(chan sourceChange, 1)
+
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+
+			watcher.changesWithTicks(ctx, ticks, changes)
+		}()
+
+		<-changes
+		// Finish the registration follow-up scan before measuring idle polls.
+		ticks <- time.Now()
+
+		ticks <- time.Now()
+
+		bench.ReportAllocs()
+
+		for bench.Loop() {
+			ticks <- time.Now()
+		}
+
+		cancel()
+		<-done
+	})
 
 	for _, verify := range []bool{false, true} {
 		name := "metadata"

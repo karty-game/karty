@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -62,8 +61,21 @@ func fileHash(ctx context.Context, path string) (string, error) {
 		return "", err
 	}
 
-	// #nosec G304 -- The caller supplies a validated build artifact path.
-	file, err := os.Open(path)
+	root, err := os.OpenRoot(filepath.Dir(path))
+	if err != nil {
+		return "", err
+	}
+	defer root.Close()
+
+	return rootFileHash(ctx, root, filepath.Base(path))
+}
+
+func rootFileHash(ctx context.Context, root *os.Root, path string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
+	file, err := root.Open(path)
 	if err != nil {
 		return "", err
 	}
@@ -91,12 +103,12 @@ func readRootFile(ctx context.Context, root *os.Root, path string) ([]byte, erro
 	return contextio.ReadAll(ctx, file)
 }
 
-func writeRootFile(ctx context.Context, root *os.Root, path string, contents []byte, mode fs.FileMode) error {
+func writeRootFile(ctx context.Context, root *os.Root, path string, contents []byte) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 
-	file, err := root.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
+	file, err := root.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/cartridge"
+	"github.com/karty-game/karty-sdk/format/textureatlas"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/pelletier/go-toml/v2"
@@ -164,17 +165,19 @@ type FontUsage struct {
 
 // Report is the deterministic asset inspection output for a build.
 type Report struct {
-	Generated    GeneratedNotice `toml:"generated"`
-	Schema       int             `toml:"schema"`
-	SDK          string          `toml:"sdk"`
-	Features     []string        `toml:"features,omitempty"`
-	Summary      Summary         `toml:"summary"`
-	Usage        []Usage         `toml:"usage"`
-	Fonts        []FontUsage     `toml:"fonts"`
-	Textures     []Texture       `toml:"textures"`
-	Sounds       []Sound         `toml:"sounds,omitempty"`
-	AudioStreams []AudioStream   `toml:"audioStreams,omitempty"`
-	Levels       []LevelTexture  `toml:"levelTextures,omitempty"`
+	Atlas          *textureatlas.Bundle `toml:"-"`
+	TextureSources []Texture            `toml:"textureSources,omitempty"`
+	Generated      GeneratedNotice      `toml:"generated"`
+	Schema         int                  `toml:"schema"`
+	SDK            string               `toml:"sdk"`
+	Features       []string             `toml:"features,omitempty"`
+	Summary        Summary              `toml:"summary"`
+	Usage          []Usage              `toml:"usage"`
+	Fonts          []FontUsage          `toml:"fonts"`
+	Textures       []Texture            `toml:"textures"`
+	Sounds         []Sound              `toml:"sounds,omitempty"`
+	AudioStreams   []AudioStream        `toml:"audioStreams,omitempty"`
+	Levels         []LevelTexture       `toml:"levelTextures,omitempty"`
 }
 
 // ProcessAudioStreams produces name-sorted, independently numbered music and

@@ -10,8 +10,8 @@ import (
 // cameraController owns continuous movement. Accepted poses arrive through its
 // entity hooks; UI and actor followers subscribe to those changes separately.
 type cameraController struct {
-	camera, orbitCamera                            *engine.EntityCamera3D
-	fps, orbitPose                                 engine.CameraSettings
+	camera, orbitCamera                            *engine.Camera3D
+	fps, orbitPose                                 engine.Camera3DSettings
 	path, orbit                                    float32
 	touchMove, touchStrafe, touchOrbit, touchPitch float32
 	left, right, orbitLeft, orbitRight             bool
@@ -79,7 +79,7 @@ func (game *cameraController) updateWalking() float32 {
 		game.mouseX, game.mouseY = 0, 0
 		return turn
 	}
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	settings.Yaw += (turn+axis(game.lookRight, game.lookLeft))*.025 + game.mouseX*.0025
 	settings.Pitch = max(-1.35, min(1.35, settings.Pitch+(game.touchPitch+axis(game.lookUp, game.lookDown))*.025-game.mouseY*.0025))
 	game.mouseX, game.mouseY = 0, 0
@@ -88,7 +88,7 @@ func (game *cameraController) updateWalking() float32 {
 		next.Position.X += next.Position.X - settings.Position.X
 		next.Position.Y += next.Position.Y - settings.Position.Y
 	}
-	if next != game.camera.Settings {
+	if next != game.camera.Settings() {
 		game.camera.SetSettings(next)
 	}
 	return turn
@@ -145,7 +145,7 @@ func (controller *cameraController) OnTransformChanged(pose engine.Transform3D) 
 	if controller.camera == nil {
 		return
 	}
-	controller.fps = controller.camera.Settings
+	controller.fps = controller.camera.Settings()
 	if controller.onMoved != nil {
 		controller.onMoved(pose)
 	}
@@ -154,7 +154,7 @@ func (controller *cameraController) OnOrbitTransformChanged(engine.Transform3D) 
 	if controller.orbitCamera == nil {
 		return
 	}
-	controller.orbitPose = controller.orbitCamera.Settings
+	controller.orbitPose = controller.orbitCamera.Settings()
 	if controller.onOrbitMoved != nil {
 		controller.onOrbitMoved()
 	}
@@ -210,14 +210,14 @@ func (game *cameraController) routeEnd() float32 {
 	return float32(len(cameraPath) - 1)
 }
 
-func (game *cameraController) routeCamera(progress float32) engine.CameraSettings {
+func (game *cameraController) routeCamera(progress float32) engine.Camera3DSettings {
 	if game.courtyard {
 		return pathCamera(courtyardPath[:], progress)
 	}
 	return perspectiveCamera(progress)
 }
 
-func (game *cameraController) orbitSettings() engine.CameraSettings {
+func (game *cameraController) orbitSettings() engine.Camera3DSettings {
 	settings := isometricCamera(game.orbit)
 	if game.courtyard {
 		settings = centeredIsometricCamera(game.orbit, -8, 4)
@@ -232,11 +232,11 @@ func (game *cameraController) orbitSettings() engine.CameraSettings {
 	return settings
 }
 
-func perspectiveCamera(progress float32) engine.CameraSettings {
+func perspectiveCamera(progress float32) engine.Camera3DSettings {
 	return pathCamera(cameraPath[:], progress)
 }
 
-func walkingCamera(settings engine.CameraSettings, forward, strafe float32) engine.CameraSettings {
+func walkingCamera(settings engine.Camera3DSettings, forward, strafe float32) engine.Camera3DSettings {
 	if length := math.Hypot(float64(forward), float64(strafe)); length > 1 {
 		forward /= float32(length)
 		strafe /= float32(length)
@@ -248,7 +248,7 @@ func walkingCamera(settings engine.CameraSettings, forward, strafe float32) engi
 	return settings
 }
 
-func pathCamera(path []cameraPoint, progress float32) engine.CameraSettings {
+func pathCamera(path []cameraPoint, progress float32) engine.Camera3DSettings {
 	segment := int(progress)
 	if segment >= len(path)-1 {
 		segment = len(path) - 2
@@ -256,7 +256,7 @@ func pathCamera(path []cameraPoint, progress float32) engine.CameraSettings {
 	}
 	amount := progress - float32(segment)
 	from, to := path[segment], path[segment+1]
-	settings := engine.CameraSettings{
+	settings := engine.Camera3DSettings{
 		Projection: engine.CameraProjectionPerspective,
 		Output:     engine.CameraOutputFull,
 		Position: engine.NewVec3(
@@ -264,28 +264,40 @@ func pathCamera(path []cameraPoint, progress float32) engine.CameraSettings {
 			from.y+(to.y-from.y)*amount,
 			from.z+(to.z-from.z)*amount,
 		),
-		Yaw: from.yaw + (to.yaw-from.yaw)*amount, Pitch: -0.08, FOVY: config.CameraFOVY, OrthoHeight: config.CameraOrthoHeight,
-		Near: config.CameraNear, Far: config.CameraFar, ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
+		Yaw:            from.yaw + (to.yaw-from.yaw)*amount,
+		Pitch:          -0.08,
+		VerticalFOV:    config.CameraFOVY,
+		OrthoHeight:    config.CameraOrthoHeight,
+		NearClip:       config.CameraNear,
+		FarClip:        config.CameraFar,
+		ViewportWidth:  config.ResolutionWidth,
+		ViewportHeight: config.ResolutionHeight,
 	}
 
 	return settings
 }
 
-func isometricCamera(angle float32) engine.CameraSettings {
+func isometricCamera(angle float32) engine.Camera3DSettings {
 	return centeredIsometricCamera(angle, 9, 2.5)
 }
 
-func centeredIsometricCamera(angle, centerX, centerY float32) engine.CameraSettings {
+func centeredIsometricCamera(angle, centerX, centerY float32) engine.Camera3DSettings {
 	const radius = 20
 	x := centerX - float32(math.Sin(float64(angle)))*radius
 	y := centerY - float32(math.Cos(float64(angle)))*radius
 
-	return engine.CameraSettings{
-		Projection: engine.CameraProjectionIsometric,
-		Output:     engine.CameraOutputFull,
-		Position:   engine.NewVec3(x, y, 18),
-		Yaw:        angle, Pitch: -0.6154797, FOVY: config.CameraFOVY, OrthoHeight: config.CameraOrthoHeight,
-		Near: config.CameraNear, Far: config.CameraFar, ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
+	return engine.Camera3DSettings{
+		Projection:     engine.CameraProjectionIsometric,
+		Output:         engine.CameraOutputFull,
+		Position:       engine.NewVec3(x, y, 18),
+		Yaw:            angle,
+		Pitch:          -0.6154797,
+		VerticalFOV:    config.CameraFOVY,
+		OrthoHeight:    config.CameraOrthoHeight,
+		NearClip:       config.CameraNear,
+		FarClip:        config.CameraFar,
+		ViewportWidth:  config.ResolutionWidth,
+		ViewportHeight: config.ResolutionHeight,
 	}
 }
 

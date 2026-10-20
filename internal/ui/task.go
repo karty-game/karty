@@ -50,6 +50,9 @@ func RunTask(ctx context.Context, label string, task func(context.Context) error
 
 // RunTaskWithProgress lets work report the current activity to the task screen.
 func RunTaskWithProgress(ctx context.Context, label string, task func(context.Context, func(string)) error) error {
+	taskContext, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	model := taskModel{label: label}
 	program := tea.NewProgram(
 		model,
@@ -58,12 +61,21 @@ func RunTaskWithProgress(ctx context.Context, label string, task func(context.Co
 		tea.WithOutput(os.Stderr),
 	)
 
+	workerDone := make(chan struct{})
 	go func() {
+		defer close(workerDone)
+
 		progress := func(label string) { program.Send(taskProgressMsg(label)) }
-		program.Send(taskFinishedMsg{err: task(ctx, progress)})
+		program.Send(taskFinishedMsg{err: task(taskContext, progress)})
 	}()
 
 	finalModel, err := program.Run()
+	// The UI may stop before the task does, including when its context is
+	// canceled or terminal initialization fails. Let the worker finish cleanup
+	// before the command can return and its caller can exit the process.
+	cancel()
+	<-workerDone
+
 	if err != nil {
 		return fmt.Errorf("run task UI: %w", err)
 	}

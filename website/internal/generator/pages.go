@@ -150,7 +150,7 @@ func guidePages() ([]guidePage, error) {
 	}
 
 	pages := []guidePage{
-		{name: "index", title: "Choose your Karty game", markdown: string(landing), cards: pathCards()},
+		{name: "index", title: "Getting Started with Karty", markdown: string(landing), cards: pathCards()},
 	}
 	for _, track := range []struct{ name, title string }{
 		{"2d", "Build a 2D game"}, {"fps", "Make a first-person game"}, {"isometric", "Make an isometric game"},
@@ -230,13 +230,14 @@ func designTopics() []guideLink {
 		{Name: "Asset pipeline", URL: "asset-pipeline.html"},
 		{Name: "Packages", URL: "packages.html"},
 		{Name: "Processor textures", URL: "processor-textures-v1.html"},
+		{Name: "Web delivery", URL: "web-delivery-v1.html"},
 	}
 }
 
 func designPages() ([]guidePage, error) {
 	pages := make([]guidePage, 0, len(designTopics())+1)
 
-	for _, name := range []string{"index", "why", "architecture", "sdk-and-toolchain", "asset-pipeline", "packages", "processor-textures-v1"} {
+	for _, name := range []string{"index", "why", "architecture", "sdk-and-toolchain", "asset-pipeline", "packages", "processor-textures-v1", "web-delivery-v1"} {
 		contents, err := website.Files.ReadFile("content/design/" + name + ".md")
 		if err != nil {
 			return nil, err

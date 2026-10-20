@@ -197,7 +197,7 @@ func (game *Game) rotate(amount float32) {
 		return
 	}
 	x, y := game.target()
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	radius := math.Hypot(float64(settings.Position.X-x), float64(settings.Position.Y-y))
 	settings.Yaw += amount
 	settings.Position.X = x - float32(math.Sin(float64(settings.Yaw))*radius)
@@ -209,7 +209,7 @@ func (game *Game) zoom(factor float32) {
 	if game.camera == nil || game.release != 0 || factor <= 0 {
 		return
 	}
-	settings := game.camera.Settings
-	settings.FOVY = min(max(settings.FOVY*factor, .38), 1.45)
+	settings := game.camera.Settings()
+	settings.VerticalFOV = min(max(settings.VerticalFOV*factor, .38), 1.45)
 	game.camera.SetSettings(settings)
 }

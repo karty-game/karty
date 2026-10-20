@@ -77,7 +77,8 @@ type Compatibility struct {
 
 // SupportsAuthoredActions reports whether the bundle supplies the action generator contract.
 func (manifest Manifest) SupportsAuthoredActions() bool {
-	return manifest.Compatibility.ProjectCodegen == authoredActionProjectCodegen
+	return manifest.Compatibility.ProjectCodegen == authoredActionProjectCodegen ||
+		manifest.Compatibility.ProjectCodegen == ReviewedProjectCodegen
 }
 
 // AssetProfile pins the processor selected for an SDK asset profile.
@@ -131,6 +132,11 @@ func validateAssets(manifest Manifest) error {
 	capabilities := manifest.Assets.Capabilities
 	if err := capabilities.Validate(); err != nil {
 		return err
+	}
+
+	if slices.Contains(capabilities.Runtime, assetcontract.CapabilityTextureAtlasV1) &&
+		!slices.Contains(capabilities.Runtime, assetcontract.CapabilityTextureQOIv1) {
+		return errIncompleteSDK
 	}
 
 	for _, profile := range manifest.Assets.TextureProfiles {

@@ -7,10 +7,15 @@ import (
 	"github.com/karty-game/karty/internal/sdk"
 )
 
-// geometrySDK isolates level packaging from the external atlas processor.
+// geometrySDK exercises released geometry packaging without prepared image/material atlases.
 // Complete SDK manifests remain covered by the sample integration builds.
 func geometrySDK(manifest sdk.Manifest) sdk.Manifest {
-	return withoutRuntimeCapabilities(manifest, asset.CapabilityWorldMaterialAtlasV1, asset.CapabilityWorldMaterialAtlasV2)
+	return withoutRuntimeCapabilities(
+		manifest,
+		asset.CapabilityWorldMaterialAtlasV1,
+		asset.CapabilityWorldMaterialAtlasV2,
+		asset.CapabilityTextureAtlasV1,
+	)
 }
 
 func withoutRuntimeCapabilities(manifest sdk.Manifest, excluded ...asset.Capability) sdk.Manifest {

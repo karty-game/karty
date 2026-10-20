@@ -18,7 +18,12 @@ func AnalyzeUI(directory, modulePath string, names []string) Result {
 
 // AnalyzeUIWithComponents shares the exact compiled component graph with build.
 func AnalyzeUIWithComponents(directory, modulePath string, names []string, components []uicompiler.Component) Result {
-	fileSet, enginePackage, _, files, info, err := loadTypeInfo(directory, modulePath, components)
+	return AnalyzeUIWithOptions(directory, modulePath, names, components, Options{})
+}
+
+// AnalyzeUIWithOptions selects source for the cartridge's compiler and target.
+func AnalyzeUIWithOptions(directory, modulePath string, names []string, components []uicompiler.Component, options Options) Result {
+	fileSet, enginePackage, _, files, info, err := loadTypeInfo(directory, modulePath, components, options)
 	if err != nil {
 		return keepAll(err)
 	}

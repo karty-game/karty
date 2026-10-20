@@ -29,7 +29,7 @@ func main() {
 func (game *Game) Hooks() engine.Hooks {
 	return engine.Hooks{
 		OnStart: game.Initialize, OnUpdate: game.advanceMotion, OnStop: game.Shutdown,
-		OnLevelReady: game.onLevelReady, OnActorQueryResult: game.onActorQuery,
+		OnLevelReady: game.onLevelReady, OnEntityQueryResult: game.onActorQuery,
 		OnLevelReleased: game.onLevelReleased, OnLevelFailed: game.onLevelFailed,
 		OnKeyDown:        func(key engine.Key) { game.onKey(key, true) },
 		OnKeyUp:          func(key engine.Key) { game.onKey(key, false) },
@@ -65,7 +65,7 @@ func (game *Game) onLevelReady(event engine.LevelReady) {
 		game.fps.Output = game.output
 		game.camera = game.NewCamera3D(game.level, game.fps)
 		game.camera.SetLayer(-10)
-		if _, err := game.WatchTransform(game.camera.Ref(), game.cameraController.OnTransformChanged); err != nil {
+		if _, err := game.WatchPose(game.camera.Ref(), game.cameraController.OnTransformChanged); err != nil {
 			game.setStatus(err.Error())
 			return
 		}
@@ -74,14 +74,14 @@ func (game *Game) onLevelReady(event engine.LevelReady) {
 		game.orbitCamera = game.NewCamera3D(game.level, orbitSettings)
 		game.orbitCamera.SetLayer(-10)
 		game.orbitPose = orbitSettings
-		if _, err := game.WatchTransform(game.orbitCamera.Ref(), game.cameraController.OnOrbitTransformChanged); err != nil {
+		if _, err := game.WatchPose(game.orbitCamera.Ref(), game.cameraController.OnOrbitTransformChanged); err != nil {
 			game.setStatus(err.Error())
 			return
 		}
 		game.orbitCamera.SetAlpha(0)
-		game.tagQuery = game.World(game.level).FindTagged("interactive", 8)
-		game.spinQuery = game.World(game.level).FindTagged("spinner", 1)
-		game.markerQuery = game.World(game.level).FindTagged("player-marker", 1)
+		game.tagQuery = game.World(game.level).FindEntitiesByTag("interactive", 8)
+		game.spinQuery = game.World(game.level).FindEntitiesByTag("spinner", 1)
+		game.markerQuery = game.World(game.level).FindEntitiesByTag("player-marker", 1)
 		game.showCameraInfo()
 		game.setStatus("Discovering actors...")
 		if _, err := StartAuthoredSequence(game.level, "levels.camera-showcase", "welcome"); err != nil {
@@ -89,22 +89,22 @@ func (game *Game) onLevelReady(event engine.LevelReady) {
 		}
 	}
 }
-func (game *Game) onActorQuery(event engine.ActorQueryResult) {
+func (game *Game) onActorQuery(event engine.EntityQueryResult) {
 	if event.Handle != game.level || game.release != 0 {
 		return
 	}
 	if event.RequestID == game.markerQuery {
-		if len(event.Actors) != 0 {
-			game.marker.Bind(event.Actors[0])
+		if len(event.Entities) != 0 {
+			game.marker.Bind(event.Entities[0])
 			game.marker.Follow(cameraTransform(game.fps))
 		}
 	} else if event.RequestID == game.spinQuery {
-		if len(event.Actors) != 0 {
-			game.spinner.Bind(event.Actors[0])
+		if len(event.Entities) != 0 {
+			game.spinner.Bind(event.Entities[0])
 		}
 	} else if event.RequestID == game.tagQuery {
-		game.actorCount = uint8(len(event.Actors))
-		for _, actorID := range event.Actors {
+		game.actorCount = uint8(len(event.Entities))
+		for _, actorID := range event.Entities {
 			actorID.SetTags("interactive", "verified")
 		}
 		game.showStatus()
@@ -240,12 +240,12 @@ func (game *Game) setOutput(output engine.CameraOutput) {
 		return
 	}
 	game.output = output
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	settings.Output = game.output
 	game.camera.SetSettings(settings)
 	game.fps.Output = output
 	game.orbitPose.Output = output
-	settings = game.orbitCamera.Settings
+	settings = game.orbitCamera.Settings()
 	settings.Output = game.output
 	game.orbitCamera.SetSettings(settings)
 	game.showCameraInfo()
@@ -366,7 +366,7 @@ func (game *Game) visit(courtyard bool) {
 	game.fps.Output = game.output
 	game.camera = game.NewCamera3D(game.level, game.fps)
 	game.camera.SetLayer(-10)
-	if _, err := game.WatchTransform(game.camera.Ref(), game.cameraController.OnTransformChanged); err != nil {
+	if _, err := game.WatchPose(game.camera.Ref(), game.cameraController.OnTransformChanged); err != nil {
 		game.setStatus(err.Error())
 		return
 	}
@@ -386,5 +386,5 @@ func tagAuthoredActor(context engine.ActionContext, actor engine.EntityRef, tag 
 
 //karty:condition actor.ready
 func authoredActorReady(context engine.ActionContext, actor engine.EntityRef) (bool, error) {
-	return actor.ID != 0, nil
+	return actor.ID() != 0, nil
 }

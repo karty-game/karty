@@ -17,13 +17,13 @@ func (g *Game) requestPath(target dungeon.Point) {
 	}
 	goal := dungeon.ProjectGoal(target)
 	request, err := g.World(g.level).FindPath(engine.NavigationAgent{
-		From: engine.Vec3{
+		Position: engine.Vec3{
 			X: float32(start.X),
 			Y: float32(start.Y),
 		},
-		Radius:      engine.Vec2{X: dungeon.Radius + .001, Y: dungeon.Radius + .001},
-		Height:      1.6,
-		MaxExpanded: dungeon.Cells,
+		Radius:         engine.Vec2{X: dungeon.Radius + .001, Y: dungeon.Radius + .001},
+		Height:         1.6,
+		MaxSearchCells: dungeon.Cells,
 	}, engine.Vec3{X: float32(goal.X), Y: float32(goal.Y)})
 	if err != nil {
 		g.pathBlocked()

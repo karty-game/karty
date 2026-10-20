@@ -12,7 +12,7 @@ type Game struct {
 	request engine.RequestID
 	view    *karty2d.View
 	camera  engine.Camera2DSettings
-	label   *engine.EntityText2D
+	label   *engine.Text2D
 	keys    [4]bool
 	ready   bool
 	tick    int64
@@ -27,7 +27,7 @@ func main() {
 }
 func (g *Game) start() {
 	g.label = g.NewText2D("LOADING", engine.NewVec2(560, 24))
-	g.label.SetSize(18)
+	g.label.SetFontSize(18)
 	g.label.SetLayer(1000000000)
 	g.request = g.RequestLevel("levels.room")
 }

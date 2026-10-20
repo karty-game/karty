@@ -59,15 +59,15 @@ func (game *Game) createAudio() {
 	}
 	for index, crate := range game.crates {
 		if crate != nil {
-			game.audio.previous[index] = crate.Transform3D.Position
+			game.audio.previous[index] = crate.Transform().Position
 		}
 	}
 }
 
 func (game *Game) updateAudio(frame uint64) {
 	if game.camera != nil {
-		yaw := float64(game.camera.Settings.Yaw)
-		game.SetAudioReceiver(game.camera.Ref(), engine.AudioReceiverOptions{
+		yaw := float64(game.camera.Settings().Yaw)
+		game.SetAudioListener(game.camera.Ref(), engine.AudioListenerOptions{
 			Right: engine.NewVec2(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
 		})
 	}
@@ -85,7 +85,7 @@ func (game *Game) updateAudio(frame uint64) {
 		if crate == nil {
 			continue
 		}
-		position := crate.Transform3D.Position
+		position := crate.Transform().Position
 		previous := game.audio.previous[index]
 		// Track accepted positions even before a voice exists, so waking an idle
 		// crate never measures accumulated displacement as a sudden speed spike.
@@ -239,9 +239,9 @@ func (game *Game) closestMovingCrates(volume [len(freightStacks)]float32) [len(f
 func (game *Game) crateSoundDistance(index int) float64 {
 	var receiver engine.Vec3
 	if game.camera != nil {
-		receiver = game.camera.Settings.Position
+		receiver = game.camera.Settings().Position
 	}
-	p := game.crates[index].Transform3D.Position
+	p := game.crates[index].Transform().Position
 	dx, dy, dz := float64(p.X-receiver.X), float64(p.Y-receiver.Y), float64(p.Z-receiver.Z)
 	return dx*dx + dy*dy + dz*dz
 }
@@ -258,5 +258,5 @@ func (game *Game) stopAudio() {
 		}
 	}
 	game.audio = hangarAudio{}
-	game.ClearAudioReceiver()
+	game.ClearAudioListener()
 }

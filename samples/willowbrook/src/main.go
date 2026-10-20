@@ -20,9 +20,9 @@ type Game struct {
 	loaded       bool
 	camera       engine.Camera2DSettings
 	focus        village.Point
-	hero         *engine.EntitySprite2D
-	shadow       *engine.EntitySprite2D
-	label        *engine.EntityText2D
+	hero         *engine.Sprite2D
+	shadow       *engine.Sprite2D
+	label        *engine.Text2D
 	position     village.Point
 	controller   *controllers.Planar
 	facing, pose int
@@ -64,11 +64,11 @@ func (g *Game) start() {
 		panic(err)
 	}
 
-	plate := g.NewVector2D(engine.Rectangle(184, 38), engine.NewVec2(548, 12))
+	plate := g.NewShape2D(engine.Rectangle(184, 38), engine.NewVec2(548, 12))
 	plate.SetFill(engine.RGBA(245, 235, 197, 235))
 	plate.SetLayer(hudLayer)
 	g.label = g.NewText2D("LOADING VILLAGE", engine.NewVec2(560, 24))
-	g.label.SetSize(16)
+	g.label.SetFontSize(16)
 	g.label.SetColor(engine.RGBA(48, 66, 47, 255))
 	g.label.SetLayer(hudLayer + 1)
 	g.request = g.RequestLevel("levels.village")
@@ -237,7 +237,7 @@ func (g *Game) paint(walking bool) {
 		g.shadow = g.footSprite(shadowAsset, g.position, w*.55, 10)
 	}
 	dims := textureSizes[shadowAsset]
-	g.shadow.Set(
+	g.shadow.SetTransform(
 		engine.NewVec2(float32(g.position.X+2), float32(g.position.Y)),
 		engine.NewVec2(float32(w*.55)/float32(dims[0]), 10/float32(dims[1])),
 		0,
@@ -246,11 +246,15 @@ func (g *Game) paint(walking bool) {
 	if g.hero == nil {
 		g.hero = g.footSprite(heroTextures[pose], g.position, w, h)
 	} else {
-		g.hero.Set(engine.NewVec2(float32(g.position.X), float32(g.position.Y-h/2)), engine.NewVec2(float32(w/32), float32(h/48)), 0)
+		g.hero.SetTransform(
+			engine.NewVec2(float32(g.position.X), float32(g.position.Y-h/2)),
+			engine.NewVec2(float32(w/32), float32(h/48)),
+			0,
+		)
 		g.hero.SetLayer(g.mapLayer(village.ActorLayer, g.position.Y))
 	}
 	if pose != g.pose {
-		g.hero.UpdateLevelAsset(engine.LevelTexture(g.level, heroTextures[pose]))
+		g.hero.SetLevelTexture(engine.LevelTexture(g.level, heroTextures[pose]))
 		g.pose = pose
 	}
 }

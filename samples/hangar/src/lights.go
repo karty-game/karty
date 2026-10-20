@@ -27,8 +27,8 @@ func (game *Game) acceptTorchPose(pose engine.Transform3D) {
 	// A portal can rotate the accepted camera away from its proposed heading.
 	// Carry the existing local lag through that correction just as the host
 	// rotates the attached beam; its position continues to follow the host.
-	lsy, lcy := math.Sincos(float64(game.torch.Settings.Yaw))
-	lsp, lcp := math.Sincos(float64(game.torch.Settings.Pitch))
+	lsy, lcy := math.Sincos(float64(game.torch.Settings().Yaw))
+	lsp, lcp := math.Sincos(float64(game.torch.Settings().Pitch))
 	sy, cy := math.Sincos(yaw)
 	sp, cp := math.Sincos(pitch)
 	x, y, z := lsy*lcp, lcy*lcp, lsp
@@ -48,7 +48,7 @@ func (game *Game) updateTorch(frame uint64) {
 		frames = frame - aim.lastFrame
 	}
 	aim.lastFrame, aim.updated = frame, true
-	camera := game.camera.Settings
+	camera := game.camera.Settings()
 	yaw, pitch := float64(camera.Yaw), float64(camera.Pitch)
 	aim.cameraYaw, aim.cameraPitch = yaw, pitch
 	deltaYaw := math.Remainder(yaw-aim.yaw, 2*math.Pi)
@@ -76,7 +76,7 @@ func (game *Game) updateTorch(frame uint64) {
 	if delta == 0 && aim.pitch == pitch {
 		localYaw, localPitch = 0, 0
 	}
-	settings := game.torch.Settings
+	settings := game.torch.Settings()
 	if settings.Yaw == localYaw && settings.Pitch == localPitch {
 		return
 	}
@@ -87,7 +87,7 @@ func (game *Game) updateTorch(frame uint64) {
 // lightBolt demonstrates a moving point light independently of visible actors.
 // Only one bolt exists at a time; this lighting study has no projectile collision.
 type lightBolt struct {
-	light     *engine.EntityLight3D
+	light     *engine.Light3D
 	position  engine.Vec3
 	step      engine.Vec3
 	remaining uint8
@@ -110,7 +110,7 @@ func (game *Game) launchLight() {
 	game.bolt.close()
 	// Camera Settings holds the latest pose accepted by the host, including
 	// collision corrections. The bolt leaves that eye in its viewing direction.
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	yaw, pitch := float64(settings.Yaw), float64(settings.Pitch)
 	direction := engine.NewVec3(
 		float32(math.Sin(yaw)*math.Cos(pitch)),

@@ -24,13 +24,13 @@ type treasureQuest struct {
 	pending       int
 	route         []village.Point
 	interactHeld  bool
-	label, action *engine.EntityText2D
-	plate         *engine.EntityVector2D
-	actionPlate   *engine.EntityVector2D
-	close         *engine.EntityText2D
-	prompt        *engine.EntityText2D
-	promptPlate   *engine.EntityVector2D
-	cache         *engine.EntitySprite2D
+	label, action *engine.Text2D
+	plate         *engine.Shape2D
+	actionPlate   *engine.Shape2D
+	close         *engine.Text2D
+	prompt        *engine.Text2D
+	promptPlate   *engine.Shape2D
+	cache         *engine.Sprite2D
 	lastText      string
 	lastNearby    int
 	journalOpen   bool
@@ -44,27 +44,27 @@ func (g *Game) startQuest() {
 	g.quest.lastNearby = -2
 	g.quest.message = village.QuestMessages[0]
 	layout := journalLayout(false)
-	g.quest.plate = g.NewVector2D(engine.Rectangle(288, layout.height), engine.NewVec2(496, layout.top))
+	g.quest.plate = g.NewShape2D(engine.Rectangle(288, layout.height), engine.NewVec2(496, layout.top))
 	g.quest.plate.SetFill(engine.RGBA(245, 235, 197, 230))
 	g.quest.plate.SetLayer(hudLayer)
 	g.quest.label = g.NewText2D("", engine.NewVec2(508, layout.top+10))
-	g.quest.label.SetSize(12)
+	g.quest.label.SetFontSize(12)
 	g.quest.label.SetColor(engine.RGBA(48, 66, 47, 255))
 	g.quest.label.SetLayer(hudLayer + 1)
 	g.quest.close = g.NewText2D("", engine.NewVec2(744, layout.top+4))
-	g.quest.close.SetSize(11)
+	g.quest.close.SetFontSize(11)
 	g.quest.close.SetColor(engine.RGBA(104, 70, 36, 255))
 	g.quest.close.SetLayer(hudLayer + 2)
-	g.quest.actionPlate = g.NewVector2D(engine.Rectangle(272, layout.actionHeight), engine.NewVec2(504, layout.top+layout.actionOffset))
+	g.quest.actionPlate = g.NewShape2D(engine.Rectangle(272, layout.actionHeight), engine.NewVec2(504, layout.top+layout.actionOffset))
 	g.quest.actionPlate.SetLayer(hudLayer + 1)
 	g.quest.action = g.NewText2D("", engine.NewVec2(510, layout.top+layout.actionOffset+4))
-	g.quest.action.SetSize(12)
+	g.quest.action.SetFontSize(12)
 	g.quest.action.SetColor(engine.RGBA(104, 70, 36, 255))
 	g.quest.action.SetLayer(hudLayer + 2)
-	g.quest.promptPlate = g.NewVector2D(engine.Rectangle(66, 18), engine.NewVec2(0, 0))
+	g.quest.promptPlate = g.NewShape2D(engine.Rectangle(66, 18), engine.NewVec2(0, 0))
 	g.quest.promptPlate.SetFill(engine.ColorTransparent)
 	g.quest.prompt = g.NewText2D("", engine.NewVec2(0, 0))
-	g.quest.prompt.SetSize(11)
+	g.quest.prompt.SetFontSize(11)
 	g.quest.prompt.SetColor(engine.RGBA(48, 66, 47, 255))
 	for i, p := range village.QuestStations {
 		asset := clueNoteTexture
@@ -84,7 +84,7 @@ func (g *Game) restartQuest() {
 	g.quest.stage = 0
 	g.quest.message = village.QuestMessages[0]
 	g.quest.journalOpen = false
-	g.quest.cache.UpdateLevelAsset(engine.LevelTexture(g.level, treasureClosedTexture))
+	g.quest.cache.SetLevelTexture(engine.LevelTexture(g.level, treasureClosedTexture))
 	g.updateQuest()
 }
 
@@ -130,7 +130,7 @@ func (g *Game) inspectQuest(i int) {
 		g.quest.stage++
 		g.quest.message = village.QuestMessages[g.quest.stage]
 		if g.quest.stage == 3 {
-			g.quest.cache.UpdateLevelAsset(engine.LevelTexture(g.level, treasureOpenTexture))
+			g.quest.cache.SetLevelTexture(engine.LevelTexture(g.level, treasureOpenTexture))
 		}
 	} else if i > g.quest.stage {
 		if g.quest.stage == 0 {
@@ -186,12 +186,12 @@ func (g *Game) updateQuest() {
 	if g.quest.journalOpen != g.quest.lastOpen {
 		layout := journalLayout(g.quest.journalOpen)
 		g.quest.plate.SetShape(engine.Rectangle(288, layout.height))
-		g.quest.plate.Set(engine.NewVec2(496, layout.top), engine.NewVec2(1, 1), 0)
-		g.quest.label.Set(engine.NewVec2(508, layout.top+10), engine.NewVec2(1, 1), 0)
-		g.quest.close.Set(engine.NewVec2(744, layout.top+4), engine.NewVec2(1, 1), 0)
+		g.quest.plate.SetTransform(engine.NewVec2(496, layout.top), engine.NewVec2(1, 1), 0)
+		g.quest.label.SetTransform(engine.NewVec2(508, layout.top+10), engine.NewVec2(1, 1), 0)
+		g.quest.close.SetTransform(engine.NewVec2(744, layout.top+4), engine.NewVec2(1, 1), 0)
 		g.quest.actionPlate.SetShape(engine.Rectangle(272, layout.actionHeight))
-		g.quest.actionPlate.Set(engine.NewVec2(504, layout.top+layout.actionOffset), engine.NewVec2(1, 1), 0)
-		g.quest.action.Set(engine.NewVec2(510, layout.top+layout.actionOffset+4), engine.NewVec2(1, 1), 0)
+		g.quest.actionPlate.SetTransform(engine.NewVec2(504, layout.top+layout.actionOffset), engine.NewVec2(1, 1), 0)
+		g.quest.action.SetTransform(engine.NewVec2(510, layout.top+layout.actionOffset+4), engine.NewVec2(1, 1), 0)
 		if g.quest.journalOpen {
 			g.quest.close.SetText("CLOSE")
 		} else {
@@ -205,9 +205,9 @@ func (g *Game) updateQuest() {
 			fill = engine.RGBA(220, 201, 147, 255)
 			p := village.QuestStations[nearby]
 			_, height := village.QuestVisualSize(nearby)
-			g.quest.promptPlate.Set(engine.NewVec2(float32(p.X-33), float32(p.Y-height-22)), engine.NewVec2(1, 1), 0)
+			g.quest.promptPlate.SetTransform(engine.NewVec2(float32(p.X-33), float32(p.Y-height-22)), engine.NewVec2(1, 1), 0)
 			g.quest.promptPlate.SetLayer(g.mapLayer(village.ActorLayer, p.Y) + 3)
-			g.quest.prompt.Set(engine.NewVec2(float32(p.X-29), float32(p.Y-height-19)), engine.NewVec2(1, 1), 0)
+			g.quest.prompt.SetTransform(engine.NewVec2(float32(p.X-29), float32(p.Y-height-19)), engine.NewVec2(1, 1), 0)
 			g.quest.prompt.SetLayer(g.mapLayer(village.ActorLayer, p.Y) + 4)
 		}
 		g.quest.promptPlate.SetFill(fill)
@@ -224,7 +224,7 @@ func (g *Game) updateQuest() {
 			}
 		}
 	}
-	if g.quest.prompt.Text != prompt {
+	if g.quest.prompt.Text() != prompt {
 		g.quest.prompt.SetText(prompt)
 	}
 	if text != g.quest.lastText {

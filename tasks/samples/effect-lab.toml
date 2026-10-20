@@ -1,0 +1,32 @@
+[generate-effect-lab]
+description = "Regenerate the effect lab's procedural room and material sources"
+dir = "samples/effect-lab"
+run = ["go run generate-room.go", "prettier --write levels/room/world.yaml", "taplo format levels/room/level.toml"]
+
+[check-effect-lab]
+description = "Check a built effect lab in Chromium and save comparison captures"
+run = "node scripts/check-effect-lab.mjs"
+
+[check-effect-lab-presets]
+description = "Capture all effect presets from a built lab and verify artifact provenance"
+run = "node scripts/check-effect-lab.mjs --presets-only"
+
+[check-effect-lab-color]
+description = "Check grading, saturation, contrast and geometry outlines in the built lab"
+run = ["node --test scripts/effect-lab-performance.test.mjs", "node scripts/check-effect-lab.mjs --color"]
+
+[bench-effect-lab]
+description = "Measure every effect on the shared preview with verified hardware acceleration"
+run = "node scripts/measure-effect-lab.mjs"
+
+[check-effect-lab-outline]
+description = "Check outline thresholds, modes, stacked effects and the shared panel"
+run = "node scripts/check-effect-lab.mjs --outline"
+
+[check-effect-lab-outline-failure]
+description = "Check outline allocation failure isolation and retry in the effect lab"
+run = "node scripts/check-effect-lab.mjs --outline-failure"
+
+[check-effect-lab-lens]
+description = "Verify lens distortion, sharpening and water/grime/blood in the shared room on hardware"
+run = ["node --test scripts/effect-lab-performance.test.mjs", "node scripts/check-effect-lab.mjs --lens"]

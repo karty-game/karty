@@ -5,9 +5,6 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
-	"path/filepath"
-
-	"github.com/karty-game/karty/internal/contextio"
 )
 
 //go:embed templates/renderer-debug.js
@@ -18,26 +15,37 @@ func stageRendererDebugShell(ctx context.Context, directory string, enabled bool
 		return "", err
 	}
 
-	path := filepath.Join(directory, "renderer-debug.js")
+	root, err := os.OpenRoot(directory)
+	if err != nil {
+		if !enabled && os.IsNotExist(err) {
+			return "", nil
+		}
+
+		return "", err
+	}
+	defer root.Close()
+
+	const name = "renderer-debug.js"
+
 	if !enabled {
-		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		if err := root.Remove(name); err != nil && !os.IsNotExist(err) {
 			return "", fmt.Errorf("remove disabled renderer debugger: %w", err)
 		}
 
 		return "", nil
 	}
 
-	if info, err := os.Lstat(path); err == nil && !info.Mode().IsRegular() {
+	if info, err := root.Lstat(name); err == nil && !info.Mode().IsRegular() {
 		return "", fmt.Errorf("renderer debugger output must be a regular file: %w", os.ErrInvalid)
 	} else if err != nil && !os.IsNotExist(err) {
 		return "", err
 	}
 
-	if err := contextio.WriteFile(ctx, path, []byte(rendererDebugScript), 0o600); err != nil {
+	if err := writeRootFile(ctx, root, name, []byte(rendererDebugScript)); err != nil {
 		return "", fmt.Errorf("stage renderer debugger: %w", err)
 	}
 
-	digest, err := fileHash(ctx, path)
+	digest, err := rootFileHash(ctx, root, name)
 	if err != nil {
 		return "", err
 	}

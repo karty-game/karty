@@ -18,12 +18,23 @@ import (
 )
 
 // stageClient keeps generated source in a fresh private directory.
-func stageClient(ctx context.Context, directory, module string, views []uicompiler.Component, actions []byte) (string, func(), error) {
+func stageClient(
+	ctx context.Context,
+	directory, module string,
+	views []uicompiler.Component,
+	actions []byte,
+	generatorVersion ...int,
+) (string, func(), error) {
 	if err := ctx.Err(); err != nil {
 		return "", nil, err
 	}
 
-	files, err := codegen.UIClientFiles(views, module)
+	version := 2
+	if len(generatorVersion) > 0 {
+		version = generatorVersion[0]
+	}
+
+	files, err := codegen.UIClientFilesForVersion(views, module, version)
 	if err != nil {
 		return "", nil, err
 	}
@@ -84,7 +95,7 @@ func stageClient(ctx context.Context, directory, module string, views []uicompil
 	}
 
 	if len(actions) != 0 {
-		if err := writeRootFile(ctx, stageRoot, "karty_actions.go", actions, 0600); err != nil {
+		if err := writeRootFile(ctx, stageRoot, "karty_actions.go", actions); err != nil {
 			cleanup()
 
 			return "", nil, err
@@ -176,7 +187,7 @@ func writeLocalUI(ctx context.Context, stageRoot *os.Root, views []uicompiler.Co
 	}
 
 	for _, view := range views {
-		if err := writeRootFile(ctx, stageRoot, "karty_ui_"+view.Name+".go", files[view.Source], 0o600); err != nil {
+		if err := writeRootFile(ctx, stageRoot, "karty_ui_"+view.Name+".go", files[view.Source]); err != nil {
 			return err
 		}
 	}
@@ -232,6 +243,6 @@ func copyClientSources(ctx context.Context, source string, sourceRoot, stageRoot
 				data...)
 		}
 
-		return writeRootFile(ctx, stageRoot, relative, data, 0o600)
+		return writeRootFile(ctx, stageRoot, relative, data)
 	})
 }

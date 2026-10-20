@@ -27,15 +27,15 @@ func TestFlightConsoleControlsAndLifecycle(t *testing.T) {
 	if game.flight.CallSign != "Aster" || game.flight.Power != 75 || game.flight.Ship != 2 || game.flight.Tab != 2 {
 		t.Fatal("widget values did not reach persistent model", game.flight)
 	}
-	x := game.shape.Position.X
+	x := game.shape.Position().X
 	engine.FixtureFrame(engine.Frame{Number: 6})
-	if game.shape.Position.X-x != 4.5 {
+	if game.shape.Position().X-x != 4.5 {
 		t.Fatal("ship and power did not affect flight")
 	}
 	change(7, config.FlightAutopilot, "false")
-	x = game.shape.Position.X
+	x = game.shape.Position().X
 	engine.FixtureFrame(engine.Frame{Number: 8})
-	if game.shape.Position.X != x {
+	if game.shape.Position().X != x {
 		t.Fatal("disabled autopilot still moves")
 	}
 	if len(engine.FixtureCommands()) != 24 {

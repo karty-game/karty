@@ -10,7 +10,7 @@ import (
 // Game mounts the authored particles; it never sends a per-particle update.
 type Game struct {
 	engine.Game
-	camera           *engine.EntityCamera3D
+	camera           *engine.Camera3D
 	panel            *engine.UI
 	status           string
 	level            engine.LevelHandle
@@ -142,10 +142,10 @@ func (game *Game) visit(index int) {
 		game.camera.Destroy()
 	}
 	p := viewpoints[index]
-	game.camera = game.NewCamera3D(game.level, engine.CameraSettings{
+	game.camera = game.NewCamera3D(game.level, engine.Camera3DSettings{
 		Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
 		Position: engine.NewVec3(p.x, p.y, p.z), Yaw: p.yaw, Pitch: p.pitch,
-		FOVY: config.CameraFOVY, Near: config.CameraNear, Far: config.CameraFar,
+		VerticalFOV: config.CameraFOVY, NearClip: config.CameraNear, FarClip: config.CameraFar,
 		OrthoHeight:   config.CameraOrthoHeight,
 		ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
 	})
@@ -248,7 +248,7 @@ func (game *Game) update(engine.Frame) {
 	if forward == 0 && strafe == 0 && turn == 0 && tilt == 0 && game.mouseX == 0 && game.mouseY == 0 {
 		return
 	}
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	settings.Yaw += turn*0.025 + game.mouseX*0.0025
 	settings.Pitch = min(max(settings.Pitch+tilt*0.025-game.mouseY*0.0025, -1.4), 1.4)
 	game.mouseX, game.mouseY = 0, 0
@@ -265,7 +265,7 @@ func (game *Game) update(engine.Frame) {
 func (game *Game) stop() {
 	game.releasePointer()
 	if game.request != 0 {
-		game.CancelLevel(game.request)
+		game.CancelLevelRequest(game.request)
 	}
 	if game.camera != nil {
 		game.camera.Destroy()

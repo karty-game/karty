@@ -34,6 +34,7 @@ type Declaration struct {
 type Level struct {
 	Name, Directory string
 	Actors          map[string]bool
+	entityLookup    string
 }
 type Result struct {
 	Source, Catalog, Schema []byte
@@ -114,7 +115,20 @@ func typeName(expr ast.Expr, engineAlias string) string {
 	return "unsupported"
 }
 
-func Compile(directory, module string, declarations []Declaration, levels []Level, contract []byte) (Result, error) {
+func Compile(
+	directory, module string,
+	declarations []Declaration,
+	levels []Level,
+	contract []byte,
+	generatorVersion ...int,
+) (Result, error) {
+	if len(generatorVersion) > 0 && generatorVersion[0] >= 3 {
+		levels = append([]Level(nil), levels...)
+		for index := range levels {
+			levels[index].entityLookup = "Entity"
+		}
+	}
+
 	var result Result
 
 	schema, defs, step, base, err := actionSchema(contract)
@@ -858,7 +872,12 @@ func compileArgument(
 			errReturn = "return false,err"
 		}
 
-		source.WriteString(expression + ",err:=context.Actor(" + strconv.Quote(ref) + ");if err!=nil{" + errReturn + "};")
+		lookup := level.entityLookup
+		if lookup == "" {
+			lookup = "Actor"
+		}
+
+		source.WriteString(expression + ",err:=context." + lookup + "(" + strconv.Quote(ref) + ");if err!=nil{" + errReturn + "};")
 	default:
 		number, valid := value.(json.Number)
 		if !valid {

@@ -1,0 +1,182 @@
+package build
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/karty-game/karty/internal/packages"
+)
+
+func TestGeneratedClientAPIRejectsSymlinkedOutputs(t *testing.T) {
+	t.Parallel()
+
+	for _, link := range []string{".karty", ".karty/engine", ".karty/assets", ".karty/config", ".karty/engine/game.go"} {
+		t.Run(link, func(t *testing.T) {
+			t.Parallel()
+			directory, outside := t.TempDir(), t.TempDir()
+
+			linkPath := filepath.Join(directory, filepath.FromSlash(link))
+			if err := os.MkdirAll(filepath.Dir(linkPath), 0o750); err != nil {
+				t.Fatal(err)
+			}
+
+			target := outside
+			if link == ".karty/engine/game.go" {
+				target = filepath.Join(outside, "game.go")
+			}
+
+			outsideFile := filepath.Join(outside, "game.go")
+			if err := os.WriteFile(outsideFile, []byte("user-owned"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := os.Symlink(target, linkPath); err != nil {
+				t.Skipf("symlink unavailable: %v", err)
+			}
+
+			generated := map[string][]byte{
+				"engine/game.go":     []byte("generated engine"),
+				"assets/textures.go": []byte("generated assets"),
+				"config/project.go":  []byte("generated config"),
+			}
+			if err := writeGeneratedClientAPI(t.Context(), directory, generated); err == nil {
+				t.Fatal("accepted a symlinked output")
+			}
+
+			assertGeneratedFile(t, outsideFile, "user-owned")
+		})
+	}
+}
+
+func TestGeneratedClientAPIPreflightsBeforeReplacingFiles(t *testing.T) {
+	t.Parallel()
+
+	for name, invalid := range map[string]map[string][]byte{
+		"traversal":           {"../outside.go": nil},
+		"absolute":            {"/outside.go": nil},
+		"backslash":           {`engine\game.go`: nil},
+		"reserved component":  {"engine/CON/game.go": nil},
+		"trailing dot":        {"engine/invalid./game.go": nil},
+		"path depth":          {strings.Repeat("part/", packages.MaxPathDepth) + "game.go": nil},
+		"ancestor conflict":   {"engine/new": nil, "engine/new/game.go": nil},
+		"directory collision": {"engine": nil},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			directory := t.TempDir()
+			assets := filepath.Join(directory, ".karty", "assets", "textures.go")
+
+			legacy := filepath.Join(directory, ".karty", "engine", "assets.go")
+			for _, name := range []string{assets, legacy} {
+				if err := os.MkdirAll(filepath.Dir(name), 0o750); err != nil {
+					t.Fatal(err)
+				}
+
+				if err := os.WriteFile(name, []byte("previous"), 0o600); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			if err := writeGeneratedClientAPI(t.Context(), directory, invalid); err == nil {
+				t.Fatal("accepted invalid output")
+			}
+
+			assertGeneratedFile(t, assets, "previous")
+			assertGeneratedFile(t, legacy, "previous")
+		})
+	}
+}
+
+func TestGeneratedClientAPIReplacesFilesWithoutWritingThroughHardLinks(t *testing.T) {
+	t.Parallel()
+	directory := t.TempDir()
+
+	outside := filepath.Join(t.TempDir(), "game.go")
+	if err := os.WriteFile(outside, []byte("user-owned"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	engine := filepath.Join(directory, ".karty", "engine")
+	if err := os.MkdirAll(engine, 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Link(outside, filepath.Join(engine, "game.go")); err != nil {
+		t.Skipf("hard links unavailable: %v", err)
+	}
+
+	if err := writeGeneratedClientAPI(t.Context(), directory, map[string][]byte{"engine/game.go": []byte("generated")}); err != nil {
+		t.Fatal(err)
+	}
+
+	assertGeneratedFile(t, outside, "user-owned")
+	assertGeneratedFile(t, filepath.Join(engine, "game.go"), "generated")
+}
+
+func TestLegacyClientAPIRemovalPreflightsAncestorSymlinks(t *testing.T) {
+	t.Parallel()
+	directory, outside := t.TempDir(), t.TempDir()
+
+	legacy := filepath.Join(directory, "api_codegen.go")
+	if err := os.WriteFile(legacy, []byte("previous"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Mkdir(filepath.Join(directory, ".karty"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Symlink(outside, filepath.Join(directory, ".karty", "engine")); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+
+	outsideFile := filepath.Join(outside, "game_codegen.go")
+	if err := os.WriteFile(outsideFile, []byte("user-owned"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := removeLegacyGeneratedClientAPI(directory); err == nil {
+		t.Fatal("accepted symlinked legacy output ancestor")
+	}
+
+	assertGeneratedFile(t, legacy, "previous")
+	assertGeneratedFile(t, outsideFile, "user-owned")
+}
+
+func TestRegistrationMigrationRejectsSymlinkedSource(t *testing.T) {
+	t.Parallel()
+
+	directory, outside := t.TempDir(), t.TempDir()
+	if err := os.Symlink(outside, filepath.Join(directory, "src")); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+
+	mainSource := "package main\n//go:wasmexport karty_register\nfunc main() {}\n"
+	if err := os.WriteFile(filepath.Join(outside, "main.go"), []byte(mainSource), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	legacy := filepath.Join(outside, "karty_runtime.gen.go")
+
+	contents := "// Code generated by Karty. DO NOT EDIT.\npackage main\n"
+	if err := os.WriteFile(legacy, []byte(contents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := retireLegacyGeneratedRegistration(t.Context(), directory); err == nil {
+		t.Fatal("accepted symlinked source ancestor")
+	}
+
+	assertGeneratedFile(t, legacy, contents)
+}
+
+func assertGeneratedFile(t *testing.T, name, want string) {
+	t.Helper()
+
+	data, err := os.ReadFile(name)
+	if err != nil || string(data) != want {
+		t.Fatalf("file %s = %q, %v; want %q", name, data, err, want)
+	}
+}

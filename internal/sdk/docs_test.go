@@ -86,10 +86,20 @@ func TestSyncDocsIsIdempotentForTheCurrentSDK(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	path := filepath.Join(directory, ".karty", "docs", "README.md")
+	before, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if err := sdk.SyncDocs(directory, latest); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(filepath.Join(directory, ".karty", "docs", "README.md")); err != nil {
+	after, err := os.Stat(path)
+	if err != nil {
 		t.Fatalf("current SDK reference is missing: %v", err)
+	}
+	if !os.SameFile(before, after) || !before.ModTime().Equal(after.ModTime()) {
+		t.Fatal("unchanged SDK documentation was replaced")
 	}
 }

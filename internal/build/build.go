@@ -22,6 +22,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	sdkperformance "github.com/karty-game/karty-sdk/format/performance"
+	"github.com/karty-game/karty-sdk/format/textureatlas"
 	"github.com/karty-game/karty-ui/codegen"
 	"github.com/karty-game/karty-ui/compiler"
 	"github.com/karty-game/karty-ui/schema"
@@ -306,8 +307,12 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		if err != nil {
 			return err
 		}
+		ambienceType := "EnvironmentID"
+		if manifest.Compatibility.ProjectCodegen == sdk.ReviewedProjectCodegen {
+			ambienceType = "AmbienceID"
+		}
 		generated["assets/environments.go"], err = audioStreamAssetFile(
-			"EnvironmentID",
+			ambienceType,
 			"Environment",
 			"environment",
 			engineImport,
@@ -351,7 +356,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 
-	if err := writeUIPackage(directory, modulePath, views); err != nil {
+	if err := writeUIPackage(directory, modulePath, views, manifest.Compatibility.ProjectCodegen); err != nil {
 		return err
 	}
 
@@ -384,10 +389,13 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 	assetReport, err := analyzeProjectAssets(
 		ctx, directory, modulePath, manifest,
-		config.Assets.Textures, config.Assets.Sounds, textureNames, theme, views,
+		config.Assets.Textures, config.Assets.Sounds, textureNames, theme, views, compiler,
 	)
 	if err != nil {
 		return err
+	}
+	if err := assetpipeline.PrepareGameAtlas(ctx, directory, manifest, &assetReport); err != nil {
+		return fmt.Errorf("prepare game image atlas: %w", err)
 	}
 	assetReport.AudioStreams, err = assetpipeline.ProcessAudioStreams(
 		ctx,
@@ -451,7 +459,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 
 	var cleanup func()
 
-	clientSource, cleanup, err = stageClient(ctx, directory, modulePath, views, actionsSource)
+	clientSource, cleanup, err = stageClient(ctx, directory, modulePath, views, actionsSource, manifest.Compatibility.ProjectCodegen)
 	if err != nil {
 		return err
 	}
@@ -489,13 +497,13 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		return err
 	}
 	if err := embedProjectAssets(ctx,
-		directory, artifact, assetReport.Textures, assetReport.Sounds, config.Assets.Fonts, fontRoles,
+		directory, artifact, assetReport.Textures, assetReport.Sounds, config.Assets.Fonts, fontRoles, assetReport.Atlas,
 	); err != nil {
 		return err
 	}
 
 	if err := embedUIAssets(ctx,
-		directory, artifact, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source,
+		directory, artifact, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source, compiler,
 	); err != nil {
 		return err
 	}
@@ -762,8 +770,9 @@ func analyzeProjectAssets(
 	names []string,
 	theme uicompiler.Theme,
 	views []uicompiler.Component,
+	compiler string,
 ) (assetpipeline.Report, error) {
-	usage := assetusage.AnalyzeWithUI(directory, modulePath, names, views)
+	usage := assetusage.AnalyzeWithOptions(directory, modulePath, names, views, assetusage.Options{Compiler: compiler})
 	for _, name := range theme.ImageNames() {
 		usage.Live[name] = "theme image reference"
 	}
@@ -957,36 +966,6 @@ func setEnvironmentValue(environment []string, name, value string) []string {
 	return append(result, prefix+value)
 }
 
-func writeGeneratedClientAPI(ctx context.Context, directory string, generated map[string][]byte) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
-	root := filepath.Join(directory, ".karty")
-	if err := os.RemoveAll(filepath.Join(root, "assets")); err != nil {
-		return fmt.Errorf("replace generated assets package: %w", err)
-	}
-
-	for _, name := range []string{"assets.go", "sounds.go", "videos.go", "music.go", "environments.go", "ui-assets.go"} {
-		if err := os.Remove(filepath.Join(root, "engine", name)); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("remove legacy generated asset file %s: %w", name, err)
-		}
-	}
-
-	for relativePath, contents := range generated {
-		path := filepath.Join(root, filepath.FromSlash(relativePath))
-		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
-			return fmt.Errorf("create generated client API directory: %w", err)
-		}
-
-		if err := contextio.WriteFile(ctx, path, contents, 0o600); err != nil {
-			return fmt.Errorf("write generated client API: %w", err)
-		}
-	}
-
-	return nil
-}
-
 func soundAssetFile(sounds []project.Sound, engineImport string) ([]byte, error) {
 	sorted := slices.Clone(sounds)
 	slices.SortFunc(sorted, func(left, right project.Sound) int { return strings.Compare(left.Name, right.Name) })
@@ -1056,6 +1035,17 @@ func retireLegacyGeneratedRegistration(ctx context.Context, directory string) er
 		return err
 	}
 
+	root, err := os.OpenRoot(directory)
+	if err != nil {
+		return fmt.Errorf("open generated registration project: %w", err)
+	}
+	defer root.Close()
+
+	const name = "src/karty_runtime.gen.go"
+	if err := checkGeneratedPath(root, name, false); err != nil {
+		return err
+	}
+
 	registered, err := sourceExportsRegistration(ctx, filepath.Join(directory, "src"))
 	if err != nil || !registered {
 		return err
@@ -1063,7 +1053,7 @@ func retireLegacyGeneratedRegistration(ctx context.Context, directory string) er
 
 	path := filepath.Join(directory, "src", "karty_runtime.gen.go")
 
-	info, err := os.Lstat(path)
+	info, err := root.Lstat(name)
 	if os.IsNotExist(err) {
 		return nil
 	}
@@ -1076,7 +1066,7 @@ func retireLegacyGeneratedRegistration(ctx context.Context, directory string) er
 		return fmt.Errorf("%s: %w", path, errRegistrationCollision)
 	}
 
-	contents, err := contextio.ReadFile(ctx, path)
+	contents, err := root.ReadFile(name)
 	if err != nil {
 		return fmt.Errorf("read generated registration: %w", err)
 	}
@@ -1085,7 +1075,11 @@ func retireLegacyGeneratedRegistration(ctx context.Context, directory string) er
 		return fmt.Errorf("%s: %w", path, errRegistrationCollision)
 	}
 
-	if err := os.Remove(path); err != nil {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if err := root.Remove(name); err != nil {
 		return fmt.Errorf("remove legacy generated registration: %w", err)
 	}
 
@@ -1145,31 +1139,6 @@ func hasRegistrationDirective(documentation *ast.CommentGroup) bool {
 	}
 
 	return false
-}
-
-func removeLegacyGeneratedClientAPI(directory string) error {
-	paths := make([]string, 0, 5)
-
-	paths = append(paths,
-		filepath.Join(directory, "api_codegen.go"),
-		filepath.Join(directory, "src", "api_codegen.go"),
-	)
-	for _, root := range []string{
-		filepath.Join(directory, "src", "engine"),
-		filepath.Join(directory, ".karty", "engine"),
-	} {
-		for _, name := range []string{"game_codegen.go", "components_codegen.go"} {
-			paths = append(paths, filepath.Join(root, name))
-		}
-	}
-
-	for _, path := range paths {
-		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("remove legacy generated client API: %w", err)
-		}
-	}
-
-	return nil
 }
 
 func resolveCompiler(ctx context.Context, compiler string, manifest sdk.Manifest, options Options) (string, string, error) {
@@ -1382,19 +1351,15 @@ func embedProjectAssets(ctx context.Context,
 	sounds []assetpipeline.Sound,
 	fonts []project.Font,
 	usedFonts map[string]bool,
+	prepared ...*textureatlas.Bundle,
 ) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 
-	assets := make([]cartridge.Asset, 0, len(textures)+len(fonts))
-	for _, texture := range textures {
-		contents, err := readVerifiedProcessedAsset(ctx, texture.SourcePath, texture.OutputSHA256, texture.OutputBytes)
-		if err != nil {
-			return fmt.Errorf("read texture %q for cartridge: %w", texture.Name, err)
-		}
-
-		assets = append(assets, cartridge.Asset{Name: texture.Name, Bytes: contents})
+	assets, err := projectImageAssets(ctx, textures, prepared)
+	if err != nil {
+		return err
 	}
 
 	for _, font := range fonts {
@@ -1772,16 +1737,23 @@ func stageWebShell(ctx context.Context, targetDirectory, wasmExec string, gameTi
 		return err
 	}
 
+	bootstrapHash, statusHash, err := stageWebDelivery(ctx, targetDirectory)
+	if err != nil {
+		return err
+	}
+
 	index := strings.NewReplacer(
 		"@@GAME_TITLE@@", html.EscapeString(gameTitle),
 		"@@RENDERER_DEBUG@@", debugScripts,
 		"@@LAUNCHER_HASH@@", launcherHash,
 		"@@RUNTIME_HASH@@", runtimeHash,
+		"@@WEB_BOOTSTRAP_HASH@@", bootstrapHash,
+		"@@WEB_STATUS_HASH@@", statusHash,
 	).Replace(webIndexTemplate)
 
 	if err := contextio.WriteFile(ctx, filepath.Join(targetDirectory, "index.html"), []byte(index), 0o600); err != nil {
 		return fmt.Errorf("write web shell: %w", err)
 	}
 
-	return nil
+	return stageWebRelease(ctx, targetDirectory, cdn)
 }

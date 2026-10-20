@@ -1,5 +1,5 @@
 [tools]
-hk = "2.7.0"
+hk = "2.7.1"
 taplo = "0.10.0"
 uv = "0.13.1"
 yamllint = { version = "1.38.0", uvx = true }

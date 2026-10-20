@@ -88,14 +88,14 @@ func (l *Loader) Failure(names ...string) string {
 func (l *Loader) CancelConclusion() {
 	p := l.packs["conclusion"]
 	if p.request != 0 {
-		l.game.CancelLevel(p.request)
+		l.game.CancelLevelRequest(p.request)
 		p.request = 0
 	}
 }
 func (l *Loader) Close() {
 	for _, p := range l.packs {
 		if p.request != 0 {
-			l.game.CancelLevel(p.request)
+			l.game.CancelLevelRequest(p.request)
 			p.request = 0
 		}
 		if p.handle != 0 {

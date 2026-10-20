@@ -38,7 +38,7 @@ go work edit -replace=github.com/karty-game/karty-sdk=../karty-sdk
 Use `GOWORK=off` to check the public dependencies pinned in `go.mod`.
 Root tasks enable `GOEXPERIMENT=simd`; use `mise exec -- go ...` for ad hoc Go
 commands. Tests prepare the SDK selected by `internal/release`; an uncached
-published bundle needs a download. This checkout selects SDK 0.0.14 and its
+published bundle needs a download. This checkout selects SDK 0.0.15 and its
 matching public hosts. `KARTY_HOME` selects the SDK/toolchain cache root.
 
 For build, browser, or development-flow changes, run the relevant integration

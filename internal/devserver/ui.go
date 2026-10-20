@@ -76,6 +76,7 @@ func (snapshot *Snapshot) captureUI(ctx context.Context) error {
 	artifact := "__karty_dev/ui/" + checksum + ".bin"
 	snapshot.ui = UIResource{Artifact: artifact, ContentSHA256: checksum, Size: uint64(len(encoded))}
 	snapshot.files[artifact] = encoded
+	snapshot.checksums[artifact] = checksum
 	snapshot.size += int64(len(encoded))
 
 	return nil

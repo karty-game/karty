@@ -227,12 +227,29 @@ func TestWorldMaterialSolidsBuildAndCapabilityGate(t *testing.T) {
 		t.Fatalf("missing required features: %v", candidate[0].Features)
 	}
 
-	if len(candidate[0].Textures) != len(legacy[0].Textures)+2 {
+	envelope, err := level.DecodePassiveModule(candidate[0].Bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	standaloneCount := 0
+
+	for _, entry := range envelope.Entries {
+		if entry.Kind == level.EntryTexture {
+			standaloneCount++
+		}
+	}
+
+	if len(candidate[0].Textures) != standaloneCount+2 {
 		t.Fatal("generated pair missing from asset report/budget")
 	}
 
-	for _, texture := range candidate[0].Textures[len(legacy[0].Textures):] {
-		if texture.Kind != "world-material" || texture.SourceBytes != 0 ||
+	for _, texture := range candidate[0].Textures {
+		if texture.Kind != "world-material" {
+			continue
+		}
+
+		if texture.SourceBytes != 0 ||
 			texture.EstimatedDecodedBytes != int64(generated.Layout.Width)*int64(generated.Layout.Height)*4 || !texture.CacheHit {
 			t.Fatalf("atlas report: %+v", texture)
 		}

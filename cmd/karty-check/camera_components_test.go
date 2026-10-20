@@ -205,7 +205,11 @@ func prepareCameraHooksFixture(t *testing.T, directory, sample string, manifest 
 
 	view.Asset = "ui.controls"
 
-	files, err := codegen.UIPackageFiles([]uicompiler.Component{view}, "example.com/camera-fixture")
+	files, err := codegen.UIPackageFilesForVersion(
+		[]uicompiler.Component{view},
+		"example.com/camera-fixture",
+		manifest.Compatibility.ProjectCodegen,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -243,6 +247,7 @@ func prepareCameraHooksFixture(t *testing.T, directory, sample string, manifest 
 			},
 		},
 		contract,
+		manifest.Compatibility.ProjectCodegen,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -256,6 +261,8 @@ const componentConfigFixture = `package config
 const (CameraFOVY=1.0471976;CameraOrthoHeight=30;CameraNear=.05;CameraFar=80;ResolutionWidth=320;ResolutionHeight=180)
 `
 const componentEngineFixture = `package engine
+func FixtureSolidTransform(solid *Solid3D) *Transform3D {return &solid.transform}
+func FixtureCameraSettings(camera *Camera3D) *Camera3DSettings { return &camera.settings }
 var fixtureCommands []byte
 func FixtureBegin(){beginCommands(1)}
 func FixtureEntityRef(id uint32,level LevelHandle) EntityRef{return registerEntity(id,level,nil)}

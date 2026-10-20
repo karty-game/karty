@@ -264,14 +264,13 @@ func (server *Server) asset(output http.ResponseWriter, request *http.Request) {
 	// An active runtime can keep a boot-generation URL for chunks or media
 	// after several resource patches. Only verified content-addressed bytes
 	// can cross generation boundaries; code and HTML remain generation-pinned.
-	for _, data := range reference.fallback {
-		checksum, err := digestContext(request.Context(), data)
-		if err != nil {
+	for _, candidate := range reference.fallback {
+		if request.Context().Err() != nil {
 			return
 		}
 
-		if checksum == reference.checksum {
-			serveBytes(output, request, name, data, true)
+		if candidate.checksums[name] == reference.checksum {
+			serveBytesWithChecksum(output, request, name, candidate.files[name], true, reference.checksum)
 
 			return
 		}
@@ -305,9 +304,12 @@ func (server *Server) asset(output http.ResponseWriter, request *http.Request) {
 		injection := `<head><base href="` + base + `">` + snapshot.bootstrap()
 		data = bytes.Replace(data, []byte("<head>"), []byte(injection), 1)
 		immutable = false
+		serveBytes(output, request, name, data, immutable)
+
+		return
 	}
 
-	serveBytes(output, request, name, data, immutable)
+	serveBytesWithChecksum(output, request, name, data, immutable, snapshot.checksums[name])
 }
 
 type assetReference struct {
@@ -315,7 +317,7 @@ type assetReference struct {
 	name      string
 	immutable bool
 	checksum  string
-	fallback  [][]byte
+	fallback  []*Snapshot
 }
 
 func (server *Server) lookupAsset(name string) assetReference {
@@ -357,8 +359,8 @@ func (server *Server) lookupAsset(name string) assetReference {
 	}
 
 	for _, candidate := range slices.Backward(server.snapshots) {
-		if data, ok := candidate.files[reference.name]; ok {
-			reference.fallback = append(reference.fallback, data)
+		if _, ok := candidate.files[reference.name]; ok {
+			reference.fallback = append(reference.fallback, candidate)
 		}
 	}
 
@@ -406,6 +408,14 @@ func (server *Server) waiting(output http.ResponseWriter, request *http.Request)
 func serveBytes(output http.ResponseWriter, request *http.Request, name string, data []byte, immutable bool) {
 	checksum, err := digestContext(request.Context(), data)
 	if err != nil {
+		return
+	}
+
+	serveBytesWithChecksum(output, request, name, data, immutable, checksum)
+}
+
+func serveBytesWithChecksum(output http.ResponseWriter, request *http.Request, name string, data []byte, immutable bool, checksum string) {
+	if request.Context().Err() != nil {
 		return
 	}
 

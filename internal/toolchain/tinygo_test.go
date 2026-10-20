@@ -65,6 +65,43 @@ func TestTinyGoUsesManagedCache(t *testing.T) {
 	}
 }
 
+func TestTinyGoUsesKartyHome(t *testing.T) {
+	t.Parallel()
+
+	for _, explicitCache := range []bool{false, true} {
+		t.Run(map[bool]string{false: "environment", true: "explicit cache wins"}[explicitCache], func(t *testing.T) {
+			t.Parallel()
+			environmentHome := t.TempDir()
+			cacheDir := ""
+			selectedHome := environmentHome
+
+			if explicitCache {
+				cacheDir = t.TempDir()
+				selectedHome = cacheDir
+			}
+
+			want := writeExecutable(t, filepath.Join(
+				selectedHome, "tools", "tinygo", "0.42.0", runtime.GOOS+"-"+runtime.GOARCH,
+				"tinygo", "bin", testExecutableName("tinygo"),
+			))
+
+			got, err := toolchain.TinyGo(toolchain.TinyGoOptions{
+				Version: "0.42.0", CacheDir: cacheDir,
+				Getenv: func(key string) string {
+					if key == "KARTY_HOME" {
+						return environmentHome
+					}
+
+					return ""
+				},
+			})
+			if err != nil || got != want {
+				t.Fatalf("TinyGo() = %q, %v; want %q", got, err, want)
+			}
+		})
+	}
+}
+
 func writeExecutable(t *testing.T, path string) string {
 	t.Helper()
 

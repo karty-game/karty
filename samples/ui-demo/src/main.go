@@ -14,7 +14,7 @@ type Game struct {
 	request, release engine.RequestID
 	quantity         int
 	playing          bool
-	shape            *engine.EntityVector2D
+	shape            *engine.Shape2D
 	flight           ui.FlightSettings
 	deliveries       uint32
 }
@@ -78,7 +78,7 @@ func (game *Game) levelReady(event engine.LevelReady) {
 	}
 	game.request = 0
 	game.handle = event.Handle
-	game.shape = game.NewVector2D(engine.Rectangle(64, 32), engine.NewVec2(96, 168))
+	game.shape = game.NewShape2D(engine.Rectangle(64, 32), engine.NewVec2(96, 168))
 	game.configureShip()
 	game.resume()
 }
@@ -160,11 +160,11 @@ func (game *Game) advanceFlight(engine.Frame) {
 	if game.flight.Ship == 2 {
 		step *= 1.5
 	}
-	x := game.shape.Position.X + step
+	x := game.shape.Position().X + step
 	if x > 864 {
 		x = 32
 	}
-	game.shape.Translate(x-game.shape.Position.X, 0)
+	game.shape.Translate(x-game.shape.Position().X, 0)
 }
 
 func (game *Game) Shutdown() {

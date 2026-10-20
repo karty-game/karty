@@ -4,31 +4,31 @@ Sprites draw image assets. The host simulates authored particles.
 
 ## Sprites
 
-`EntitySprite2D` draws on the canvas or in a scrolling 2D world.
-`EntityWorldSprite` occupies a position in a mounted 3D level.
+`Sprite2D` draws on the canvas or in a scrolling 2D world.
+`Sprite3D` occupies a position in a mounted 3D level.
 
-| API                                     | Use                                                   |
-| --------------------------------------- | ----------------------------------------------------- |
-| `NewSprite2D(textureID, position)`      | Creates a sprite from a project texture               |
-| `UpdateAsset(textureID)`                | Changes its project image                             |
-| `UpdateLevelAsset(asset)`               | Changes its level texture                             |
-| `NewWorldSprite(asset, pose, settings)` | Creates a sprite in a 3D level                        |
-| `SetSprite(settings)`                   | Replaces a world sprite's settings, including `Asset` |
+| API                                  | Use                                                   |
+| ------------------------------------ | ----------------------------------------------------- |
+| `NewSprite2D(textureID, position)`   | Creates a sprite from a project texture               |
+| `SetTexture(textureID)`              | Changes its project image                             |
+| `SetLevelTexture(asset)`             | Changes its level texture                             |
+| `NewSprite3D(asset, pose, settings)` | Creates a sprite in a 3D level                        |
+| `SetSprite(settings)`                | Replaces a world sprite's settings, including `Asset` |
 
 ### World sprite settings
 
 `textureID` below is the numeric ID from the ready level's metadata:
 
 ```go
-func worldHero(game *engine.Game, level engine.LevelHandle, textureID uint32) *engine.EntityWorldSprite {
-    return game.NewWorldSprite(
+func worldHero(game *engine.Game, level engine.LevelHandle, textureID uint32) *engine.Sprite3D {
+    return game.NewSprite3D(
         engine.LevelTexture(level, textureID),
         engine.NewTransform3D(engine.NewVec3(4, 4, 0)),
-        engine.WorldSprite{
+        engine.SpriteRenderer3D{
             Facing: engine.WorldSpriteFacingUpright,
-            Alpha: engine.WorldSpriteAlphaCutout,
+            AlphaMode: engine.WorldSpriteAlphaCutout,
             Size: engine.NewVec2(0.8, 1.6),
-            Origin: engine.NewVec2(0.5, 1),
+            Anchor: engine.NewVec2(0.5, 1),
         },
     )
 }

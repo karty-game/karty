@@ -56,14 +56,9 @@ func TinyGo(options TinyGoOptions) (string, error) {
 		return "", errTinyGoVersion
 	}
 
-	cacheDir := options.CacheDir
-	if cacheDir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", fmt.Errorf("resolve Karty home directory: %w", err)
-		}
-
-		cacheDir = filepath.Join(home, ".karty")
+	cacheDir, err := kartyHomeWithEnv(options.CacheDir, getenv)
+	if err != nil {
+		return "", err
 	}
 
 	path := filepath.Join(

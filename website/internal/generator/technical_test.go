@@ -103,7 +103,7 @@ const TexturePlayer engine.TextureID = "player"
 const SoundUiClick engine.SoundID = 1
 const SoundReactorHum engine.SoundID = 2
 const MusicTheme engine.MusicID = 1
-const EnvironmentWind engine.EnvironmentID = 1
+const EnvironmentWind engine.AmbienceID = 1
 `),
 	})
 

@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -111,8 +112,12 @@ func InstallTinyGo(ctx context.Context, options InstallTinyGoOptions) (string, e
 }
 
 func kartyHome(cacheDir string) (string, error) {
+	return kartyHomeWithEnv(cacheDir, os.Getenv)
+}
+
+func kartyHomeWithEnv(cacheDir string, getenv func(string) string) (string, error) {
 	if cacheDir == "" {
-		cacheDir = os.Getenv("KARTY_HOME")
+		cacheDir = getenv("KARTY_HOME")
 	}
 
 	if cacheDir != "" {
@@ -285,15 +290,25 @@ func extractTinyGoZip(ctx context.Context, destination string, contents []byte) 
 }
 
 func archiveRelativePath(name, root string) (string, bool) {
-	cleanName := filepath.Clean(name)
+	// Archive paths always use forward slashes. Reject Windows separators and
+	// volume/stream syntax before converting to a local filesystem path.
+	if strings.ContainsAny(name, `\:`) {
+		return "", false
+	}
+
+	cleanName := path.Clean(name)
 	if cleanName == root {
 		return "", true
 	}
 
 	relative, ok := strings.CutPrefix(cleanName, root+"/")
+	if !ok {
+		return "", false
+	}
 
-	return relative, ok && relative != "." && relative != ".." && !filepath.IsAbs(relative) &&
-		!strings.HasPrefix(relative, ".."+string(filepath.Separator))
+	local, err := filepath.Localize(relative)
+
+	return local, err == nil
 }
 
 func writeArchiveFile(ctx context.Context, path string, source io.Reader, size int64, mode fs.FileMode) error {

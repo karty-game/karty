@@ -30,13 +30,23 @@ type staticError string
 
 func (err staticError) Error() string { return string(err) }
 
-const errNoBuildableFiles staticError = "package contains no buildable Go files"
+const (
+	errNoBuildableFiles    staticError = "package contains no buildable Go files"
+	errQuotedGoFlags       staticError = "quoted GOFLAGS require conservative asset retention"
+	errCompilerConstraints staticError = "compiler release or experiment build constraints require conservative asset retention"
+)
 
 // Result describes the conservative live texture set.
 type Result struct {
 	Live       map[string]string
 	KeepAll    bool
 	Diagnostic string
+}
+
+// Options selects the cartridge compiler whose source constraints are analyzed.
+// An empty Compiler selects the standard Go WASI target.
+type Options struct {
+	Compiler string
 }
 
 // Analyze type-checks the generated engine package together with project source.
@@ -48,19 +58,24 @@ func Analyze(directory, modulePath string, names []string) Result {
 // AnalyzeWithUI uses the build's resolved components, including package exports.
 // Nil components preserve standalone project discovery and conservative fallback.
 func AnalyzeWithUI(directory, modulePath string, names []string, components []uicompiler.Component) Result {
+	return AnalyzeWithOptions(directory, modulePath, names, components, Options{})
+}
+
+// AnalyzeWithOptions uses the same WASI source selection as the cartridge build.
+func AnalyzeWithOptions(directory, modulePath string, names []string, components []uicompiler.Component, options Options) Result {
 	known := make(map[string]struct{}, len(names))
 	for _, name := range names {
 		known[name] = struct{}{}
 	}
 
-	fileSet, enginePackage, assetsPackage, sourceFiles, info, err := loadTypeInfo(directory, modulePath, components)
+	fileSet, enginePackage, assetsPackage, sourceFiles, info, err := loadTypeInfo(directory, modulePath, components, options)
 	if err != nil {
 		return keepAll(err)
 	}
 
 	result := Result{Live: make(map[string]string)}
-	inspectUses(directory, fileSet, enginePackage, assetsPackage, info, known, &result)
-	inspectCalls(directory, fileSet, enginePackage, sourceFiles, info, known, &result)
+	direct := inspectCalls(directory, fileSet, enginePackage, sourceFiles, info, known, &result)
+	inspectUses(directory, fileSet, enginePackage, assetsPackage, info, known, direct, &result)
 
 	return result
 }
@@ -68,11 +83,17 @@ func AnalyzeWithUI(directory, modulePath string, names []string, components []ui
 func loadTypeInfo(
 	directory, modulePath string,
 	components []uicompiler.Component,
+	options Options,
 ) (*token.FileSet, *types.Package, *types.Package, []*ast.File, *types.Info, error) {
 	fileSet := token.NewFileSet()
 	enginePath := modulePath + "/.karty/engine"
 
-	engineFiles, err := parsePackageFiles(fileSet, filepath.Join(directory, ".karty", "engine"))
+	context, err := cartridgeBuildContext(options)
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+
+	engineFiles, err := parsePackageFiles(fileSet, filepath.Join(directory, ".karty", "engine"), context)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -85,7 +106,7 @@ func loadTypeInfo(
 	resolver := packageImporter{enginePath: enginePath, engine: enginePackage, fallback: importer.Default()}
 	assetsPath := modulePath + "/.karty/assets"
 
-	assetsFiles, err := parsePackageFiles(fileSet, filepath.Join(directory, ".karty", "assets"))
+	assetsFiles, err := parsePackageFiles(fileSet, filepath.Join(directory, ".karty", "assets"), context)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -97,12 +118,12 @@ func loadTypeInfo(
 
 	resolver.assetsPath, resolver.assets = assetsPath, assetsPackage
 
-	sourceFiles, err := parsePackageFiles(fileSet, filepath.Join(directory, "src"))
+	sourceFiles, err := parsePackageFiles(fileSet, filepath.Join(directory, "src"), context)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
 
-	sourceFiles, err = appendUIFiles(fileSet, directory, modulePath, sourceFiles, components)
+	sourceFiles, err = appendUIFiles(fileSet, directory, modulePath, sourceFiles, components, uiAdapterVersion(enginePackage))
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -154,6 +175,7 @@ func inspectUses(
 	assetsPackage *types.Package,
 	info *types.Info,
 	known map[string]struct{},
+	direct map[*ast.Ident]bool,
 	result *Result,
 ) {
 	for identifier, object := range info.Uses {
@@ -174,6 +196,11 @@ func inspectUses(
 			result.KeepAll = true
 			result.Diagnostic = fmt.Sprintf("%s at %s", ReasonDynamicLookup, sourcePosition(directory, fileSet.Position(identifier.Pos())))
 		}
+
+		if textureFunction(object.Name()) && !direct[identifier] {
+			result.KeepAll = true
+			result.Diagnostic = fmt.Sprintf("%s at %s", ReasonDynamicLookup, sourcePosition(directory, fileSet.Position(identifier.Pos())))
+		}
 	}
 }
 
@@ -185,7 +212,9 @@ func inspectCalls(
 	info *types.Info,
 	known map[string]struct{},
 	result *Result,
-) {
+) map[*ast.Ident]bool {
+	direct := make(map[*ast.Ident]bool)
+
 	for _, file := range sourceFiles {
 		ast.Inspect(file, func(node ast.Node) bool {
 			call, ok := node.(*ast.CallExpr)
@@ -194,17 +223,36 @@ func inspectCalls(
 			}
 
 			name, belongsToEngine := calledEngineFunction(call.Fun, info, enginePackage)
-			if !belongsToEngine || (name != "NewSprite2D" && name != "UpdateAsset") || len(call.Args) == 0 {
+			if !belongsToEngine || !textureFunction(name) {
 				return true
 			}
 
-			value := info.Types[call.Args[0]].Value
+			function := unparen(call.Fun)
+			argumentIndex := 0
+
+			switch function := function.(type) {
+			case *ast.Ident:
+				direct[function] = true
+			case *ast.SelectorExpr:
+				direct[function.Sel] = true
+				if selection := info.Selections[function]; selection != nil && selection.Kind() == types.MethodExpr {
+					argumentIndex = 1
+				}
+			}
+
+			if argumentIndex >= len(call.Args) {
+				return true
+			}
+
+			argument := call.Args[argumentIndex]
+
+			value := info.Types[argument].Value
 			if value == nil || value.Kind() != constant.String {
 				result.KeepAll = true
 				result.Diagnostic = fmt.Sprintf(
 					"%s at %s",
 					ReasonDynamicLookup,
-					sourcePosition(directory, fileSet.Position(call.Args[0].Pos())),
+					sourcePosition(directory, fileSet.Position(argument.Pos())),
 				)
 
 				return true
@@ -218,6 +266,12 @@ func inspectCalls(
 			return true
 		})
 	}
+
+	return direct
+}
+
+func textureFunction(name string) bool {
+	return name == "NewSprite2D" || name == "UpdateAsset" || name == "SetTexture"
 }
 
 type packageImporter struct {
@@ -246,7 +300,7 @@ func (resolver packageImporter) Import(path string) (*types.Package, error) {
 	return resolver.fallback.Import(path)
 }
 
-func parsePackageFiles(fileSet *token.FileSet, directory string) ([]*ast.File, error) {
+func parsePackageFiles(fileSet *token.FileSet, directory string, context build.Context) ([]*ast.File, error) {
 	entries, err := os.ReadDir(directory)
 	if err != nil {
 		return nil, err
@@ -258,7 +312,18 @@ func parsePackageFiles(fileSet *token.FileSet, directory string) ([]*ast.File, e
 			continue
 		}
 
-		matched, err := build.Default.MatchFile(directory, entry.Name())
+		path := filepath.Join(directory, entry.Name())
+
+		contents, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := checkCompilerConstraints(contents); err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+
+		matched, err := context.MatchFile(directory, entry.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -267,7 +332,7 @@ func parsePackageFiles(fileSet *token.FileSet, directory string) ([]*ast.File, e
 			continue
 		}
 
-		file, err := parser.ParseFile(fileSet, filepath.Join(directory, entry.Name()), nil, parser.AllErrors)
+		file, err := parser.ParseFile(fileSet, path, contents, parser.AllErrors)
 		if err != nil {
 			return nil, err
 		}
@@ -283,7 +348,7 @@ func parsePackageFiles(fileSet *token.FileSet, directory string) ([]*ast.File, e
 }
 
 func calledEngineFunction(expression ast.Expr, info *types.Info, engine *types.Package) (string, bool) {
-	switch function := expression.(type) {
+	switch function := unparen(expression).(type) {
 	case *ast.Ident:
 		object := info.Uses[function]
 
@@ -296,6 +361,17 @@ func calledEngineFunction(expression ast.Expr, info *types.Info, engine *types.P
 		return objectName(info.Uses[function.Sel], engine)
 	default:
 		return "", false
+	}
+}
+
+func unparen(expression ast.Expr) ast.Expr {
+	for {
+		parenthesized, ok := expression.(*ast.ParenExpr)
+		if !ok {
+			return expression
+		}
+
+		expression = parenthesized.X
 	}
 }
 
@@ -335,6 +411,7 @@ func appendUIFiles(
 	directory, modulePath string,
 	sourceFiles []*ast.File,
 	views []uicompiler.Component,
+	version int,
 ) ([]*ast.File, error) {
 	if views == nil {
 		if _, err := os.Stat(filepath.Join(directory, "karty.toml")); os.IsNotExist(err) {
@@ -352,12 +429,12 @@ func appendUIFiles(
 		}
 	}
 
-	clientFiles, err := codegen.UIClientFiles(views, modulePath)
+	clientFiles, err := codegen.UIClientFilesForVersion(views, modulePath, version)
 	if err != nil {
 		return nil, err
 	}
 
-	packageFiles, err := codegen.UIPackageFiles(views, modulePath)
+	packageFiles, err := codegen.UIPackageFilesForVersion(views, modulePath, version)
 	if err != nil {
 		return nil, err
 	}
@@ -374,4 +451,23 @@ func appendUIFiles(
 	}
 
 	return sourceFiles, nil
+}
+
+const (
+	legacyUIAdapterVersion   = 2
+	reviewedUIAdapterVersion = 3
+)
+
+func uiAdapterVersion(engine *types.Package) int {
+	object := engine.Scope().Lookup("UI")
+	if object == nil {
+		return legacyUIAdapterVersion
+	}
+
+	method, _, _ := types.LookupFieldOrMethod(types.NewPointer(object.Type()), true, engine, "SetText")
+	if method != nil {
+		return reviewedUIAdapterVersion
+	}
+
+	return legacyUIAdapterVersion
 }

@@ -30,6 +30,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-cli-process-${{ hashFiles('mise.toml', 'go.sum') }}-
       - run: mise run test-process-lifecycle
+      - run: mise run test-platform-setup
   test:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -56,6 +57,39 @@ jobs:
       - run: mise run test
       - run: mise run lint
       - run: mise run build
+  web-delivery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GOCACHE: ${{ github.workspace }}/tmp/ci/go-build
+      GOMODCACHE: ${{ github.workspace }}/tmp/ci/go-mod
+      GOMAXPROCS: "2"
+      GOFLAGS: "-p=1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+      - name: Cache Go modules and compiler output
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+            ${{ env.GOMODCACHE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cli-web-delivery-${{ hashFiles('mise.toml', 'go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cli-web-delivery-${{ hashFiles('mise.toml', 'go.sum') }}-
+      - name: Install pinned browser tooling
+        run: mise exec -- npm ci --ignore-scripts
+      - name: Install Chromium and browser system dependencies
+        run: mise exec -- npx playwright install --with-deps chromium --only-shell
+      - name: Verify web release delivery in Chromium
+        run: mise run check-web-delivery
+      - name: Upload browser delivery report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: web-delivery-results
+          path: dist/validation/web-delivery/results.json
+          if-no-files-found: ignore
   materialize-software:
     runs-on: ubuntu-24.04
     timeout-minutes: 10

@@ -8,8 +8,8 @@ import (
 
 type Game struct {
 	engine.Game
-	camera         *engine.EntityCamera3D
-	torch          *engine.EntityLight3D
+	camera         *engine.Camera3D
+	torch          *engine.Light3D
 	torchAim       lightAim
 	torchEnabled   bool
 	bolt           lightBolt
@@ -17,7 +17,7 @@ type Game struct {
 	request        engine.RequestID
 	panel          *engine.UI
 	fps            *FPSController
-	crates         [len(freightStacks)]*engine.EntityWorldSolid
+	crates         [len(freightStacks)]*engine.Solid3D
 	audio          hangarAudio
 	audioPending   bool
 	elevatorFrame  uint64
@@ -123,10 +123,10 @@ func (game *Game) visit(index int) {
 		game.camera.Destroy()
 	}
 	p := viewpoints[index]
-	game.camera = game.NewCamera3D(game.level, engine.CameraSettings{
+	game.camera = game.NewCamera3D(game.level, engine.Camera3DSettings{
 		Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
 		Position: engine.NewVec3(p.x, p.y, p.z), Yaw: p.yaw, Pitch: p.pitch,
-		FOVY: config.CameraFOVY, Near: config.CameraNear, Far: config.CameraFar,
+		VerticalFOV: config.CameraFOVY, NearClip: config.CameraNear, FarClip: config.CameraFar,
 		OrthoHeight:   config.CameraOrthoHeight,
 		ViewportWidth: config.ResolutionWidth, ViewportHeight: config.ResolutionHeight,
 	})
@@ -134,7 +134,7 @@ func (game *Game) visit(index int) {
 	// Keep the walking controller's floor and stair proposals; the body lets
 	// accepted steps push the movable freight through the host's box solver.
 	body, err := game.World(game.level).
-		AttachBody(game.camera.Ref(), engine.BodySettings{Kind: engine.BodyDynamic, Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(.3, .3, .85), Offset: engine.NewVec3(0, 0, -.85)}, Rotate: false, Forces: engine.BodyForces{GravityScale: 1, Buoyancy: false}, Mass: 80, Friction: .5})
+		AttachBody(game.camera.Ref(), engine.BodySettings{Kind: engine.BodyDynamic, Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(.3, .3, .85), Offset: engine.NewVec3(0, 0, -.85)}, AllowRotation: false, Forces: engine.BodyForceSettings{GravityScale: 1, Buoyancy: false}, Mass: 80, Friction: .5})
 	if err != nil {
 		panic(err)
 	}
@@ -149,7 +149,7 @@ func (game *Game) visit(index int) {
 	game.fps.SetCamera(game.camera, body)
 	// The generated hook applies the host's accepted pose to camera.Settings.
 	// Every walking proposal starts from that pose, including on the stairs.
-	if _, err := game.WatchTransform(game.camera.Ref(), game.acceptTorchPose); err != nil {
+	if _, err := game.WatchPose(game.camera.Ref(), game.acceptTorchPose); err != nil {
 		game.status = err.Error()
 	} else {
 		game.status = p.name

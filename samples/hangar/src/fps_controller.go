@@ -12,7 +12,7 @@ import (
 // grounded step assistance before the full player box reaches their edges.
 type FPSController struct {
 	game          *engine.Game
-	camera        *engine.EntityCamera3D
+	camera        *engine.Camera3D
 	body          *engine.Body
 	input         fps.Input
 	walker        fps.Walker
@@ -21,13 +21,13 @@ type FPSController struct {
 	OnTouchMode   func()
 }
 
-type stickOverlay struct{ base, thumb *engine.EntityVector2D }
+type stickOverlay struct{ base, thumb *engine.Shape2D }
 
 func NewFPSController(game *engine.Game) *FPSController {
 	return &FPSController{game: game, input: fps.New(float32(config.ResolutionWidth), float32(config.ResolutionHeight))}
 }
 
-func (controller *FPSController) SetCamera(camera *engine.EntityCamera3D, body *engine.Body) {
+func (controller *FPSController) SetCamera(camera *engine.Camera3D, body *engine.Body) {
 	controller.Release()
 	controller.camera, controller.body = camera, body
 }
@@ -114,7 +114,7 @@ func (controller *FPSController) Update(engine.Frame) {
 	if controller.camera == nil {
 		return
 	}
-	settings := controller.camera.Settings
+	settings := controller.camera.Settings()
 	motion := controller.input.Step(settings.Yaw, settings.Pitch)
 	z := controller.walker.StepUp(
 		settings.Position.X, settings.Position.Y, settings.Position.Z,
@@ -165,11 +165,11 @@ func (controller *FPSController) Help() string {
 func (controller *FPSController) showSticks() {
 	for index := range controller.sticks {
 		stick := controller.input.Sticks[index]
-		base := controller.game.NewVector2D(engine.Circle(fps.StickRadius), engine.NewVec2(stick.X, stick.Y))
+		base := controller.game.NewShape2D(engine.Circle(fps.StickRadius), engine.NewVec2(stick.X, stick.Y))
 		base.SetFill(engine.RGBA(20, 30, 34, 160))
 		base.SetStroke(engine.RGBA(217, 183, 113, 200), 2)
 		base.SetLayer(20)
-		thumb := controller.game.NewVector2D(engine.Circle(23), engine.NewVec2(stick.X, stick.Y))
+		thumb := controller.game.NewShape2D(engine.Circle(23), engine.NewVec2(stick.X, stick.Y))
 		thumb.SetFill(engine.RGBA(217, 183, 113, 220))
 		thumb.SetLayer(21)
 		controller.sticks[index] = stickOverlay{base, thumb}
@@ -183,17 +183,17 @@ func (controller *FPSController) drawSticks() {
 		}
 		stick := controller.input.Sticks[index]
 		base, thumb := engine.NewVec2(stick.X, stick.Y), engine.NewVec2(stick.X+stick.DX, stick.Y+stick.DY)
-		if overlay.base.Position != base {
-			overlay.base.Set(base, engine.NewVec2(1, 1), 0)
+		if overlay.base.Position() != base {
+			overlay.base.SetTransform(base, engine.NewVec2(1, 1), 0)
 		}
-		if overlay.thumb.Position != thumb {
-			overlay.thumb.Set(thumb, engine.NewVec2(1, 1), 0)
+		if overlay.thumb.Position() != thumb {
+			overlay.thumb.SetTransform(thumb, engine.NewVec2(1, 1), 0)
 		}
 		alpha := float32(.35)
 		if stick.ID != 0 {
 			alpha = .8
 		}
-		if overlay.base.Alpha != alpha {
+		if overlay.base.Alpha() != alpha {
 			overlay.base.SetAlpha(alpha)
 			overlay.thumb.SetAlpha(alpha)
 		}

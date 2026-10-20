@@ -195,8 +195,8 @@ func TestMaterialMipAndStrengthPackagedWASMAndReports(t *testing.T) {
 	checkWorldMaterialModule(t, first[0].Bytes, expected)
 
 	reports := first[0].Textures
-	if len(reports) != 4 {
-		t.Fatalf("source + L0 pair + tail report count: %d", len(reports))
+	if len(reports) != 3 {
+		t.Fatalf("packaged L0 pair + tail report count: %d", len(reports))
 	}
 
 	tailWidth, tailHeight := cachedPair.Layout.MipDimensions()
@@ -218,7 +218,7 @@ func TestMaterialMipAndStrengthPackagedWASMAndReports(t *testing.T) {
 		t.Fatal("changed strengths not recorded in level metadata")
 	}
 
-	if !reflect.DeepEqual(first[0].Textures[1:], second[0].Textures[1:]) {
+	if !reflect.DeepEqual(first[0].Textures, second[0].Textures) {
 		t.Fatal("changed controls altered generated texture hashes/recipes/reports")
 	}
 

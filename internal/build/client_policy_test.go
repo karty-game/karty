@@ -61,7 +61,7 @@ func TestGeneratedClientsExcludeUnapprovedDecodersTransitively(t *testing.T) {
 			}
 			defer cleanup()
 
-			checkProducerImports(t, os.DirFS(filepath.Join(root, ".karty")))
+			checkProducerImports(t, os.DirFS(filepath.Join(root, ".karty")), false)
 
 			if err := CheckClientDependencies(t.Context(), root, "go", goTool, stage); err != nil {
 				t.Fatal(err)

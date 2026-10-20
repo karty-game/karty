@@ -453,6 +453,10 @@ try {
           assert.equal(restored.text, before.text);
           assert.deepEqual(restored.choices, before.choices);
           report.checks.push("choice checkpoint survives a complete page/guest restart");
+          // Identical saves intentionally skip storage I/O. Move to another
+          // story state so the injected failure exercises a real changed write.
+          await choose(page, 3);
+          assert.notEqual((await state(page)).text, before.text);
           // A failed write must keep the previous successful checkpoint.
           await page.evaluate(() => {
             globalThis.originalSetItem = Storage.prototype.setItem;
@@ -469,6 +473,11 @@ try {
           await page.evaluate(() => {
             Storage.prototype.setItem = globalThis.originalSetItem;
           });
+          await toolbar(page, 1);
+          await status(page, "Checkpoint restored");
+          const afterFailedWrite = await state(page);
+          assert.equal(afterFailedWrite.text, before.text);
+          assert.deepEqual(afterFailedWrite.choices, before.choices);
           report.checks.push("injected browser quota failure preserves the previous checkpoint");
         }
       }
@@ -1028,27 +1037,35 @@ async function state(page) {
   });
 }
 async function status(page, text) {
-  await page.waitForFunction(
-    (text) =>
-      Object.values(trainProbe.instances).some(
-        (v) =>
-          (v.name === "dialogue.dialogue" && trainDialogue().status?.includes(text)) ||
-          (v.name === "ui.game-screen" && v.values[29]?.text.includes(text)),
-      ),
-    text,
-  );
+  await page.waitForFunction((text) => {
+    const instances = Object.values(trainProbe.instances);
+    if (instances.some((v) => v.name === "dialogue.dialogue")) return trainDialogue().status?.includes(text);
+    return instances.some((v) => v.name === "ui.game-screen" && v.values[29]?.text.includes(text));
+  }, text);
 }
 async function advance(page) {
-  assert.equal((await state(page)).choices.length, 0);
-  if ((await state(page)).revealing) await clickDialogue(page, 0);
+  const previous = await state(page);
+  assert.equal(previous.choices.length, 0);
+  if (previous.revealing) await clickDialogue(page, 0);
   await page.waitForFunction(() =>
     Object.values(trainProbe.instances).some((v) => v.name === "dialogue.dialogue" && trainDialogue().enabled),
   );
   await clickDialogue(page, 0);
-  await page.waitForFunction(() =>
-    Object.values(trainProbe.instances).some((v) => v.name === "dialogue.dialogue" && trainDialogue().text),
-  );
+  // A pause or chapter curtain keeps the old text mounted while input is
+  // disabled. Wait for the resulting story state before clicking the toolbar.
+  await page.waitForFunction((text) => {
+    const dialogue = trainDialogue();
+    const choices = Object.values(trainProbe.instances).some(
+      (v) => v.name === "dialogue.choice" && v.values[1]?.enabled,
+    );
+    return (
+      (dialogue.enabled && dialogue.text && dialogue.text !== text) ||
+      choices ||
+      dialogue.status?.includes("End of the line")
+    );
+  }, previous.text);
 }
+
 async function advanceTo(page, text) {
   for (let n = 0; n < 48; n++) {
     const current = await state(page);

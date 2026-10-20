@@ -4,6 +4,7 @@ package toolchain
 import (
 	"context"
 	"fmt"
+	"os"
 	"runtime"
 
 	"github.com/karty-game/karty/internal/sdk"
@@ -34,7 +35,7 @@ type EnsurePaths struct {
 
 // Ensure verifies that the selected SDK tools are ready to run, downloading
 // missing managed tools into the checksum-verified Karty cache. It does not
-// download tools supplied through explicit command-line overrides.
+// download tools supplied through command-line or environment overrides.
 func Ensure(ctx context.Context, manifest sdk.Manifest, options EnsureOptions) (EnsurePaths, error) {
 	paths := EnsurePaths{}
 	platform := runtime.GOOS + "-" + runtime.GOARCH
@@ -86,7 +87,7 @@ func Ensure(ctx context.Context, manifest sdk.Manifest, options EnsureOptions) (
 }
 
 func ensureTinyGo(ctx context.Context, manifest sdk.Manifest, override, platform string) (string, error) {
-	if override != "" {
+	if override != "" || os.Getenv("KARTY_TINYGO") != "" {
 		return TinyGo(TinyGoOptions{Override: override, Version: manifest.Tools.TinyGo})
 	}
 

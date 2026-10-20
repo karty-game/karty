@@ -2,10 +2,10 @@
 
 The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.
 
-Create the SDK 0.0.14 starter:
+Create the SDK 0.0.15 starter:
 
 ```sh
-karty new --yes --sdk 0.0.14 --template isometric my-game
+karty new --yes --sdk 0.0.15 --template isometric my-game
 cd my-game
 karty dev
 ```
@@ -37,10 +37,10 @@ import (
 type Game struct {
 	engine.Game
 	request    engine.RequestID
-	camera     *engine.EntityCamera3D
-	label      *engine.EntityText2D
+	camera     *engine.Camera3D
+	label      *engine.Text2D
 	controller *controllers.Planar
-	player     *engine.EntityWorldSolid
+	player     *engine.Solid3D
 	focus      controllers.Vec2
 	isoReady   bool
 }
@@ -68,18 +68,18 @@ func main() {
 			}
 			options := game.controller.Options()
 			position := game.controller.CameraPosition(game.focus)
-			game.camera = game.NewCamera3D(event.Handle, engine.CameraSettings{
+			game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
 				Projection: engine.CameraProjectionIsometric,
 				Output:     engine.CameraOutputFull,
 				Position:   engine.NewVec3(float32(position.X), float32(position.Y), float32(position.Z)),
 				Yaw:        float32(options.Yaw), Pitch: float32(options.Pitch),
-				FOVY: 1.05, OrthoHeight: float32(options.Zoom),
-				Near: 0.05, Far: 100,
+				VerticalFOV: 1.05, OrthoHeight: float32(options.Zoom),
+				NearClip: 0.05, FarClip: 100,
 				ViewportWidth: 960, ViewportHeight: 540,
 			})
 			game.camera.SetLayer(-1)
 
-			game.player = game.NewWorldSolid(event.Handle, engine.NewTransform3D(engine.NewVec3(4, 4, 0)), engine.SolidRenderer{Prefab: "player"})
+			game.player = game.NewSolid3D(event.Handle, engine.NewTransform3D(engine.NewVec3(4, 4, 0)), engine.SolidRenderer{Prefab: "player"})
 
 			game.isoReady = true
 
@@ -109,7 +109,7 @@ func (game *Game) keyIsometric(key engine.Key, down bool) {
 		factor = 1 / 1.1
 	}
 	if factor != 1 {
-		settings := game.camera.Settings
+		settings := game.camera.Settings()
 		settings.OrthoHeight = float32(game.controller.ZoomBy(factor))
 		game.camera.SetSettings(settings)
 	}
@@ -122,7 +122,7 @@ func (game *Game) updateIsometric() {
 		return
 	}
 	// Follow only the host-accepted actor position, never an unaccepted proposal.
-	pose := game.player.Transform3D
+	pose := game.player.Transform()
 	accepted := controllers.Vec2{X: float64(pose.Position.X), Y: float64(pose.Position.Y)}
 	delta := game.controller.Step(accepted)
 	// This starter owns an empty 8m room; replace its bounds with navigation
@@ -135,7 +135,7 @@ func (game *Game) updateIsometric() {
 	}
 	game.focus = game.controller.Follow(game.focus, accepted, false)
 	position := game.controller.CameraPosition(game.focus)
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	settings.Position = engine.NewVec3(float32(position.X), float32(position.Y), float32(position.Z))
 	game.camera.SetSettings(settings)
 }
@@ -169,7 +169,7 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 
 `Step` proposes movement from the accepted player position. Apply your game
 constraints; the SDK refreshes the accepted pose automatically before the next
-update. `WatchTransform` adds an optional notification. `Follow` takes that
+update. `WatchPose` adds an optional notification. `Follow` takes that
 accepted position. The fixed diagonal camera keeps
 its angle as the player moves; `ZoomBy` clamps the visible world height.
 

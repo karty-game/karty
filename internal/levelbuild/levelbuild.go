@@ -351,6 +351,19 @@ func build(
 		return Artifact{}, err
 	}
 
+	data, processedTextures, features, metadata, err = finalizeLevelTextures(
+		ctx,
+		data,
+		processedTextures,
+		textureMetadata,
+		features,
+		metadata,
+		assets,
+	)
+	if err != nil {
+		return Artifact{}, err
+	}
+
 	module, err := encodeLevelModule(definition.Level.Name, metadata, data)
 	if err != nil {
 		return Artifact{}, err

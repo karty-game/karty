@@ -14,7 +14,7 @@ type cameraPointer struct {
 
 const moveStickRadius float32 = 72
 
-type moveStickOverlay struct{ base, thumb *engine.EntityVector2D }
+type moveStickOverlay struct{ base, thumb *engine.Shape2D }
 
 func (game *Game) controlHelp() string {
 	if game.isometric {
@@ -152,11 +152,11 @@ func (game *Game) drawMoveStick(x, y, dx, dy float32) {
 	y = max(moveStickRadius+8, min(float32(config.ResolutionHeight)-moveStickRadius-8, y))
 	basePosition := engine.NewVec2(x, y)
 	if game.moveStick.base == nil {
-		base := game.NewVector2D(engine.Circle(moveStickRadius), basePosition)
+		base := game.NewShape2D(engine.Circle(moveStickRadius), basePosition)
 		base.SetFill(engine.RGBA(20, 30, 34, 140))
 		base.SetStroke(engine.RGBA(217, 183, 113, 200), 2)
 		base.SetLayer(20)
-		thumb := game.NewVector2D(engine.Circle(23), basePosition)
+		thumb := game.NewShape2D(engine.Circle(23), basePosition)
 		thumb.SetFill(engine.RGBA(217, 183, 113, 220))
 		thumb.SetLayer(21)
 		game.moveStick = moveStickOverlay{base, thumb}
@@ -167,20 +167,20 @@ func (game *Game) drawMoveStick(x, y, dx, dy float32) {
 	}
 	thumbPosition := engine.NewVec2(x+dx, y+dy)
 	for _, item := range []struct {
-		entity   *engine.EntityVector2D
+		entity   *engine.Shape2D
 		position engine.Vec2
 	}{{game.moveStick.base, basePosition}, {game.moveStick.thumb, thumbPosition}} {
-		if item.entity.Position != item.position {
-			item.entity.Set(item.position, engine.NewVec2(1, 1), 0)
+		if item.entity.Position() != item.position {
+			item.entity.SetTransform(item.position, engine.NewVec2(1, 1), 0)
 		}
-		if item.entity.Alpha != 1 {
+		if item.entity.Alpha() != 1 {
 			item.entity.SetAlpha(1)
 		}
 	}
 }
 
 func (game *Game) hideMoveStick() {
-	if game.moveStick.base != nil && game.moveStick.base.Alpha != 0 {
+	if game.moveStick.base != nil && game.moveStick.base.Alpha() != 0 {
 		game.moveStick.base.SetAlpha(0)
 		game.moveStick.thumb.SetAlpha(0)
 	}

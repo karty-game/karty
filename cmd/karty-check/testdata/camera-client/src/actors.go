@@ -33,7 +33,7 @@ func (follower *markerFollower) Follow(pose engine.Transform3D) {
 	}
 	follower.lastPose, follower.hasPose = pose, true
 }
-func cameraTransform(settings engine.CameraSettings) engine.Transform3D {
+func cameraTransform(settings engine.Camera3DSettings) engine.Transform3D {
 	pose := engine.NewTransform3D(settings.Position)
 	pose.Yaw, pose.Pitch = settings.Yaw, settings.Pitch
 	return pose

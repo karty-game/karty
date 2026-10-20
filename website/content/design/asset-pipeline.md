@@ -108,6 +108,12 @@ neighbouring materials from bleeding into each other. The host loads those
 prepared textures and samples them while drawing. It never runs Materialize
 on a player's machine.
 
+World materials use the packaged atlas directly. The build omits their individual
+texture payloads when they have no separate sprite, animation, particle,
+vegetation or level UI use. This also avoids decoding those duplicate images and
+packing an unused sprite atlas at runtime. Textures outside the material atlas
+remain available as standalone level assets.
+
 A cold build does more work. Later builds reuse maps whose source, preset,
 generation settings and tool identity still match. Changing one material
 regenerates that material and repacks the atlas; unchanged maps are reused.
@@ -149,3 +155,12 @@ into bounded binary resources before cartridge compilation. Runtime game code
 uses the compiled records, with no general JSON, CSV, XML, gob or YAML/TOML
 decoder dependency. Development-server messages, source-package inventories,
 editor schemas and authoring reports remain tooling formats.
+
+Candidate SDK 0.0.15 packs game images and all remaining level images into
+build-time QOI atlas pages with a binary region layout (`texture/atlas@1`).
+Sprites, UI, animation, particles and vegetation keep stable logical references
+and original dimensions. Identical processed images share one rectangle;
+connected particle frames share one page. The verified cache includes source
+bytes, names, frame groups and packing revision. Reports count emitted page
+bytes and decoded memory once, and retain source records for inspection.
+Runtime loads the prepared pages and views; it does not rebuild these atlases.

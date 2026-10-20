@@ -21,10 +21,17 @@ if (!mock) {
   const scripts = [...html.matchAll(/<script\s+src="([^"]+)"\s*>/g)].map((match) => match[1]);
   assert.deepEqual(
     scripts.map((path) => path.split("?")[0]),
-    ["wasm_exec.js", "karty.js"],
-    "runtime must load before the launcher",
+    ["karty-web.js"],
+    "delivery selects and verifies the release before loading the runtime",
   );
-  for (const path of scripts) {
+  assert.match(html, /await KartyWebRuntime\.ready/);
+  assert.match(html, /\["wasm_exec\.js\?v=[a-f0-9]+", "karty\.js\?v=[a-f0-9]+"\]/);
+  const deferred = [...html.matchAll(/<script\s+defer\s+src="([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(deferred.length, 1);
+  assert.equal(deferred[0].split("?")[0], "karty-web-status.js");
+  const launchScripts = [...html.matchAll(/"((?:wasm_exec|karty)\.js\?v=[a-f0-9]+)"/g)].map((match) => match[1]);
+  assert.equal(launchScripts.length, 2);
+  for (const path of [...scripts, ...deferred, ...launchScripts]) {
     const [name, query] = path.split("?");
     const bytes = await readFile(join(directory, name));
     assert.equal(query, "v=" + createHash("sha256").update(bytes).digest("hex").slice(0, 16));

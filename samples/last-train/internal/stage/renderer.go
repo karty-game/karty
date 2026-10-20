@@ -14,14 +14,14 @@ import (
 const width, height = float32(1280), float32(720)
 
 type sprite struct {
-	entity      *engine.EntitySprite2D
+	entity      *engine.Sprite2D
 	last        dialogue.StageTransform
 	initialized bool
 	asset       engine.LevelTextureRef
 }
 
 type particle struct {
-	entity      *engine.EntityVector2D
+	entity      *engine.Shape2D
 	last        dialogue.StageParticle
 	initialized bool
 }
@@ -48,7 +48,7 @@ func New(game *engine.Game, motion *dialogue.Stage, packs *art.Loader) *Renderer
 	}
 	r := &Renderer{Motion: motion, game: game, Art: packs}
 	for i := range r.rain {
-		e := game.NewVector2D(engine.Line(engine.NewVec2(-5, 25)), engine.NewVec2(0, 0))
+		e := game.NewShape2D(engine.Line(engine.NewVec2(-5, 25)), engine.NewVec2(0, 0))
 		e.SetStroke(engine.RGBA(190, 211, 230, 255), .8)
 		e.SetLayer(-70)
 		e.SetAlpha(0)
@@ -141,12 +141,12 @@ func (s *sprite) apply(game *engine.Game, asset engine.LevelTextureRef, t dialog
 	}
 
 	if s.asset != asset {
-		s.entity.UpdateLevelAsset(asset)
+		s.entity.SetLevelTexture(asset)
 		s.asset = asset
 	}
 	if !s.initialized || t.X != s.last.X || t.Y != s.last.Y || t.Height != s.last.Height || t.Rotation != s.last.Rotation {
 		scale := t.Height * height / sourceHeight
-		s.entity.Set(engine.NewVec2(t.X*width, t.Y*height), engine.NewVec2(scale, scale), t.Rotation)
+		s.entity.SetTransform(engine.NewVec2(t.X*width, t.Y*height), engine.NewVec2(scale, scale), t.Rotation)
 	}
 	if !s.initialized || t.Alpha != s.last.Alpha {
 		s.entity.SetAlpha(t.Alpha)
@@ -160,7 +160,7 @@ func (p *particle) apply(next dialogue.StageParticle) {
 	}
 	if next.Alpha > 0 {
 		scale := next.Height * height / 25
-		p.entity.Set(engine.NewVec2(next.X*width, next.Y*height), engine.NewVec2(scale, scale), 0)
+		p.entity.SetTransform(engine.NewVec2(next.X*width, next.Y*height), engine.NewVec2(scale, scale), 0)
 	}
 	if !p.initialized || next.Alpha != p.last.Alpha {
 		p.entity.SetAlpha(next.Alpha)

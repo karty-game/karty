@@ -80,7 +80,7 @@ func TestCreateGameWritesPinnedSDKFiles(t *testing.T) {
 		t.Errorf("generated main.go uses an unavailable movement helper: %s", mainSource)
 	}
 
-	for _, required := range []string{"First Spark", "NewVector2D", "NewText2D", "OnInputReset"} {
+	for _, required := range []string{"First Spark", "NewShape2D", "NewText2D", "OnInputReset"} {
 		if !strings.Contains(string(mainSource), required) {
 			t.Errorf("generated starter missing %q", required)
 		}

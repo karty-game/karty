@@ -49,8 +49,8 @@ import "example.com/my-game/.karty/engine"
 type Game struct {
     engine.Game
     request engine.RequestID
-    camera *engine.EntityCamera3D
-    label *engine.EntityText2D
+    camera *engine.Camera3D
+    label *engine.Text2D
 }
 
 //go:wasmexport karty_register
@@ -63,10 +63,10 @@ func main() {
         },
         OnLevelReady: func(event engine.LevelReady) {
             if event.RequestID != game.request { return }
-            game.camera = game.NewCamera3D(event.Handle, engine.CameraSettings{
+            game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
                 Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-                Position: engine.NewVec3(2, 2, 1.7), FOVY: 1.05,
-                Near: 0.05, Far: 100, OrthoHeight: 10,
+                Position: engine.NewVec3(2, 2, 1.7), VerticalFOV: 1.05,
+                NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
                 ViewportWidth: 960, ViewportHeight: 540,
             })
             game.camera.SetLayer(-1)

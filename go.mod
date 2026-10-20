@@ -8,9 +8,10 @@ require (
 	github.com/charmbracelet/log v1.0.0
 	github.com/cwbudde/algo-dsp v0.13.0
 	github.com/disintegration/imaging v1.6.2
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/google/jsonschema-go v0.4.3
-	github.com/karty-game/karty-sdk v0.0.15
-	github.com/karty-game/karty-ui v0.0.8
+	github.com/karty-game/karty-sdk v0.0.16
+	github.com/karty-game/karty-ui v0.0.9
 	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.4.1
@@ -34,7 +35,6 @@ require (
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
-	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/hchargois/qoi v1.0.0 // indirect

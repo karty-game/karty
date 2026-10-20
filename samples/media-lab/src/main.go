@@ -8,8 +8,8 @@ import (
 type Game struct {
 	engine.Game
 
-	status         *engine.EntityText2D
-	musicLabel     *engine.EntityText2D
+	status         *engine.Text2D
+	musicLabel     *engine.Text2D
 	musicEnabled   bool
 	burstRemaining uint8
 }
@@ -26,46 +26,46 @@ func (game *Game) Initialize() {
 	badge := game.NewSprite2D(assets.TextureGalleryBadge, engine.NewVec2(780, 170))
 	badge.SetLayer(-5)
 
-	shade := game.NewVector2D(engine.Rectangle(960, 540), engine.NewVec2(0, 0))
+	shade := game.NewShape2D(engine.Rectangle(960, 540), engine.NewVec2(0, 0))
 	shade.SetFill(engine.RGBA(7, 13, 30, 112))
 	shade.SetLayer(-10)
 
 	title := game.NewText2D("Karty media lab", engine.NewVec2(330, 42))
-	title.SetSize(34)
+	title.SetFontSize(34)
 	title.SetLayer(10)
 	formats := game.NewText2D("Images: QOI  |  Sound: QOA  |  Video: MPEG-1", engine.NewVec2(246, 96))
-	formats.SetSize(18)
+	formats.SetFontSize(18)
 	formats.SetColor(engine.RGBA(210, 226, 255, 255))
 	formats.SetLayer(10)
 
 	videoControls := game.NewText2D("VIDEO: left = play/replay | right = stop", engine.NewVec2(310, 318))
-	videoControls.SetSize(15)
+	videoControls.SetFontSize(15)
 	videoControls.SetLayer(12)
 	game.status = game.NewText2D("Video: click center-left to play, center-right to stop", engine.NewVec2(244, 350))
-	game.status.SetSize(18)
+	game.status.SetFontSize(18)
 	game.status.SetLayer(10)
 
 	game.addButton(20, engine.RGBA(39, 100, 150, 235), "ONE SHOT", "8-bit mono WAV")
 	game.addButton(333, engine.RGBA(150, 62, 65, 235), "36-START BURST", "24-bit mono WAV")
 	game.addButton(646, engine.RGBA(75, 94, 156, 235), "BGM REPLAY: OFF", "16-bit stereo WAV / 4 sec")
 	game.musicLabel = game.NewText2D("BGM REPLAY: OFF", engine.NewVec2(680, 425))
-	game.musicLabel.SetSize(22)
+	game.musicLabel.SetFontSize(22)
 	game.musicLabel.SetLayer(12)
 }
 
 func (game *Game) addButton(x float32, color engine.Color, title, subtitle string) {
-	panel := game.NewVector2D(engine.Rectangle(294, 112), engine.NewVec2(x, 408))
+	panel := game.NewShape2D(engine.Rectangle(294, 112), engine.NewVec2(x, 408))
 	panel.SetFill(color)
 	panel.SetStroke(engine.RGBA(205, 225, 255, 255), 2)
 	panel.SetLayer(8)
 
 	if title != "BGM REPLAY: OFF" {
 		label := game.NewText2D(title, engine.NewVec2(x+34, 425))
-		label.SetSize(22)
+		label.SetFontSize(22)
 		label.SetLayer(12)
 	}
 	detail := game.NewText2D(subtitle, engine.NewVec2(x+34, 468))
-	detail.SetSize(15)
+	detail.SetFontSize(15)
 	detail.SetColor(engine.RGBA(220, 232, 255, 255))
 	detail.SetLayer(12)
 }
