@@ -1147,7 +1147,18 @@ pre code {
             <li><a href="isometric.html" aria-current="false">3D isometric</a></li>
             
           </ul>
-             
+           
+          <p>On this page</p>
+          <ol class="on-page">
+            
+            <li><a href="#install-the-cli">Install the CLI</a></li>
+            
+            <li><a href="#create-a-game">Create a game</a></li>
+            
+            <li><a href="#choose-your-game">Choose your game</a></li>
+            
+          </ol>
+            
           <p>For every game</p>
           <ul aria-label="Shared topics">
             
@@ -1189,6 +1200,17 @@ pre code {
               
             </ul>
              
+            <p>On this page</p>
+            <ol class="on-page">
+              
+              <li><a href="#install-the-cli">Install the CLI</a></li>
+              
+              <li><a href="#create-a-game">Create a game</a></li>
+              
+              <li><a href="#choose-your-game">Choose your game</a></li>
+              
+            </ol>
+            
           </div>
         </details>
       </nav>
@@ -1209,15 +1231,28 @@ pre code {
           ></a>
         </div>
         
-        <div class="guide-body"><h1 id="choose-your-game">Choose your game</h1>
+        <div class="guide-body"><h1 id="getting-started">Getting Started</h1>
 <p><a href="../design/why.html">Why Karty?</a> · <a href="../design/">How Karty works</a></p>
-<p>Create a project and open its browser preview:</p>
+<h2 id="install-the-cli">Install the CLI</h2>
+<p>Download the <a href="https://github.com/karty-game/karty/releases/latest">Karty CLI</a> archive for your operating system and CPU, then extract it.</p>
+<ul>
+<li>On Linux or macOS, put <code>karty</code> in <code>~/.local/bin</code>. Create the folder if needed.</li>
+</ul>
+<p>Add <code>export PATH=&#34;$HOME/.local/bin:$PATH&#34;</code> to your shell profile.</p>
+<ul>
+<li>On Windows, put <code>karty.exe</code> in a folder such as <code>C:\Karty</code>.</li>
+</ul>
+<p>Add that folder to your user <code>Path</code> in Environment Variables.</p>
+<p>Open a new terminal and run <code>karty --help</code> to check the installation.</p>
+<h2 id="create-a-game">Create a game</h2>
+<p>Create a project and start its browser preview:</p>
 <pre><code class="language-sh">karty new my-game
 cd my-game
 karty dev
 </code></pre>
-<p>Install the <a href="https://github.com/karty-game/karty/releases/latest">Karty CLI</a> first if needed. The first setup downloads tools. Later builds reuse them. Open the address printed by <code>karty dev</code>, then choose the kind of game you want to write below.</p>
+<p>Open the address printed by <code>karty dev</code>. The first setup downloads the SDK and build tools. Later builds reuse them.</p>
 <p>Your project pins an exact SDK. Keep <code>karty.toml</code>, Go source, and source assets in Git. The CLI recreates <code>.karty/</code> and <code>dist/</code>. Use <code>.karty/docs/</code> for the API reference that matches your project.</p>
+<h2 id="choose-your-game">Choose your game</h2>
 <p>Choose the <a href="2d.html">2D game</a>, <a href="fps.html">first-person game</a>, or <a href="isometric.html">isometric game</a> guide.</p>
 <p>The 2D path covers sprites, vector shapes, and text on a flat canvas. <a href="ui.html">Menus and layouts</a> and <a href="media.html">sound and video</a> work with every game path.</p>
 </div>
