@@ -20,7 +20,7 @@ jobs:
       - uses: jdx/mise-action@v4
       - name: Restore sample lightmap bakes
         id: bake-cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: samples/*/.karty/bakes
           key: ${{ runner.os }}-sample-bakes-v1-${{ github.sha }}
@@ -32,7 +32,7 @@ jobs:
         run: mise run build-samples -- --cdn
       - name: Save sample lightmap bakes
         if: steps.bake-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: samples/*/.karty/bakes
           key: ${{ steps.bake-cache.outputs.cache-primary-key }}
