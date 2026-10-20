@@ -1,86 +1,51 @@
 # Karty
 
-Build small games in Go, with a CLI for creating projects, previewing changes
-and packaging releases.
+Build retro-inspired 2D and 3D games. Karty handles live reloading, asset preparation, and packaging.
 
 [Play the demos](https://karty-game.github.io/karty/main/) ·
-[Game guides](https://karty-game.github.io/karty/main/guide/) ·
+[Getting Started](https://karty-game.github.io/karty/main/guide/) ·
 [CLI releases](https://github.com/karty-game/karty/releases/latest)
 
-- Make retro first-person games, isometric adventures, 2D games and [visual novels](samples/last-train/README.md).
-- Build 3D rooms from floor plans, heights and reusable shapes.
-- Package a WebAssembly cartridge for the browser, Linux, macOS or Windows.
-
-Built on [Ebitengine](https://ebitengine.org/) and [EbitenUI](https://github.com/ebitenui/ebitenui).
+- 🐹 **Your game, written in Go.** Build game logic with Go’s simplicity, speed and
+  type safety, powered by [Ebitengine](https://ebitengine.org/) and
+  [EbitenUI](https://github.com/ebitenui/ebitenui).
+- 👾 **Retro looks. Modern workflow.** Create 2D and 3D games inspired by the ’90s
+  and early 2000s, with tools built for today’s development workflow.
+- ✨ **Give your game a signature look.** Shape the mood with built-in
+  post-processing effects and presets, from CRT-inspired visuals to handheld
+  palettes.
+- 📦 **One cartridge. Web and desktop.** Package your game as a portable WebAssembly
+  cartridge and run it with Karty’s hosts in browsers or on Linux, macOS and
+  Windows.
+- 🌐 **Less asset plumbing. More game.** Let the build pipeline prune unused assets,
+  pack atlases and handle optimization, chunking and caching ahead of time.
+- 🚀 **From terminal to playable.** Create projects, preview changes and package
+  releases from the CLI, locally or in CI.
 
 > [!WARNING]
 > Karty is under active development. APIs, project formats and features may change.
 
-| First-person Hangar                                                                                                                       | Dimetric Vigil                                                                                                   |
-| ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [![The Hangar's lit reactor room, viewed at player height.](samples/hangar/preview.jpg)](https://karty-game.github.io/karty/main/hangar/) | [![A pilgrim at the candlelit altar of a dark abbey crypt.](samples/vigil/preview.jpg)](samples/vigil/README.md) |
-
-## Start a game
-
-Download the [CLI release](https://github.com/karty-game/karty/releases/latest)
-for your development machine, extract it, and put `karty` on your `PATH`.
-See [supported platforms](https://karty-game.github.io/karty/main/guide/share.html)
-for developer tool requirements.
-
-This checkout's starters and samples use [SDK 0.0.14](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.0.14).
-The CLI downloads the pinned SDK and matching hosts when needed. See
-[contributor setup](CONTRIBUTING.md#local-setup) for working from source.
-
-```sh
-karty new my-game
-cd my-game
-karty dev
-```
-
-In a terminal, `new` offers blank, 2D, first-person, isometric and UI starters, plus
-optional Git and GitHub Actions setup. Use `--yes --template 2d` for scripts.
-
-Open the preview address printed by `karty dev`. The first setup downloads the
-project's pinned SDK and tools; later builds reuse them. Save changes to update
-the preview. Compatible lighting, material and global UI edits update live;
-code and structural changes reload the game. Build errors leave the previous
-game running. See [the setup guide](https://karty-game.github.io/karty/main/guide/start.html)
-for details.
-
-Press Ctrl+C to stop the preview, then package your game:
-
-```sh
-karty build --target web
-karty build --target native
-```
-
-Share the complete `dist/web/` or `dist/native/` directory. Keep your source and
-`karty.toml` in Git; the CLI recreates `.karty/` and `dist/`. Your project's
-`.karty/docs/` contains the reference for its exact SDK.
+| [FPS](https://karty-game.github.io/karty/main/hangar/)                                                                                                | [Isometric Adventure](https://karty-game.github.io/karty/main/vigil/)                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [![The Hangar's lit reactor room, viewed at player height.](samples/hangar/preview.jpg)](https://karty-game.github.io/karty/main/hangar/)             | [![A pilgrim at the candlelit altar of a dark abbey crypt.](samples/vigil/preview.jpg)](https://karty-game.github.io/karty/main/vigil/)             |
+| **[3D World Exploration](https://karty-game.github.io/karty/main/terrain/)**                                                                          | **[Visual Novel Dialogue](https://karty-game.github.io/karty/main/last-train/)**                                                                    |
+| [![A sandy coastal cove with a wooden jetty, palms and a lighthouse.](samples/terrain/preview.jpg)](https://karty-game.github.io/karty/main/terrain/) | [![Mara aboard a warmly lit train carriage on a rainy night.](samples/last-train/preview.jpg)](https://karty-game.github.io/karty/main/last-train/) |
 
 ## CLI commands
 
 Run `karty --help` for an overview, or append `--help` to any command for its
 options.
 
-| Command                       | Purpose                                   |
-| ----------------------------- | ----------------------------------------- |
-| `karty new`                   | Create a game project                     |
-| `karty dev`                   | Preview your game as you edit             |
-| `karty build`                 | Build your game for web or desktop        |
-| `karty serve`                 | Preview a built web game                  |
-| `karty fmt` / `karty lint`    | Format and check your Go code             |
-| `karty schema`                | Update editor suggestions for level files |
-| `karty package`               | Share and reuse game packages             |
-| `karty render bake`           | Bake level lighting                       |
-| `karty render screenshot`     | Save level screenshots as PNGs            |
-| `karty sdk current`           | Show this CLI's default SDK version       |
-| `karty sdk install VERSION`   | Install an SDK version                    |
-| `karty sdk toolchain install` | Install this project's build tools        |
-
-Rendering commands live under `render`; SDK and toolchain management live under
-`sdk`. The earlier `karty bake`, `karty screenshot` and `karty toolchain install`
-spellings remain available for existing scripts, but are hidden from root help.
+| Command                    | Purpose                            |
+| -------------------------- | ---------------------------------- |
+| `karty new`                | Create a game project              |
+| `karty dev`                | Preview your game as you edit      |
+| `karty build`              | Build your game for web or desktop |
+| `karty serve`              | Preview a built web game           |
+| `karty fmt` / `karty lint` | Format and check your Go code      |
+| `karty package`            | Share and reuse game packages      |
+| `karty render bake`        | Bake level lighting                |
+| `karty render screenshot`  | Save level screenshots as PNGs     |
 
 ## Explore Karty
 
