@@ -1,11 +1,11 @@
 # Karty
 
 Build retro-inspired 2D and 3D games.
-Karty handles live reloading, asset preparation, and packaging.
+Karty handles live reloading, asset preparation, and packaging for you.
 
-[Play the demos](https://karty-game.github.io/karty/main/) ·
 [Getting Started](https://karty-game.github.io/karty/main/guide/) ·
-[CLI releases](https://github.com/karty-game/karty/releases/latest)
+[Play the demos](https://karty-game.github.io/karty/main/) ·
+[Releases](https://github.com/karty-game/karty/releases/latest)
 
 > [!WARNING]
 > Karty is under active development. APIs, project formats and features may change.
