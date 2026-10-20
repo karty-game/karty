@@ -29,10 +29,10 @@ Build retro-inspired 2D and 3D games with Karty.
 
 ## Samples
 
-| [FPS](https://karty-game.github.io/karty/main/hangar/)                                                                                                | [Isometric Adventure](https://karty-game.github.io/karty/main/vigil/)                                                                               |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [![The Hangar's lit reactor room, viewed at player height.](samples/hangar/preview.jpg)](https://karty-game.github.io/karty/main/hangar/)             | [![A pilgrim at the candlelit altar of a dark abbey crypt.](samples/vigil/preview.jpg)](https://karty-game.github.io/karty/main/vigil/)             |
-| **[3D World Exploration](https://karty-game.github.io/karty/main/terrain/)**                                                                          | **[Visual Novel Dialogue](https://karty-game.github.io/karty/main/last-train/)**                                                                    |
+|                                                [FPS](https://karty-game.github.io/karty/main/hangar/)                                                 |                                        [Isometric Adventure](https://karty-game.github.io/karty/main/vigil/)                                        |
+| :---------------------------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------: |
+|       [![The Hangar's lit reactor room, viewed at player height.](samples/hangar/preview.jpg)](https://karty-game.github.io/karty/main/hangar/)       |       [![A pilgrim at the candlelit altar of a dark abbey crypt.](samples/vigil/preview.jpg)](https://karty-game.github.io/karty/main/vigil/)       |
+|                                     **[3D World Exploration](https://karty-game.github.io/karty/main/terrain/)**                                      |                                       **[Visual Novel](https://karty-game.github.io/karty/main/last-train/)**                                       |
 | [![A sandy coastal cove with a wooden jetty, palms and a lighthouse.](samples/terrain/preview.jpg)](https://karty-game.github.io/karty/main/terrain/) | [![Mara aboard a warmly lit train carriage on a rainy night.](samples/last-train/preview.jpg)](https://karty-game.github.io/karty/main/last-train/) |
 
 ## CLI commands
