@@ -1213,8 +1213,8 @@ pre code {
 <h2 id="transform-2d">Transform 2D</h2>
 <p><code>Transform2D</code> places an entity in logical canvas pixels. X grows right and Y grows down. Rotation uses radians.</p>
 <p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Method</th><th scope="col">Effect</th></tr></thead><tbody><tr><td><code>Set(position, scale, rotation)</code></td><td>Replaces the complete transform</td></tr><tr><td><code>Translate(dx, dy)</code></td><td>Adds a displacement</td></tr><tr><td><code>Scale(x, y)</code></td><td>Sets the scale factors</td></tr><tr><td><code>Rotate(angle)</code></td><td>Adds an angle</td></tr></tbody></table></div>
-<pre><code class="language-go">func place(sprite *engine.EntitySprite2D) {
-    sprite.Set(engine.NewVec2(240, 180), engine.NewVec2(2, 2), 0)
+<pre><code class="language-go">func place(sprite *engine.Sprite2D) {
+    sprite.SetTransform(engine.NewVec2(240, 180), engine.NewVec2(2, 2), 0)
     sprite.Translate(1, 0)
     sprite.Rotate(0.01)
 }
@@ -1223,9 +1223,9 @@ pre code {
 <p><a href="cameras.html#camera-2d">Camera 2D</a> · <a href="../guide/2d.html">2D guide</a></p>
 <h2 id="transform-3d">Transform 3D</h2>
 <p><code>Transform3D</code> uses X/Y for the floor plan and Z for height. Samples use metres. <code>Yaw</code>, <code>Pitch</code> and <code>Roll</code> use radians; camera yaw zero faces positive Y and positive pitch looks down.</p>
-<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">API</th><th scope="col">Behavior</th></tr></thead><tbody><tr><td><code>NewTransform3D(position)</code></td><td>Creates a pose with unit scale</td></tr><tr><td><code>ref.SetPose(pose)</code></td><td>Proposes a new world pose</td></tr><tr><td><code>WatchTransform(ref, callback)</code></td><td>Delivers host-accepted poses after movement resolution</td></tr><tr><td><code>subscription.Stop()</code></td><td>Stops transform notifications</td></tr></tbody></table></div>
+<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">API</th><th scope="col">Behavior</th></tr></thead><tbody><tr><td><code>NewTransform3D(position)</code></td><td>Creates a pose with unit scale</td></tr><tr><td><code>ref.SetPose(pose)</code></td><td>Proposes a new world pose</td></tr><tr><td><code>WatchPose(ref, callback)</code></td><td>Delivers host-accepted poses after movement resolution</td></tr><tr><td><code>subscription.Stop()</code></td><td>Stops transform notifications</td></tr></tbody></table></div>
 <p>Accepted poses synchronize automatically. Read <code>sprite.Ref().Pose()</code> for the next movement baseline; a watch adds an optional notification:</p>
-<pre><code class="language-go">func step(sprite *engine.EntityWorldSprite, dx float32) error {
+<pre><code class="language-go">func step(sprite *engine.Sprite3D, dx float32) error {
     accepted, known := sprite.Ref().Pose()
     if !known { return nil }
     accepted.Position.X += dx

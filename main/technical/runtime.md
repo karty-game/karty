@@ -28,11 +28,11 @@ screen. `OnStop` only runs at cartridge shutdown.
 ## Entities and components
 
 Typed entities expose the components they support. For example,
-`EntityVector2D` has transform, fill, alpha and drawing-layer methods.
+`Shape2D` has transform, fill, alpha and drawing-layer methods.
 
 ```go
-func marker(game *engine.Game) *engine.EntityVector2D {
-    dot := game.NewVector2D(engine.Circle(16), engine.NewVec2(240, 180))
+func marker(game *engine.Game) *engine.Shape2D {
+    dot := game.NewShape2D(engine.Circle(16), engine.NewVec2(240, 180))
     dot.SetFill(engine.RGBA(110, 231, 204, 255))
     dot.SetLayer(10)
     return dot
@@ -91,7 +91,7 @@ func character(game *engine.Game, level engine.LevelHandle, entity engine.Entity
         Mode: engine.WorldPlanar,
         Min: engine.Vec2{}, Max: engine.Vec2{X: 20, Y: 10}, CellSize: .5,
     }); err != nil { return nil, err }
-    return world.AttachBody(entity, engine.CharacterBody())
+    return world.AttachBody(entity, engine.CharacterBodySettings())
 }
 
 func inspect(world engine.World, player *engine.Body) (engine.RequestID, error) {

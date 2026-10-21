@@ -1,0 +1,1277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1218" />
+    <meta
+      name="description"
+      content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages."
+    />
+    <title>Web delivery / Karty</title>
+    
+    <style>
+      :root {
+  color-scheme: dark;
+  --canvas: #0b1218;
+  --surface: #111d26;
+  --surface-raised: #172630;
+  --ink: #edf4f5;
+  --body: #c4d2d8;
+  --muted: #93a8b2;
+  --line: #283d48;
+  --accent: #6ee7cc;
+  --accent-ink: #09231e;
+  --focus: #baf7e9;
+  --radius: 16px;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+body {
+  margin: 0;
+  isolation: isolate;
+  background: var(--canvas);
+  color: var(--body);
+  font-size: 16px;
+  line-height: 1.75;
+}
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 540px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 82% 0, #14363480, transparent 60%);
+}
+a {
+  color: var(--accent);
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+a:hover {
+  color: var(--focus);
+}
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 5px;
+  border-radius: 3px;
+}
+::selection {
+  background: #287868;
+  color: white;
+}
+h1,
+h2,
+h3 {
+  color: var(--ink);
+  font-weight: 650;
+}
+h1 {
+  margin: 0 0 1.25rem;
+  font-size: clamp(2.7rem, 5.2vw, 4.2rem);
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.035em;
+  line-height: 1.3;
+}
+h3 {
+  font-size: 1.12rem;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+p {
+  margin: 1rem 0;
+}
+img {
+  max-width: 100%;
+}
+.skip {
+  position: fixed;
+  top: -6rem;
+  left: 1rem;
+  z-index: 20;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 650;
+}
+.skip:focus {
+  top: 1rem;
+}
+.site-header {
+  border-bottom: 1px solid var(--line);
+  background: #0b1218e8;
+}
+.header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.05rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 1.3rem;
+  font-weight: 750;
+  letter-spacing: -0.055em;
+}
+.brand svg {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  color: var(--accent);
+}
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.site-nav a {
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 550;
+  text-decoration: none;
+}
+.site-nav a:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.site-nav a[aria-current="page"] {
+  background: #1b3c36;
+  color: var(--accent);
+}
+.site-nav .github {
+  margin-left: 0.65rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.external-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--accent);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "";
+  height: 6px;
+  width: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 42px;
+  padding: 0.6rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.86rem;
+  font-weight: 650;
+  text-decoration: none;
+  line-height: 1.4;
+}
+.button:hover {
+  background: var(--focus);
+  color: var(--accent-ink);
+}
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 550;
+  text-decoration: none;
+}
+.text-link:hover {
+  text-decoration: underline;
+}
+code {
+  padding: 0.14em 0.35em;
+  border: 1px solid #304450;
+  border-radius: 5px;
+  background: #182730;
+  color: #d8f0e9;
+  font:
+    0.85em/1.7 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  overflow-wrap: anywhere;
+}
+pre {
+  margin: 1.5rem 0;
+  padding: 1.2rem 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #071016;
+  box-shadow: inset 0 1px #ffffff04;
+  overflow-x: auto;
+  tab-size: 4;
+}
+.guide-body code.command-flag {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.8rem;
+  line-height: 1.75;
+  overflow-wrap: normal;
+}
+.site-footer {
+  width: calc(100% - 4rem);
+  max-width: 1216px;
+  margin: 0 auto;
+  border-top: 1px solid var(--line);
+  padding: 2rem 0 2.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.site-footer p {
+  margin: 0.5rem 0 0;
+}
+.footer-brand {
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem 1.5rem;
+}
+.footer-links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.footer-links a:hover {
+  color: var(--accent);
+}
+
+/* Guide: a quiet reading column beside a compact, persistent chapter list. */
+.guide-layout {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 216px minmax(0, 1fr);
+  gap: 4rem;
+  padding: 3.25rem 2rem 5rem;
+}
+.guide-nav {
+  position: sticky;
+  top: 2rem;
+  align-self: start;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.technical-page .desktop-toc {
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.guide-nav p {
+  margin: 1.8rem 0.75rem 0.6rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 650;
+}
+.guide-nav p:first-child {
+  margin-top: 1.6rem;
+}
+.guide-nav ul,
+.guide-nav ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.guide-nav li {
+  margin: 0.12rem 0;
+}
+.guide-nav a {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.guide-nav a:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.guide-nav a[aria-current="page"] {
+  background: #17342f;
+  border-color: #31564a;
+  color: var(--accent);
+  font-weight: 600;
+}
+.guide-nav .nav-home {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+.nav-home svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.guide-nav .on-page {
+  border-left: 1px solid var(--line);
+  margin-left: 0.8rem;
+}
+.guide-nav .on-page a {
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  font-size: 0.77rem;
+}
+.mobile-toc {
+  display: none;
+}
+.guide-main {
+  min-width: 0;
+  max-width: 900px;
+}
+.page-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.4rem;
+}
+.page-tools .text-link {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+.page-tools .text-link:hover {
+  color: var(--accent);
+}
+.guide-body h1 {
+  max-width: 16ch;
+}
+.guide-body h1 + p {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--body);
+  font-size: 1.08rem;
+}
+.guide-body p,
+.guide-body > ul {
+  max-width: 72ch;
+}
+.guide-body h2 {
+  border-top: 1px solid var(--line);
+  padding-top: 2.1rem;
+  margin: 3rem 0 1rem;
+  font-size: 1.65rem;
+}
+.guide-body h3 {
+  margin: 1.8rem 0 0.8rem;
+}
+.guide-body ul {
+  padding-left: 1.4rem;
+}
+.guide-body li {
+  margin: 0.65rem 0;
+}
+.guide-body li::marker {
+  color: var(--accent);
+}
+.guide-body figure {
+  margin: 2rem 0;
+}
+.guide-body figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.design-page .guide-body img[src$=".svg"],
+.technical-page .guide-body img[src$=".svg"] {
+  max-width: 32rem;
+  margin-inline: auto;
+}
+.guide-body figcaption {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.65;
+}
+.table-wrap {
+  max-width: 100%;
+  margin: 1.8rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.table-wrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.table-hint {
+  display: none;
+}
+.table-wrap table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.table-wrap th,
+.table-wrap td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+.table-wrap th {
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-weight: 600;
+}
+.table-wrap tr:last-child td {
+  border-bottom: 0;
+}
+.guide-body .journey {
+  max-width: 400px;
+  margin: 2rem auto;
+}
+.journey svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.journey rect {
+  fill: var(--surface-raised);
+  stroke: var(--line);
+}
+.journey text {
+  fill: var(--ink);
+}
+.journey path {
+  stroke: var(--accent);
+}
+.paths {
+  margin-top: 2.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.path {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+.path:hover {
+  border-color: #4c8a7a;
+  background: #172b33;
+  color: var(--ink);
+}
+.path img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-bottom: 1px solid var(--line);
+}
+.path-details {
+  flex: 1;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+}
+.path h2 {
+  margin: 0 0 0.6rem;
+  padding: 0;
+  border: 0;
+  font-size: 1.1rem;
+  letter-spacing: -0.025em;
+}
+.path p {
+  margin: 0 0 1.2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.path .card-cta {
+  margin-top: auto;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.card-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+.card-cta svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* Samples use the same cards, palette, navigation and spacing as the guide. */
+.gallery-main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3.5rem 2rem 5rem;
+}
+.gallery-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 4rem;
+  align-items: center;
+  padding-bottom: 3rem;
+}
+.gallery-hero .eyebrow {
+  margin: 0 0 1.5rem;
+}
+.gallery-hero h1 {
+  max-width: 11ch;
+}
+.gallery-lead {
+  max-width: 48ch;
+  color: var(--body);
+  font-size: 1.05rem;
+}
+.starter-card {
+  padding: 1.5rem;
+  border: 1px solid #31534a;
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, #18342e, var(--surface));
+}
+.starter-card .eyebrow {
+  margin: 0 0 0.9rem;
+  font-size: 0.63rem;
+}
+.starter-card h2 {
+  font-size: 1.35rem;
+}
+.starter-card p {
+  margin: 0.65rem 0 1rem;
+  font-size: 0.8rem;
+  color: #a7c1be;
+}
+.starter-card pre {
+  margin: 1rem 0 1.2rem;
+  padding: 0.85rem 1rem;
+  background: #091a19;
+  border-color: #31534a;
+}
+.starter-card pre code {
+  font-size: 0.75rem;
+}
+.starter-card .text-link {
+  font-size: 0.8rem;
+}
+.sample-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.sample-section-header h2 {
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+.sample-count {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+.samples {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.samples > li {
+  min-width: 0;
+}
+.sample-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transition: border-color 160ms ease;
+}
+.sample-card:hover {
+  border-color: #476573;
+}
+.preview {
+  display: block;
+  overflow: hidden;
+  background: #060d12;
+  border-bottom: 1px solid var(--line);
+}
+.preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.sample-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+}
+.sample-details h2 {
+  font-size: 1.3rem;
+}
+.sample-details p {
+  margin: 0.7rem 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+.sample-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-top: auto;
+}
+.sample-actions .text-link {
+  color: var(--body);
+  font-size: 0.78rem;
+}
+.sample-actions .text-link:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 1050px) {
+  .guide-layout {
+    gap: 2.5rem;
+    grid-template-columns: 192px minmax(0, 1fr);
+  }
+  .paths {
+    grid-template-columns: 1fr;
+  }
+  .path {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+  .path img {
+    height: 100%;
+    aspect-ratio: auto;
+    border-bottom: 0;
+    border-right: 1px solid var(--line);
+  }
+  .path-details {
+    padding: 1rem;
+  }
+  .path p {
+    margin-bottom: 0.7rem;
+  }
+  .gallery-hero {
+    gap: 2rem;
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  .site-footer {
+    margin-right: 2rem;
+    margin-left: 2rem;
+  }
+}
+@media (max-width: 800px) {
+  .guide-body .table-hint {
+    display: block;
+    margin-bottom: -1rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .technical-page .table-hint {
+    display: none;
+  }
+  .technical-page .table-wrap table {
+    min-width: 0;
+  }
+  .technical-page .table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .technical-page .table-wrap tbody,
+  .technical-page .table-wrap tr,
+  .technical-page .table-wrap td {
+    display: block;
+  }
+  .technical-page .table-wrap tr + tr {
+    border-top: 1px solid var(--line);
+  }
+  .technical-page .table-wrap td {
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .technical-page .table-wrap td + td {
+    padding-top: 0;
+  }
+  .header-inner {
+    padding: 0.85rem 1.25rem;
+    gap: 1rem;
+  }
+  .site-nav a {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  .site-nav .github {
+    margin-left: 0.2rem;
+    padding-left: 0.7rem;
+  }
+  .guide-layout {
+    display: block;
+    padding: 1.5rem 1.25rem 3rem;
+  }
+  .guide-nav {
+    position: static;
+    margin: 0 0 2rem;
+  }
+  .desktop-toc {
+    display: none;
+  }
+  .mobile-toc {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+  }
+  .mobile-toc summary {
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 0.84rem;
+    font-weight: 550;
+  }
+  .mobile-toc[open] summary {
+    border-bottom: 1px solid var(--line);
+  }
+  .mobile-toc .mobile-links {
+    padding: 0.25rem 0.5rem 0.8rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 0.5rem;
+  }
+  .mobile-links .nav-home,
+  .mobile-links > p,
+  .mobile-links .on-page {
+    grid-column: 1 / -1;
+  }
+  .technical-page .mobile-links > ul {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mobile-links > p {
+    margin: 1rem 0.75rem 0.3rem;
+  }
+  .page-tools {
+    margin-bottom: 1.25rem;
+  }
+  .guide-body h1 {
+    font-size: clamp(2.5rem, 8vw, 3.6rem);
+  }
+  .gallery-main {
+    padding: 2.5rem 1.25rem 3rem;
+  }
+  .gallery-hero {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+  }
+  .gallery-hero h1 {
+    max-width: 16ch;
+  }
+  .starter-card {
+    padding: 1.25rem;
+  }
+  .starter-card pre {
+    max-width: 28rem;
+  }
+  .samples {
+    gap: 1rem;
+  }
+  .sample-details {
+    padding: 1.1rem;
+  }
+  .sample-details h2 {
+    font-size: 1.1rem;
+  }
+  .site-footer {
+    width: calc(100% - 2.5rem);
+    margin-right: 1.25rem;
+    margin-left: 1.25rem;
+    padding-top: 1.5rem;
+  }
+}
+@media (max-width: 560px) {
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+  .brand {
+    font-size: 1.15rem;
+    gap: 0.45rem;
+  }
+  .brand svg {
+    width: 26px;
+    height: 26px;
+  }
+  .site-nav {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.1rem;
+  }
+  .site-nav a {
+    padding-inline: 0.35rem;
+    font-size: 0.75rem;
+  }
+  .site-nav .github {
+    margin-left: 0;
+    padding-left: 0.35rem;
+  }
+  .github .external-icon {
+    display: none;
+  }
+  .samples {
+    grid-template-columns: 1fr;
+  }
+  .sample-details {
+    padding: 1.25rem;
+  }
+  .sample-details h2 {
+    font-size: 1.25rem;
+  }
+  .page-tools {
+    align-items: flex-start;
+  }
+  .page-tools .eyebrow {
+    max-width: 12rem;
+    font-size: 0.6rem;
+  }
+  .page-tools .text-link {
+    font-size: 0.7rem;
+  }
+  .path {
+    display: flex;
+  }
+  .path img {
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-bottom: 1px solid var(--line);
+    border-right: 0;
+  }
+  .path-details {
+    padding: 1.25rem;
+  }
+  .path h2 {
+    font-size: 1.25rem;
+  }
+  .path p {
+    font-size: 0.88rem;
+  }
+  .site-footer {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .footer-links {
+    justify-content: flex-start;
+  }
+  pre {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+}
+@media (max-width: 360px) {
+  .header-inner {
+    flex-wrap: wrap;
+    row-gap: 0.65rem;
+  }
+  .site-nav {
+    flex-wrap: nowrap;
+  }
+  .site-nav a {
+    flex: 1;
+    padding-inline: 0.15rem;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+  .site-nav .github {
+    padding-left: 0.15rem;
+    justify-content: center;
+  }
+  .gallery-hero h1 {
+    font-size: 2.25rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .path,
+  .sample-card {
+    transition: none;
+  }
+}
+@media print {
+  :root {
+    color-scheme: light;
+    --canvas: white;
+    --ink: #172630;
+    --body: #172630;
+    --muted: #40535e;
+    --line: #ccd6db;
+    --surface: #f3f6f7;
+    --surface-raised: #f3f6f7;
+    --accent: #186f60;
+  }
+  body {
+    font-size: 11pt;
+  }
+  body::before,
+  .site-header,
+  .guide-nav,
+  .site-footer,
+  .page-tools,
+  .starter-card {
+    display: none;
+  }
+  .guide-layout,
+  .gallery-main {
+    display: block;
+    padding: 0;
+  }
+  .guide-main {
+    max-width: none;
+  }
+  h1 {
+    font-size: 28pt;
+  }
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+  figure,
+  .path,
+  .sample-card {
+    break-inside: avoid;
+  }
+  a {
+    color: inherit;
+  }
+  code {
+    background: #f3f6f7;
+    border-color: #ccd6db;
+    color: #172630;
+  }
+  pre {
+    white-space: pre-wrap;
+    overflow: visible;
+    box-shadow: none;
+    background: #f3f6f7;
+  }
+  pre code {
+    color: #172630;
+  }
+  .paths {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .path {
+    display: flex;
+  }
+  .path img {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+    </style>
+  </head>
+  <body class="guide-page design-page">
+    <a class="skip" href="#guide">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="../" aria-label="Karty samples">
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path
+              d="M7 5v22m0-11L25 5M7 16l18 11"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span>Karty</span>
+        </a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <a href="../">Samples</a>
+          <a
+            href="../guide/"
+            
+            >Guides</a
+          >
+          <a
+            href="../technical/"
+            
+            >API</a
+          >
+          <a href="index.html"  aria-current="page" 
+            >Design</a
+          >
+          <a class="github" href="https://github.com/karty-game/karty"
+            >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M6 3H3v10h10v-3M8 3h5v5M13 3 7 9"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg
+          ></a>
+        </nav>
+      </div>
+    </header>
+    <div class="guide-layout">
+      
+      <nav
+        class="guide-nav"
+        aria-label="Design pages"
+      >
+        <div class="desktop-toc">
+          
+          <a class="nav-home" href="index.html" aria-current="false"
+            >Design overview</a
+          >
+          <p>Design</p>
+          <ul aria-label="Design pages">
+            
+            <li><a href="why.html" aria-current="false">Why Karty?</a></li>
+            
+            <li><a href="architecture.html" aria-current="false">Architecture</a></li>
+            
+            <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+            
+            <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
+            
+            <li><a href="packages.html" aria-current="false">Packages</a></li>
+            
+            <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
+            
+            <li><a href="web-delivery-v1.html" aria-current="page">Web delivery</a></li>
+            
+          </ul>
+           
+          <p>On this page</p>
+          <ol class="on-page">
+            
+            <li><a href="#release-identity">Release identity</a></li>
+            
+            <li><a href="#starting-and-updating">Starting and updating</a></li>
+            
+            <li><a href="#background-downloads">Background downloads</a></li>
+            
+            <li><a href="#cache-lifetime-and-browser-support">Cache lifetime and browser support</a></li>
+            
+            <li><a href="#publishing-a-release">Publishing a release</a></li>
+            
+            <li><a href="#validation">Validation</a></li>
+            
+          </ol>
+            
+        </div>
+        <details class="mobile-toc">
+          <summary>Browse design</summary>
+          <div class="mobile-links">
+            
+            <a class="nav-home" href="index.html" aria-current="false"
+              >Design overview</a
+            >
+            <p>Design</p>
+            <ul aria-label="Design pages">
+              
+              <li><a href="why.html" aria-current="false">Why Karty?</a></li>
+              
+              <li><a href="architecture.html" aria-current="false">Architecture</a></li>
+              
+              <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+              
+              <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
+              
+              <li><a href="packages.html" aria-current="false">Packages</a></li>
+              
+              <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
+              
+              <li><a href="web-delivery-v1.html" aria-current="page">Web delivery</a></li>
+              
+            </ul>
+               
+            <p>On this page</p>
+            <ol class="on-page">
+              
+              <li><a href="#release-identity">Release identity</a></li>
+              
+              <li><a href="#starting-and-updating">Starting and updating</a></li>
+              
+              <li><a href="#background-downloads">Background downloads</a></li>
+              
+              <li><a href="#cache-lifetime-and-browser-support">Cache lifetime and browser support</a></li>
+              
+              <li><a href="#publishing-a-release">Publishing a release</a></li>
+              
+              <li><a href="#validation">Validation</a></li>
+              
+            </ol>
+            
+          </div>
+        </details>
+      </nav>
+      <main class="guide-main" id="guide">
+        <div class="page-tools">
+          <span class="eyebrow"
+            >Karty design</span
+          >
+          <a class="text-link" href="web-delivery-v1.md" download
+            >Download Markdown<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M8 2v8m-3-3 3 3 3-3M3 11v3h10v-3"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg
+          ></a>
+        </div>
+        
+        <div class="guide-body"><h1 id="web-delivery">Web delivery</h1>
+<p>Web delivery version 1 uses a service worker to download the rest of a game after initialization, reuse unchanged assets across releases and support offline play. The CLI stages the worker and browser shell with each web build. Development mode keeps its existing live-update flow.</p>
+<p>The server handles HTTP compression normally. Delivery does not require Brotli sidecars, a custom decompressor or special compression configuration. Cache identities and integrity checks describe the decoded bytes, whether the server sends gzip, Brotli or an uncompressed response.</p>
+<h2 id="release-identity">Release identity</h2>
+<p>Each build writes an immutable JSON manifest at <code>karty-releases/&lt;sha256&gt;.json</code>. The SHA-256 identifies the exact manifest bytes. A small <code>karty-latest.json</code> pointer identifies the release to launch. Both use format version 1.</p>
+<p>The manifest lists the browser shell, runtime glue, launcher, host, cartridge, optional debugging scripts and every staged KLD, audio and video file. Each entry records its URL, decoded SHA-256, decoded size, content type and startup or background role. Assets embedded inside KLD files travel with those files.</p>
+<p>Local files have exact sizes. Signed shared-host metadata currently provides a digest without a decoded size; that entry uses size zero. The worker still requires its digest to match and enforces the host&#39;s 128 MiB decoded limit. A shared host remains shared: making a release manifest does not copy it into each game distribution.</p>
+<p>Downloads enter the persistent content cache only after their decoded length and digest pass validation. Cache keys use content digests, so an unchanged file is reused even when a new manifest lists it. A partial or corrupt response never becomes a valid cached asset. The worker hashes streams incrementally to avoid buffering entire audio and video files in JavaScript.</p>
+<h2 id="starting-and-updating">Starting and updating</h2>
+<p>At an online launch, the browser checks <code>karty-latest.json</code> with HTTP caching bypassed. It verifies the manifest and prepares the release&#39;s startup files before starting the game. Once the server confirms a newer release, a failed manifest, integrity check or required startup download produces an update error; it does not silently launch an older cached game.</p>
+<p>A running session stays pinned to the release it selected. Its cartridge, levels and assets keep their original identities when another tab starts a newer release. Pins survive service-worker restarts. Checking for an update does not replace the game underneath the player; the update applies on a new launch. Worker-code updates also wait for existing sessions to finish. The restart control can activate an available worker update explicitly; other open sessions retain their release pins.</p>
+<p>When the network is unavailable, a new session can use the last complete downloaded release. The previous complete release remains available while its replacement is incomplete. Completing a download in an older open tab does not replace a newer complete release as the default for offline play.</p>
+<h2 id="background-downloads">Background downloads</h2>
+<p>After game initialization, the browser starts downloading remaining assets in the background. Foreground requests take priority; an interrupted background download can be resumed later. Content-addressed KLD files include levels, chunks and their packed assets, so later visits can reuse them without a network round trip.</p>
+<p>The shell reports progress and exposes pause and resume controls. Automatic downloads pause when the browser requests data saving or reports a slow 2G connection. A deliberate resume can override that policy.</p>
+<p>Offline readiness means every file required by the selected release is present and verified. Partial downloads, storage errors or insufficient quota keep the release incomplete. A background cache failure leaves online game access available and reports why offline downloading paused.</p>
+<h2 id="cache-lifetime-and-browser-support">Cache lifetime and browser support</h2>
+<p>Each game&#39;s cache is scoped to its own deployment URL. Cleanup retains files referenced by active sessions, the selected release and the last complete offline release. Files shared by those releases remain stored once. Obsolete files and release metadata can then be removed without clearing another game&#39;s cache.</p>
+<p>Offline play requires service-worker and CacheStorage support in a secure context, normally HTTPS or localhost. Registration restrictions fall back to ordinary online loading. Browser storage is subject to quota limits and eviction; a previous successful download is not a permanent storage guarantee. The shell checks current cache contents before reporting offline readiness.</p>
+<h2 id="publishing-a-release">Publishing a release</h2>
+<p>Upload the game files and immutable release manifest first. Publish <code>karty-latest.json</code> last, after those files are available. This prevents the discovery pointer from announcing an incomplete deployment. Serve the discovery pointer and root HTML with revalidation or no-store behavior; the worker also bypasses HTTP caches when checking for a release.</p>
+<p>Keep previously published hash-named content files available while older sessions may still request them. An open old tab might not have downloaded every level before the update. Its release pin prevents switching to a different level, but cannot recover an old file that the server has deleted and the browser never cached. Build output describes the current release; deployment tooling is responsible for retaining older published content when needed.</p>
+<p>Mutable startup paths also need coherent deployment. Keep old sessions&#39; startup files cached and publish the new files before their pointer. The complete old offline release is retained until the new release is fully downloaded.</p>
+<h2 id="validation">Validation</h2>
+<p>Run <code>mise run check-web-delivery</code> after installing the browser tooling with <code>mise run install-browser</code>. It creates synthetic releases through the production staging code and executes update, prefetch, cancellation and offline-cache checks in real Chromium. Reports go to <code>dist/validation/web-delivery/results.json</code>.</p>
+<p>This validates browser delivery behavior. The fixture&#39;s small WASM files do not establish game execution, rendering, device performance or physical audio. <code>mise run check-web</code> separately executes the staged JavaScript and Go/TinyGo cartridges.</p>
+</div>
+        
+      </main>
+    </div>
+    <footer class="site-footer">
+      <div>
+        <span class="footer-brand">Karty</span>
+        <p>Go, KartUI, and one CLI for browser and desktop games.</p>
+        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+      </div>
+      <div class="footer-links">
+        
+        <a href="../guide/">Start a game</a>
+        
+        <a href="../">Explore samples</a>
+      </div>
+    </footer>
+  </body>
+</html>
+
+

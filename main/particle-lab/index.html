@@ -27,6 +27,10 @@ Regenerate with: karty build --target web
     button:focus-visible { outline: 3px solid #8eb9ff; outline-offset: 3px; }
     #fullscreen { position: fixed; z-index: 5; right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); background: #10131ccc; }
     #error-detail { max-height: 25vh; overflow: auto; overflow-wrap: anywhere; font-size: 13px; }
+    #offline-download { position: fixed; z-index: 6; top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); max-width: min(360px, calc(100vw - 16px)); padding: 8px 12px; border-radius: 10px; background: #10131ce6; font-size: 12px; }
+    #offline-download p { margin: 0 0 6px; }
+    #offline-download progress { margin: 6px 0; }
+    #offline-download button { min-height: 36px; padding: 4px 10px; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -41,6 +45,11 @@ Regenerate with: karty build --target web
     </div>
   </main>
   <button id="fullscreen" type="button" hidden aria-label="Enter fullscreen">Fullscreen</button>
+  <aside id="offline-download" hidden aria-label="Offline download">
+    <p id="offline-status" role="status" aria-live="polite"></p>
+    <progress id="offline-progress" hidden aria-label="Offline game download"></progress>
+    <button id="offline-action" type="button" hidden>Download for offline</button>
+  </aside>
   <script>
     // Keep this small bootstrap independent of the launcher: even a failed
     // download or syntax error in either external script must be visible.
@@ -70,14 +79,32 @@ Regenerate with: karty build --target web
         report(String(event.reason && event.reason.message || event.reason));
       });
       setTimeout(function () {
-        if (!window.kartyLauncherStarted) {
+        if (!window.kartyLauncherStarted && !window.KartyWebRuntime?.preparing) {
           report("The launcher did not start. A script may be blocked, cached, or replaced by the proxy. Try reloading this page.");
         }
       }, 20000);
     })();
   </script>
   
-  <script src="wasm_exec.js?v=265b9a8216c42dad"></script>
-  <script src="karty.js?v=b189a081ee892077"></script>
+  <script src="karty-web.js?v=3e379b353333674e"></script>
+  <script defer src="karty-web-status.js?v=68296d47003e0349"></script>
+  <script>
+    (async function () {
+      const delivery = await KartyWebRuntime.ready;
+      for (const src of ["wasm_exec.js?v=265b9a8216c42dad", "karty.js?v=d8b9aadb4d2b89cf"]) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = src;
+          const file = delivery.startupFiles?.find(file => new URL(file.url, document.baseURI).pathname === new URL(src, document.baseURI).pathname);
+          if (file) {
+            script.integrity = "sha256-" + btoa(String.fromCharCode(...file.sha256.match(/../g).map(byte => parseInt(byte, 16))));
+          }
+          script.onload = resolve;
+          script.onerror = () => reject(new Error("Could not load script: " + src));
+          document.body.appendChild(script);
+        });
+      }
+    })().catch(error => window.dispatchEvent(new ErrorEvent("error", { message: error.message || String(error) })));
+  </script>
 </body>
 </html>

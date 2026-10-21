@@ -1135,7 +1135,7 @@ pre code {
                 stroke-width="1.2"
                 stroke-linejoin="round"
               /></svg
-            >Start here</a
+            >Getting Started</a
           >
           <p>Choose your game</p>
           <ul>
@@ -1209,7 +1209,7 @@ pre code {
           <div class="mobile-links">
             
             <a class="nav-home" href="index.html" aria-current="false"
-              >Start here</a
+              >Getting Started</a
             >
             <p>Choose your game</p>
             <ul>
@@ -1304,8 +1304,8 @@ pre code {
 cd my-game
 karty dev
 </code></pre>
-<p>The terminal wizard offers <code>blank</code>, <code>2d</code>, <code>fps</code>, <code>isometric</code>, and <code>ui</code>, plus optional Git initialization and GitHub Actions. Use <code class="command-flag">--yes --template 2d</code> for scripts. Use <code class="command-flag">--no-template</code> for just the base folders and an empty entry point. Current starters use SDK 0.0.14, which the CLI installs when needed.</p>
-<p>The SDK 0.0.14 2D, first-person and isometric starters use one reusable controllers package with different presets. They include its source under <code>packages/controllers/</code> so generated projects work without a published module. Keep that folder in Git. Blank and UI projects add controls only when needed.</p>
+<p>The terminal wizard offers <code>blank</code>, <code>2d</code>, <code>fps</code>, <code>isometric</code>, and <code>ui</code>, plus optional Git initialization and GitHub Actions. Use <code class="command-flag">--yes --template 2d</code> for scripts. Use <code class="command-flag">--no-template</code> for just the base folders and an empty entry point. Current starters use SDK 0.0.16, which the CLI installs when needed.</p>
+<p>The SDK 0.0.16 2D, first-person and isometric starters use one reusable controllers package with different presets. They include its source under <code>packages/controllers/</code> so generated projects work without a published module. Keep that folder in Git. Blank and UI projects add controls only when needed.</p>
 <p>Open the address printed by the preview. Change a color or a movement speed in <code>src/main.go</code>, save, and try it again. The first setup downloads tools; later builds reuse them.</p>
 <figure class="journey"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" role="img" aria-label="Create with karty new → Preview with karty dev → Build a 2D or 3D scene → Build with karty build → Share the output folder"><rect x="20" y="12" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="37" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Create with karty new</text><path d="M200 56V72M195 67L200 72L205 67" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="76" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="101" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Preview with karty dev</text><path d="M200 120V136M195 131L200 136L205 131" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="140" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="165" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Build a 2D or 3D scene</text><path d="M200 184V200M195 195L200 200L205 195" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="204" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="229" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Build with karty build</text><path d="M200 248V264M195 259L200 264L205 259" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="268" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="293" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Share the output folder</text></svg></figure>
 <p>Keep <code>karty.toml</code>, your Go source, and source assets in Git. The CLI recreates <code>.karty/</code> and <code>dist/</code>. Your project pins an exact SDK; use its <code>.karty/docs/</code> reference for API names and supported features.</p>
@@ -1343,8 +1343,8 @@ import &#34;example.com/my-game/.karty/engine&#34;
 type Game struct {
     engine.Game
     request engine.RequestID
-    camera *engine.EntityCamera3D
-    label *engine.EntityText2D
+    camera *engine.Camera3D
+    label *engine.Text2D
 }
 
 //go:wasmexport karty_register
@@ -1357,10 +1357,10 @@ func main() {
         },
         OnLevelReady: func(event engine.LevelReady) {
             if event.RequestID != game.request { return }
-            game.camera = game.NewCamera3D(event.Handle, engine.CameraSettings{
+            game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
                 Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-                Position: engine.NewVec3(2, 2, 1.7), FOVY: 1.05,
-                Near: 0.05, Far: 100, OrthoHeight: 10,
+                Position: engine.NewVec3(2, 2, 1.7), VerticalFOV: 1.05,
+                NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
                 ViewportWidth: 960, ViewportHeight: 540,
             })
             game.camera.SetLayer(-1)
@@ -1475,8 +1475,8 @@ nearGoal, won bool
     dx, dy := position.X-6, position.Y-6
     game.nearGoal = dx*dx+dy*dy &lt; 1
 }
-updateGoal(game.camera.Settings.Position)
-_, err := game.WatchTransform(game.camera.Ref(), func(pose engine.Transform3D) {
+updateGoal(game.camera.Settings().Position)
+_, err := game.WatchPose(game.camera.Ref(), func(pose engine.Transform3D) {
     // The host has applied collision and portal movement.
     updateGoal(pose.Position)
 })
@@ -1484,7 +1484,7 @@ if err != nil {
     game.status = err.Error()
 }
 </code></pre>
-<p>Propose movement from <code>camera.Settings</code>, which the SDK keeps synchronized automatically with the accepted pose. Do not accumulate a separate guessed player position.</p>
+<p>Propose movement from <code>camera.Settings()</code>, which the SDK keeps synchronized automatically with the accepted pose. Do not accumulate a separate guessed player position.</p>
 <p>The position check defines a one-metre trigger around <code>(6, 6)</code>. Call this method from your existing <code>OnKeyDown</code> handler to finish when the player presses E there. Keep the movement handler in that hook too.</p>
 <pre><code class="language-go">func (game *Game) onKeyDown(key engine.Key) {
     if key == engine.KeyE &amp;&amp; game.nearGoal &amp;&amp; !game.won {
@@ -1545,30 +1545,30 @@ func (game *Game) stopMedia() {
 </code></pre>
 <p>For <code>my-game</code>, the assets import is <code>example.com/my-game/.karty/assets</code>. Use the generated names in <code>.karty/assets/</code>. Play the click once per action, and start music once when entering a screen or level.</p>
 <h3 id="choose-how-a-sound-reaches-the-player">Choose how a sound reaches the player</h3>
-<p>Use <code>PlaySound</code> for centered interface feedback. Use <code>PlaySFXFrom</code> for a short effect that follows an object, such as a door opening. For a humming reactor or a moving crate&#39;s scraping loop, use a sound emitter. Music and environment streams provide a soundtrack or broad ambience; they have no source position.</p>
+<p>Use <code>PlaySound</code> for centered interface feedback. Use <code>PlaySoundFrom</code> for a short effect that follows an object, such as a door opening. For a humming reactor or a moving crate&#39;s scraping loop, use a sound emitter. Music and environment streams provide a soundtrack or broad ambience; they have no source position.</p>
 <p>Spatial playback changes volume with distance and pans between the left and right speakers. Use mono WAV clips so the host can place them in the stereo field. The <code>channels = &#34;mono&#34;</code> transforms above downmix stereo recordings during the build. Keep emitter loops short: they use decoded sound assets, rather than streaming music. Sound assets are limited to 30 seconds and 6 MiB of decoded PCM per clip.</p>
 <h3 id="set-the-listener-and-update-its-direction">Set the listener and update its direction</h3>
 <p>For a world game, make the camera the audio receiver. Add <code>math</code> to your imports and this method to the room viewer:</p>
 <pre><code class="language-go">func (game *Game) updateAudioReceiver() {
     if game.camera == nil { return }
-    yaw := float64(game.camera.Settings.Yaw)
-    game.SetAudioReceiver(game.camera.Ref(), engine.AudioReceiverOptions{
+    yaw := float64(game.camera.Settings().Yaw)
+    game.SetAudioListener(game.camera.Ref(), engine.AudioListenerOptions{
         Right: engine.NewVec2(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
     })
 }
 </code></pre>
 <p>Call <code>game.updateAudioReceiver()</code> after camera creation in <code>OnLevelReady</code>, and from your existing <code>OnUpdate</code> after movement and turning. Set it again when replacing the camera. The receiver follows the camera&#39;s world position; its output rectangle on screen does not change where the player hears from.</p>
-<p><code>Right</code> is the world direction of the right speaker. A yaw of zero faces positive Y, so the right direction is <code>(1, 0)</code>. The host does not derive this vector from camera yaw: update it as the player turns, or panning will keep the old direction. Camera pitch does not change this horizontal listener basis. For a 2D game, use the player entity as receiver and <code>(1, 0)</code> when positive X should always sound to the right. <code>ClearAudioReceiver()</code> silences spatial playback until another receiver is set.</p>
+<p><code>Right</code> is the world direction of the right speaker. A yaw of zero faces positive Y, so the right direction is <code>(1, 0)</code>. The host does not derive this vector from camera yaw: update it as the player turns, or panning will keep the old direction. Camera pitch does not change this horizontal listener basis. For a 2D game, use the player entity as receiver and <code>(1, 0)</code> when positive X should always sound to the right. <code>ClearAudioListener()</code> silences spatial playback until another receiver is set.</p>
 <h3 id="play-a-positioned-one-shot">Play a positioned one-shot</h3>
 <p>Pass the existing door entity or resolved <code>engine.EntityRef</code> when the door opens. It must be a live audio entity:</p>
 <pre><code class="language-go">func (game *Game) playDoorSound(door engine.EntityRef) {
-    game.PlaySFXFrom(assets.SoundDoorOpen, door, engine.SFXOptions{
+    game.PlaySoundFrom(assets.SoundDoorOpen, door, engine.SpatialSoundOptions{
         Volume: 0.8, NearDistance: 1, FarDistance: 12,
     })
 }
 </code></pre>
 <p>Call this once per opening, rather than every update. The voice follows the door until the clip ends. <code>NearDistance</code> is the range with no distance reduction; volume fades between near and far, and reaches silence at <code>FarDistance</code>. Use the same units as the entity positions: metres for the world guides, canvas coordinates for 2D entities. Set volume explicitly; zero is silent. Use finite values, volume in <code>[0, 4]</code>, a nonnegative near distance, and a far distance greater than near.</p>
-<p><code>PlaySFXFrom</code> uses XY distance. Z height, walls and doors do not obstruct this one-shot API. Use an emitter with <code>Loop: false</code> when a short effect needs XYZ distance or collision obstruction.</p>
+<p><code>PlaySoundFrom</code> uses XY distance. Z height, walls and doors do not obstruct this one-shot API. Use an emitter with <code>Loop: false</code> when a short effect needs XYZ distance or collision obstruction.</p>
 <h3 id="place-a-looping-sound-in-the-world">Place a looping sound in the world</h3>
 <p>Check <code>.karty/docs/audio-emitters.md</code> for emitter support in your project&#39;s selected SDK and matching host. Create this emitter once from <code>OnLevelReady</code>, using <code>event.Handle</code> for the mounted level:</p>
 <pre><code class="language-go">func (game *Game) startReactorSound(level engine.LevelHandle) *engine.SoundEmitter {
@@ -1751,8 +1751,8 @@ jobs:
 </ul>
 <h2 id="draw-a-2d-game">Draw a 2D game</h2>
 <p>Use sprites for image artwork, vectors for shapes, and text for instructions and scores. This example draws all three and lets you collect a circle with keyboard movement.</p>
-<p>Start with the SDK 0.0.14 <code>2d</code> starter, which includes controllers 0.1.0:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.14 --template 2d my-game
+<p>Start with the SDK 0.0.16 <code>2d</code> starter, which includes controllers 0.1.0:</p>
+<pre><code class="language-sh">karty new --yes --sdk 0.0.16 --template 2d my-game
 </code></pre>
 <p>Keep <code>packages/controllers/</code> in Git. For an existing project, import the package using the <a href="../design/packages.html">reusable packages guide</a> first.</p>
 <h3 id="add-a-sprite">Add a sprite</h3>
@@ -1771,9 +1771,9 @@ const speed = 180 // logical pixels per second
 
 type Game struct {
     engine.Game
-    player *engine.EntitySprite2D
-    goal *engine.EntityVector2D
-    label *engine.EntityText2D
+    player *engine.Sprite2D
+    goal *engine.Shape2D
+    label *engine.Text2D
     controller *controllers.Planar
     won bool
 }
@@ -1796,14 +1796,14 @@ func main() {
 
 func (game *Game) start() {
     // Draw the background behind the sprite, goal, and text.
-    background := game.NewVector2D(engine.Rectangle(960, 540), engine.NewVec2(0, 0))
+    background := game.NewShape2D(engine.Rectangle(960, 540), engine.NewVec2(0, 0))
     background.SetFill(engine.RGBA(12, 21, 35, 255))
     background.SetLayer(-1)
     game.player = game.NewSprite2D(assets.TexturePlayer, engine.NewVec2(160, 280))
-    game.goal = game.NewVector2D(engine.Circle(18), engine.NewVec2(760, 350))
+    game.goal = game.NewShape2D(engine.Circle(18), engine.NewVec2(760, 350))
     game.goal.SetFill(engine.RGBA(255, 200, 99, 255))
     game.label = game.NewText2D(&#34;WASD / arrows: collect the gold circle&#34;, engine.NewVec2(32, 24))
-    game.label.SetSize(20)
+    game.label.SetFontSize(20)
     game.label.SetLayer(1)
 }
 
@@ -1811,7 +1811,7 @@ func (game *Game) key(key engine.Key, down bool) {
     if key == engine.KeyR &amp;&amp; down {
         game.controller.Reset()
         game.won = false
-        game.player.Translate(160-game.player.Position.X, 280-game.player.Position.Y)
+        game.player.Translate(160-game.player.Position().X, 280-game.player.Position().Y)
         game.goal.SetAlpha(1)
         game.label.SetText(&#34;WASD / arrows: collect the gold circle&#34;)
     }
@@ -1820,16 +1820,16 @@ func (game *Game) key(key engine.Key, down bool) {
 
 func (game *Game) update(engine.Frame) {
     if game.won { return }
-    delta := game.controller.Step(controllers.Vec2{X: float64(game.player.Position.X), Y: float64(game.player.Position.Y)})
+    delta := game.controller.Step(controllers.Vec2{X: float64(game.player.Position().X), Y: float64(game.player.Position().Y)})
     dx, dy := float32(delta.X), float32(delta.Y)
     if dx != 0 || dy != 0 {
-        x := min(max(game.player.Position.X+dx, 16), 944)
-        y := min(max(game.player.Position.Y+dy, 80), 524)
-        game.player.Translate(x-game.player.Position.X, y-game.player.Position.Y)
+        x := min(max(game.player.Position().X+dx, 16), 944)
+        y := min(max(game.player.Position().Y+dy, 80), 524)
+        game.player.Translate(x-game.player.Position().X, y-game.player.Position().Y)
     }
     // Our game collects the goal within 32 pixels of its centre.
-    dx = game.player.Position.X - game.goal.Position.X
-    dy = game.player.Position.Y - game.goal.Position.Y
+    dx = game.player.Position().X - game.goal.Position().X
+    dy = game.player.Position().Y - game.goal.Position().Y
     if dx*dx + dy*dy &lt; 32*32 {
         game.won = true
         game.goal.SetAlpha(0)
@@ -1856,7 +1856,7 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 <p>Run <code>karty dev</code>. Move with WASD or the arrow keys, reach the circle, then press R to try again. <code>OnInputReset</code> clears held keys when the game loses focus. The preset normalizes diagonal input and converts <code>speed = 180</code> pixels per second into three pixels per fixed 60 Hz update. Camera following, pointer targets and zoom are available on the same preset when your game needs them.</p>
 <h3 id="change-the-drawing">Change the drawing</h3>
 <p>Positions use canvas pixels. The upper left is <code>(0, 0)</code>; X grows right and Y grows down. Sprite and circle positions mark their centres. Rectangle and text positions mark their upper-left corners.</p>
-<p><code>NewSprite2D</code> draws the imported image. <code>NewVector2D</code> draws the rectangle and circle without image files. <code>NewText2D</code> draws the instruction, and <code>SetText</code> changes it when the goal is collected. Higher layers draw above lower ones.</p>
+<p><code>NewSprite2D</code> draws the imported image. <code>NewShape2D</code> draws the rectangle and circle without image files. <code>NewText2D</code> draws the instruction, and <code>SetText</code> changes it when the goal is collected. Higher layers draw above lower ones.</p>
 <p>Try another PNG, change the circle&#39;s radius or color, or move the goal. Use setters such as <code>Translate</code>, <code>SetFill</code>, and <code>SetText</code> to update existing entities instead of creating them again each frame.</p>
 <figure><img src="assets/2d-scene.jpg" alt="A 2D sprite, vector goal, and text drawn by the example." loading="lazy"><figcaption>A 2D sprite, vector goal, and text drawn by the example.</figcaption></figure>
 <h3 id="add-feedback-and-share">Add feedback and share</h3>
@@ -1864,8 +1864,8 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 <p><a href="ui.html">KartUI</a> is optional when you need menus or reusable screen layouts. Its components work with both 2D and 3D games.</p>
 <h2 id="make-a-first-person-game">Make a first-person game</h2>
 <p>The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.</p>
-<p>Create the SDK 0.0.14 starter:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.14 --template fps my-game
+<p>Create the SDK 0.0.16 starter:</p>
+<pre><code class="language-sh">karty new --yes --sdk 0.0.16 --template fps my-game
 cd my-game
 karty dev
 </code></pre>
@@ -1884,8 +1884,8 @@ import (
 type Game struct {
 	engine.Game
 	request                        engine.RequestID
-	camera                         *engine.EntityCamera3D
-	label                          *engine.EntityText2D
+	camera                         *engine.Camera3D
+	label                          *engine.Text2D
 	controller *controllers.FirstPerson
 	fpsReady bool
 }
@@ -1913,12 +1913,12 @@ func main() {
 			if event.RequestID != game.request {
 				return
 			}
-			game.camera = game.NewCamera3D(event.Handle, engine.CameraSettings{
+			game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
 				Projection: engine.CameraProjectionPerspective,
 				Output:     engine.CameraOutputFull,
 				Position:   engine.NewVec3(2, 2, 1.7),
-				Yaw:        0, Pitch: 0, FOVY: 1.05,
-				Near: 0.05, Far: 100, OrthoHeight: 10,
+				Yaw:        0, Pitch: 0, VerticalFOV: 1.05,
+				NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
 				ViewportWidth: 960, ViewportHeight: 540,
 			})
 			game.camera.SetLayer(-1)
@@ -1973,7 +1973,7 @@ func (game *Game) pointerFPS(pointer engine.PointerInput) {
 func (game *Game) updateFPS() {
 	if game.camera == nil || !game.fpsReady { return }
 	// Settings contains the last host-accepted pose automatically.
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	motion := game.controller.Step(settings.Yaw, settings.Pitch)
 	if motion.X == 0 &amp;&amp; motion.Y == 0 &amp;&amp; motion.Yaw == settings.Yaw &amp;&amp; motion.Pitch == settings.Pitch { return }
 	settings.Yaw, settings.Pitch = motion.Yaw, motion.Pitch
@@ -2003,8 +2003,8 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 <p>The interaction guide uses E by default. Use F for interactions here, or remap this starter&#39;s Q/E controls before wiring the interaction hook.</p>
 <h2 id="make-an-isometric-game">Make an isometric game</h2>
 <p>The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.</p>
-<p>Create the SDK 0.0.14 starter:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.14 --template isometric my-game
+<p>Create the SDK 0.0.16 starter:</p>
+<pre><code class="language-sh">karty new --yes --sdk 0.0.16 --template isometric my-game
 cd my-game
 karty dev
 </code></pre>
@@ -2023,10 +2023,10 @@ import (
 type Game struct {
 	engine.Game
 	request    engine.RequestID
-	camera     *engine.EntityCamera3D
-	label      *engine.EntityText2D
+	camera     *engine.Camera3D
+	label      *engine.Text2D
 	controller *controllers.Planar
-	player     *engine.EntityWorldSolid
+	player     *engine.Solid3D
 	focus      controllers.Vec2
 	isoReady   bool
 }
@@ -2054,18 +2054,18 @@ func main() {
 			}
 			options := game.controller.Options()
 			position := game.controller.CameraPosition(game.focus)
-			game.camera = game.NewCamera3D(event.Handle, engine.CameraSettings{
+			game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
 				Projection: engine.CameraProjectionIsometric,
 				Output:     engine.CameraOutputFull,
 				Position:   engine.NewVec3(float32(position.X), float32(position.Y), float32(position.Z)),
 				Yaw:        float32(options.Yaw), Pitch: float32(options.Pitch),
-				FOVY: 1.05, OrthoHeight: float32(options.Zoom),
-				Near: 0.05, Far: 100,
+				VerticalFOV: 1.05, OrthoHeight: float32(options.Zoom),
+				NearClip: 0.05, FarClip: 100,
 				ViewportWidth: 960, ViewportHeight: 540,
 			})
 			game.camera.SetLayer(-1)
 
-			game.player = game.NewWorldSolid(event.Handle, engine.NewTransform3D(engine.NewVec3(4, 4, 0)), engine.SolidRenderer{Prefab: &#34;player&#34;})
+			game.player = game.NewSolid3D(event.Handle, engine.NewTransform3D(engine.NewVec3(4, 4, 0)), engine.SolidRenderer{Prefab: &#34;player&#34;})
 
 			game.isoReady = true
 
@@ -2095,7 +2095,7 @@ func (game *Game) keyIsometric(key engine.Key, down bool) {
 		factor = 1 / 1.1
 	}
 	if factor != 1 {
-		settings := game.camera.Settings
+		settings := game.camera.Settings()
 		settings.OrthoHeight = float32(game.controller.ZoomBy(factor))
 		game.camera.SetSettings(settings)
 	}
@@ -2108,7 +2108,7 @@ func (game *Game) updateIsometric() {
 		return
 	}
 	// Follow only the host-accepted actor position, never an unaccepted proposal.
-	pose := game.player.Transform3D
+	pose := game.player.Transform()
 	accepted := controllers.Vec2{X: float64(pose.Position.X), Y: float64(pose.Position.Y)}
 	delta := game.controller.Step(accepted)
 	// This starter owns an empty 8m room; replace its bounds with navigation
@@ -2121,7 +2121,7 @@ func (game *Game) updateIsometric() {
 	}
 	game.focus = game.controller.Follow(game.focus, accepted, false)
 	position := game.controller.CameraPosition(game.focus)
-	settings := game.camera.Settings
+	settings := game.camera.Settings()
 	settings.Position = engine.NewVec3(float32(position.X), float32(position.Y), float32(position.Z))
 	game.camera.SetSettings(settings)
 }
@@ -2152,7 +2152,7 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 	return 0, false
 }
 </code></pre>
-<p><code>Step</code> proposes movement from the accepted player position. Apply your game constraints; the SDK refreshes the accepted pose automatically before the next update. <code>WatchTransform</code> adds an optional notification. <code>Follow</code> takes that accepted position. The fixed diagonal camera keeps its angle as the player moves; <code>ZoomBy</code> clamps the visible world height.</p>
+<p><code>Step</code> proposes movement from the accepted player position. Apply your game constraints; the SDK refreshes the accepted pose automatically before the next update. <code>WatchPose</code> adds an optional notification. <code>Follow</code> takes that accepted position. The fixed diagonal camera keeps its angle as the player moves; <code>ZoomBy</code> clamps the visible world height.</p>
 <p>Read <code>packages/controllers/docs/presets-v1.md</code> in the generated project for the complete contract, including picking and pointer targets. Extend the game with <a href="textures.html">textures</a>, <a href="prefabs.html">prefabs</a>, <a href="lighting.html">lighting</a> and <a href="interactions.html">interactions</a>, then <a href="share.html">share a build</a>.</p>
 <p>The interaction guide uses E by default. Use F for interactions here, or remap this starter&#39;s Q/E controls before wiring the interaction hook.</p>
 </div>

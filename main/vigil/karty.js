@@ -65,7 +65,7 @@
     }
     return WebAssembly.instantiate(await response.arrayBuffer(), imports);
   });
-  const hostSource = {url:"../runtime/0.0.14/438217478960baa6c8e9c66281e92df8c30ace8598a2f2ef68de690963142878.wasm",sha256:"438217478960baa6c8e9c66281e92df8c30ace8598a2f2ef68de690963142878"};
+  const hostSource = {url:"../runtime/0.0.16/81372851d4f20b2c72f562f1c9f501df81cf746277d4f4bc07d698fe82f5af2d.wasm",sha256:"81372851d4f20b2c72f562f1c9f501df81cf746277d4f4bc07d698fe82f5af2d"};
   const readHostBytes = async (response) => {
     // Startup downloads have a fixed bound, independent of server headers.
     const maxBytes = 128 * 1024 * 1024;
@@ -522,7 +522,7 @@
       state("loading-cartridge");
       status("Loading game cartridge…");
       go = new Go();
-      return loadClientWasm("game.kart?v=e3b795283219c8c0", imports);
+      return loadClientWasm("game.kart?v=5ccbb4bccb42925b", imports);
     })
     .then((result) => {
       client = result.instance;
@@ -556,6 +556,9 @@
               return;
             }
             state("running");
+            // Downloads start after initial level publication and presentation.
+            // Their failure must never interrupt a running game.
+            Promise.resolve(globalThis.KartyWebRuntime?.startPrefetch()).catch(() => {});
             if (element("loading")) {
               element("loading").setAttribute("aria-busy", "false");
               element("loading").hidden = true;

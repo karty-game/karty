@@ -1211,19 +1211,19 @@ pre code {
         <div class="guide-body"><h1 id="sprites-and-particles">Sprites and particles</h1>
 <p>Sprites draw image assets. The host simulates authored particles.</p>
 <h2 id="sprites">Sprites</h2>
-<p><code>EntitySprite2D</code> draws on the canvas or in a scrolling 2D world. <code>EntityWorldSprite</code> occupies a position in a mounted 3D level.</p>
-<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">API</th><th scope="col">Use</th></tr></thead><tbody><tr><td><code>NewSprite2D(textureID, position)</code></td><td>Creates a sprite from a project texture</td></tr><tr><td><code>UpdateAsset(textureID)</code></td><td>Changes its project image</td></tr><tr><td><code>UpdateLevelAsset(asset)</code></td><td>Changes its level texture</td></tr><tr><td><code>NewWorldSprite(asset, pose, settings)</code></td><td>Creates a sprite in a 3D level</td></tr><tr><td><code>SetSprite(settings)</code></td><td>Replaces a world sprite&#39;s settings, including <code>Asset</code></td></tr></tbody></table></div>
+<p><code>Sprite2D</code> draws on the canvas or in a scrolling 2D world. <code>Sprite3D</code> occupies a position in a mounted 3D level.</p>
+<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">API</th><th scope="col">Use</th></tr></thead><tbody><tr><td><code>NewSprite2D(textureID, position)</code></td><td>Creates a sprite from a project texture</td></tr><tr><td><code>SetTexture(textureID)</code></td><td>Changes its project image</td></tr><tr><td><code>SetLevelTexture(asset)</code></td><td>Changes its level texture</td></tr><tr><td><code>NewSprite3D(asset, pose, settings)</code></td><td>Creates a sprite in a 3D level</td></tr><tr><td><code>SetSprite(settings)</code></td><td>Replaces a world sprite&#39;s settings, including <code>Asset</code></td></tr></tbody></table></div>
 <h3 id="world-sprite-settings">World sprite settings</h3>
 <p><code>textureID</code> below is the numeric ID from the ready level&#39;s metadata:</p>
-<pre><code class="language-go">func worldHero(game *engine.Game, level engine.LevelHandle, textureID uint32) *engine.EntityWorldSprite {
-    return game.NewWorldSprite(
+<pre><code class="language-go">func worldHero(game *engine.Game, level engine.LevelHandle, textureID uint32) *engine.Sprite3D {
+    return game.NewSprite3D(
         engine.LevelTexture(level, textureID),
         engine.NewTransform3D(engine.NewVec3(4, 4, 0)),
-        engine.WorldSprite{
+        engine.SpriteRenderer3D{
             Facing: engine.WorldSpriteFacingUpright,
-            Alpha: engine.WorldSpriteAlphaCutout,
+            AlphaMode: engine.WorldSpriteAlphaCutout,
             Size: engine.NewVec2(0.8, 1.6),
-            Origin: engine.NewVec2(0.5, 1),
+            Anchor: engine.NewVec2(0.5, 1),
         },
     )
 }

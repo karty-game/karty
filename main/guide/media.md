@@ -61,7 +61,7 @@ and start music once when entering a screen or level.
 
 ## Choose how a sound reaches the player
 
-Use `PlaySound` for centered interface feedback. Use `PlaySFXFrom` for a short
+Use `PlaySound` for centered interface feedback. Use `PlaySoundFrom` for a short
 effect that follows an object, such as a door opening. For a humming reactor or
 a moving crate's scraping loop, use a sound emitter. Music and environment
 streams provide a soundtrack or broad ambience; they have no source position.
@@ -81,8 +81,8 @@ and this method to the room viewer:
 ```go
 func (game *Game) updateAudioReceiver() {
     if game.camera == nil { return }
-    yaw := float64(game.camera.Settings.Yaw)
-    game.SetAudioReceiver(game.camera.Ref(), engine.AudioReceiverOptions{
+    yaw := float64(game.camera.Settings().Yaw)
+    game.SetAudioListener(game.camera.Ref(), engine.AudioListenerOptions{
         Right: engine.NewVec2(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
     })
 }
@@ -98,7 +98,7 @@ positive Y, so the right direction is `(1, 0)`. The host does not derive this
 vector from camera yaw: update it as the player turns, or panning will keep the
 old direction. Camera pitch does not change this horizontal listener basis.
 For a 2D game, use the player entity as receiver and `(1, 0)` when positive X
-should always sound to the right. `ClearAudioReceiver()` silences spatial
+should always sound to the right. `ClearAudioListener()` silences spatial
 playback until another receiver is set.
 
 ## Play a positioned one-shot
@@ -108,7 +108,7 @@ opens. It must be a live audio entity:
 
 ```go
 func (game *Game) playDoorSound(door engine.EntityRef) {
-    game.PlaySFXFrom(assets.SoundDoorOpen, door, engine.SFXOptions{
+    game.PlaySoundFrom(assets.SoundDoorOpen, door, engine.SpatialSoundOptions{
         Volume: 0.8, NearDistance: 1, FarDistance: 12,
     })
 }
@@ -122,7 +122,7 @@ coordinates for 2D entities. Set volume explicitly; zero is silent. Use finite
 values, volume in `[0, 4]`, a nonnegative near distance, and a far distance
 greater than near.
 
-`PlaySFXFrom` uses XY distance. Z height, walls and doors do not obstruct this
+`PlaySoundFrom` uses XY distance. Z height, walls and doors do not obstruct this
 one-shot API. Use an emitter with `Loop: false` when a short effect needs XYZ
 distance or collision obstruction.
 

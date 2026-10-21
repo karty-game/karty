@@ -1135,7 +1135,7 @@ pre code {
                 stroke-width="1.2"
                 stroke-linejoin="round"
               /></svg
-            >Start here</a
+            >Getting Started</a
           >
           <p>Choose your game</p>
           <ul>
@@ -1180,7 +1180,7 @@ pre code {
           <div class="mobile-links">
             
             <a class="nav-home" href="index.html" aria-current="false"
-              >Start here</a
+              >Getting Started</a
             >
             <p>Choose your game</p>
             <ul>
@@ -1289,30 +1289,30 @@ func (game *Game) stopMedia() {
 </code></pre>
 <p>For <code>my-game</code>, the assets import is <code>example.com/my-game/.karty/assets</code>. Use the generated names in <code>.karty/assets/</code>. Play the click once per action, and start music once when entering a screen or level.</p>
 <h2 id="choose-how-a-sound-reaches-the-player">Choose how a sound reaches the player</h2>
-<p>Use <code>PlaySound</code> for centered interface feedback. Use <code>PlaySFXFrom</code> for a short effect that follows an object, such as a door opening. For a humming reactor or a moving crate&#39;s scraping loop, use a sound emitter. Music and environment streams provide a soundtrack or broad ambience; they have no source position.</p>
+<p>Use <code>PlaySound</code> for centered interface feedback. Use <code>PlaySoundFrom</code> for a short effect that follows an object, such as a door opening. For a humming reactor or a moving crate&#39;s scraping loop, use a sound emitter. Music and environment streams provide a soundtrack or broad ambience; they have no source position.</p>
 <p>Spatial playback changes volume with distance and pans between the left and right speakers. Use mono WAV clips so the host can place them in the stereo field. The <code>channels = &#34;mono&#34;</code> transforms above downmix stereo recordings during the build. Keep emitter loops short: they use decoded sound assets, rather than streaming music. Sound assets are limited to 30 seconds and 6 MiB of decoded PCM per clip.</p>
 <h2 id="set-the-listener-and-update-its-direction">Set the listener and update its direction</h2>
 <p>For a world game, make the camera the audio receiver. Add <code>math</code> to your imports and this method to the room viewer:</p>
 <pre><code class="language-go">func (game *Game) updateAudioReceiver() {
     if game.camera == nil { return }
-    yaw := float64(game.camera.Settings.Yaw)
-    game.SetAudioReceiver(game.camera.Ref(), engine.AudioReceiverOptions{
+    yaw := float64(game.camera.Settings().Yaw)
+    game.SetAudioListener(game.camera.Ref(), engine.AudioListenerOptions{
         Right: engine.NewVec2(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
     })
 }
 </code></pre>
 <p>Call <code>game.updateAudioReceiver()</code> after camera creation in <code>OnLevelReady</code>, and from your existing <code>OnUpdate</code> after movement and turning. Set it again when replacing the camera. The receiver follows the camera&#39;s world position; its output rectangle on screen does not change where the player hears from.</p>
-<p><code>Right</code> is the world direction of the right speaker. A yaw of zero faces positive Y, so the right direction is <code>(1, 0)</code>. The host does not derive this vector from camera yaw: update it as the player turns, or panning will keep the old direction. Camera pitch does not change this horizontal listener basis. For a 2D game, use the player entity as receiver and <code>(1, 0)</code> when positive X should always sound to the right. <code>ClearAudioReceiver()</code> silences spatial playback until another receiver is set.</p>
+<p><code>Right</code> is the world direction of the right speaker. A yaw of zero faces positive Y, so the right direction is <code>(1, 0)</code>. The host does not derive this vector from camera yaw: update it as the player turns, or panning will keep the old direction. Camera pitch does not change this horizontal listener basis. For a 2D game, use the player entity as receiver and <code>(1, 0)</code> when positive X should always sound to the right. <code>ClearAudioListener()</code> silences spatial playback until another receiver is set.</p>
 <h2 id="play-a-positioned-one-shot">Play a positioned one-shot</h2>
 <p>Pass the existing door entity or resolved <code>engine.EntityRef</code> when the door opens. It must be a live audio entity:</p>
 <pre><code class="language-go">func (game *Game) playDoorSound(door engine.EntityRef) {
-    game.PlaySFXFrom(assets.SoundDoorOpen, door, engine.SFXOptions{
+    game.PlaySoundFrom(assets.SoundDoorOpen, door, engine.SpatialSoundOptions{
         Volume: 0.8, NearDistance: 1, FarDistance: 12,
     })
 }
 </code></pre>
 <p>Call this once per opening, rather than every update. The voice follows the door until the clip ends. <code>NearDistance</code> is the range with no distance reduction; volume fades between near and far, and reaches silence at <code>FarDistance</code>. Use the same units as the entity positions: metres for the world guides, canvas coordinates for 2D entities. Set volume explicitly; zero is silent. Use finite values, volume in <code>[0, 4]</code>, a nonnegative near distance, and a far distance greater than near.</p>
-<p><code>PlaySFXFrom</code> uses XY distance. Z height, walls and doors do not obstruct this one-shot API. Use an emitter with <code>Loop: false</code> when a short effect needs XYZ distance or collision obstruction.</p>
+<p><code>PlaySoundFrom</code> uses XY distance. Z height, walls and doors do not obstruct this one-shot API. Use an emitter with <code>Loop: false</code> when a short effect needs XYZ distance or collision obstruction.</p>
 <h2 id="place-a-looping-sound-in-the-world">Place a looping sound in the world</h2>
 <p>Check <code>.karty/docs/audio-emitters.md</code> for emitter support in your project&#39;s selected SDK and matching host. Create this emitter once from <code>OnLevelReady</code>, using <code>event.Handle</code> for the mounted level:</p>
 <pre><code class="language-go">func (game *Game) startReactorSound(level engine.LevelHandle) *engine.SoundEmitter {

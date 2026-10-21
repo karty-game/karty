@@ -1135,7 +1135,7 @@ pre code {
                 stroke-width="1.2"
                 stroke-linejoin="round"
               /></svg
-            >Start here</a
+            >Getting Started</a
           >
           <p>Choose your game</p>
           <ul>
@@ -1178,7 +1178,7 @@ pre code {
           <div class="mobile-links">
             
             <a class="nav-home" href="index.html" aria-current="false"
-              >Start here</a
+              >Getting Started</a
             >
             <p>Choose your game</p>
             <ul>
@@ -1237,8 +1237,8 @@ pre code {
         
         <div class="guide-body"><h1 id="draw-a-2d-game">Draw a 2D game</h1>
 <p>Use sprites for image artwork, vectors for shapes, and text for instructions and scores. This example draws all three and lets you collect a circle with keyboard movement.</p>
-<p>Start with the SDK 0.0.14 <code>2d</code> starter, which includes controllers 0.1.0:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.14 --template 2d my-game
+<p>Start with the SDK 0.0.16 <code>2d</code> starter, which includes controllers 0.1.0:</p>
+<pre><code class="language-sh">karty new --yes --sdk 0.0.16 --template 2d my-game
 </code></pre>
 <p>Keep <code>packages/controllers/</code> in Git. For an existing project, import the package using the <a href="../design/packages.html">reusable packages guide</a> first.</p>
 <h2 id="add-a-sprite">Add a sprite</h2>
@@ -1257,9 +1257,9 @@ const speed = 180 // logical pixels per second
 
 type Game struct {
     engine.Game
-    player *engine.EntitySprite2D
-    goal *engine.EntityVector2D
-    label *engine.EntityText2D
+    player *engine.Sprite2D
+    goal *engine.Shape2D
+    label *engine.Text2D
     controller *controllers.Planar
     won bool
 }
@@ -1282,14 +1282,14 @@ func main() {
 
 func (game *Game) start() {
     // Draw the background behind the sprite, goal, and text.
-    background := game.NewVector2D(engine.Rectangle(960, 540), engine.NewVec2(0, 0))
+    background := game.NewShape2D(engine.Rectangle(960, 540), engine.NewVec2(0, 0))
     background.SetFill(engine.RGBA(12, 21, 35, 255))
     background.SetLayer(-1)
     game.player = game.NewSprite2D(assets.TexturePlayer, engine.NewVec2(160, 280))
-    game.goal = game.NewVector2D(engine.Circle(18), engine.NewVec2(760, 350))
+    game.goal = game.NewShape2D(engine.Circle(18), engine.NewVec2(760, 350))
     game.goal.SetFill(engine.RGBA(255, 200, 99, 255))
     game.label = game.NewText2D(&#34;WASD / arrows: collect the gold circle&#34;, engine.NewVec2(32, 24))
-    game.label.SetSize(20)
+    game.label.SetFontSize(20)
     game.label.SetLayer(1)
 }
 
@@ -1297,7 +1297,7 @@ func (game *Game) key(key engine.Key, down bool) {
     if key == engine.KeyR &amp;&amp; down {
         game.controller.Reset()
         game.won = false
-        game.player.Translate(160-game.player.Position.X, 280-game.player.Position.Y)
+        game.player.Translate(160-game.player.Position().X, 280-game.player.Position().Y)
         game.goal.SetAlpha(1)
         game.label.SetText(&#34;WASD / arrows: collect the gold circle&#34;)
     }
@@ -1306,16 +1306,16 @@ func (game *Game) key(key engine.Key, down bool) {
 
 func (game *Game) update(engine.Frame) {
     if game.won { return }
-    delta := game.controller.Step(controllers.Vec2{X: float64(game.player.Position.X), Y: float64(game.player.Position.Y)})
+    delta := game.controller.Step(controllers.Vec2{X: float64(game.player.Position().X), Y: float64(game.player.Position().Y)})
     dx, dy := float32(delta.X), float32(delta.Y)
     if dx != 0 || dy != 0 {
-        x := min(max(game.player.Position.X+dx, 16), 944)
-        y := min(max(game.player.Position.Y+dy, 80), 524)
-        game.player.Translate(x-game.player.Position.X, y-game.player.Position.Y)
+        x := min(max(game.player.Position().X+dx, 16), 944)
+        y := min(max(game.player.Position().Y+dy, 80), 524)
+        game.player.Translate(x-game.player.Position().X, y-game.player.Position().Y)
     }
     // Our game collects the goal within 32 pixels of its centre.
-    dx = game.player.Position.X - game.goal.Position.X
-    dy = game.player.Position.Y - game.goal.Position.Y
+    dx = game.player.Position().X - game.goal.Position().X
+    dy = game.player.Position().Y - game.goal.Position().Y
     if dx*dx + dy*dy &lt; 32*32 {
         game.won = true
         game.goal.SetAlpha(0)
@@ -1342,7 +1342,7 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 <p>Run <code>karty dev</code>. Move with WASD or the arrow keys, reach the circle, then press R to try again. <code>OnInputReset</code> clears held keys when the game loses focus. The preset normalizes diagonal input and converts <code>speed = 180</code> pixels per second into three pixels per fixed 60 Hz update. Camera following, pointer targets and zoom are available on the same preset when your game needs them.</p>
 <h2 id="change-the-drawing">Change the drawing</h2>
 <p>Positions use canvas pixels. The upper left is <code>(0, 0)</code>; X grows right and Y grows down. Sprite and circle positions mark their centres. Rectangle and text positions mark their upper-left corners.</p>
-<p><code>NewSprite2D</code> draws the imported image. <code>NewVector2D</code> draws the rectangle and circle without image files. <code>NewText2D</code> draws the instruction, and <code>SetText</code> changes it when the goal is collected. Higher layers draw above lower ones.</p>
+<p><code>NewSprite2D</code> draws the imported image. <code>NewShape2D</code> draws the rectangle and circle without image files. <code>NewText2D</code> draws the instruction, and <code>SetText</code> changes it when the goal is collected. Higher layers draw above lower ones.</p>
 <p>Try another PNG, change the circle&#39;s radius or color, or move the goal. Use setters such as <code>Translate</code>, <code>SetFill</code>, and <code>SetText</code> to update existing entities instead of creating them again each frame.</p>
 <figure><img src="assets/2d-scene.jpg" alt="A 2D sprite, vector goal, and text drawn by the example." loading="lazy"><figcaption>A 2D sprite, vector goal, and text drawn by the example.</figcaption></figure>
 <h2 id="add-feedback-and-share">Add feedback and share</h2>

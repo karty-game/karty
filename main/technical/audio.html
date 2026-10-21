@@ -1210,7 +1210,7 @@ pre code {
         
         <div class="guide-body"><h1 id="audio">Audio</h1>
 <h2 id="playback">Playback</h2>
-<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">API</th><th scope="col">Playback</th></tr></thead><tbody><tr><td><code>PlaySound</code></td><td>Decoded one-shot with no source position</td></tr><tr><td><code>PlayMusic</code>, <code>StopMusic</code></td><td>Streaming soundtrack</td></tr><tr><td><code>PlayEnvironment</code>, <code>StopEnvironment</code></td><td>Streaming ambience on an environment lane</td></tr><tr><td><code>PlaySFXFrom</code></td><td>One-shot following an entity, with XY spatialization</td></tr><tr><td><code>NewSoundEmitter</code></td><td>Positioned source with XYZ distance and optional collision occlusion</td></tr><tr><td><code>NewAttachedSoundEmitter</code></td><td>Persistent emitter following an entity</td></tr></tbody></table></div>
+<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">API</th><th scope="col">Playback</th></tr></thead><tbody><tr><td><code>PlaySound</code></td><td>Decoded one-shot with no source position</td></tr><tr><td><code>PlayMusic</code>, <code>StopMusic</code></td><td>Streaming soundtrack</td></tr><tr><td><code>PlayAmbience</code>, <code>StopAmbience</code></td><td>Streaming ambience on an environment lane</td></tr><tr><td><code>PlaySoundFrom</code></td><td>One-shot following an entity, with XY spatialization</td></tr><tr><td><code>NewSoundEmitter</code></td><td>Positioned source with XYZ distance and optional collision occlusion</td></tr><tr><td><code>NewAttachedSoundEmitter</code></td><td>Persistent emitter following an entity</td></tr></tbody></table></div>
 <h2 id="spatial-emitters">Spatial emitters</h2>
 <p>Spatial emitters require <code>SoundEmitterOptions</code>. Create them after level readiness. This example uses a generated project sound ID:</p>
 <pre><code class="language-go">func reactor(game *engine.Game, level engine.LevelHandle) *engine.SoundEmitter {
@@ -1221,7 +1221,7 @@ pre code {
         })
 }
 </code></pre>
-<p><code>SetAudioReceiver</code> selects the listening entity. Receiver and emitter must belong to the same mounted level. Its <code>Right</code> vector sets stereo direction; for camera yaw, use <code>(cos(yaw), -sin(yaw))</code> and update it when turning.</p>
+<p><code>SetAudioListener</code> selects the listening entity. Receiver and emitter must belong to the same mounted level. Its <code>Right</code> vector sets stereo direction; for camera yaw, use <code>(cos(yaw), -sin(yaw))</code> and update it when turning.</p>
 <p>Near distance is the full-volume range. Far distance must be greater than near and marks silence. Occlusion uses loaded collision geometry. Spatial clips should be mono.</p>
 <p>Start loops once. Stop screen-owned streams when leaving the screen. Keep emitter handles to update settings or call <code>Stop</code>; level release stops them. Fading voices can continue occupying capacity. Browsers may require player input before audio becomes audible.</p>
 <p><a href="../guide/media.html">Asset setup and playback examples</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/hangar/src/audio.go">Hangar emitters</a></p>

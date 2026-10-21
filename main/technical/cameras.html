@@ -1229,14 +1229,14 @@ pre code {
 <p><a href="cameras.html#camera-3d">Camera 3D</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/main.go">Willowbrook camera and picking</a></p>
 <p>Exact bounds are in <code>.karty/docs/cameras.md</code>.</p>
 <h2 id="camera-3d">Camera 3D</h2>
-<p><code>EntityCamera3D</code> projects a mounted world into a 2D output rectangle. Create it after <code>OnLevelReady</code>, using that event&#39;s handle.</p>
-<pre><code class="language-go">func roomCamera(game *engine.Game, level engine.LevelHandle) *engine.EntityCamera3D {
-    return game.NewCamera3D(level, engine.CameraSettings{
+<p><code>Camera3D</code> projects a mounted world into a 2D output rectangle. Create it after <code>OnLevelReady</code>, using that event&#39;s handle.</p>
+<pre><code class="language-go">func roomCamera(game *engine.Game, level engine.LevelHandle) *engine.Camera3D {
+    return game.NewCamera3D(level, engine.Camera3DSettings{
         Projection: engine.CameraProjectionPerspective,
         Output: engine.CameraOutputFull,
         Position: engine.NewVec3(2, 2, 1.7),
-        FOVY: 1.05, OrthoHeight: 12,
-        Near: 0.05, Far: 100,
+        VerticalFOV: 1.05, OrthoHeight: 12,
+        NearClip: 0.05, FarClip: 100,
         ViewportWidth: 960, ViewportHeight: 540,
     })
 }

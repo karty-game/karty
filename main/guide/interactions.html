@@ -1135,7 +1135,7 @@ pre code {
                 stroke-width="1.2"
                 stroke-linejoin="round"
               /></svg
-            >Start here</a
+            >Getting Started</a
           >
           <p>Choose your game</p>
           <ul>
@@ -1180,7 +1180,7 @@ pre code {
           <div class="mobile-links">
             
             <a class="nav-home" href="index.html" aria-current="false"
-              >Start here</a
+              >Getting Started</a
             >
             <p>Choose your game</p>
             <ul>
@@ -1249,8 +1249,8 @@ nearGoal, won bool
     dx, dy := position.X-6, position.Y-6
     game.nearGoal = dx*dx+dy*dy &lt; 1
 }
-updateGoal(game.camera.Settings.Position)
-_, err := game.WatchTransform(game.camera.Ref(), func(pose engine.Transform3D) {
+updateGoal(game.camera.Settings().Position)
+_, err := game.WatchPose(game.camera.Ref(), func(pose engine.Transform3D) {
     // The host has applied collision and portal movement.
     updateGoal(pose.Position)
 })
@@ -1258,7 +1258,7 @@ if err != nil {
     game.status = err.Error()
 }
 </code></pre>
-<p>Propose movement from <code>camera.Settings</code>, which the SDK keeps synchronized automatically with the accepted pose. Do not accumulate a separate guessed player position.</p>
+<p>Propose movement from <code>camera.Settings()</code>, which the SDK keeps synchronized automatically with the accepted pose. Do not accumulate a separate guessed player position.</p>
 <p>The position check defines a one-metre trigger around <code>(6, 6)</code>. Call this method from your existing <code>OnKeyDown</code> handler to finish when the player presses E there. Keep the movement handler in that hook too.</p>
 <pre><code class="language-go">func (game *Game) onKeyDown(key engine.Key) {
     if key == engine.KeyE &amp;&amp; game.nearGoal &amp;&amp; !game.won {

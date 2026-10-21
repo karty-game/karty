@@ -15,8 +15,8 @@ grows down. Rotation uses radians.
 | `Rotate(angle)`                  | Adds an angle                   |
 
 ```go
-func place(sprite *engine.EntitySprite2D) {
-    sprite.Set(engine.NewVec2(240, 180), engine.NewVec2(2, 2), 0)
+func place(sprite *engine.Sprite2D) {
+    sprite.SetTransform(engine.NewVec2(240, 180), engine.NewVec2(2, 2), 0)
     sprite.Translate(1, 0)
     sprite.Rotate(0.01)
 }
@@ -34,18 +34,18 @@ draw later. Direct field assignments do not send changes to the host.
 `Yaw`, `Pitch` and `Roll` use radians; camera yaw zero faces positive Y and
 positive pitch looks down.
 
-| API                             | Behavior                                               |
-| ------------------------------- | ------------------------------------------------------ |
-| `NewTransform3D(position)`      | Creates a pose with unit scale                         |
-| `ref.SetPose(pose)`             | Proposes a new world pose                              |
-| `WatchTransform(ref, callback)` | Delivers host-accepted poses after movement resolution |
-| `subscription.Stop()`           | Stops transform notifications                          |
+| API                        | Behavior                                               |
+| -------------------------- | ------------------------------------------------------ |
+| `NewTransform3D(position)` | Creates a pose with unit scale                         |
+| `ref.SetPose(pose)`        | Proposes a new world pose                              |
+| `WatchPose(ref, callback)` | Delivers host-accepted poses after movement resolution |
+| `subscription.Stop()`      | Stops transform notifications                          |
 
 Accepted poses synchronize automatically. Read `sprite.Ref().Pose()` for the
 next movement baseline; a watch adds an optional notification:
 
 ```go
-func step(sprite *engine.EntityWorldSprite, dx float32) error {
+func step(sprite *engine.Sprite3D, dx float32) error {
     accepted, known := sprite.Ref().Pose()
     if !known { return nil }
     accepted.Position.X += dx

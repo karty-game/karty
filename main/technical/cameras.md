@@ -41,17 +41,17 @@ Exact bounds are in `.karty/docs/cameras.md`.
 
 ## Camera 3D
 
-`EntityCamera3D` projects a mounted world into a 2D output rectangle. Create it
+`Camera3D` projects a mounted world into a 2D output rectangle. Create it
 after `OnLevelReady`, using that event's handle.
 
 ```go
-func roomCamera(game *engine.Game, level engine.LevelHandle) *engine.EntityCamera3D {
-    return game.NewCamera3D(level, engine.CameraSettings{
+func roomCamera(game *engine.Game, level engine.LevelHandle) *engine.Camera3D {
+    return game.NewCamera3D(level, engine.Camera3DSettings{
         Projection: engine.CameraProjectionPerspective,
         Output: engine.CameraOutputFull,
         Position: engine.NewVec3(2, 2, 1.7),
-        FOVY: 1.05, OrthoHeight: 12,
-        Near: 0.05, Far: 100,
+        VerticalFOV: 1.05, OrthoHeight: 12,
+        NearClip: 0.05, FarClip: 100,
         ViewportWidth: 960, ViewportHeight: 540,
     })
 }

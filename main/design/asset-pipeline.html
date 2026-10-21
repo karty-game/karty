@@ -1143,6 +1143,8 @@ pre code {
             
             <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
             
+            <li><a href="web-delivery-v1.html" aria-current="false">Web delivery</a></li>
+            
           </ul>
            
           <p>On this page</p>
@@ -1184,6 +1186,8 @@ pre code {
               <li><a href="packages.html" aria-current="false">Packages</a></li>
               
               <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
+              
+              <li><a href="web-delivery-v1.html" aria-current="false">Web delivery</a></li>
               
             </ul>
                
@@ -1258,6 +1262,7 @@ preset = &#34;brick&#34;
 <h3 id="do-the-expensive-work-before-the-game-runs">Do the expensive work before the game runs</h3>
 <p>The world pipeline normalizes each surface material to a 256-pixel tile and runs the SDK-pinned Materialize executable for each uncached material. The illustration above shows the original 128-pixel image and standalone native map outputs; the game build also performs normalization and packaging.</p>
 <p>Karty validates the generated maps, packs their channels into material atlases, and builds smaller texture levels, called mipmaps, with borders that keep neighbouring materials from bleeding into each other. The host loads those prepared textures and samples them while drawing. It never runs Materialize on a player&#39;s machine.</p>
+<p>World materials use the packaged atlas directly. The build omits their individual texture payloads when they have no separate sprite, animation, particle, vegetation or level UI use. This also avoids decoding those duplicate images and packing an unused sprite atlas at runtime. Textures outside the material atlas remain available as standalone level assets.</p>
 <p>A cold build does more work. Later builds reuse maps whose source, preset, generation settings and tool identity still match. Changing one material regenerates that material and repacks the atlas; unchanged maps are reused. The separate <code>textures.material_strengths</code> settings adjust how strongly the host displays normal, height and AO effects while reusing the generated maps.</p>
 <p>The <a href="../guide/textures.html">texture guide</a> covers presets and surface mapping. The generated <code>.karty/docs/</code> reference lists the controls supported by your SDK.</p>
 <h2 id="generated-files-have-separate-homes">Generated files have separate homes</h2>
@@ -1268,6 +1273,7 @@ preset = &#34;brick&#34;
 <p>Share the complete target directory so those pieces stay together. Follow <a href="../guide/share.html">Build and share</a> for packaging commands, or <a href="../guide/textures.html">Textures</a> for a world material example. Your project&#39;s <code>.karty/docs/</code> records its SDK&#39;s contracts.</p>
 <h2 id="source-formats-and-runtime-data">Source formats and runtime data</h2>
 <p>TOML configures projects and tools; YAML describes worlds and prefabs. Importers may also consume editor formats such as Tiled JSON. Builds convert game data into bounded binary resources before cartridge compilation. Runtime game code uses the compiled records, with no general JSON, CSV, XML, gob or YAML/TOML decoder dependency. Development-server messages, source-package inventories, editor schemas and authoring reports remain tooling formats.</p>
+<p>SDK 0.0.16 packs game images and all remaining level images into build-time QOI atlas pages with a binary region layout (<code>texture/atlas@1</code>). Sprites, UI, animation, particles and vegetation keep stable logical references and original dimensions. Identical processed images share one rectangle; connected particle frames share one page. The verified cache includes source bytes, names, frame groups and packing revision. Reports count emitted page bytes and decoded memory once, and retain source records for inspection. Runtime loads the prepared pages and views; it does not rebuild these atlases.</p>
 </div>
         
       </main>

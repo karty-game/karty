@@ -1143,6 +1143,8 @@ pre code {
             
             <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
             
+            <li><a href="web-delivery-v1.html" aria-current="false">Web delivery</a></li>
+            
           </ul>
            
           <p>On this page</p>
@@ -1186,6 +1188,8 @@ pre code {
               <li><a href="packages.html" aria-current="page">Packages</a></li>
               
               <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
+              
+              <li><a href="web-delivery-v1.html" aria-current="false">Web delivery</a></li>
               
             </ul>
                
@@ -1258,7 +1262,7 @@ karty package import ../warehouse-kit-0.1.0.kpkg
 <p>The reusable <code>controllers</code> package bundles first-person, top-down 2D and isometric input and camera behavior in one install. Choose a preset, customize its options, route your game hooks to it and apply its results through your SDK bindings. There is no separate camera or input package to assemble.</p>
 <p>Hangar, Terrain and Crate Room share first-person movement and look calculations. Willowbrook uses top-down movement and camera following; Vigil uses the isometric movement basis, following camera, ground picking and zoom. Each game retains its collision rules, navigation, artwork and gameplay.</p>
 <p>The module path is <code>github.com/karty-game/controllers</code>. Version 0.1.0 is local source, supplied through a linked package or exported archive; a public Go module tag is not assumed. Its package README contains setup and adapter examples. This adds no engine API or SDK requirement beyond the consuming game&#39;s existing APIs.</p>
-<p>SDK 0.0.14&#39;s <code>2d</code>, <code>fps</code> and <code>isometric</code> starters include the same package source under <code>packages/controllers/</code>. Their <code>karty.toml</code> links that folder, so a generated project builds without a published controller module. Keep the folder in Git. Blank and UI starters add no player controls. See the <a href="../guide/2d.html">2D</a>, <a href="../guide/fps.html">first-person</a> and <a href="../guide/isometric.html">isometric</a> guides for complete SDK adapters.</p>
+<p>SDK 0.0.16&#39;s <code>2d</code>, <code>fps</code> and <code>isometric</code> starters include the same package source under <code>packages/controllers/</code>. Their <code>karty.toml</code> links that folder, so a generated project builds without a published controller module. Keep the folder in Git. Blank and UI starters add no player controls. See the <a href="../guide/2d.html">2D</a>, <a href="../guide/fps.html">first-person</a> and <a href="../guide/isometric.html">isometric</a> guides for complete SDK adapters.</p>
 <h2 id="the-game-owns-composition">The game owns composition</h2>
 <p>Suppose <code>warehouse-kit</code> exports a <code>crate-stack</code> prefab and a <code>wood</code> material. The game places <code>warehouse-kit.crate-stack</code> in its world and can override that instance&#39;s material. Other instances keep the package&#39;s default.</p>
 <p>The same boundary applies to UI: a shared HUD component receives the game&#39;s state and callbacks, while the game chooses where it appears and how long it lives. Shared Go behavior should accept a small interface from its consumer, so it can work across games with different generated bindings.</p>
@@ -1286,7 +1290,7 @@ karty package export --output /tmp/tiled-0.1.0.kpkg packages/tiled
 karty package import --replace /tmp/tiled-0.1.0.kpkg
 </code></pre>
 <p>Both consumers call the shared image importer from their own author generator, which writes ordinary level texture inputs. From the repository root, run <code>mise run author-willowbrook</code> followed by <code>mise run build-willowbrook-web</code>, or <code>mise run author-tiled-room</code> followed by <code>mise run build-tiled-room-web</code>. Use the SDK and matching public host selected by those samples.</p>
-<p>Game code imports <code>github.com/karty-game/tiled</code> and its <code>karty2d</code> subpackage. The game supplies a small create/update/destroy Sprite2D backend using its own generated bindings and mounted textures. The shared view handles bounded residency, authored animation and optional wind; the game owns its camera, input, collision rules, actors and HUD. Static sprites stay in world coordinates while the existing SDK Camera2D follows the player. No engine API or wire change is needed to use this package.</p>
+<p>Game code imports <code>github.com/karty-game/tiled</code> and its <code>karty2d</code> subpackage. The game supplies a small create/update/destroy SpriteRenderer2D backend using its own generated bindings and mounted textures. The shared view handles bounded residency, authored animation and optional wind; the game owns its camera, input, collision rules, actors and HUD. Static sprites stay in world coordinates while the existing SDK Camera2D follows the player. No engine API or wire change is needed to use this package.</p>
 <p>The supported subset is finite orthogonal <code>right-down</code> JSON maps with image collections or atlases, group offsets/opacity, tile flips/rotation and timed tile animations. Infinite maps, encoded/compressed tile data, image layers and external object templates are rejected. The package reference lists the exact geometry limits and input/allocation bounds. Importing this code package does not automatically register PNGs as level textures; that remains the consuming game&#39;s explicit authoring step.</p>
 <h3 id="runtime-format-boundary">Runtime format boundary</h3>
 <p>Editable Tiled JSON and Yarn source remain build inputs. Games explicitly select <code>tiled.compile</code> or <code>dialogue.compile</code>; their generated resources are binary. Dialogue string tables and run saves are binary too. The CLI checks the actual staged cartridge dependency closure before compilation, rejecting JSON, CSV, XML, gob and known YAML/TOML decoders.</p>

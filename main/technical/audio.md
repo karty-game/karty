@@ -2,14 +2,14 @@
 
 ## Playback
 
-| API                                  | Playback                                                             |
-| ------------------------------------ | -------------------------------------------------------------------- |
-| `PlaySound`                          | Decoded one-shot with no source position                             |
-| `PlayMusic`, `StopMusic`             | Streaming soundtrack                                                 |
-| `PlayEnvironment`, `StopEnvironment` | Streaming ambience on an environment lane                            |
-| `PlaySFXFrom`                        | One-shot following an entity, with XY spatialization                 |
-| `NewSoundEmitter`                    | Positioned source with XYZ distance and optional collision occlusion |
-| `NewAttachedSoundEmitter`            | Persistent emitter following an entity                               |
+| API                            | Playback                                                             |
+| ------------------------------ | -------------------------------------------------------------------- |
+| `PlaySound`                    | Decoded one-shot with no source position                             |
+| `PlayMusic`, `StopMusic`       | Streaming soundtrack                                                 |
+| `PlayAmbience`, `StopAmbience` | Streaming ambience on an environment lane                            |
+| `PlaySoundFrom`                | One-shot following an entity, with XY spatialization                 |
+| `NewSoundEmitter`              | Positioned source with XYZ distance and optional collision occlusion |
+| `NewAttachedSoundEmitter`      | Persistent emitter following an entity                               |
 
 ## Spatial emitters
 
@@ -26,7 +26,7 @@ func reactor(game *engine.Game, level engine.LevelHandle) *engine.SoundEmitter {
 }
 ```
 
-`SetAudioReceiver` selects the listening entity. Receiver and emitter must
+`SetAudioListener` selects the listening entity. Receiver and emitter must
 belong to the same mounted level. Its `Right` vector sets stereo direction;
 for camera yaw, use `(cos(yaw), -sin(yaw))` and update it when turning.
 
