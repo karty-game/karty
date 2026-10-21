@@ -2,6 +2,8 @@
 
 Build retro-inspired 2D and 3D games with Karty.
 
+![Karty Banner](./website/assets/banner.png)
+
 [**Getting Started**](https://karty-game.github.io/karty/main/guide/) ·
 [**Play the demos**](https://karty-game.github.io/karty/main/) ·
 [**Releases**](https://github.com/karty-game/karty/releases/latest)
