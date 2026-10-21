@@ -15,9 +15,9 @@ karty dev
 The terminal wizard offers `blank`, `2d`, `fps`, `isometric`, and `ui`, plus optional
 Git initialization and GitHub Actions. Use `--yes --template 2d` for scripts.
 Use `--no-template` for just the base folders and an empty entry point.
-Current starters use SDK 0.0.16, which the CLI installs when needed.
+Current starters use SDK 0.0.17, which the CLI installs when needed.
 
-The SDK 0.0.16 2D, first-person and isometric starters use one reusable
+The SDK 0.0.17 2D, first-person and isometric starters use one reusable
 controllers package with different presets. They include its source under
 `packages/controllers/` so generated projects work without a published module.
 Keep that folder in Git. Blank and UI projects add controls only when needed.
@@ -808,10 +808,10 @@ Use sprites for image artwork, vectors for shapes, and text for instructions
 and scores. This example draws all three and lets you collect a circle with
 keyboard movement.
 
-Start with the SDK 0.0.16 `2d` starter, which includes controllers 0.1.0:
+Start with the SDK 0.0.17 `2d` starter, which includes controllers 0.1.0:
 
 ```sh
-karty new --yes --sdk 0.0.16 --template 2d my-game
+karty new --yes --sdk 0.0.17 --template 2d my-game
 ```
 
 Keep `packages/controllers/` in Git. For an existing project, import the package
@@ -959,10 +959,10 @@ Its components work with both 2D and 3D games.
 
 The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.
 
-Create the SDK 0.0.16 starter:
+Create the SDK 0.0.17 starter:
 
 ```sh
-karty new --yes --sdk 0.0.16 --template fps my-game
+karty new --yes --sdk 0.0.17 --template fps my-game
 cd my-game
 karty dev
 ```
@@ -1127,10 +1127,10 @@ remap this starter's Q/E controls before wiring the interaction hook.
 
 The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.
 
-Create the SDK 0.0.16 starter:
+Create the SDK 0.0.17 starter:
 
 ```sh
-karty new --yes --sdk 0.0.16 --template isometric my-game
+karty new --yes --sdk 0.0.17 --template isometric my-game
 cd my-game
 karty dev
 ```

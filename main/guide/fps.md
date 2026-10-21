@@ -2,10 +2,10 @@
 
 The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.
 
-Create the SDK 0.0.16 starter:
+Create the SDK 0.0.17 starter:
 
 ```sh
-karty new --yes --sdk 0.0.16 --template fps my-game
+karty new --yes --sdk 0.0.17 --template fps my-game
 cd my-game
 karty dev
 ```

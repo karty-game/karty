@@ -31,6 +31,7 @@ Regenerate with: karty build --target web
     #offline-download p { margin: 0 0 6px; }
     #offline-download progress { margin: 6px 0; }
     #offline-download button { min-height: 36px; padding: 4px 10px; font-size: 12px; }
+    #offline-download[data-docked] { position: static; max-width: none; min-width: 0; padding: 0; background: transparent; flex: 1; }
   </style>
 </head>
 <body>
@@ -91,7 +92,7 @@ Regenerate with: karty build --target web
   <script>
     (async function () {
       const delivery = await KartyWebRuntime.ready;
-      for (const src of ["wasm_exec.js?v=265b9a8216c42dad", "karty.js?v=869c52b64c4d46a7"]) {
+      for (const src of ["wasm_exec.js?v=265b9a8216c42dad", "karty.js?v=dc87fc0fb83b4e65"]) {
         await new Promise((resolve, reject) => {
           const script = document.createElement("script");
           script.src = src;

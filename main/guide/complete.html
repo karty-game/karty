@@ -1304,8 +1304,8 @@ pre code {
 cd my-game
 karty dev
 </code></pre>
-<p>The terminal wizard offers <code>blank</code>, <code>2d</code>, <code>fps</code>, <code>isometric</code>, and <code>ui</code>, plus optional Git initialization and GitHub Actions. Use <code class="command-flag">--yes --template 2d</code> for scripts. Use <code class="command-flag">--no-template</code> for just the base folders and an empty entry point. Current starters use SDK 0.0.16, which the CLI installs when needed.</p>
-<p>The SDK 0.0.16 2D, first-person and isometric starters use one reusable controllers package with different presets. They include its source under <code>packages/controllers/</code> so generated projects work without a published module. Keep that folder in Git. Blank and UI projects add controls only when needed.</p>
+<p>The terminal wizard offers <code>blank</code>, <code>2d</code>, <code>fps</code>, <code>isometric</code>, and <code>ui</code>, plus optional Git initialization and GitHub Actions. Use <code class="command-flag">--yes --template 2d</code> for scripts. Use <code class="command-flag">--no-template</code> for just the base folders and an empty entry point. Current starters use SDK 0.0.17, which the CLI installs when needed.</p>
+<p>The SDK 0.0.17 2D, first-person and isometric starters use one reusable controllers package with different presets. They include its source under <code>packages/controllers/</code> so generated projects work without a published module. Keep that folder in Git. Blank and UI projects add controls only when needed.</p>
 <p>Open the address printed by the preview. Change a color or a movement speed in <code>src/main.go</code>, save, and try it again. The first setup downloads tools; later builds reuse them.</p>
 <figure class="journey"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" role="img" aria-label="Create with karty new → Preview with karty dev → Build a 2D or 3D scene → Build with karty build → Share the output folder"><rect x="20" y="12" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="37" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Create with karty new</text><path d="M200 56V72M195 67L200 72L205 67" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="76" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="101" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Preview with karty dev</text><path d="M200 120V136M195 131L200 136L205 131" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="140" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="165" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Build a 2D or 3D scene</text><path d="M200 184V200M195 195L200 200L205 195" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="204" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="229" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Build with karty build</text><path d="M200 248V264M195 259L200 264L205 259" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="268" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="293" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Share the output folder</text></svg></figure>
 <p>Keep <code>karty.toml</code>, your Go source, and source assets in Git. The CLI recreates <code>.karty/</code> and <code>dist/</code>. Your project pins an exact SDK; use its <code>.karty/docs/</code> reference for API names and supported features.</p>
@@ -1751,8 +1751,8 @@ jobs:
 </ul>
 <h2 id="draw-a-2d-game">Draw a 2D game</h2>
 <p>Use sprites for image artwork, vectors for shapes, and text for instructions and scores. This example draws all three and lets you collect a circle with keyboard movement.</p>
-<p>Start with the SDK 0.0.16 <code>2d</code> starter, which includes controllers 0.1.0:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.16 --template 2d my-game
+<p>Start with the SDK 0.0.17 <code>2d</code> starter, which includes controllers 0.1.0:</p>
+<pre><code class="language-sh">karty new --yes --sdk 0.0.17 --template 2d my-game
 </code></pre>
 <p>Keep <code>packages/controllers/</code> in Git. For an existing project, import the package using the <a href="../design/packages.html">reusable packages guide</a> first.</p>
 <h3 id="add-a-sprite">Add a sprite</h3>
@@ -1864,8 +1864,8 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 <p><a href="ui.html">KartUI</a> is optional when you need menus or reusable screen layouts. Its components work with both 2D and 3D games.</p>
 <h2 id="make-a-first-person-game">Make a first-person game</h2>
 <p>The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.</p>
-<p>Create the SDK 0.0.16 starter:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.16 --template fps my-game
+<p>Create the SDK 0.0.17 starter:</p>
+<pre><code class="language-sh">karty new --yes --sdk 0.0.17 --template fps my-game
 cd my-game
 karty dev
 </code></pre>
@@ -2003,8 +2003,8 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 <p>The interaction guide uses E by default. Use F for interactions here, or remap this starter&#39;s Q/E controls before wiring the interaction hook.</p>
 <h2 id="make-an-isometric-game">Make an isometric game</h2>
 <p>The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.</p>
-<p>Create the SDK 0.0.16 starter:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.16 --template isometric my-game
+<p>Create the SDK 0.0.17 starter:</p>
+<pre><code class="language-sh">karty new --yes --sdk 0.0.17 --template isometric my-game
 cd my-game
 karty dev
 </code></pre>
