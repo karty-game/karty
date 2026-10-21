@@ -5,7 +5,7 @@
     "check:browser": "node internal/build/testdata/browser.test.mjs"
   },
   "devDependencies": {
-    "playwright": "1.64.0"
+    "playwright": "1.64.1"
   },
   "license": "MIT"
 }
