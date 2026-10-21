@@ -1,6 +1,6 @@
 # API reference
 
-Examples on these pages target SDK 0.0.16 / Go API 0.0.13.
+Examples on these pages target SDK 0.0.17 / Go API 0.0.13.
 
 Look up API behavior, coordinate systems and resource lifetimes. For project
 setup and complete games, use the [Guides](../guide/).

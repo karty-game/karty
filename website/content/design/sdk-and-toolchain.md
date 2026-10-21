@@ -10,7 +10,7 @@ A project's manifest contains an exact version, for example:
 
 ```toml
 [sdk]
-version = "0.0.16"
+version = "0.0.17"
 ```
 
 The version above is an example pin, rather than a request for the latest SDK.
@@ -40,7 +40,7 @@ Install the version declared by your project, then prepare its tools:
 
 ```sh
 # Use the version from your game's [sdk] table.
-karty sdk install 0.0.16
+karty sdk install 0.0.17
 
 # Run this from the game project.
 karty sdk toolchain install
@@ -74,7 +74,7 @@ and sources for any changed contracts, then test the packaged game on its
 target platforms. Commit the pin with those source changes. Generated files
 under `.karty/` are recreated by the build.
 
-SDK 0.0.16 selects API/reference 0.0.13 and project adapter contract 3. Its
+SDK 0.0.17 selects API/reference 0.0.13 and project adapter contract 3. Its
 reviewed Go API uses renamed types and setters, snapshot getters and typed
 authored renderer handles, without compatibility aliases. Update authored Go
 code against the matching `.karty/docs/` reference and rebuild generated adapters

@@ -12,7 +12,7 @@ far = 100
 ortho_height = 14
 
 [sdk]
-version = "0.0.16"
+version = "0.0.17"
 
 [[assets.texture]]
 name = "sight-mask"

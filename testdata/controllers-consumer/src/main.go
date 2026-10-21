@@ -22,6 +22,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	composer, err := controllers.NewCameraComposer(controllers.DefaultCameraFramingOptions())
+	if err != nil {
+		panic(err)
+	}
 	game := &engine.Game{}
 	var marker *engine.Shape2D
 	position, focus := controllers.Vec2{}, controllers.Vec2{}
@@ -50,7 +54,10 @@ func main() {
 			a, b := top.Step(position), iso.Step(position)
 			position.X += a.X + b.X + float64(motion.X)
 			position.Y += a.Y + b.Y + float64(motion.Y)
-			focus = top.Follow(focus, position, false)
+			focus, err = top.ComposeCamera(composer, focus, position, 1280, 720, false)
+			if err != nil {
+				panic(err)
+			}
 			camera := iso.CameraPosition(focus)
 			ground, ok := iso.ScreenToGround(controllers.Vec2{X: 640, Y: 360}, focus, 1280, 720)
 			if ok {

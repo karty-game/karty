@@ -466,6 +466,11 @@ function observe(animation) {
           const tag = b.getUint8(o),
             length = b.getUint16(o + 1, true),
             p = o + 3;
+          if (
+            tag === 20 &&
+            new TextDecoder().decode(batch.subarray(p + 11, p + 11 + b.getUint16(p + 9, true))) === "3 / 3"
+          )
+            state.success = true;
           if (tag === 57) {
             if (length !== 56) throw new Error("invalid FindPath request length");
             state.pathRequests.push({
@@ -580,7 +585,6 @@ function observe(animation) {
           }
           o += 3 + length;
         }
-        if (new TextDecoder().decode(batch).includes("The vigil is kept.")) state.success = true;
         if (state.hero && state.root) {
           const pose =
             state.heroTexture >= animation.firstIdleTexture
@@ -822,10 +826,23 @@ try {
     };
     const pair = async (name, requireHood) => {
       await page.waitForFunction(
-        () =>
-          Math.abs(vigil.camera[0] - (vigil.position[0] + 1.6 - 18)) +
-            Math.abs(vigil.camera[1] - (vigil.position[1] + 1.6 - 18)) <
-          0.0003,
+        () => {
+          // Framing now settles at a dead-zone boundary rather than forcing
+          // exact centering. Retain a stable view for the paired pixel capture.
+          const dx = vigil.position[0] + 1.6 - vigil.camera[0] - 18;
+          const dy = vigil.position[1] + 1.6 - vigil.camera[1] - 18;
+          const right = (dx - dy) / Math.SQRT2;
+          const down = -(dx + dy) / (2 * Math.SQRT2);
+          const inside =
+            Math.abs(right) <= (0.025 * vigil.height * 1280) / 720 / 2 + 0.0003 &&
+            Math.abs(down) <= (0.04 * vigil.height) / 2 + 0.0003;
+          const previous = vigil.framingPrevious;
+          const stable =
+            previous && Math.abs(previous[0] - vigil.camera[0]) + Math.abs(previous[1] - vigil.camera[1]) < 0.00001;
+          vigil.framingPrevious = vigil.camera.slice();
+          vigil.framingStable = inside && stable ? (vigil.framingStable || 0) + 1 : 0;
+          return vigil.framingStable >= 3;
+        },
         null,
         { timeout: 15000 },
       );
@@ -1172,8 +1189,8 @@ try {
         // UI uses viewport pixels, independently of world input projection.
         const r = document.querySelector("canvas").getBoundingClientRect();
         const narrow = r.width <= 700,
-          padding = narrow ? 16 : 30;
-        return { x: r.right - padding - 75, y: r.bottom - padding - (narrow ? 150 : 140) - 24 };
+          padding = narrow ? 16 : 24;
+        return { x: r.right - padding - 2 * (44 + 8) - 64, y: r.top + padding + (narrow ? 172 : 120) + 22 };
       });
       if (touch) {
         const cdp = await page.context().newCDPSession(page);
@@ -1888,7 +1905,7 @@ try {
             await walk(point);
           await press("e");
           await page.keyboard.up("Shift");
-          assert.equal(await page.evaluate(() => vigil.success), true, "three-light completion message missing");
+          assert.equal(await page.evaluate(() => vigil.success), true, "three-light completion count missing");
           assert.equal(
             await page.evaluate(() => Object.values(vigil.lights).filter(Boolean).length),
             4,

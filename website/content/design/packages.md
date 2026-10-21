@@ -82,7 +82,7 @@ module tag is not assumed. Its package README contains setup and adapter
 examples. This adds no engine API or SDK requirement beyond the consuming
 game's existing APIs.
 
-SDK 0.0.16's `2d`, `fps` and `isometric` starters include the
+SDK 0.0.17's `2d`, `fps` and `isometric` starters include the
 same package source under `packages/controllers/`. Their `karty.toml` links that
 folder, so a generated project builds without a published controller module.
 Keep the folder in Git. Blank and UI starters add no player controls.

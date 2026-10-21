@@ -1,0 +1,54 @@
+<template>
+  <panel class="screen" modal="false">
+    <panel class="heading">
+      <label class="title">{ props.Status() }</label>
+      <label>WASD move · Mouse look · Esc release · 1 / 2 / 3 viewpoints · R reset</label>
+      <label class="help">Open Debug → Effects to compare methods. Touch: left drag move / right drag look.</label>
+    </panel>
+  </panel>
+</template>
+
+<script setup lang="go">
+type HudProps struct {
+	Status func() string
+}
+
+func setup(props HudProps) {}
+</script>
+
+<style>
+.screen
+  width: 100%
+  height: 100%
+  padding: 0
+  background: #00000000
+.heading
+  position: absolute
+  top: 16
+  left: 16
+  right: 16
+  max-width: 810
+  padding: 14
+  gap: 7
+  background: #0c121bd7
+label
+  color: #e6eff8ff
+  font-size: 15
+.title
+  font-size: 22
+.help
+  font-size: 14
+@media (max-width: 600)
+  .heading
+    top: 8
+    left: 8
+    right: 8
+    padding: 10
+    gap: 4
+  label
+    font-size: 12
+  .title
+    font-size: 18
+  .help
+    font-size: 12
+</style>

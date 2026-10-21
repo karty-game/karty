@@ -18,6 +18,7 @@ export function effectVariants(defaults) {
     "lensDistortion",
     "sharpen",
     "lensSurface",
+    "bloom",
   ];
   const variants = [{ name: "clean", options: active }];
   for (const name of names) {
@@ -29,6 +30,12 @@ export function effectVariants(defaults) {
   variants.push(
     { name: "lens-dirt", options: { ...surface, lensSurfaceMode: 1 } },
     { name: "lens-blood", options: { ...surface, lensSurfaceMode: 2 } },
+  );
+  const bloom = variants.find((v) => v.name === "bloom").options;
+  variants.push(
+    { name: "bloom-compact", options: { ...bloom, bloomQuality: 0 } },
+    { name: "bloom-balanced", options: { ...bloom, bloomQuality: 1 } },
+    { name: "bloom-rgba8", options: { ...bloom, bloomFormat: 1 } },
   );
   const stack = { ...active, ...color, ...Object.fromEntries(names.map((name) => [name, true])) };
   variants.push({ name: "stack-no-outline", options: { ...stack, outline: false } }, { name: "stack", options: stack });
@@ -179,6 +186,13 @@ async function measure(api, { warmup, frames, signal }) {
       throw new Error(
         "Geometry outlines unavailable during measurement: " + (device.outlineError || "requested effect is inactive"),
       );
+    if (
+      metadata.options.effectsEnabled &&
+      metadata.options.bloom &&
+      metadata.options.bloomIntensity > 0 &&
+      (device.bloomActive === false || device.bloomError)
+    )
+      throw new Error("Bloom unavailable during measurement: " + (device.bloomError || "requested effect is inactive"));
     return device;
   };
   const before = checkedDevice().resourceRevisions;
@@ -218,6 +232,10 @@ async function measure(api, { warmup, frames, signal }) {
         opaqueDrawCalls: device.opaqueDrawCalls,
         shadowCaptures: device.shadowCaptures,
         uploadBytes: device.uploadBytes,
+        bloomActive: device.bloomActive ?? null,
+        bloomBytes: device.bloomBytes ?? null,
+        bloomPasses: device.bloomPasses ?? null,
+        bloomError: device.bloomError ?? null,
         outlineActive: device.outlineActive ?? null,
         outlineBytes: device.outlineBytes ?? null,
         outlineError: device.outlineError ?? null,

@@ -18,7 +18,7 @@ below to explore its source, controls and authoring tools.
 
 ## Run a sample
 
-These sources target released SDK 0.0.16 and its matching hosts, including support
+These sources target released SDK 0.0.17 and its matching hosts, including support
 for their build-time image atlases.
 The CLI installs the pinned SDK and matching hosts as needed. See
 [contributor setup](../CONTRIBUTING.md#local-setup) for toolchain and cache settings.
@@ -40,3 +40,26 @@ light-baking steps.
 To package a sample, run `karty build --target web` or
 `karty build --target native` from its directory, using the CLI you built above.
 Keep the complete output directory when sharing a game.
+
+## HUD and popup text
+
+Author status panels, instructions, buttons and popup text as KartUI components
+under each sample's `ui/` directory. KartUI paints at presentation resolution;
+ordinary `Text2D` and shapes stay in the game image even at a high numbered
+layer. Keep game artwork and world sprites in the game layer.
+
+The migrated samples have browser checks for presentation-layer text and their
+controls:
+
+```sh
+mise run check-terrain-hud-web
+mise run check-media-lab-hud-web
+mise run check-crate-room-ui
+```
+
+Build the matching sample first. The checks observe actual cartridge commands,
+reject legacy HUD text entities, and use real browser input. Captures include
+fractional window sizes, portrait layouts and high-DPI rendering. Terrain's HUD
+check lowers only the 3D render scale for the software browser; UI text keeps
+its presentation resolution. Omit `--world-scale=0.25` when running its script
+directly to review full-quality world rendering.

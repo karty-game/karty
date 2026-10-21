@@ -5,12 +5,11 @@ import (
 
 	"example.com/willowbrook/.karty/engine"
 	"example.com/willowbrook/.karty/processed"
+	"example.com/willowbrook/.karty/ui"
 	"example.com/willowbrook/internal/village"
 	"github.com/karty-game/controllers"
 	"github.com/karty-game/tiled"
 )
-
-const hudLayer = 1000000000
 
 type Game struct {
 	engine.Game
@@ -22,9 +21,12 @@ type Game struct {
 	focus        village.Point
 	hero         *engine.Sprite2D
 	shadow       *engine.Sprite2D
-	label        *engine.Text2D
+	title        string
 	position     village.Point
 	controller   *controllers.Planar
+	framing      *controllers.CameraComposer
+	cameraLab    cameraLab
+	hud          *engine.UI
 	facing, pose int
 	phase        float64
 	quest        treasureQuest
@@ -39,7 +41,7 @@ func main() {
 		OnKeyDown: func(k engine.Key) { g.key(k, true) }, OnKeyUp: func(k engine.Key) { g.key(k, false) },
 		OnInputReset: g.resetInput, OnPointer: g.pointer,
 		OnPathResult:  g.pathResult,
-		OnLevelFailed: func(e engine.LevelFailed) { g.label.SetText("Village loading failed: " + e.Diagnostic) },
+		OnLevelFailed: func(e engine.LevelFailed) { g.setTitle("Village loading failed: " + e.Diagnostic) },
 	})
 }
 func (g *Game) start() {
@@ -63,14 +65,16 @@ func (g *Game) start() {
 	if err != nil {
 		panic(err)
 	}
-
-	plate := g.NewShape2D(engine.Rectangle(184, 38), engine.NewVec2(548, 12))
-	plate.SetFill(engine.RGBA(245, 235, 197, 235))
-	plate.SetLayer(hudLayer)
-	g.label = g.NewText2D("LOADING VILLAGE", engine.NewVec2(560, 24))
-	g.label.SetFontSize(16)
-	g.label.SetColor(engine.RGBA(48, 66, 47, 255))
-	g.label.SetLayer(hudLayer + 1)
+	g.configureCameraFraming()
+	g.title = "LOADING VILLAGE"
+	g.hud = ui.CameraHud(ui.CameraHUDProps{
+		Camera:          g.cameraSettingsProps(),
+		Title:           func() string { return g.title },
+		JournalText:     func() string { return g.quest.text },
+		JournalOpen:     func() bool { return g.quest.journalOpen },
+		JournalReady:    func() bool { return g.loaded },
+		ActivateJournal: g.activateJournal,
+	})
 	g.request = g.RequestLevel("levels.village")
 }
 func (g *Game) ready(e engine.LevelReady) {
@@ -98,6 +102,12 @@ func (g *Game) resetInput() {
 	g.cancelQuestWalk()
 }
 func (g *Game) key(k engine.Key, down bool) {
+	if k == engine.KeyC {
+		if down {
+			g.toggleCameraSettings()
+		}
+		return
+	}
 	var control controllers.Control
 	movement := true
 	switch k {
@@ -184,7 +194,7 @@ func (g *Game) update(engine.Frame) {
 		g.loaded = true
 		g.paint(false)
 		g.startQuest()
-		g.label.SetText("WILLOWBROOK")
+		g.setTitle("WILLOWBROOK")
 		return
 	}
 	g.view.build(g.camera)
@@ -216,7 +226,7 @@ func (g *Game) update(engine.Frame) {
 	g.paint(distance > .00001)
 }
 func (g *Game) follow(snap bool) {
-	focus := g.controller.Follow(controllers.Vec2{X: g.focus.X, Y: g.focus.Y}, controllers.Vec2{X: g.position.X, Y: g.position.Y}, snap)
+	focus := g.composeCamera(snap)
 	next := village.Point{X: focus.X, Y: focus.Y}
 	if !snap && math.Hypot(next.X-g.focus.X, next.Y-g.focus.Y) < .001 {
 		return
@@ -256,5 +266,12 @@ func (g *Game) paint(walking bool) {
 	if pose != g.pose {
 		g.hero.SetLevelTexture(engine.LevelTexture(g.level, heroTextures[pose]))
 		g.pose = pose
+	}
+}
+
+func (g *Game) setTitle(title string) {
+	g.title = title
+	if g.hud != nil {
+		g.hud.Invalidate()
 	}
 }

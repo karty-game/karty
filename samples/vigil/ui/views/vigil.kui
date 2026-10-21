@@ -11,7 +11,6 @@
       <label class="subtle">vigil lights</label>
     </panel>
     <panel class="bottom">
-      <label class="message">{ props.Status() }</label>
       if props.Prompt() != "" {
         <button class="interact" onClick={ props.Interact }>{ props.Prompt() }</button>
       }
@@ -21,19 +20,19 @@
         <label class="help">F: fireball · R: restart · H: hide help</label>
       }
     </panel>
-    <panel class="spell-frame">
-      <button class="fireball" enabled={ props.SpellReady() } onClick={ props.Fireball }>F · Fireball</button>
-    </panel>
-    <label class="spell-status">{ spellStatus() }</label>
     <panel class="tools">
-      <button onClick={ props.ZoomOut }>-</button>
+      <button class="fireball" enabled={ props.SpellReady() } onClick={ props.Fireball }>F · Fireball</button>
+      <button onClick={ props.ZoomOut }>−</button>
       <button onClick={ props.ZoomIn }>+</button>
-      <button onClick={ props.ToggleHelp }>?</button>
+    </panel>
+    <panel class="camera-placement">
+      <CameraSettings props={ props.Camera }/>
     </panel>
   </panel>
 </template>
 <script setup lang="go">
 type VigilProps struct {
+  Camera CameraSettingsProps
   Area func() string
   Status func() string
   Progress func() string
@@ -47,143 +46,99 @@ type VigilProps struct {
   ZoomIn func()
   ZoomOut func()
 }
-func setup(props VigilProps) {
-  spellStatus := func() string {
-    if props.SpellReady() { return "READY" }
-    return "GATHERING EMBERS"
-  }
-}
+func setup(props VigilProps) {}
 </script>
 <style>
 .screen
   width: 100%
   height: 100%
-  padding: 30
+  padding: theme.spacing.inset
+  background: theme.colors.transparent
+.camera-placement
+  position: absolute
+  top: 120
+  bottom: 72
+  left: 0
+  width: 352
 .heading
   width: 236
-  padding: 10
+  height: 104
+  padding: theme.spacing.panel
   align: start
-  gap: 4
-  background: #111314a8
+  gap: theme.spacing.tight
+  background: theme.colors.surface
 .eyebrow
-  font-size: 10
-  color: #b39c71
+  font-size: theme.typography.caption
+  color: theme.colors.accent
 .title
   font-family: display
-  font-size: 32
-  color: #e0d4b9
+  font-size: theme.typography.title
+  color: theme.colors.text
 .area
   font-family: display
-  font-size: 14
-  color: #c2b6a2
+  font-size: theme.typography.body
+  color: theme.colors.text-disabled
 .objective
   position: absolute
   top: 0
   right: 0
-  width: 126
-  padding: 10
+  width: 152
+  height: 104
+  padding: theme.spacing.panel
   align: end
-  gap: 4
-  background: #111314a8
+  gap: theme.spacing.tight
+  background: theme.colors.surface
 .count
   font-family: display
-  font-size: 26
-  color: #dbc497
+  font-size: theme.typography.title
+  color: theme.colors.text
 .subtle
-  font-size: 10
-  color: #a69b86
+  font-size: theme.typography.label
+  color: theme.colors.text-disabled
 .bottom
   position: absolute
   bottom: 48
   left: 0
   right: 0
   align: center
-  gap: 6
-.message
-  font-family: display
-  font-size: 16
-  color: #dfcba1
+  gap: theme.spacing.tight
 .help
-  font-size: 11
-  color: #b6ac98
+  font-size: theme.typography.caption
+  color: theme.colors.text-disabled
 .tools
   position: absolute
-  top: 112
+  top: 120
   right: 0
   direction: row
-  gap: 5
+  gap: theme.spacing.gap
 button
-  min-width: 38
-  min-height: 38
-  background: #202022ed
-  color: #cfbb91
-  font-family: display
-  font-size: 16
-button:hover
-  background: #49402e
-  color: #f0d7a0
-button:pressed
-  background: #17191a
+  min-width: 44
+  min-height: theme.controls.height
+  background: theme.colors.primary
+  background-hover: theme.colors.primary-hover
+  background-pressed: theme.colors.primary-pressed
+  background-disabled: theme.colors.disabled
+  color: theme.colors.text
+  color-disabled: theme.colors.text-disabled
+  font-family: body
+  font-size: theme.typography.body
 .interact
   min-width: 244
-  min-height: 42
-  font-size: 13
-  background: #302b20f0
-.spell-frame
-  position: absolute
-  bottom: 140
-  right: 0
-  padding: 1
-  background: #8e7144
 .fireball
-  min-width: 148
-  min-height: 46
-  font-size: 17
-  background: #35271eeb
-  color: #f1cb87
-.fireball:hover
-  background: #69462c
-  color: #fff0c9
-.fireball:pressed
-  background: #211a16
-.fireball:disabled
-  background: #202020ef
-  color: #8b8376
-.spell-status
-  position: absolute
-  bottom: 122
-  right: 0
-  width: 150
-  text-align: center
-  font-size: 9
-  color: #bba478
+  width: 128
 @media (max-width: 700)
   .screen
-    padding: 16
+    padding: theme.spacing.compact-inset
+  .camera-placement
+    width: 100%
   .heading
-    width: 196
-    padding: 8
-  .title
-    font-size: 26
-  .area
-    font-size: 12
+    width: 52%
   .objective
-    width: 110
-    padding: 8
-  .eyebrow
-    font-size: 9
-  .count
-    font-size: 24
+    width: 40%
+  .title
+    font-size: 28
   .tools
-    top: 108
+    top: 172
   .bottom
-    bottom: 58
-  .help
-    font-size: 10
-  .message
-    font-size: 12
-  .spell-frame
-    bottom: 150
-  .spell-status
-    bottom: 132
+    bottom: 72
 </style>

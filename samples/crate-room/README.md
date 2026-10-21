@@ -10,6 +10,11 @@ angular momentum; this regular TinyGo WASI cartridge only creates props and send
 Desktop: WASD move, Shift run, mouse look after clicking, arrows aim,
 click or Space shoot, B/right-click blast, R reset, Escape release the cursor.
 Touch: drag MOVE to walk, drag LOOK to aim, hold SHOOT, tap BLAST or RESET.
+SHOOT is centered near the bottom to stay visible when narrow screens crop the
+full-frame view. BLAST and RESET are presentation UI buttons; the passive SHOOT
+label leaves down/up events available for continuous fire. Status and control
+instructions also use KartUI, so text is drawn at presentation resolution above
+world rendering and effects. The joystick and crosshair remain game graphics.
 Independent fingers can move, aim and shoot together. Landscape gives the
 largest view on a phone.
 

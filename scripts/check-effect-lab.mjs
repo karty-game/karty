@@ -225,7 +225,7 @@ try {
     await page.locator("#karty-effects-preset-Hazy").click();
     assert.notEqual(await capture("fog"), baseline);
     if (presetsOnly) {
-      for (const preset of ["Warm", "Cool", "Ink"]) {
+      for (const preset of ["Bloom", "Warm", "Cool", "Ink"]) {
         await page.locator("#karty-effects-preset-" + preset).click();
         assert.notEqual(await capture("preset-" + preset.toLowerCase()), baseline);
       }

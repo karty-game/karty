@@ -41,7 +41,7 @@ For first person:
 2. Map SDK pointer phases into `Pointer`. Pass whether a new gesture hits the
    scene rather than your UI. Apply its `Capture`/`Release` request to the host;
    `TouchStarted` can create a game-styled overlay from `Sticks`.
-3. Call `Step(camera.Settings.Yaw, camera.Settings.Pitch)` once per update.
+3. Call `Step(camera.Settings().Yaw, camera.Settings().Pitch)` once per update.
    Apply changed yaw/pitch to the camera. Send `motion.X*60`, `motion.Y*60` to
    `body.SetHorizontalVelocity`, including zeros when input stops.
 4. Call `Reset` on focus loss, pause or view replacement, and release the host
@@ -83,6 +83,27 @@ or orthographic height for isometric. Apply it to the SDK camera. Isometric
 `ScreenToGround` takes the current focus and logical viewport dimensions; use
 the game's actual current camera, including responsive viewport handling.
 It returns false for invalid dimensions. Ground picking assumes Z=0.
+
+For camera zones and anticipation, create a `CameraComposer` and replace Follow:
+
+```go
+framing := controllers.DefaultCameraFramingOptions()
+framing.MaxLookahead = 24 // map pixels; use a smaller value for isometric metres
+composer, err := controllers.NewCameraComposer(framing)
+// Handle err, then once per update, after accepting player movement:
+focus, err = player.ComposeCamera(composer, focus, accepted, 1280, 720, snap)
+```
+
+Here `player` is a Planar controller and `focus` is the same focus used by
+CameraPosition/ScreenToGround. Handle the update error before submitting a
+camera. `Damping` sets horizontal/vertical half-lives in seconds; `DeadZone`
+permits movement without camera correction, and `SoftZone` sets the outer
+framing limits. `LookaheadTime`, `LookaheadDamping` and `MaxLookahead` control
+filtered, capped anticipation from actual accepted movement. Use `snap` on
+spawn or teleport. Keep one composer per shot and reset it on player replacement.
+Willowbrook and Vigil demonstrate the 2D and fixed isometric adapters.
+The [camera framing contract](docs/camera-framing-v1.md) defines units, bounds,
+portrait cropping and the first version's limits.
 
 See the small SDK adapters in the sample sources. Game hooks, entities, collider
 setup, overlay rendering and lifetime remain with the game. Stair assistance,

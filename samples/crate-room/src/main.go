@@ -6,11 +6,15 @@ import (
 
 	"example.com/crate-room/.karty/config"
 	"example.com/crate-room/.karty/engine"
+	"example.com/crate-room/.karty/ui"
 	"github.com/karty-game/controllers"
 )
 
 const width, height = float32(config.ResolutionWidth), float32(config.ResolutionHeight)
 const crateCount = 80
+
+// A centered control stays visible when the full-frame view crops its sides.
+const shootX, shootY = width / 2, height * .8125
 
 type Game struct {
 	engine.Game
@@ -26,7 +30,8 @@ type Game struct {
 	mouseHeld, pendingShot, pendingBlast, pendingReset bool
 	cooldown                                           uint8
 	shots, blasts                                      uint64
-	status                                             *engine.Text2D
+	status                                             string
+	panel                                              *engine.UI
 	moveThumb                                          *engine.Shape2D
 }
 
@@ -42,7 +47,7 @@ func main() {
 			OnPointer:     game.pointer,
 			OnInputReset:  game.resetInput,
 			OnLevelReady:  game.ready,
-			OnLevelFailed: func(event engine.LevelFailed) { game.status.SetText("Level failed: " + event.Diagnostic) },
+			OnLevelFailed: func(event engine.LevelFailed) { game.setStatus("Level failed: " + event.Diagnostic) },
 		},
 	)
 }
@@ -59,22 +64,21 @@ func (game *Game) start() {
 		panic(err)
 	}
 
-	game.status = game.NewText2D("Loading crate room...", engine.NewVec2(22, 22))
-	game.status.SetFontSize(19)
-	game.status.SetColor(engine.RGBA(237, 221, 177, 255))
-	game.status.SetLayer(30)
-	help := game.NewText2D("WASD / drag MOVE · Mouse / drag LOOK · Shoot · B blast · R reset", engine.NewVec2(22, 52))
-	help.SetFontSize(14)
-	help.SetLayer(35)
-	// Controls are cartridge entities and consume the public multi-touch input.
-	game.pad(110, height-104, "MOVE")
-	game.pad(width-110, height-104, "LOOK")
+	game.status = "Loading crate room..."
+	game.panel = ui.Hud(ui.HudProps{
+		Status: func() string { return game.status },
+		Blast:  func() { game.pendingBlast = true },
+		Reset:  func() { game.pendingReset = true },
+	})
+	// Gesture feedback stays in game coordinates; all copy is presentation UI.
+	// SHOOT is a passive UI label so raw down/up events preserve held fire while
+	// other fingers independently move and look. BLAST and RESET are UI buttons.
+	game.pad(110, height-104)
+	game.pad(width-110, height-104)
 	game.moveThumb = game.NewShape2D(engine.Circle(25), engine.NewVec2(110, height-104))
 	game.moveThumb.SetFill(engine.RGBA(233, 191, 113, 210))
 	game.moveThumb.SetLayer(31)
-	game.button(width-252, height-220, 210, 75, "SHOOT")
-	game.button(width-252, height-310, 210, 75, "BLAST")
-	game.button(width-170, 20, 150, 55, "RESET")
+	game.button(shootX-105, shootY-37.5, 210, 75)
 	crossX := game.NewShape2D(engine.Line(engine.NewVec2(18, 0)), engine.NewVec2(width/2-9, height/2))
 	crossX.SetStroke(engine.RGBA(255, 235, 184, 235), 2)
 	crossX.SetLayer(35)
@@ -83,23 +87,17 @@ func (game *Game) start() {
 	crossY.SetLayer(35)
 	game.RequestLevel("levels.crate-room")
 }
-func (game *Game) pad(x, y float32, label string) {
+func (game *Game) pad(x, y float32) {
 	base := game.NewShape2D(engine.Circle(86), engine.NewVec2(x, y))
 	base.SetFill(engine.RGBA(12, 24, 35, 165))
 	base.SetStroke(engine.RGBA(225, 184, 110, 190), 2)
 	base.SetLayer(30)
-	text := game.NewText2D(label, engine.NewVec2(x-30, y-10))
-	text.SetFontSize(18)
-	text.SetLayer(32)
 }
-func (game *Game) button(x, y, w, h float32, label string) {
+func (game *Game) button(x, y, w, h float32) {
 	base := game.NewShape2D(engine.Rectangle(w, h), engine.NewVec2(x, y))
 	base.SetFill(engine.RGBA(19, 32, 43, 210))
 	base.SetStroke(engine.RGBA(220, 180, 109, 220), 2)
 	base.SetLayer(30)
-	text := game.NewText2D(label, engine.NewVec2(x+20, y+20))
-	text.SetFontSize(22)
-	text.SetLayer(31)
 }
 func (game *Game) ready(event engine.LevelReady) {
 	game.level = event.Handle
@@ -207,7 +205,8 @@ func (game *Game) pointer(p engine.PointerInput) {
 			game.controller.Mouse(p.DeltaX, p.DeltaY)
 		}
 		if p.Phase == engine.PointerDown {
-			if game.action(p.X, p.Y) {
+			if shootContains(p.X, p.Y) {
+				game.mouseHeld, game.pendingShot = true, true
 				return
 			}
 			game.SetCursorCaptured(true)
@@ -228,12 +227,9 @@ func (game *Game) pointer(p engine.PointerInput) {
 	}
 	switch p.Phase {
 	case engine.PointerDown:
-		if p.X > width-272 && p.X < width-22 && p.Y > height-240 && p.Y < height-125 {
+		if shootContains(p.X, p.Y) {
 			game.shootID = p.ID
 			game.pendingShot = true
-			return
-		}
-		if game.action(p.X, p.Y) {
 			return
 		}
 		if p.X < width/2 && game.moveID == 0 {
@@ -266,19 +262,8 @@ func (game *Game) pointer(p engine.PointerInput) {
 		}
 	}
 }
-func (game *Game) action(x, y float32) bool {
-	switch {
-	case x > width-185 && y < 90:
-		game.pendingReset = true
-		return true
-	case x > width-272 && x < width-22 && y > height-330 && y < height-245:
-		game.pendingBlast = true
-		return true
-	case x > width-272 && x < width-22 && y > height-240 && y < height-125:
-		game.pendingShot = true
-		return true
-	}
-	return false
+func shootContains(x, y float32) bool {
+	return x > shootX-125 && x < shootX+125 && y > shootY-57.5 && y < shootY+57.5
 }
 func (game *Game) move(x, y float32) {
 	game.controller.MoveTouch(game.moveID, x, y)
@@ -380,7 +365,14 @@ func (game *Game) reset() {
 	game.hud()
 }
 func (game *Game) hud() {
-	game.status.SetText(
+	game.setStatus(
 		"CRATE ROOM · 80 boxes · Shots " + strconv.FormatUint(game.shots, 10) + " · Blasts " + strconv.FormatUint(game.blasts, 10),
 	)
+}
+
+func (game *Game) setStatus(value string) {
+	game.status = value
+	if game.panel != nil {
+		game.panel.Invalidate()
+	}
 }

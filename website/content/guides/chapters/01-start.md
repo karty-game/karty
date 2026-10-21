@@ -11,9 +11,9 @@ karty dev
 The terminal wizard offers `blank`, `2d`, `fps`, `isometric`, and `ui`, plus optional
 Git initialization and GitHub Actions. Use `--yes --template 2d` for scripts.
 Use `--no-template` for just the base folders and an empty entry point.
-Current starters use SDK 0.0.16, which the CLI installs when needed.
+Current starters use SDK 0.0.17, which the CLI installs when needed.
 
-The SDK 0.0.16 2D, first-person and isometric starters use one reusable
+The SDK 0.0.17 2D, first-person and isometric starters use one reusable
 controllers package with different presets. They include its source under
 `packages/controllers/` so generated projects work without a published module.
 Keep that folder in Git. Blank and UI projects add controls only when needed.

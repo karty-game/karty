@@ -14,3 +14,12 @@ run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
 [check-media-lab-audio-web]
 description = "Measure production music continuity, loop boundaries and full-burst mix headroom in actual WebAudio"
 run = "node scripts/check-media-lab-audio-web.mjs"
+
+
+[check-media-lab-hud-web]
+description = "Check presentation-layer media controls and responsive text in Chromium"
+run = "node scripts/check-sample-hud.mjs media-lab"
+
+[check-media-lab-video-web]
+description = "Verify actual MPEG-1 frames appear, advance, stop and replay through presentation UI controls"
+run = "node scripts/check-media-lab-video-web.mjs"

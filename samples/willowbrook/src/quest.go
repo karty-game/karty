@@ -8,64 +8,21 @@ import (
 	"github.com/karty-game/controllers"
 )
 
-type questJournalLayout struct {
-	top, height, actionOffset, actionHeight float32
-}
-
-func journalLayout(expanded bool) questJournalLayout {
-	if expanded {
-		return questJournalLayout{top: 584, height: 112, actionOffset: 72, actionHeight: 34}
-	}
-	return questJournalLayout{top: 648, height: 50, actionOffset: 24, actionHeight: 22}
-}
-
 type treasureQuest struct {
-	stage         int
-	pending       int
-	route         []village.Point
-	interactHeld  bool
-	label, action *engine.Text2D
-	plate         *engine.Shape2D
-	actionPlate   *engine.Shape2D
-	close         *engine.Text2D
-	prompt        *engine.Text2D
-	promptPlate   *engine.Shape2D
-	cache         *engine.Sprite2D
-	lastText      string
-	lastNearby    int
-	journalOpen   bool
-	lastOpen      bool
-	message       string
-	lastLabel     string
+	stage        int
+	pending      int
+	route        []village.Point
+	interactHeld bool
+	cache        *engine.Sprite2D
+	journalOpen  bool
+	lastOpen     bool
+	message      string
+	text         string
 }
 
 func (g *Game) startQuest() {
 	g.quest.pending = -1
-	g.quest.lastNearby = -2
 	g.quest.message = village.QuestMessages[0]
-	layout := journalLayout(false)
-	g.quest.plate = g.NewShape2D(engine.Rectangle(288, layout.height), engine.NewVec2(496, layout.top))
-	g.quest.plate.SetFill(engine.RGBA(245, 235, 197, 230))
-	g.quest.plate.SetLayer(hudLayer)
-	g.quest.label = g.NewText2D("", engine.NewVec2(508, layout.top+10))
-	g.quest.label.SetFontSize(12)
-	g.quest.label.SetColor(engine.RGBA(48, 66, 47, 255))
-	g.quest.label.SetLayer(hudLayer + 1)
-	g.quest.close = g.NewText2D("", engine.NewVec2(744, layout.top+4))
-	g.quest.close.SetFontSize(11)
-	g.quest.close.SetColor(engine.RGBA(104, 70, 36, 255))
-	g.quest.close.SetLayer(hudLayer + 2)
-	g.quest.actionPlate = g.NewShape2D(engine.Rectangle(272, layout.actionHeight), engine.NewVec2(504, layout.top+layout.actionOffset))
-	g.quest.actionPlate.SetLayer(hudLayer + 1)
-	g.quest.action = g.NewText2D("", engine.NewVec2(510, layout.top+layout.actionOffset+4))
-	g.quest.action.SetFontSize(12)
-	g.quest.action.SetColor(engine.RGBA(104, 70, 36, 255))
-	g.quest.action.SetLayer(hudLayer + 2)
-	g.quest.promptPlate = g.NewShape2D(engine.Rectangle(66, 18), engine.NewVec2(0, 0))
-	g.quest.promptPlate.SetFill(engine.ColorTransparent)
-	g.quest.prompt = g.NewText2D("", engine.NewVec2(0, 0))
-	g.quest.prompt.SetFontSize(11)
-	g.quest.prompt.SetColor(engine.RGBA(48, 66, 47, 255))
 	for i, p := range village.QuestStations {
 		asset := clueNoteTexture
 		width, height := village.QuestVisualSize(i)
@@ -179,83 +136,39 @@ func (g *Game) updateQuest() {
 		label = g.quest.message
 		text = "E / SPACE / TAP HERE: CLOSE\nTap a sign or chest to inspect it"
 	}
-	if label != g.quest.lastLabel {
-		g.quest.label.SetText(label)
-		g.quest.lastLabel = label
-	}
-	if g.quest.journalOpen != g.quest.lastOpen {
-		layout := journalLayout(g.quest.journalOpen)
-		g.quest.plate.SetShape(engine.Rectangle(288, layout.height))
-		g.quest.plate.SetTransform(engine.NewVec2(496, layout.top), engine.NewVec2(1, 1), 0)
-		g.quest.label.SetTransform(engine.NewVec2(508, layout.top+10), engine.NewVec2(1, 1), 0)
-		g.quest.close.SetTransform(engine.NewVec2(744, layout.top+4), engine.NewVec2(1, 1), 0)
-		g.quest.actionPlate.SetShape(engine.Rectangle(272, layout.actionHeight))
-		g.quest.actionPlate.SetTransform(engine.NewVec2(504, layout.top+layout.actionOffset), engine.NewVec2(1, 1), 0)
-		g.quest.action.SetTransform(engine.NewVec2(510, layout.top+layout.actionOffset+4), engine.NewVec2(1, 1), 0)
-		if g.quest.journalOpen {
-			g.quest.close.SetText("CLOSE")
-		} else {
-			g.quest.close.SetText("")
-		}
+	combined := label + "\n" + text
+	if combined != g.quest.text || g.quest.journalOpen != g.quest.lastOpen {
+		g.quest.text = combined
 		g.quest.lastOpen = g.quest.journalOpen
+		g.hud.Invalidate()
 	}
-	if nearby != g.quest.lastNearby {
-		fill := engine.RGBA(245, 235, 197, 0)
-		if nearby >= 0 {
-			fill = engine.RGBA(220, 201, 147, 255)
-			p := village.QuestStations[nearby]
-			_, height := village.QuestVisualSize(nearby)
-			g.quest.promptPlate.SetTransform(engine.NewVec2(float32(p.X-33), float32(p.Y-height-22)), engine.NewVec2(1, 1), 0)
-			g.quest.promptPlate.SetLayer(g.mapLayer(village.ActorLayer, p.Y) + 3)
-			g.quest.prompt.SetTransform(engine.NewVec2(float32(p.X-29), float32(p.Y-height-19)), engine.NewVec2(1, 1), 0)
-			g.quest.prompt.SetLayer(g.mapLayer(village.ActorLayer, p.Y) + 4)
-		}
-		g.quest.promptPlate.SetFill(fill)
-		g.quest.actionPlate.SetFill(fill)
-		g.quest.lastNearby = nearby
+}
+
+// The journal is presentation UI, so its action consumes pointer input before
+// world picking and stays readable independently of game-image resolution.
+func (g *Game) activateJournal() {
+	if !g.loaded {
+		return
 	}
-	prompt := ""
-	if nearby >= 0 {
-		prompt = "READ [E]"
-		if nearby == 2 {
-			prompt = "OPEN [E]"
-			if g.quest.stage == 3 {
-				prompt = "VIEW [E]"
-			}
-		}
-	}
-	if g.quest.prompt.Text() != prompt {
-		g.quest.prompt.SetText(prompt)
-	}
-	if text != g.quest.lastText {
-		g.quest.action.SetText(text)
-		g.quest.lastText = text
+	g.controller.CancelTarget()
+	g.cancelQuestWalk()
+	if g.quest.journalOpen {
+		g.closeJournal()
+	} else if g.nearbyQuest() >= 0 {
+		g.inspectNearby()
+	} else {
+		g.quest.journalOpen = true
+		g.updateQuest()
 	}
 }
 
 // Test the projected sprite, including its height, so tapping a note's picture
 // works on the upper terrace as well as tapping its ground contact.
 func (g *Game) selectQuest(x, y float64) bool {
-	// The highlighted footer is a generous touch action, inside the portrait
-	// safe area. Clicking any part of the journal must not walk through it.
-	layout := journalLayout(g.quest.journalOpen)
-	if x >= 496 && x <= 784 && y >= float64(layout.top) && y <= float64(layout.top+layout.height) {
-		if g.quest.journalOpen {
-			g.closeJournal()
-		} else if y >= float64(layout.top+layout.actionOffset) && g.nearbyQuest() >= 0 {
-			g.inspectNearby()
-		} else {
-			g.quest.journalOpen = true
-			g.updateQuest()
-		}
-		return true
-	}
 	for i, p := range village.QuestStations {
 		screen := g.camera.WorldToScreen(engine.NewVec2(float32(p.X), float32(p.Y)), 1280, 720)
 		sx, sy, zoom := float64(screen.X), float64(screen.Y), float64(g.camera.Zoom)
-		_, height := village.QuestVisualSize(i)
-		promptHit := g.nearQuest(i) && math.Abs(x-sx) <= 33*zoom && y >= sy-(height+22)*zoom && y <= sy-(height+4)*zoom
-		if !promptHit && !village.QuestHit(i, x, y, sx, sy, zoom) {
+		if !village.QuestHit(i, x, y, sx, sy, zoom) {
 			continue
 		}
 		if g.nearQuest(i) {

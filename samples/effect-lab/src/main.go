@@ -3,6 +3,7 @@ package main
 import (
 	"example.com/effect-lab/.karty/config"
 	"example.com/effect-lab/.karty/engine"
+	"example.com/effect-lab/.karty/ui"
 	"github.com/karty-game/controllers"
 )
 
@@ -12,7 +13,8 @@ type Game struct {
 	controller *controllers.FirstPerson
 	level      engine.LevelHandle
 	request    engine.RequestID
-	status     *engine.Text2D
+	status     string
+	panel      *engine.UI
 	keys       [256]bool
 	view       int
 }
@@ -29,7 +31,7 @@ func main() {
 		OnLevelFailed: func(e engine.LevelFailed) {
 			if e.RequestID == g.request {
 				g.request = 0
-				g.status.SetText("Load failed: " + e.Diagnostic)
+				g.setStatus("Load failed: " + e.Diagnostic)
 			}
 		},
 	})
@@ -43,12 +45,8 @@ func (g *Game) start() {
 	if err != nil {
 		panic(err)
 	}
-	background := g.NewShape2D(engine.Rectangle(810, 104), engine.NewVec2(16, 16))
-	background.SetFill(engine.RGBA(12, 18, 27, 215))
-	background.SetLayer(20)
-	g.status = g.text("Loading effect lab…", 30, 25, 22)
-	g.text("WASD move · Mouse look · Esc release · 1 / 2 / 3 viewpoints · R reset", 30, 57, 15)
-	g.text("Open Debug → Effects to compare methods. Touch: left drag move / right drag look.", 30, 82, 14)
+	g.status = "Loading effect lab…"
+	g.panel = ui.Hud(ui.HudProps{Status: func() string { return g.status }})
 	for _, offset := range [...]engine.Vec2{engine.NewVec2(-6, 0), engine.NewVec2(0, -6)} {
 		shape := engine.Line(engine.NewVec2(12, 0))
 		if offset.Y != 0 {
@@ -61,12 +59,11 @@ func (g *Game) start() {
 	g.request = g.RequestLevel("levels.effect-lab")
 }
 
-func (g *Game) text(value string, x, y, size float32) *engine.Text2D {
-	t := g.NewText2D(value, engine.NewVec2(x, y))
-	t.SetFontSize(size)
-	t.SetColor(engine.RGBA(230, 239, 248, 255))
-	t.SetLayer(21)
-	return t
+func (g *Game) setStatus(value string) {
+	g.status = value
+	if g.panel != nil {
+		g.panel.Invalidate()
+	}
 }
 
 func (g *Game) ready(e engine.LevelReady) {
@@ -109,7 +106,7 @@ func (g *Game) visit(index int) {
 	g.camera.Destroy()
 	g.camera = g.NewCamera3D(g.level, s)
 	g.camera.SetLayer(-10)
-	g.status.SetText(p.name)
+	g.setStatus(p.name)
 }
 
 func (g *Game) key(key engine.Key, down bool) {
@@ -198,6 +195,10 @@ func (g *Game) resetInput() {
 }
 func (g *Game) releasePointer() { g.SetCursorCaptured(false); g.resetInput() }
 func (g *Game) stop() {
+	if g.panel != nil {
+		g.panel.Close()
+		g.panel = nil
+	}
 	g.releasePointer()
 	if g.request != 0 {
 		g.CancelLevelRequest(g.request)

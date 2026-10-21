@@ -26,6 +26,7 @@ test("all effects exercise actual work, with matched baseline and outline stacks
     "lensDistortion",
     "sharpen",
     "lensSurface",
+    "bloom",
   ];
   const defaults = {
     ...Object.fromEntries(names.map((n) => [n, false])),
@@ -35,9 +36,12 @@ test("all effects exercise actual work, with matched baseline and outline stacks
     gradeExposure: 0,
   };
   const variants = effectVariants(defaults);
-  assert.equal(variants.length, 19);
+  assert.equal(variants.length, 23);
   assert.deepEqual(variants[0].options, defaults);
   for (const name of names) assert.equal(variants.find((v) => v.name === name).options[name], true);
+  assert.equal(variants.find((v) => v.name === "bloom-compact").options.bloomQuality, 0);
+  assert.equal(variants.find((v) => v.name === "bloom-balanced").options.bloomQuality, 1);
+  assert.equal(variants.find((v) => v.name === "bloom-rgba8").options.bloomFormat, 1);
   assert.equal(variants.find((v) => v.name === "dither").options.quantize, true);
   assert.notEqual(variants.find((v) => v.name === "saturation").options.saturationAmount, 1);
   assert.notEqual(variants.find((v) => v.name === "contrast").options.contrastAmount, 1);
@@ -148,6 +152,7 @@ test("complete and cancelled captures restore effects and the original presentat
         "lensDistortion",
         "sharpen",
         "lensSurface",
+        "bloom",
       ].map((n) => [n, false]),
     ),
     effectsEnabled: true,
@@ -166,6 +171,9 @@ test("complete and cancelled captures restore effects and the original presentat
     lensSize: 1,
     lensRefraction: 8,
     lensSpecular: 0.35,
+    bloomIntensity: 1,
+    bloomQuality: 2,
+    bloomFormat: 0,
   };
   let options = { ...defaults, grain: true },
     profile = "low",
@@ -231,6 +239,10 @@ test("complete and cancelled captures restore effects and the original presentat
             device: {
               frames: frame,
               resourceRevisions: 2,
+              bloomActive: options.bloom,
+              bloomBytes: options.bloom ? 2048 : 0,
+              bloomPasses: options.bloom ? 2 * (options.bloomQuality + 1) : 0,
+              bloomError: "",
               gradePending: gradeRemaining > 0,
               gradeBuildMs,
               gradeBuildNodes,
@@ -294,7 +306,7 @@ test("complete and cancelled captures restore effects and the original presentat
     expose(key, value);
   try {
     const report = await runEffectBenchmark({ warmup: 1, frames: 16, repeats: 1 });
-    assert.equal(report.rows.length, 20);
+    assert.equal(report.rows.length, 24);
     assert.equal(report.rows.find((r) => r.name === "outline").comparison.gpuDeltaMs, 1);
     const outlineStats = report.rows.find((r) => r.name === "outline").renderStats;
     assert.equal(outlineStats.outlineActive, true);

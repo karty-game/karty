@@ -25,7 +25,7 @@ run = 'node website/scripts/generate-design-materialize.mjs "$KARTY_DOCS_MATERIA
 
 [check-technical-candidate]
 description = "Type-check all API examples against an installed SDK candidate"
-env = { KARTY_TECHNICAL_SDK = "0.0.16" }
+env = { KARTY_TECHNICAL_SDK = "0.0.17" }
 run = "go test -timeout=9s ./website/internal/generator -run TestTechnicalExamples -count=1 -v"
 
 [check-docs-web]

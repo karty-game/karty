@@ -156,7 +156,7 @@ uses the compiled records, with no general JSON, CSV, XML, gob or YAML/TOML
 decoder dependency. Development-server messages, source-package inventories,
 editor schemas and authoring reports remain tooling formats.
 
-SDK 0.0.16 packs game images and all remaining level images into
+SDK 0.0.17 packs game images and all remaining level images into
 build-time QOI atlas pages with a binary region layout (`texture/atlas@1`).
 Sprites, UI, animation, particles and vegetation keep stable logical references
 and original dimensions. Identical processed images share one rectangle;

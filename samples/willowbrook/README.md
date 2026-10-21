@@ -11,17 +11,33 @@ Tap a note or cache to find a walkable route and inspect it, or approach with
 the keyboard and press E or Space. R restarts the hunt. Losing focus cancels
 held input and automatic walking.
 
+Press **C** or tap **Camera settings** to tune horizontal/vertical damping,
+dead/soft zone sizes and lookahead live. Compare **Hard lock / Follow** while
+walking, stopping, reversing and running. Higher damping catches up more slowly;
+the dead zone permits small movement and the soft zone limits target drift.
+Zone sizes are percentages of the view, including the target's framing offset.
+Enable the green/amber zone guides to see those bounds. R tests a spawn snap;
+**Reset** restores the sample defaults. Changes last until reload.
+This first version covers target framing only.
+
+Camera controls use the village's parchment, green and brown palette from
+`ui/theme.toml`. The camera button sits beneath the centered title; the open
+panel scrolls on short screens. Offline status and downloads live inside the
+shared browser Debug panel, which retains its standard appearance.
+
 Ground clicks use the SDK's shared `World.FindPath` solver with the authored
 collision geometry. A 24-pixel grid covers the village within the engine's
 4,096-cell bound; returned routes still pass the game's collision checks.
 New clicks replace the route, and keyboard movement cancels it. Quest clicks
 retain their finer approach search so signs can be inspected from nearby.
 
-Noticeboards show a nearby **READ [E]** prompt, and the chest shows **OPEN [E]**.
-Tap the painted sign face, nearby prompt or highlighted journal action; the
-character approaches through the same collisions before reading. E/Space also
-reads a nearby item. The journal stays compact at the bottom during play; tap
-its title to reopen it, or use E/Space, Escape or CLOSE to dismiss a page.
+The title, journal and nearby Read/Open action use KartUI's presentation layer,
+so text stays sharp independently of game-image scaling. Interaction hints stay
+in the journal above the scenery. Tap a painted sign or chest to approach it
+through the same collisions, then read or open it. E/Space and the journal
+button also interact with a nearby item. The journal stays compact at the bottom
+during play; tap it to reopen a page, and tap again or use E/Space or Escape to
+close it.
 
 From the CLI repository root:
 
@@ -32,7 +48,7 @@ mise run build-willowbrook-web
 mise run serve-willowbrook
 ```
 
-The sample uses SDK 0.0.16 with Camera2D and its matching public host.
+The sample uses SDK 0.0.17 with Camera2D and its matching public host.
 No engine source is imported by the sample. `KARTY_HOST_WEB` selects a contributor
 host override; native packaging uses `mise run build-willowbrook-native`.
 

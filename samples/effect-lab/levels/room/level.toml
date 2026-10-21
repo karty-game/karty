@@ -200,3 +200,51 @@ normal = 0
 height = 0
 ao = 0.2
 rim = 0
+
+[[textures]]
+name = "bloom-amber"
+source = "bloom-amber.png"
+profile = "environment"
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+[textures.emission]
+intensity = 1.8
+
+[[textures]]
+name = "bloom-cyan"
+source = "bloom-cyan.png"
+profile = "environment"
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+[textures.emission]
+intensity = 1.8
+
+[[textures]]
+name = "bloom-magenta"
+source = "bloom-magenta.png"
+profile = "environment"
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+[textures.emission]
+intensity = 1.8
+
+[[textures]]
+name = "bloom-white"
+source = "bloom-white.png"
+profile = "environment"
+[textures.material_strengths]
+normal = 0
+height = 0
+ao = 0
+rim = 0
+[textures.emission]
+intensity = 1.8

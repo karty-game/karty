@@ -12,14 +12,14 @@ change the choices available in the dining car.
 ## Run it
 
 Complete the [sample setup](../README.md#run-a-sample), including
-SDK 0.0.16 and its matching host, then run from the CLI repository root:
+SDK 0.0.17 and its matching host, then run from the CLI repository root:
 
 ```sh
 mise run build-last-train-web
 mise run serve-last-train
 ```
 
-Character reveal uses `UI.Reveal` from SDK 0.0.16. Build from this checkout,
+Character reveal uses `UI.Reveal` from SDK 0.0.17. Build from this checkout,
 which pins KartUI v0.0.10 with its `reveal` compiler support. The CLI installs the
 matching SDK and host; `KARTY_HOME` selects their cache directory.
 
@@ -47,7 +47,7 @@ and current preferences.
 
 ## Story and saves
 
-This sample uses SDK/host **0.0.16** (API **0.0.13**) for character
+This sample uses SDK/host **0.0.17** (API **0.0.13**) for character
 reveal and persistent saves, plus the `dialogue` package and optional save storage:
 
 | Package                                       | Responsibility                                                                 |

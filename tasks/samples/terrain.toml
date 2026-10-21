@@ -44,3 +44,8 @@ run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
 description = "Check the terrain sample's desktop and independent touch input"
 dir = "samples/terrain"
 run = "GOWORK=off go test -timeout=9s ./internal/fps"
+
+
+[check-terrain-hud-web]
+description = "Check presentation-layer terrain status, viewpoint controls and responsive text in Chromium"
+run = "node scripts/check-sample-hud.mjs terrain --world-scale=0.25"

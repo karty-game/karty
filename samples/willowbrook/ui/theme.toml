@@ -1,0 +1,25 @@
+extends = "dark"
+
+[colors]
+surface = "#f5ebc5eb"
+primary = "#e6d7a9ff"
+primary-hover = "#d8c692ff"
+primary-pressed = "#cbb67bff"
+disabled = "#e4dcbfff"
+accent = "#684624ff"
+text = "#30422fff"
+text-disabled = "#72745aff"
+transparent = "#00000000"
+
+[spacing]
+panel = 12
+gap = 8
+tight = 4
+
+[typography]
+body = 14
+label = 12
+caption = 11
+
+[controls]
+height = 44

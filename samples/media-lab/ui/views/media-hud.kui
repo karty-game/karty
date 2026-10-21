@@ -1,0 +1,121 @@
+<template>
+  <panel class="screen" modal="false">
+    <panel class="heading">
+      <label class="title">Karty media lab</label>
+      <label class="formats">Images: QOI · Sound: QOA · Video: MPEG-1</label>
+    </panel>
+    <panel class="controls">
+      <label class="status">{ props.Status() }</label>
+      <panel class="video-controls">
+        <button onClick={ props.PlayVideo }>Play / replay video</button>
+        <button onClick={ props.StopVideo }>Stop video</button>
+      </panel>
+      <panel class="audio-controls">
+        <button class="one-shot" onClick={ props.OneShot }>ONE SHOT · 8-bit mono</button>
+        <button class="burst" onClick={ props.Burst }>36-START BURST · 24-bit mono</button>
+        <button class="music" onClick={ props.ToggleMusic }>{ musicLabel() }</button>
+      </panel>
+    </panel>
+  </panel>
+</template>
+<script setup lang="go">
+type MediaHUDProps struct {
+  Status func() string
+  MusicEnabled func() bool
+  PlayVideo, StopVideo, OneShot, Burst, ToggleMusic func()
+}
+func setup(props MediaHUDProps) {
+  musicLabel := func() string {
+    if props.MusicEnabled() { return "BGM REPLAY: ON · stereo loop" }
+    return "BGM REPLAY: OFF · stereo loop"
+  }
+}
+</script>
+<style>
+.screen
+  width: 100%
+  height: 100%
+  padding: 20
+  align: center
+  background: #00000000
+.heading
+  width: 100%
+  max-width: 680
+  padding: 0
+  gap: 8
+  align: center
+  background: #00000000
+.title
+  font-family: body
+  font-size: 30
+  color: #f0f6ffff
+.formats
+  font-family: body
+  font-size: 14
+  color: #d2e2ffff
+.controls
+  position: absolute
+  left: 0
+  right: 0
+  bottom: 52
+  padding: 0
+  gap: 8
+  background: #00000000
+.status
+  width: 100%
+  height: 22
+  font-family: body
+  font-size: 15
+  color: #f0f6ffff
+  text-align: center
+.video-controls
+  width: 100%
+  direction: row
+  height: 44
+  gap: 8
+  padding: 0
+  justify: center
+  background: #00000000
+.audio-controls
+  width: 100%
+  direction: row
+  align: stretch
+  height: 76
+  gap: 12
+  padding: 0
+  background: #00000000
+button
+  flex-grow: 1
+  min-width: 0
+  min-height: 44
+  font-family: body
+  font-size: 15
+  color: #f0f6ffff
+  background: #253e5af5
+  background-hover: #365879ff
+  background-pressed: #172c43ff
+.one-shot
+  background: #276496eb
+.burst
+  background: #963e41eb
+.music
+  background: #4b5e9ceb
+@media (max-width: 700)
+  .screen
+    padding: 12
+  .title
+    font-size: 24
+  .formats
+    font-size: 12
+  .controls
+    bottom: 60
+  .audio-controls
+    direction: column
+    height: 160
+    gap: 8
+  .status
+    height: 40
+    font-size: 14
+  button
+    font-size: 14
+</style>

@@ -3,6 +3,7 @@ package main
 import (
 	"example.com/terrain/.karty/config"
 	"example.com/terrain/.karty/engine"
+	"example.com/terrain/.karty/ui"
 )
 
 const viewpointCount = 11
@@ -12,7 +13,8 @@ type Game struct {
 	camera   *engine.Camera3D
 	level    engine.LevelHandle
 	fps      *FPSController
-	status   *engine.Text2D
+	hud      *engine.UI
+	status   string
 	view     int
 	viewHeld bool
 }
@@ -28,9 +30,10 @@ func main() {
 		OnPointer:     func(pointer engine.PointerInput) { game.fps.Pointer(pointer) },
 		OnInputReset:  func() { game.fps.Reset(); game.viewHeld = false },
 		OnLevelReady:  game.ready,
-		OnLevelFailed: func(event engine.LevelFailed) { game.status.SetText("Level failed: " + event.Diagnostic) },
+		OnLevelFailed: func(event engine.LevelFailed) { game.setStatus("Level failed: " + event.Diagnostic) },
 		OnStop: func() {
 			game.fps.Close()
+			game.hud.Close()
 			if game.level != 0 {
 				game.ReleaseLevel(game.level)
 			}
@@ -41,17 +44,16 @@ func main() {
 func (game *Game) start() {
 	game.fps = NewFPSController(&game.Game)
 	game.fps.SceneContains = func(x, y float32) bool { return y > 80 }
-	game.status = game.NewText2D("Loading cove terrain...", engine.NewVec2(22, 18))
-	game.status.SetFontSize(20)
-	game.status.SetColor(engine.RGBA(245, 241, 223, 255))
-	game.status.SetLayer(30)
-	help := game.NewText2D(
-		"Coastal vegetation · WASD / mouse · Shift run · V views (11) · R reset · Touch: left move / right look",
-		engine.NewVec2(22, 48),
-	)
-	help.SetFontSize(14)
-	help.SetLayer(30)
+	game.status = "Loading cove terrain..."
+	game.hud = ui.TerrainHud(ui.TerrainHUDProps{Status: func() string { return game.status }})
 	game.RequestLevel("levels.ground")
+}
+
+func (game *Game) setStatus(status string) {
+	game.status = status
+	if game.hud != nil {
+		game.hud.Invalidate()
+	}
 }
 
 func (game *Game) ready(event engine.LevelReady) {
@@ -87,7 +89,7 @@ func (game *Game) visit(index int) {
 	}
 	game.fps.SetCamera(game.camera, body)
 
-	game.status.SetText(name)
+	game.setStatus(name)
 
 	game.view = index
 }

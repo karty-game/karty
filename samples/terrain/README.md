@@ -17,7 +17,7 @@ mise run build-terrain-web
 mise exec -- ./dist/karty serve samples/terrain/dist/web --addr 127.0.0.1:8080
 ```
 
-Open `http://127.0.0.1:8080/`. The sample pins SDK 0.0.16 and uses its matching
+Open `http://127.0.0.1:8080/`. The sample pins SDK 0.0.17 and uses its matching
 public host. For native packaging, run `mise run build-terrain-native`.
 Run native and web builds sequentially because they share generated UI staging.
 
@@ -40,6 +40,8 @@ Run native and web builds sequentially because they share generated UI staging.
   structures, vegetation and the ocean.
 - `src/main.go` selects viewpoints; `src/fps_controller.go` and `internal/fps/`
   combine accepted physical movement, camera control and swimming.
+- `ui/terrain-hud.kui` keeps viewpoint names, loading errors and instructions in
+  presentation UI, separate from the terrain and its camera resolution.
 - `levels/ground/` contains the textures used by the level. The lighthouse is
   an exterior landmark; its door does not open.
 

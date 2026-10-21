@@ -12,6 +12,9 @@ explicit, run once per fixed 60 Hz update, and retain no global game state.
 First-person Step reads accepted yaw/pitch and returns displacement plus camera
 angles; callers send horizontal velocity to the host, preserving gravity.
 Planar Step proposes movement and Follow uses the accepted position.
+The optional [camera composer](camera-framing-v1.md) adds screen-axis damping,
+dead/soft zones and bounded lookahead through Planar.ComposeCamera. It does not
+change Follow or movement behavior for existing consumers.
 
 Input storage is fixed. Controls include independent key aliases; repeated
 keydown is idempotent. Each touch slot owns one nonzero finger until release

@@ -106,6 +106,7 @@ try {
         sprites: 0,
         destroyed: 0,
         world3D: 0,
+        legacyText2D: 0,
         texts: [],
         textByID: {},
         heroTextures: [],
@@ -294,11 +295,25 @@ try {
                 if (tag === 2) delete m.shadows[id];
               }
               if (tag === 8 || tag === 9) {
+                if (tag === 8) s.legacyText2D++;
                 const n = v.getUint16(p + 4, true),
                   text = new TextDecoder().decode(batch.slice(p + 6, p + 6 + n));
                 if (!s.texts.includes(text)) s.texts.push(text);
                 s.textByID[id] = text;
                 s.latestText = text;
+              }
+              // Presentation HUD labels are KartUI elements, independent of
+              // the pixel-art world camera and its Text2D entities.
+              if (tag === 20) {
+                const element = v.getUint32(p + 4, true),
+                  n = v.getUint16(p + 9, true),
+                  text = new TextDecoder().decode(batch.slice(p + 11, p + 11 + n));
+                if (!s.texts.includes(text)) s.texts.push(text);
+                s.textByID["ui:" + id + ":" + element] = text;
+                s.latestText = text;
+              }
+              if (tag === 19) {
+                for (const key of Object.keys(s.textByID)) if (key.startsWith("ui:" + id + ":")) delete s.textByID[key];
               }
               // Negative control: preserve observed anchors but suppress drawing.
               if (hideQuest && tag === 3 && s.questSprites[id]) {
@@ -431,6 +446,16 @@ try {
   };
   const initial = await state();
   assert.equal(initial.world3D, 0);
+  assert.equal(initial.legacyText2D, 0, "Willow text must use the presentation HUD instead of world Text2D");
+  const presentationTexts = Object.entries(initial.textByID)
+    .filter(([key]) => key.startsWith("ui:"))
+    .map(([, text]) => text);
+  assert.ok(presentationTexts.includes("WILLOWBROOK"), "title was not submitted through KartUI");
+  assert.ok(
+    presentationTexts.some((text) => text.includes("JOURNAL: FIND THE COTTAGE SIGN")),
+    "journal was not submitted through KartUI",
+  );
+  report.checks.push("title and journal use KartUI presentation labels; no legacy world Text2D entities are created");
   assert.ok(initial.camera.length === 3 && initial.sprites > 1 && initial.sprites <= 384);
   assert.ok(Math.hypot(initial.position[0] - spawn.x, initial.position[1] - spawn.y) < 0.01);
   assertQuestAnchors(
@@ -785,30 +810,44 @@ try {
   } else if (interactions) {
     const objective = "JOURNAL: FIND THE GARDEN SIGN";
     const currentText = async (text) => {
-      await game.waitForFunction((text) => Object.values(villageEvidence.textByID).includes(text), text, {
-        timeout: 20000,
-      });
+      await game.waitForFunction(
+        (text) => Object.values(villageEvidence.textByID).some((value) => value.includes(text)),
+        text,
+        {
+          timeout: 20000,
+        },
+      );
     };
     const compact = async () => {
       await currentText(objective);
       const texts = Object.values((await state()).textByID);
-      assert.ok(!texts.includes(stationTexts[0]), "closed journal retained its visible inscription");
-      assert.ok(!texts.includes("CLOSE"), "closed journal retained the close control");
+      assert.ok(
+        !texts.some((value) => value.includes(stationTexts[0])),
+        "closed journal retained its visible inscription",
+      );
+      assert.ok(!texts.some((value) => value.includes("CLOSE")), "closed journal retained the close control");
     };
     const opened = async () => {
       await currentText(stationTexts[0]);
-      assert.ok(Object.values((await state()).textByID).includes("CLOSE"), "opened inscription has no close control");
+      assert.ok(
+        Object.values((await state()).textByID).some((value) => value.includes("CLOSE")),
+        "opened inscription has no close control",
+      );
     };
-    const tapHUD = async (x, y) => {
+    const tapJournal = async (expanded, horizontal = 0.5, vertical = 0.5) => {
       const box = await game.locator("canvas").boundingBox();
-      const scale = box.height / 720;
-      const point = { x: box.x + box.width / 2 + (x - 640) * scale, y: box.y + y * scale };
+      const width = Math.min(288, box.width - 24),
+        height = expanded ? 112 : 50;
+      const point = {
+        x: box.x + box.width / 2 + (horizontal - 0.5) * width,
+        y: box.y + box.height - 22 - height + vertical * height,
+      };
       const viewport = page.viewportSize();
       assert.ok(point.x > 0 && point.x < viewport.width && point.y > 0 && point.y < viewport.height);
       await tap(point.x, point.y);
     };
     assert.ok(
-      Object.values(initial.textByID).includes("JOURNAL: FIND THE COTTAGE SIGN"),
+      Object.values(initial.textByID).some((value) => value.includes("JOURNAL: FIND THE COTTAGE SIGN")),
       "journal did not start as a compact objective",
     );
     await page.keyboard.down("Shift");
@@ -833,31 +872,31 @@ try {
     await press("e", 1);
     await compact();
     await frames(24);
-    // This lies inside the actual nearby cream READ tag, above the sign's
-    // sprite hit padding. It exercises the local action instead of its foot.
-    await clickWorld(stations[0], 77);
+    // The nearby READ action stays in the presentation HUD, above world art.
+    await currentText("READ SIGN");
+    await tapJournal(false, 0.5, 0.75);
     await opened();
-    await tapHUD(760, 594);
+    await tapJournal(true, 0.9, 0.1);
     await compact();
-    await tapHUD(640, 682);
+    await tapJournal(false, 0.5, 0.75);
     await opened();
     await press("Escape", 1);
     await compact();
-    await tapHUD(620, 662);
+    await tapJournal(false, 0.4, 0.25);
     await opened();
-    await tapHUD(760, 594);
+    await tapJournal(true, 0.9, 0.1);
     await compact();
     assert.equal((await state()).cacheAsset, art.textures["treasure-closed"], "reading a sign opened the chest early");
     report.checks.push(
-      "visible painted sign face tap approaches through actual map collision before reading; E reopens and closes; nearby world READ tag, highlighted HUD action and journal title/close controls all respond to actual input",
+      "visible painted sign face tap approaches through actual map collision before reading; E reopens and closes; presentation HUD READ action and journal title/close regions all respond to actual input",
     );
     await page.setViewportSize({ width: 390, height: 844 });
     await frames(20);
     await capture("interactions-portrait-compact");
-    await tapHUD(640, 682);
+    await tapJournal(false, 0.5, 0.75);
     await opened();
     await capture("interactions-portrait-read");
-    await tapHUD(760, 594);
+    await tapJournal(true, 0.9, 0.1);
     await compact();
     const after = await state();
     assert.ok(Math.hypot(after.position[0] - firstRead.position[0], after.position[1] - firstRead.position[1]) < 0.1);
@@ -867,17 +906,23 @@ try {
   } else {
     await page.keyboard.down("Shift");
     await clickWorld(stations[0], 12);
-    await game.waitForFunction((text) => villageEvidence.texts.includes(text), stationTexts[0], { timeout: 20000 });
+    await game.waitForFunction((text) => villageEvidence.texts.some((value) => value.includes(text)), stationTexts[0], {
+      timeout: 20000,
+    });
     await questPixels(0);
     await capture("cottage-note");
     await press("Escape", 1);
     await clickWorld(stations[1], 12);
-    await game.waitForFunction((text) => villageEvidence.texts.includes(text), stationTexts[1], { timeout: 30000 });
+    await game.waitForFunction((text) => villageEvidence.texts.some((value) => value.includes(text)), stationTexts[1], {
+      timeout: 30000,
+    });
     await questPixels(1);
     await capture("terrace");
     await press("Escape", 1);
     await clickWorld(stations[2], 20);
-    await game.waitForFunction((text) => villageEvidence.texts.includes(text), stationTexts[2], { timeout: 20000 });
+    await game.waitForFunction((text) => villageEvidence.texts.some((value) => value.includes(text)), stationTexts[2], {
+      timeout: 20000,
+    });
     await page.keyboard.up("Shift");
     await frames(4);
     assert.equal((await state()).cacheAsset, art.textures["treasure-open"]);
@@ -954,6 +999,7 @@ try {
   const s = await state();
   assert.ok(s.maxBatch <= 65536 && s.maxRecords <= 4096);
   assert.equal(s.world3D, 0);
+  assert.equal(s.legacyText2D, 0, "gameplay recreated legacy Text2D labels");
   report.state = s;
   report.stats = await game.evaluate(() => globalThis.kartyWorldRenderer?.stats() ?? null);
   if (report.stats?.cameras) assert.equal(report.stats.cameras.length, 0, "2D scene allocated a 3D camera");

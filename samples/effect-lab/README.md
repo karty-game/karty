@@ -3,7 +3,8 @@
 A small FPS room for comparing rendering treatments in motion. Five warm, cool,
 neutral and colored lights illuminate painted blocks, wooden and brick objects,
 metal columns, grayscale/color ramps and fine checker patterns. White depth
-markers provide a distance-fog comparison.
+markers provide a distance-fog comparison. Amber/cyan emissive tubes, a magenta
+bar and a small warm point provide bright sources for bloom in the same room.
 
 All artwork is procedural. From the CLI root, regenerate it with
 `mise run generate-effect-lab`. Materialize builds the normal, height,
@@ -33,7 +34,7 @@ Desktop AMD GPU checks do not establish Pixel 6 performance or stability.
 Open **Debug → Effects**, or append `?effects=1` to the preview URL. Release
 mouse look before using the panel. Individual toggles retain their strengths;
 Enable effects provides a master before/after comparison. Clean resets all
-settings. CRT, Handheld, Hazy, Warm, Cool and Ink provide starting points for experimentation.
+settings. Bloom, CRT, Handheld, Hazy, Warm, Cool and Ink provide starting points for experimentation.
 Use Jump to effect to reach a section directly.
 
 - Warp the lens with bounded barrel/pincushion distortion, optical center and
@@ -147,6 +148,32 @@ mise run check-effect-lab-outline-failure
 
 The host override also copies its adjacent `wasm_exec.js`. The baseline stays
 unchanged; the report records the exact cartridge, host and glue hashes.
+
+## Bloom
+
+Bloom uses the ordinary Effects panel, presets and shared benchmark. The Bloom
+preset enables it; Clean disables it. Adjust strength, brightness threshold,
+threshold softness, radius and scatter, and compare Compact/Balanced/Wide spread.
+Composite, Glow only and Selected source views make selection and halos visible.
+The room stays SDR RGBA8. Only low-resolution glow buffers use RGBA16F by default;
+RGBA8 is an explicit option with lower faint-tail precision. Bright charts/walls
+can contribute alongside emissive fixtures because this selects scene brightness.
+
+Spread uses 2/4/6 small passes; at a 1280×720 world size RGBA16F scratch is about
+2.20/2.75/2.88 MiB, with an 8 MiB per-camera preflight limit. RGBA8 halves storage.
+Changing scalar controls keeps the same targets. Master bypass and zero strength
+skip bloom draws; disabled targets remain cached for reuse. Unsupported formats
+show an error without stopping the room or other effects. Select RGBA8 explicitly
+or toggle off/on to retry. These desktop paths do not certify Pixel 6 frame rates.
+
+After building with a host that includes these controls, run
+`mise run check-effect-lab-bloom`. Optional `KARTY_EFFECT_LAB_HOST` and
+`KARTY_EFFECT_LAB_DISTRIBUTION` overrides select explicit artifacts. The check
+covers all spreads/formats, source/glow views, scalar reuse, master/neutral and
+material-view bypass, grading/outlines, the standard benchmark, mobile layout
+and unsupported-float recovery. Browser actions and measurement windows retain
+five-second deadlines. `Measure on this device` includes bloom and its spread/
+format variants, records passes and scratch bytes, and restores ordinary settings.
 
 ## Measure effects
 

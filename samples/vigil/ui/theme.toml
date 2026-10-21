@@ -1,0 +1,29 @@
+extends = "dark"
+
+[colors]
+surface = "#10150fe8"
+primary = "#282b22f5"
+primary-hover = "#454839ff"
+primary-pressed = "#191e16ff"
+disabled = "#1c211aff"
+accent = "#cfbb91ff"
+text = "#e0d4b9ff"
+text-disabled = "#9c9b87ff"
+transparent = "#00000000"
+
+[spacing]
+panel = 12
+gap = 8
+tight = 4
+inset = 24
+compact-inset = 16
+
+[typography]
+body = 14
+title = 32
+label = 12
+caption = 11
+
+[controls]
+height = 44
+transition = 100

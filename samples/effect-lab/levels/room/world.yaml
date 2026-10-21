@@ -290,3 +290,147 @@ solids:
     bottom_material: checker
     side_uv: { mode: planar, scale: { x: 2, y: 2 }, offset: { x: 1, y: -0.25 } }
     collision: true
+  - id: bloom-base-0
+    footprint:
+      - { x: -2.40000, y: 0.80000 }
+      - { x: -2.44019, y: 0.95000 }
+      - { x: -2.55000, y: 1.05981 }
+      - { x: -2.70000, y: 1.10000 }
+      - { x: -2.85000, y: 1.05981 }
+      - { x: -2.95981, y: 0.95000 }
+      - { x: -3.00000, y: 0.80000 }
+      - { x: -2.95981, y: 0.65000 }
+      - { x: -2.85000, y: 0.54019 }
+      - { x: -2.70000, y: 0.50000 }
+      - { x: -2.55000, y: 0.54019 }
+      - { x: -2.44019, y: 0.65000 }
+    bottom: { c: 0 }
+    top: { c: 0.5 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: bloom-tube-0
+    footprint:
+      - { x: -2.62500, y: 0.80000 }
+      - { x: -2.63505, y: 0.83750 }
+      - { x: -2.66250, y: 0.86495 }
+      - { x: -2.70000, y: 0.87500 }
+      - { x: -2.73750, y: 0.86495 }
+      - { x: -2.76495, y: 0.83750 }
+      - { x: -2.77500, y: 0.80000 }
+      - { x: -2.76495, y: 0.76250 }
+      - { x: -2.73750, y: 0.73505 }
+      - { x: -2.70000, y: 0.72500 }
+      - { x: -2.66250, y: 0.73505 }
+      - { x: -2.63505, y: 0.76250 }
+    bottom: { c: 0.5 }
+    top: { c: 2.15 }
+    side_material: bloom-amber
+    top_material: bloom-amber
+    bottom_material: bloom-amber
+    collision: true
+  - id: bloom-cap-0
+    footprint:
+      - { x: -2.58000, y: 0.80000 }
+      - { x: -2.59608, y: 0.86000 }
+      - { x: -2.64000, y: 0.90392 }
+      - { x: -2.70000, y: 0.92000 }
+      - { x: -2.76000, y: 0.90392 }
+      - { x: -2.80392, y: 0.86000 }
+      - { x: -2.82000, y: 0.80000 }
+      - { x: -2.80392, y: 0.74000 }
+      - { x: -2.76000, y: 0.69608 }
+      - { x: -2.70000, y: 0.68000 }
+      - { x: -2.64000, y: 0.69608 }
+      - { x: -2.59608, y: 0.74000 }
+    bottom: { c: 2.15 }
+    top: { c: 2.27 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: bloom-base-1
+    footprint:
+      - { x: 3.00000, y: 2.20000 }
+      - { x: 2.95981, y: 2.35000 }
+      - { x: 2.85000, y: 2.45981 }
+      - { x: 2.70000, y: 2.50000 }
+      - { x: 2.55000, y: 2.45981 }
+      - { x: 2.44019, y: 2.35000 }
+      - { x: 2.40000, y: 2.20000 }
+      - { x: 2.44019, y: 2.05000 }
+      - { x: 2.55000, y: 1.94019 }
+      - { x: 2.70000, y: 1.90000 }
+      - { x: 2.85000, y: 1.94019 }
+      - { x: 2.95981, y: 2.05000 }
+    bottom: { c: 0 }
+    top: { c: 0.5 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: bloom-tube-1
+    footprint:
+      - { x: 2.77500, y: 2.20000 }
+      - { x: 2.76495, y: 2.23750 }
+      - { x: 2.73750, y: 2.26495 }
+      - { x: 2.70000, y: 2.27500 }
+      - { x: 2.66250, y: 2.26495 }
+      - { x: 2.63505, y: 2.23750 }
+      - { x: 2.62500, y: 2.20000 }
+      - { x: 2.63505, y: 2.16250 }
+      - { x: 2.66250, y: 2.13505 }
+      - { x: 2.70000, y: 2.12500 }
+      - { x: 2.73750, y: 2.13505 }
+      - { x: 2.76495, y: 2.16250 }
+    bottom: { c: 0.5 }
+    top: { c: 2.15 }
+    side_material: bloom-cyan
+    top_material: bloom-cyan
+    bottom_material: bloom-cyan
+    collision: true
+  - id: bloom-cap-1
+    footprint:
+      - { x: 2.82000, y: 2.20000 }
+      - { x: 2.80392, y: 2.26000 }
+      - { x: 2.76000, y: 2.30392 }
+      - { x: 2.70000, y: 2.32000 }
+      - { x: 2.64000, y: 2.30392 }
+      - { x: 2.59608, y: 2.26000 }
+      - { x: 2.58000, y: 2.20000 }
+      - { x: 2.59608, y: 2.14000 }
+      - { x: 2.64000, y: 2.09608 }
+      - { x: 2.70000, y: 2.08000 }
+      - { x: 2.76000, y: 2.09608 }
+      - { x: 2.80392, y: 2.14000 }
+    bottom: { c: 2.15 }
+    top: { c: 2.27 }
+    side_material: steel
+    top_material: steel
+    bottom_material: steel
+    collision: true
+  - id: bloom-magenta-bar
+    footprint: [{ x: -1.5, y: 7.7 }, { x: 1.5, y: 7.7 }, { x: 1.5, y: 7.8 }, { x: -1.5, y: 7.8 }]
+    bottom: { c: 3.35 }
+    top: { c: 3.415 }
+    side_material: bloom-magenta
+    top_material: bloom-magenta
+    bottom_material: bloom-magenta
+    side_uv: { mode: planar, scale: { x: 3, y: 0.065 }, offset: { x: 0.5, y: -51.53846153846154 } }
+    collision: true
+  - id: bloom-white-point
+    footprint:
+      [
+        { x: -1.7275, y: 3.9725 },
+        { x: -1.6724999999999999, y: 3.9725 },
+        { x: -1.6724999999999999, y: 4.0275 },
+        { x: -1.7275, y: 4.0275 },
+      ]
+    bottom: { c: 2 }
+    top: { c: 2.055 }
+    side_material: bloom-white
+    top_material: bloom-white
+    bottom_material: bloom-white
+    side_uv: { mode: planar, scale: { x: 1, y: 1 }, offset: { x: 1.7275, y: -2 } }
+    collision: true

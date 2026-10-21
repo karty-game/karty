@@ -10,7 +10,7 @@ box physics, animated machinery, particles and spatial audio.
 
 ## Run it
 
-The sample's [karty.toml](karty.toml) pins SDK 0.0.16. Its matching public host
+The sample's [karty.toml](karty.toml) pins SDK 0.0.17. Its matching public host
 supports the reciprocal physics portal loop. The CLI installs and verifies the
 host and its matching `wasm_exec.js` when building.
 After [sample setup](../README.md#run-a-sample), run from the CLI repository root

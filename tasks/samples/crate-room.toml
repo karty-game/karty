@@ -11,3 +11,8 @@ run = "../../dist/karty build --target web"
 description = "Build the box-physics sample for native"
 dir = "samples/crate-room"
 run = "../../dist/karty build --target native"
+
+
+[check-crate-room-ui]
+description = "Check presentation HUD, held fire and independent touch movement/aim in actual browser WASM"
+run = "node scripts/check-crate-room-ui.mjs"

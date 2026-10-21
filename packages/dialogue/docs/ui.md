@@ -10,7 +10,7 @@ warm prose face without a nameplate; speech has a character name and regular
 body text. Both bind the complete line as layout text and pass
 `Model.RevealCharacters()` to the label's `reveal` attribute. The renderer lays
 out and shapes that complete line, then reveals Unicode characters without
-changing wrapping or moving existing glyphs. This UI requires SDK 0.0.16 with
+changing wrapping or moving existing glyphs. This UI requires SDK 0.0.17 with
 `UI.Reveal`; the model/runtime alone still work with custom interfaces.
 A compact 48×44 icon button shows `»` while revealing and `▾` when ready; the
 first activation finishes a line and the next advances. `Paused` disables that

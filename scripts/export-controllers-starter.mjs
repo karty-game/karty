@@ -19,7 +19,9 @@ for (const name of names) {
   const contents = await readFile(resolve(source, name), "utf8");
   files.set(name + ".tmpl", contents.replaceAll("{{", '{{"{{"}}'));
 }
-files.set("docs/presets-v1.md.tmpl", await readFile(resolve(source, "docs/presets-v1.md"), "utf8"));
+for (const name of (await readdir(resolve(source, "docs"))).sort()) {
+  if (name.endsWith(".md")) files.set("docs/" + name + ".tmpl", await readFile(resolve(source, "docs", name), "utf8"));
+}
 if (check) {
   // Compare every distributed source byte, including the public contract/license.
   for (const [name, contents] of files)
@@ -29,6 +31,13 @@ if (check) {
     [...files.keys()]
       .filter((name) => !name.includes("/"))
       .concat("docs")
+      .sort(),
+  );
+  assert.deepEqual(
+    (await readdir(resolve(destination, "docs"))).sort(),
+    [...files.keys()]
+      .filter((name) => name.startsWith("docs/"))
+      .map((name) => name.slice(5))
       .sort(),
   );
 } else {

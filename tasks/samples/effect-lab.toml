@@ -30,3 +30,10 @@ run = "node scripts/check-effect-lab.mjs --outline-failure"
 [check-effect-lab-lens]
 description = "Verify lens distortion, sharpening and water/grime/blood in the shared room on hardware"
 run = ["node --test scripts/effect-lab-performance.test.mjs", "node scripts/check-effect-lab.mjs --lens"]
+
+[check-effect-lab-bloom]
+description = "Verify supported SDR bloom controls, bypass, fallback and benchmark in the shared room"
+run = [
+  "node --test scripts/effect-lab-performance.test.mjs scripts/prepare-effect-lab-preview.test.mjs",
+  "node scripts/check-effect-lab-bloom.mjs",
+]

@@ -2,10 +2,10 @@
 
 The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.
 
-Create the SDK 0.0.16 starter:
+Create the SDK 0.0.17 starter:
 
 ```sh
-karty new --yes --sdk 0.0.16 --template isometric my-game
+karty new --yes --sdk 0.0.17 --template isometric my-game
 cd my-game
 karty dev
 ```

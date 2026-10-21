@@ -18,7 +18,7 @@ cd samples/vigil
 ../../dist/karty dev
 ```
 
-Open the preview address printed by the CLI. SDK 0.0.16 and its matching public
+Open the preview address printed by the CLI. SDK 0.0.17 and its matching public
 host supply navigation, sprites and foreground occluder fading. For packaging,
 run `mise run build-vigil-web` or `mise run build-vigil-native` from the repository
 root. Run those builds sequentially because they share generated UI staging.
@@ -32,9 +32,26 @@ root. Run those builds sequentially because they share generated UI staging.
 | E / Space / interaction button | Rekindle a nearby vigil light                           |
 | Tap nearby vigil light         | Rekindle it                                             |
 | + / − / on-screen buttons      | Zoom                                                    |
-| H / ?                          | Toggle help                                             |
+| H                              | Toggle help                                             |
+| C / Camera settings button     | Tune follow framing and compare with hard lock          |
 | Escape / focus loss            | Stop movement and clear held input                      |
 | R                              | Return to the entrance and reset the lights             |
+
+Open **Camera settings** to adjust horizontal/vertical damping, dead/soft zones
+and lookahead while playing. Higher damping means a longer catch-up. The dead
+zone permits small movements without moving the camera; the soft zone bounds
+how far the tracked target can drift. Zone sizes are percentages of the view.
+The zone overlay follows the camera target, including its framing offset.
+**Hard lock / Follow** compares immediate tracking against the current settings;
+**Reset** restores this sample's defaults. Walk, stop, reverse, run and
+press R to compare settling, anticipation and teleport handling. Changes last
+until the page is reloaded. This first version covers target framing only.
+
+Vigil's HUD and camera controls share `ui/theme.toml` for colors, spacing,
+typography and button height. The camera button aligns with the title and the
+Fireball row on desktop; narrow layouts stack the controls and scroll the open
+camera panel. Browser Debug keeps its shared host style. Offline status and
+downloads are available inside Debug.
 
 ## Explore the project
 

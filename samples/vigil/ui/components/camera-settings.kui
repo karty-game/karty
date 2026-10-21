@@ -1,0 +1,163 @@
+<template>
+  <panel class="camera-dock">
+    <button class="camera-toggle" onClick={ toggle }>Camera settings · C</button>
+    if props.Open() {
+      <panel class="camera-controls">
+        <label class="camera-title">{ mode() }</label>
+        <panel class="camera-actions">
+          <button class="camera-action" onClick={ compare }>Hard lock / Follow</button>
+          <button class="camera-action" onClick={ reset }>Reset</button>
+        </panel>
+        <label class="section-title">DAMPING · HALF-LIFE</label>
+        <panel class="camera-pair">
+          <panel class="camera-half">
+            <label>{ props.Label(0) }</label>
+            <slider min="0" max="100" value={ props.Value(0) } enabled={ !props.Locked() } onChange={ func(value int32) { change(0, value) } }/>
+          </panel>
+          <panel class="camera-half">
+            <label>{ props.Label(1) }</label>
+            <slider min="0" max="100" value={ props.Value(1) } enabled={ !props.Locked() } onChange={ func(value int32) { change(1, value) } }/>
+          </panel>
+        </panel>
+        <label class="section-title">DEAD ZONE</label>
+        <panel class="camera-pair">
+          <panel class="camera-half">
+            <label>{ props.Label(2) }</label>
+            <slider min="0" max="100" value={ props.Value(2) } enabled={ !props.Locked() } onChange={ func(value int32) { change(2, value) } }/>
+          </panel>
+          <panel class="camera-half">
+            <label>{ props.Label(3) }</label>
+            <slider min="0" max="100" value={ props.Value(3) } enabled={ !props.Locked() } onChange={ func(value int32) { change(3, value) } }/>
+          </panel>
+        </panel>
+        <label class="section-title">SOFT ZONE</label>
+        <panel class="camera-pair">
+          <panel class="camera-half">
+            <label>{ props.Label(4) }</label>
+            <slider min="0" max="100" value={ props.Value(4) } enabled={ !props.Locked() } onChange={ func(value int32) { change(4, value) } }/>
+          </panel>
+          <panel class="camera-half">
+            <label>{ props.Label(5) }</label>
+            <slider min="0" max="100" value={ props.Value(5) } enabled={ !props.Locked() } onChange={ func(value int32) { change(5, value) } }/>
+          </panel>
+        </panel>
+        <panel class="camera-axis">
+          <label>{ props.Label(6) }</label>
+          <slider min="0" max="100" value={ props.Value(6) } enabled={ !props.Locked() } onChange={ func(value int32) { change(6, value) } }/>
+        </panel>
+        <checkbox checked={ props.Guides() } onChange={ guides }>Show framing zones</checkbox>
+        <label class="hint">Green: dead · Amber: soft. C closes.</label>
+      </panel>
+    }
+  </panel>
+</template>
+
+<script setup lang="go">
+type CameraSettingsProps struct {
+  Open func() bool
+  Locked func() bool
+  Guides func() bool
+  Value func(int) int32
+  Label func(int) string
+  Change func(int, int32)
+  Toggle func()
+  Compare func()
+  Reset func()
+  SetGuides func(bool)
+}
+func setup(props CameraSettingsProps) {
+  mode := func() string {
+    if props.Locked() { return "CAMERA · HARD LOCK" }
+    return "CAMERA · SMOOTH FOLLOW"
+  }
+  toggle := func() { props.Toggle(); invalidate() }
+  compare := func() { props.Compare(); invalidate() }
+  reset := func() { props.Reset(); invalidate() }
+  guides := func(on bool) { props.SetGuides(on); invalidate() }
+  change := func(field int, value int32) { props.Change(field, value); invalidate() }
+}
+</script>
+
+<style>
+.camera-dock
+  width: 100%
+  height: 100%
+  padding: 0
+  gap: theme.spacing.gap
+  background: theme.colors.transparent
+.camera-toggle
+  width: 236
+.camera-controls
+  position: absolute
+  top: 52
+  bottom: 0
+  left: 0
+  right: 0
+  padding: theme.spacing.panel
+  gap: theme.spacing.gap
+  background: theme.colors.surface
+  align: stretch
+  max-height: 480
+  overflow: scroll
+.camera-title
+  font-size: theme.typography.body
+  color: theme.colors.accent
+.camera-actions
+  direction: row
+  gap: theme.spacing.gap
+  align: stretch
+.camera-action
+  flex-grow: 1
+.camera-pair
+  direction: row
+  gap: theme.spacing.gap
+.camera-axis
+  width: 100%
+  gap: theme.spacing.tight
+  align: stretch
+.camera-half
+  width: 48%
+  gap: theme.spacing.tight
+  align: stretch
+.section-title
+  font-size: theme.typography.caption
+  color: theme.colors.accent
+label
+  color: theme.colors.text
+  font-family: body
+  font-size: theme.typography.label
+.hint
+  font-size: theme.typography.caption
+  color: theme.colors.text-disabled
+button
+  background: theme.colors.primary
+  background-hover: theme.colors.primary-hover
+  background-pressed: theme.colors.primary-pressed
+  background-disabled: theme.colors.disabled
+  color: theme.colors.text
+  color-disabled: theme.colors.text-disabled
+  font-family: body
+  font-size: theme.typography.body
+  min-height: theme.controls.height
+slider
+  width: 100%
+  height: 24
+  min-height: 24
+  background: theme.colors.primary
+  background-hover: theme.colors.primary-hover
+  background-pressed: theme.colors.accent
+  background-disabled: theme.colors.disabled
+checkbox
+  min-height: theme.controls.height
+  font-family: body
+  font-size: theme.typography.label
+  color: theme.colors.text
+  color-disabled: theme.colors.text-disabled
+  background: theme.colors.primary
+  background-hover: theme.colors.primary-hover
+  background-pressed: theme.colors.primary-hover
+  background-disabled: theme.colors.disabled
+@media (max-width: 700)
+  .camera-toggle
+    width: 52%
+</style>

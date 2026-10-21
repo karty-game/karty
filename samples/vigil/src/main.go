@@ -25,6 +25,8 @@ type Game struct {
 	aim                  dungeon.Point
 	height               float64
 	controller           *controllers.Planar
+	framing              *controllers.CameraComposer
+	cameraLab            cameraLab
 	held, help           bool
 	helpPinned           bool
 	spellReady           bool
@@ -75,6 +77,7 @@ func (g *Game) start() {
 	if err != nil {
 		panic(err)
 	}
+	g.configureCameraFraming()
 
 	g.status = "Descending beneath the abbey..."
 	g.hud = ui.Vigil(ui.VigilProps{
@@ -84,6 +87,7 @@ func (g *Game) start() {
 		SpellReady: func() bool { return g.hero != nil && !g.resetPending && g.fireCooldown == 0 },
 		ToggleHelp: g.toggleHelp, Interact: g.interact,
 		Reset: g.restart, Fireball: g.throwFireball, ZoomIn: func() { g.zoom(.9) }, ZoomOut: func() { g.zoom(1.1) },
+		Camera: g.cameraSettingsProps(),
 	})
 	g.request = g.RequestLevel("levels.crypt")
 }
@@ -202,7 +206,7 @@ func (g *Game) update(f engine.Frame) {
 	g.vision.HeroOffset = dungeon.Point{next.X - p.X, next.Y - p.Y}
 	g.updateHeroPose(pose, next)
 	// Smooth the camera from accepted positions, keeping a little space ahead.
-	focus := g.controller.Follow(controllers.Vec2{X: g.focus.X, Y: g.focus.Y}, controllers.Vec2{X: p.X, Y: p.Y}, false)
+	focus := g.composeCamera(p, false)
 	changed := math.Abs(focus.X-g.focus.X)+math.Abs(focus.Y-g.focus.Y) > .00001
 	g.focus = dungeon.Point{X: focus.X, Y: focus.Y}
 	if changed || moved {
@@ -248,6 +252,12 @@ func (g *Game) update(f engine.Frame) {
 }
 
 func (g *Game) key(k engine.Key, down bool) {
+	if k == engine.KeyC {
+		if down {
+			g.toggleCameraSettings()
+		}
+		return
+	}
 	var control controllers.Control
 	movement := true
 	switch k {
@@ -460,6 +470,7 @@ func (g *Game) restart() {
 	}
 	g.bindAudioReceiver()
 	g.lastPosition = dungeon.Spawn
+	g.framing.Reset()
 	g.focus = dungeon.Point{dungeon.Spawn.X + 1.6, dungeon.Spawn.Y + 1.6}
 	pose := engine.NewTransform3D(engine.NewVec3(float32(g.focus.X-18), float32(g.focus.Y-18), 14.696938))
 	pose.Yaw, pose.Pitch = math.Pi/4, -math.Pi/6

@@ -1,0 +1,86 @@
+<template>
+  <panel class="screen" modal="false">
+    <panel class="heading">
+      <label class="title">{ props.Title() }</label>
+    </panel>
+    <panel class="camera-placement">
+      <CameraSettings props={ props.Camera }/>
+    </panel>
+    <panel class="journal-clearance"/>
+    <panel class="journal-placement">
+      if props.JournalReady() && props.JournalOpen() {
+        <button class="journal-open" onClick={ props.ActivateJournal }>{ props.JournalText() }</button>
+      }
+      if props.JournalReady() && !props.JournalOpen() {
+        <button class="journal-compact" onClick={ props.ActivateJournal }>{ props.JournalText() }</button>
+      }
+    </panel>
+  </panel>
+</template>
+<script setup lang="go">
+type CameraHUDProps struct {
+  Camera CameraSettingsProps
+  Title func() string
+  JournalText func() string
+  JournalOpen func() bool
+  JournalReady func() bool
+  ActivateJournal func()
+}
+func setup(props CameraHUDProps) {}
+</script>
+<style>
+.screen
+  width: 100%
+  height: 100%
+  padding: 12
+  align: center
+  gap: theme.spacing.gap
+  background: theme.colors.transparent
+.heading
+  width: 184
+  height: 38
+  padding: 8
+  align: start
+  justify: center
+  background: theme.colors.surface
+.title
+  font-family: body
+  font-size: 16
+  color: theme.colors.text
+.journal-clearance
+  height: 134
+  width: 1
+  padding: 0
+  background: theme.colors.transparent
+.camera-placement
+  width: 100%
+  max-width: 352
+  flex-grow: 1
+  min-height: 0
+  padding: 0
+  background: theme.colors.transparent
+.journal-placement
+  position: absolute
+  bottom: 10
+  left: 0
+  right: 0
+  padding: 0
+  align: center
+.journal-compact
+  height: 50
+.journal-open
+  height: 112
+button
+  width: 100%
+  max-width: 288
+  min-height: 44
+  font-family: body
+  font-size: theme.typography.label
+  text-align: start
+  color: theme.colors.text
+  color-disabled: theme.colors.text-disabled
+  background: theme.colors.surface
+  background-hover: theme.colors.primary-hover
+  background-pressed: theme.colors.primary-pressed
+  background-disabled: theme.colors.disabled
+</style>
