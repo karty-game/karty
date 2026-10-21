@@ -246,6 +246,17 @@ async function manifestFor(release) {
   return manifest;
 }
 function findFile(manifest, url) {
+  // Page options (for example ?effects=1) do not select different HTML bytes.
+  // Both the directory URL and explicit index.html address the same shell.
+  const page = new URL(url);
+  if (
+    page.origin === scopeURL.origin &&
+    [scopeURL.pathname, scopeURL.pathname + "index.html"].includes(page.pathname)
+  ) {
+    page.pathname = scopeURL.pathname + "index.html";
+    page.search = "";
+    url = page;
+  }
   const exact = manifest.files.find((file) => file.absoluteURL === url.href);
   if (exact) return exact;
   // The launcher adds v= for local files; configured CDN query strings remain
@@ -253,6 +264,29 @@ function findFile(manifest, url) {
   const local = new URL(url);
   local.searchParams.delete("v");
   return manifest.files.find((file) => !new URL(file.absoluteURL).search && file.absoluteURL === local.href);
+}
+async function fetchShell(request) {
+  let response, failure;
+  try {
+    response = await fetch(request, { cache: "no-store" });
+  } catch (error) {
+    failure = error;
+  }
+  if (response?.ok) return response;
+  const state = (await metadataRead("state")) || {};
+  const release = state.completeRelease || state.selectedRelease;
+  if (release) {
+    const manifest = await manifestFor(release);
+    const file = findFile(manifest, new URL(request.url));
+    const cache = file ? await contentCache() : null;
+    const cached = cache ? await cache.match(contentKey(file.sha256)) : null;
+    if (cached) {
+      await response?.body?.cancel().catch(() => {});
+      return cached;
+    }
+  }
+  if (response) return response;
+  throw failure;
 }
 async function pinFor(clientID) {
   if (pins.has(clientID)) return pins.get(clientID);
@@ -514,14 +548,18 @@ async function latestManifest() {
   const timer = setTimeout(() => controller.abort(new Error("Update check timed out.")), 3500);
   let latest;
   try {
-    const bytes = await boundedBytes(
-      await requestFetch(
-        new URL("karty-latest.json", scopeURL),
-        { cache: "no-store", redirect: "error" },
-        controller.signal,
-      ),
-      4096,
+    const response = await requestFetch(
+      new URL("karty-latest.json", scopeURL),
+      { cache: "no-store", redirect: "error" },
+      controller.signal,
     );
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => {});
+      const error = new Error("Game update discovery is unavailable (" + response.status + ").");
+      error.discoveryUnavailable = true;
+      throw error;
+    }
+    const bytes = await boundedBytes(response, 4096);
     latest = JSON.parse(new TextDecoder().decode(bytes));
   } finally {
     clearTimeout(timer);
@@ -570,7 +608,9 @@ async function selectRelease(clientID) {
       // Metadata/integrity errors are confirmed-release failures, never offline.
       if (
         error.confirmedRelease ||
-        (!["TypeError", "AbortError"].includes(error.name) && error.message !== "Update check timed out.")
+        (!error.discoveryUnavailable &&
+          !["TypeError", "AbortError"].includes(error.name) &&
+          error.message !== "Update check timed out.")
       )
         throw error;
       if (!state.completeRelease && !state.selectedRelease) throw error;
@@ -779,21 +819,7 @@ self.addEventListener("fetch", (event) => {
     // A navigation belongs to a new session. Online always asks the server for
     // its bootstrap shell; the bootstrap then confirms the latest release.
     if (event.request.mode === "navigate") {
-      try {
-        return await fetch(routedRequest, { cache: "no-store" });
-      } catch (error) {
-        const state = (await metadataRead("state")) || {};
-        release = state.completeRelease || state.selectedRelease;
-        if (!release) throw error;
-        const manifest = await manifestFor(release);
-        const file =
-          findFile(manifest, routedURL) ||
-          (target.href === scopeURL.href ? manifest.files.find((file) => file.url === "index.html") : null);
-        if (!file) throw error;
-        const cached = await (await caches.open(contentCacheName)).match(contentKey(file.sha256));
-        if (!cached) throw error;
-        return cached;
-      }
+      return fetchShell(routedRequest);
     }
     if (
       !release &&
@@ -807,15 +833,8 @@ self.addEventListener("fetch", (event) => {
     if (!release) {
       // Scripts loaded by an offline shell before its SELECT handshake use the
       // last complete shell only. The game itself starts after selection.
-      try {
-        return await fetch(routedRequest, { cache: "no-store" });
-      } catch (error) {
-        const state = (await metadataRead("state")) || {};
-        release = state.completeRelease || state.selectedRelease;
-        if (!release) throw error;
-      }
+      return fetchShell(routedRequest);
     }
-    if (!release) return fetch(routedRequest);
     const manifest = await manifestFor(release);
     const file = findFile(manifest, routedURL);
     if (!file) return fetch(routedRequest);

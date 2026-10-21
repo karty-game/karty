@@ -1152,11 +1152,15 @@ pre code {
             
             <li><a href="#make-a-room-and-try-it">Make a room and try it</a></li>
             
-            <li><a href="#let-the-tools-do-the-routine-work">Let the tools do the routine work</a></li>
+            <li><a href="#development">Development</a></li>
             
-            <li><a href="#keep-the-feedback-loop-short">Keep the feedback loop short</a></li>
+            <li><a href="#visual">Visual</a></li>
             
-            <li><a href="#choose-a-focused-framework">Choose a focused framework</a></li>
+            <li><a href="#performance">Performance</a></li>
+            
+            <li><a href="#assets">Assets</a></li>
+            
+            <li><a href="#flexibility">Flexibility</a></li>
             
           </ol>
             
@@ -1192,11 +1196,15 @@ pre code {
               
               <li><a href="#make-a-room-and-try-it">Make a room and try it</a></li>
               
-              <li><a href="#let-the-tools-do-the-routine-work">Let the tools do the routine work</a></li>
+              <li><a href="#development">Development</a></li>
               
-              <li><a href="#keep-the-feedback-loop-short">Keep the feedback loop short</a></li>
+              <li><a href="#visual">Visual</a></li>
               
-              <li><a href="#choose-a-focused-framework">Choose a focused framework</a></li>
+              <li><a href="#performance">Performance</a></li>
+              
+              <li><a href="#assets">Assets</a></li>
+              
+              <li><a href="#flexibility">Flexibility</a></li>
               
             </ol>
             
@@ -1226,16 +1234,62 @@ pre code {
 <h2 id="make-a-room-and-try-it">Make a room and try it</h2>
 <p>Unity and Unreal feel too big, too slow, and too general-purpose for my games. I miss the directness of Doom and Half-Life level editors. Making a room and trying it felt simple.</p>
 <p>Karty is aimed at small games and prototypes, including retro first-person games, isometric adventures and 2D games. For worlds, I want to work with floor plans, heights, materials and reusable objects. That should be enough to make a space worth exploring without first learning a full 3D modeling tool.</p>
-<h2 id="let-the-tools-do-the-routine-work">Let the tools do the routine work</h2>
-<p>I want to supply an albedo image and let the tools generate the material maps. I want to place lights and objects without spending hours tuning mipmaps or packing lightmaps. Those jobs belong in the <a href="asset-pipeline.html">asset pipeline</a>.</p>
-<p>Karty already processes assets during builds, generates world materials and supports offline light baking. The project keeps the original files; derived files can be rebuilt.</p>
-<p>I also want to reuse behavior, effects and UI across games. <a href="packages.html">Packages</a> already share Go code, static prefabs, PNG materials and KartUI components. A broader library of effects and components is still a goal.</p>
-<h2 id="keep-the-feedback-loop-short">Keep the feedback loop short</h2>
-<p>Today, levels are authored in files and <code>karty dev</code> watches for changes. Compatible lighting, material and global UI updates can reach the running preview without resetting the game. Code and structural changes reload it.</p>
-<p>The editor I want goes further: move a wall, swap a material or place an object and see the result immediately. That graphical editing workflow is a direction for Karty, rather than a feature available today.</p>
-<h2 id="choose-a-focused-framework">Choose a focused framework</h2>
-<p>Karty makes choices about world geometry, asset processing and the <a href="architecture.html">host and client boundary</a>. Those choices reduce setup for the games it targets, while limiting how much of the renderer or runtime a game can replace. A game that needs an arbitrary mesh workflow or a custom rendering pipeline may fit another engine better.</p>
-<p>I&#39;m building toward a workflow where making a small game that looks good takes less preparation and leaves more time for the game itself.</p>
+<h2 id="development">Development</h2>
+<ul>
+<li>**See changes immediately.** <code>karty dev</code> watches your level files and updates</li>
+</ul>
+<p>the preview as you work.</p>
+<ul>
+<li>**Iterate quickly.** Target code recompilation in 2–3 seconds.</li>
+</ul>
+<h2 id="visual">Visual</h2>
+<ul>
+<li>**Good lighting.** Bake bounced light with Karty&#39;s built-in light baker,</li>
+</ul>
+<p>without extra tools.</p>
+<ul>
+<li>**Give the scene personality.** Use built-in post-processing effects for</li>
+</ul>
+<p>atmosphere, storytelling and gameplay highlights.</p>
+<ul>
+<li>**Fire, smoke and more.** A flexible GPU particle system draws thousands of</li>
+</ul>
+<p>sprites.</p>
+<h2 id="performance">Performance</h2>
+<ul>
+<li>**Run on modest hardware.** Target 720p at 60 FPS in WebGL on a five-year-old</li>
+</ul>
+<p>smartphone.</p>
+<ul>
+<li>**Start playing your game quickly.** Keep downloads small and aim for startup within</li>
+</ul>
+<p>a few seconds.</p>
+<ul>
+<li>**Play offline.** Prefetch and cache assets in the background, ready to play</li>
+</ul>
+<p>without internet once the download is complete.</p>
+<h2 id="assets">Assets</h2>
+<ul>
+<li>**Skip image preparation.** Let the <a href="asset-pipeline.html">asset pipeline</a></li>
+</ul>
+<p>resize textures, pack atlases and handle compression.</p>
+<ul>
+<li>**One texture is enough.** Generate normal, height and ambient occlusion maps</li>
+</ul>
+<p>from a single albedo image.</p>
+<ul>
+<li>**Build large maps.** Automatic chunking and background streaming let your</li>
+</ul>
+<p>world grow.</p>
+<h2 id="flexibility">Flexibility</h2>
+<ul>
+<li>**UI with less code.** KartUI provides a dedicated language and reusable</li>
+</ul>
+<p>components for game interfaces.</p>
+<ul>
+<li>**Bring other tools.** <a href="packages.html">Packages</a> let the community share</li>
+</ul>
+<p>reusable integrations, code and components.</p>
 <p>Continue with <a href="architecture.html">Architecture</a>, or <a href="../guide/index.html">make your first game</a>.</p>
 </div>
         

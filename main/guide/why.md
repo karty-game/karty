@@ -16,39 +16,44 @@ games, isometric adventures and 2D games. For worlds, I want to work with
 floor plans, heights, materials and reusable objects. That should be enough
 to make a space worth exploring without first learning a full 3D modeling tool.
 
-## Let the tools do the routine work
+## Development
 
-I want to supply an albedo image and let the tools generate the material maps.
-I want to place lights and objects without spending hours tuning mipmaps or
-packing lightmaps. Those jobs belong in the [asset pipeline](../design/asset-pipeline.html).
+- **See changes immediately.** `karty dev` watches your level files and updates
+  the preview as you work.
+- **Iterate quickly.** Target code recompilation in 2–3 seconds.
 
-Karty already processes assets during builds, generates world materials and
-supports offline light baking. The project keeps the original files; derived
-files can be rebuilt.
+## Visual
 
-I also want to reuse behavior, effects and UI across games.
-[Packages](../design/packages.html) already share Go code, static prefabs, PNG materials
-and KartUI components. A broader library of effects and components is still a goal.
+- **Good lighting.** Bake bounced light with Karty's built-in light baker,
+  without extra tools.
+- **Give the scene personality.** Use built-in post-processing effects for
+  atmosphere, storytelling and gameplay highlights.
+- **Fire, smoke and more.** A flexible GPU particle system draws thousands of
+  sprites.
 
-## Keep the feedback loop short
+## Performance
 
-Today, levels are authored in files and `karty dev` watches for changes.
-Compatible lighting, material and global UI updates can reach the running
-preview without resetting the game. Code and structural changes reload it.
+- **Run on modest hardware.** Target 720p at 60 FPS in WebGL on a five-year-old
+  smartphone.
+- **Start playing your game quickly.** Keep downloads small and aim for startup within
+  a few seconds.
+- **Play offline.** Prefetch and cache assets in the background, ready to play
+  without internet once the download is complete.
 
-The editor I want goes further: move a wall, swap a material or place an object
-and see the result immediately. That graphical editing workflow is a direction
-for Karty, rather than a feature available today.
+## Assets
 
-## Choose a focused framework
+- **Skip image preparation.** Let the [asset pipeline](../design/asset-pipeline.html)
+  resize textures, pack atlases and handle compression.
+- **One texture is enough.** Generate normal, height and ambient occlusion maps
+  from a single albedo image.
+- **Build large maps.** Automatic chunking and background streaming let your
+  world grow.
 
-Karty makes choices about world geometry, asset processing and the
-[host and client boundary](../design/architecture.html). Those choices reduce setup for
-the games it targets, while limiting how much of the renderer or runtime a game
-can replace. A game that needs an arbitrary mesh workflow or a custom rendering
-pipeline may fit another engine better.
+## Flexibility
 
-I'm building toward a workflow where making a small game that looks good takes
-less preparation and leaves more time for the game itself.
+- **UI with less code.** KartUI provides a dedicated language and reusable
+  components for game interfaces.
+- **Bring other tools.** [Packages](../design/packages.html) let the community share
+  reusable integrations, code and components.
 
 Continue with [Architecture](../design/architecture.html), or [make your first game](../guide/index.html).
