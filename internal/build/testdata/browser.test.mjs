@@ -113,6 +113,25 @@ async function checkRuntime(prefix, options = {}) {
     launcherRequests,
     "unchanged launcher missed verified delivery cache",
   );
+  await page.evaluate(() => globalThis.KartyWebRuntime.startPrefetch());
+  await page.waitForFunction(async () => (await globalThis.KartyWebRuntime.status()).offlineReady, null, {
+    timeout: 9000,
+  });
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Network.enable");
+  await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
+  await context.setOffline(true);
+  assert.equal(await page.evaluate(() => navigator.onLine), false);
+  const offline = await page.reload({ waitUntil: "domcontentloaded", timeout: 9000 });
+  assert.equal(offline.fromServiceWorker(), true);
+  await page.waitForFunction(() => document.documentElement.dataset.kartyState === "running", null, {
+    timeout: 9000,
+  });
+  const offlineFrame = await page.evaluate(() => globalThis.kartyFrame.toString());
+  await page.waitForFunction((frame) => BigInt(globalThis.kartyFrame) > BigInt(frame), offlineFrame, { timeout: 9000 });
+  assert.ok((await canvas.screenshot()).length > 1024, "offline reload did not render the game");
+  assert.deepEqual(errors, [], `offline page errors: ${errors.join("; ")}`);
+  await cdp.detach();
   await context.close();
 }
 
@@ -142,7 +161,7 @@ try {
       `browser did not fetch level artifact ${artifact}`,
     );
   }
-  console.log("Browser checks passed (actual Go/Ebiten host and TinyGo cartridge in Chromium).");
+  console.log("Browser checks passed (actual Go/Ebiten host and TinyGo cartridge online and offline in Chromium).");
 } finally {
   await browser.close();
   await new Promise((resolveClose) => server.close(resolveClose));

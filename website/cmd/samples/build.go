@@ -31,10 +31,10 @@ func samplePriority(name string) int {
 		"vigil",
 		"willowbrook",
 		"last-train",
+		"effect-lab",
 		"ui-demo",
 		"media-lab",
 		"particle-lab",
-		"effect-lab",
 	}
 	if index := slices.Index(sampleOrder[:], name); index >= 0 {
 		return index

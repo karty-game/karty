@@ -58,6 +58,10 @@ const ready = async (page) => {
   await page.waitForFunction(() => !!globalThis.KartyWebRuntime, null, { timeout: 9000 });
   return page.evaluate(() => globalThis.KartyWebRuntime.ready);
 };
+const shellLoaded = (page) =>
+  page.waitForFunction(() => globalThis.kartyDeliveryFixtureRuntime && globalThis.kartyLauncherStarted, null, {
+    timeout: 9000,
+  });
 const open = async (context, prefix = "/game/") => {
   const page = await context.newPage();
   await page.goto(server.origin + prefix, { waitUntil: "domcontentloaded", timeout: 9000 });
@@ -249,6 +253,81 @@ try {
     const after = await independent.page.evaluate(() => caches.keys());
     assert.ok(otherCacheNames.some((name) => after.includes(name)));
     server.setOnline(true);
+  });
+  await check("browser offline reload restores the complete shell with a restarted worker", async () => {
+    const prefix = "/offline/proxy/4242/";
+    server.setRelease(prefix, "b");
+    const isolated = await context();
+    const opened = await open(isolated, prefix);
+    await complete(opened.page);
+    await shellLoaded(opened.page);
+    const cdp = await isolated.newCDPSession(opened.page);
+    await cdp.send("Network.enable");
+    await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
+    await isolated.setOffline(true);
+    assert.equal(await opened.page.evaluate(() => navigator.onLine), false);
+    // Chromium's worker-script update checks bypass CDP's offline emulation.
+    // Make those fail too, and require all application files to stay local.
+    server.faults.set(prefix + "karty-sw.js", { status: 503 });
+    const applicationRequests = () =>
+      server.requests.filter((entry) => entry.path.startsWith(prefix) && entry.path !== prefix + "karty-sw.js").length;
+    const requestCount = applicationRequests();
+    const refreshed = await opened.page.reload({ waitUntil: "domcontentloaded", timeout: 9000 });
+    assert.equal(refreshed.fromServiceWorker(), true);
+    assert.equal((await ready(opened.page)).release, b.pointer.release);
+    await shellLoaded(opened.page);
+    await cdp.send("ServiceWorker.enable");
+    await cdp.send("ServiceWorker.stopAllWorkers");
+    await cdp.detach();
+    await opened.page.close();
+    for (const suffix of ["", "index.html", "?effects=1", "index.html?effects=1"]) {
+      const page = await isolated.newPage();
+      const client = await isolated.newCDPSession(page);
+      await client.send("Network.enable");
+      await client.send("Network.setCacheDisabled", { cacheDisabled: true });
+      const response = await page.goto(server.origin + prefix + suffix, {
+        waitUntil: "domcontentloaded",
+        timeout: 9000,
+      });
+      assert.equal(response.fromServiceWorker(), true);
+      assert.equal(response.status(), 200);
+      assert.deepEqual(await response.body(), await readFile(resolve(fixtures, "b", "index.html")));
+      assert.equal((await ready(page)).release, b.pointer.release);
+      await shellLoaded(page);
+      assert.deepEqual(await fetchBytes(page, changed.url), [...(await readFile(resolve(fixtures, "b", changed.url)))]);
+      assert.equal((await status(page)).ready, true);
+      await client.detach();
+      await page.close();
+    }
+    const missing = await isolated.newPage();
+    await assert.rejects(missing.goto(server.origin + prefix + "not-a-release-file.html", { timeout: 9000 }), /ERR_/);
+    assert.equal(applicationRequests(), requestCount);
+    server.faults.delete(prefix + "karty-sw.js");
+    await isolated.close();
+    contexts.delete(isolated);
+  });
+  await check("unavailable shell and discovery endpoints fall back to the verified cached release", async () => {
+    const prefix = "/unavailable/game/";
+    server.setRelease(prefix, "b");
+    const isolated = await context();
+    const opened = await open(isolated, prefix);
+    await complete(opened.page);
+    await shellLoaded(opened.page);
+    const cdp = await isolated.newCDPSession(opened.page);
+    await cdp.send("Network.enable");
+    await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
+    for (const name of ["", "index.html", "karty-web.js", "karty-web-status.js", "karty-latest.json"])
+      server.faults.set(prefix + name, { status: 503 });
+    const response = await opened.page.reload({ waitUntil: "domcontentloaded", timeout: 9000 });
+    assert.equal(response.status(), 200);
+    assert.equal((await ready(opened.page)).release, b.pointer.release);
+    await shellLoaded(opened.page);
+    assert.equal((await status(opened.page)).ready, true);
+    for (const name of ["", "index.html", "karty-web.js", "karty-web-status.js", "karty-latest.json"])
+      server.faults.delete(prefix + name);
+    await cdp.detach();
+    await isolated.close();
+    contexts.delete(isolated);
   });
   await check("confirmed B startup corruption blocks launch instead of silently selecting A", async () => {
     const isolated = await context();

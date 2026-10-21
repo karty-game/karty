@@ -1,5 +1,3 @@
-# Keep out of the public gallery until a released host includes the Effects panel.
-hidden = true
 title = "Retro effect lab"
-description = "Walk a material and lighting test room. Compare grading, geometric outlines, color reduction, dithering, lens effects and fog using a development host's Effects panel."
+description = "Walk a material and lighting test room. Compare grading, geometric outlines, color reduction, dithering, lens effects and fog using the Effects panel."
 alt = "Colored material specimens, a grayscale ramp and colored lights in the effect lab."

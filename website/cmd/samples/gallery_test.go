@@ -52,10 +52,10 @@ func TestGalleryExplainsEachPublishedSample(t *testing.T) {
 		"vigil",
 		"willowbrook",
 		"last-train",
+		"effect-lab",
 		"ui-demo",
 		"media-lab",
 		"particle-lab",
-		"effect-lab",
 	}
 	if !slices.Equal(names, expected) {
 		t.Fatalf("discovered sample projects: %v", names)
@@ -124,10 +124,10 @@ func TestGalleryPrioritizesPublicSamples(t *testing.T) {
 		"vigil",
 		"willowbrook",
 		"last-train",
+		"effect-lab",
 		"ui-demo",
 		"media-lab",
 		"particle-lab",
-		"effect-lab",
 	}
 	if !slices.Equal(names, want) {
 		t.Fatalf("gallery order: %v", names)
@@ -152,6 +152,10 @@ func TestGalleryPrioritizesPublicSamples(t *testing.T) {
 	previous := -1
 
 	for index, name := range want {
+		if (name == "last-train" || name == "effect-lab") && cards[index].Preview.Hidden {
+			t.Fatalf("%s must appear in the public gallery", name)
+		}
+
 		if cards[index].Preview.Hidden {
 			continue
 		}

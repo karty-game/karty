@@ -17,10 +17,9 @@ the cursor. Touch drags in the lower left/right halves move/look. Press 1 for
 the overview, 2 for the charts, 3 for the material specimens, and R to restore
 the current viewpoint. Movement uses host-constrained camera proposals.
 
-The room builds with its pinned public SDK. **The Effects tab requires a
-development host containing the effect-lab renderer changes.** An older public
-host runs the room without those controls. Select a matching host using the
-CLI's normal `--host` or `KARTY_HOST_WEB` override; its `wasm_exec.js` must be
+The room and Effects panel run with its pinned public SDK and matching public
+host. Build normally to use that host. For development, select a matching host
+using the CLI's `--host` or `KARTY_HOST_WEB` override; its `wasm_exec.js` must be
 beside the host. Use the exact Go compiler required by the selected SDK.
 
 ## Mobile target
@@ -225,7 +224,7 @@ sandbox that hides GPU devices must be exited for this check. The local AMD
 results qualify that development GPU, not phone performance.
 
 For the new lens effects specifically, run `mise run check-effect-lab-lens` after
-building with the matching development host. Its focused hardware captures cover
+building with the matching host. Its focused hardware captures cover
 radial/offset distortion, native and half-resolution sharpening, the three lens
 surfaces, water refraction and the Water specular slider, combined optics, neutral/master bypass and atomic
 invalid-setting rejection. All browser actions have five-second bounds.
