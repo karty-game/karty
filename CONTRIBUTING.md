@@ -125,10 +125,23 @@ After maintainer approval, pushing that tag starts [Release CLI](.github/workflo
 The workflow validates Linux amd64/arm64, Windows process cleanup and a packaged
 Windows ARM64 game before GoReleaser publishes the CLI archives and checksums.
 The Windows ARM64 startup smoke uses a pinned, checksum-verified Mesa llvmpipe
-driver through a private DLL redirection directory so it can run without a
-hardware OpenGL driver. The smoke verifies that this driver is loaded.
-It establishes software-rendered startup, not hardware GPU
-support or performance, and the CI driver is not added to distributed games.
+driver with a private application manifest. It requires the process to load
+only that OpenGL driver and remain alive for eight seconds, retaining module
+paths and startup logs for diagnosis. This checks software-rendered startup,
+not hardware GPU support or performance. The manifest and CI driver are not
+added to distributed games.
+
+Before retrying a release, run **Windows ARM64 packaged game smoke** manually
+against an existing `windows-arm64-game` artifact. Select the branch containing
+the workflow fix and supply the original workflow run ID:
+
+```sh
+gh workflow run windows-arm64-smoke.yml --ref main -f source-run-id=39634328984
+```
+
+This workflow reuses the existing game, runs only the Windows checks, and cannot
+publish a release. The release workflow calls the same check after Linux
+packaging, so its assertions stay identical.
 SDK/host publication remains owned by the engine release process.
 
 ## Sending a pull request

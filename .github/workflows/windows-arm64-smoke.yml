@@ -1,0 +1,59 @@
+name: Windows ARM64 packaged game smoke
+on:
+  workflow_call:
+    inputs:
+      source-run-id:
+        description: Workflow run containing the windows-arm64-game artifact
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      source-run-id:
+        description: Existing workflow run containing the windows-arm64-game artifact
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  smoke:
+    runs-on: windows-11-arm
+    timeout-minutes: 10
+    env:
+      GOWORK: "off"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows-arm64-game
+          path: game
+          run-id: ${{ inputs.source-run-id }}
+          github-token: ${{ github.token }}
+      - name: Validate packaged cartridge without developer tools
+        working-directory: game
+        shell: pwsh
+        run: |
+          ./karty-host.exe --check --cartridge game.kart
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Prepare pinned ARM64 software OpenGL
+        working-directory: game
+        shell: pwsh
+        run: ../.github/scripts/windows-arm64-opengl.ps1 -Phase Prepare
+      - name: Native game startup smoke with software OpenGL
+        working-directory: game
+        shell: pwsh
+        env:
+          GALLIUM_DRIVER: llvmpipe
+        run: ../.github/scripts/windows-arm64-opengl.ps1 -Phase Run
+      - name: Preserve Windows ARM64 startup diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-arm64-startup-diagnostics
+          path: |
+            game/host.*.log
+            game/karty-host.exe.manifest
+          if-no-files-found: ignore
+          retention-days: 7
