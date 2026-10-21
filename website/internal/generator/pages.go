@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"strings"
 
+	"github.com/karty-game/karty/internal/brand"
 	"github.com/karty-game/karty/website"
 )
 
@@ -81,16 +82,33 @@ func pageFiles() ([]generatedFile, error) {
 
 func renderPages(pages []guidePage) ([]generatedFile, error) {
 	pageTemplate, err := template.New("page.html").Funcs(template.FuncMap{
+		"faviconURL": brand.FaviconURL,
 		"siteCSS": func() template.CSS {
 			return template.CSS(website.CSS()) // #nosec G203 -- stylesheet is trusted, embedded repository source.
 		},
-	}).ParseFS(website.Files, "templates/page.html")
+	}).ParseFS(website.Files, "templates/page.html", "templates/social.html")
 	if err != nil {
 		return nil, err
 	}
 
 	files := make([]generatedFile, 0, len(pages)*2)
 	for _, page := range pages {
+		siteSection := "guide"
+		description := "Choose a 2D, first-person, or isometric Karty game guide. Learn the CLI, levels, materials, lighting, interactions, media, UI, and sharing."
+
+		if page.technical {
+			siteSection = "technical"
+			description = "Karty code and API topics: lifecycle, entities, levels, input, 2D and 3D transforms and cameras, sprites, audio and particles."
+		} else if page.design {
+			siteSection = "design"
+			description = "Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages."
+		}
+
+		social, err := website.NewSocial(page.title+" / Karty", description, siteSection+"/"+page.name+".html")
+		if err != nil {
+			return nil, err
+		}
+
 		body, sections, err := renderMarkdown(page.markdown)
 		if err != nil {
 			return nil, fmt.Errorf("render %s: %w", page.name, err)
@@ -103,6 +121,7 @@ func renderPages(pages []guidePage) ([]generatedFile, error) {
 
 		var output strings.Builder
 		if err := pageTemplate.Execute(&output, struct {
+			Social                   website.Social
 			Title, Markdown, Current string
 			Design                   bool
 			Technical                bool
@@ -117,6 +136,7 @@ func renderPages(pages []guidePage) ([]generatedFile, error) {
 			TechnicalTopics          []guideLink
 			Cards                    []pathCard
 		}{
+			Social:          social,
 			Title:           page.title,
 			Markdown:        markdownName,
 			Current:         page.name + ".html",

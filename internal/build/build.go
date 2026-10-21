@@ -28,6 +28,7 @@ import (
 	"github.com/karty-game/karty-ui/schema"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/assetusage"
+	"github.com/karty-game/karty/internal/brand"
 	"github.com/karty-game/karty/internal/contextio"
 	"github.com/karty-game/karty/internal/levelbuild"
 	"github.com/karty-game/karty/internal/packages"
@@ -1743,6 +1744,7 @@ func stageWebShell(ctx context.Context, targetDirectory, wasmExec string, gameTi
 	}
 
 	index := strings.NewReplacer(
+		"@@FAVICON_URL@@", string(brand.FaviconURL()),
 		"@@GAME_TITLE@@", html.EscapeString(gameTitle),
 		"@@RENDERER_DEBUG@@", debugScripts,
 		"@@LAUNCHER_HASH@@", launcherHash,

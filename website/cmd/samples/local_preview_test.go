@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"html"
 	"os"
 	"path/filepath"
 	"slices"
@@ -109,8 +110,11 @@ func TestLocalDocsWithoutBuildShowSetupAndScreenshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, want := range []string{"Physics lab: crate room", "Build locally to play", "build the web target", `src="preview.jpg"`} {
-		if !strings.Contains(string(page), want) {
+	for _, want := range []string{
+		"Physics lab: crate room", "Build locally to play", "build the web target", `src="preview.jpg"`,
+		`<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,`,
+	} {
+		if !strings.Contains(html.UnescapeString(string(page)), want) {
 			t.Fatalf("unbuilt local sample missing %q", want)
 		}
 	}

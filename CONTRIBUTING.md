@@ -124,6 +124,11 @@ CLI `vMAJOR.MINOR.PATCH` tag.
 After maintainer approval, pushing that tag starts [Release CLI](.github/workflows/release.yml).
 The workflow validates Linux amd64/arm64, Windows process cleanup and a packaged
 Windows ARM64 game before GoReleaser publishes the CLI archives and checksums.
+The Windows ARM64 startup smoke uses a pinned, checksum-verified Mesa llvmpipe
+driver through a private DLL redirection directory so it can run without a
+hardware OpenGL driver. The smoke verifies that this driver is loaded.
+It establishes software-rendered startup, not hardware GPU
+support or performance, and the CI driver is not added to distributed games.
 SDK/host publication remains owned by the engine release process.
 
 ## Sending a pull request

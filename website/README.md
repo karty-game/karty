@@ -30,6 +30,19 @@ public gallery card while retaining builds and direct demo URLs.
 Templates emitted into game builds belong to `internal/build/templates/`.
 The public site's templates belong to `website/templates/`.
 
+The shared Candy Buddy artwork is `internal/brand/favicon.svg`. Site headers,
+footers and favicons use that same SVG; game pages and local sample instructions
+also embed it as their favicon. SVG data URLs keep nested previews and offline
+games independent of another asset download. The Midnight theme pairs blue
+surfaces and warm white text with the selected Tangerine orange accents.
+
+Documentation, gallery and local instruction pages include Open Graph and
+large-image social card metadata using the 640×320 banner. The generated
+`guide/assets/banner.png` is the shared social image. `KARTY_SITE_URL` selects
+the absolute published site prefix; it defaults to
+`https://karty-game.github.io/karty/main/`. The sample build workflow sets the
+correct main or PR preview prefix, including a configured `PAGES_BASE_URL`.
+
 ## Preview and generate
 
 Run tasks from the repository root:
@@ -78,6 +91,20 @@ candidate requirements explicit and use the project's `.karty/docs/` for exact
 SDK contracts.
 
 ## Images and diagrams
+
+`assets/logo.png` is the transparent 256×256 Candy Buddy export.
+`assets/banner.png` is the 640×320 Midnight banner with the Baloo 2 Karty wordmark and
+the slogan “Retro looks, modern tools.” Regenerate both from the shared SVG:
+
+```sh
+mise run export-brand
+```
+
+The export uses Playwright Chromium, the pinned
+[Baloo 2](https://github.com/google/fonts/tree/main/ofl/baloo2) font in
+`assets/fonts/baloo2/`, and DejaVu Sans for the slogan. The bundled font retains
+its OFL license and source revision. `KARTY_BRAND_BODY_FONT` can select the
+DejaVu Sans regular file on systems where its Debian/Ubuntu path differs.
 
 Architecture and coordinate diagrams are handwritten SVG. `design-room.png`
 is an AI-generated concept illustration; its prompt and checksum are in

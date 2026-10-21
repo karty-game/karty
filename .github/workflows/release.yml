@@ -93,9 +93,33 @@ jobs:
         run: |
           ./karty-host.exe --check --cartridge game.kart
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Native game startup smoke
+      - name: Prepare pinned ARM64 software OpenGL
         working-directory: game
         shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = Join-Path $env:RUNNER_TEMP 'mesa-llvmpipe-arm64-26.2.5.7z'
+          $url = 'https://github.com/mmozeiko/build-mesa/releases/download/26.2.5/mesa-llvmpipe-arm64-26.2.5.7z'
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          $expected = 'e7df75398d50e07a68bbffa5cff2ece4c85e5f8ef8bda497f560dd04fe60cbbd'
+          if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -ne $expected) {
+            throw 'ARM64 Mesa archive checksum mismatch'
+          }
+          $driverDirectory = Join-Path $PWD 'karty-host.exe.local'
+          New-Item -ItemType Directory -Path $driverDirectory | Out-Null
+          & 7z x $archive "-o$driverDirectory" opengl32.dll -y
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to extract ARM64 Mesa OpenGL' }
+          if (-not (Test-Path -LiteralPath (Join-Path $driverDirectory 'opengl32.dll'))) {
+            throw 'ARM64 Mesa archive is missing opengl32.dll'
+          }
+          # DotLocal redirection applies even to the host's System32 DLL loads.
+          # This private CI driver is not added to the packaged game artifact.
+          Get-FileHash -LiteralPath (Join-Path $driverDirectory 'opengl32.dll') -Algorithm SHA256
+      - name: Native game startup smoke with software OpenGL
+        working-directory: game
+        shell: pwsh
+        env:
+          GALLIUM_DRIVER: llvmpipe
         run: |
           $game = Start-Process -FilePath ./karty-host.exe -ArgumentList '--cartridge', 'game.kart' -PassThru -RedirectStandardOutput host.stdout.log -RedirectStandardError host.stderr.log
           try {
@@ -104,9 +128,23 @@ jobs:
               Get-Content host.stdout.log, host.stderr.log
               throw "Windows ARM64 game exited during startup (code $($game.ExitCode))"
             }
+            $expectedDriver = (Resolve-Path './karty-host.exe.local/opengl32.dll').Path
+            $loadedDrivers = @((Get-Process -Id $game.Id).Modules | Where-Object ModuleName -eq 'opengl32.dll')
+            $loadedDrivers | Format-Table ModuleName, FileName
+            if (-not ($loadedDrivers | Where-Object FileName -eq $expectedDriver)) {
+              throw 'Windows ARM64 smoke did not load the pinned software OpenGL driver'
+            }
           } finally {
             if (-not $game.HasExited) { Stop-Process -Id $game.Id -Force }
           }
+      - name: Preserve Windows ARM64 startup diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-arm64-startup-diagnostics
+          path: game/host.*.log
+          if-no-files-found: ignore
+          retention-days: 7
   release:
     needs: [validate, validate-windows-arm64, validate-windows-process-lifecycle]
     runs-on: ubuntu-24.04

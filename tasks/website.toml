@@ -40,6 +40,10 @@ run = "go test -timeout=9s ./website/cmd/samples"
 description = "Capture sample gallery thumbnails from staged browser games"
 run = "node website/scripts/capture-samples.mjs"
 
+[export-brand]
+description = "Export the 256px logo and 640x320 Midnight brand banner"
+run = "node website/scripts/export-brand.mjs"
+
 [build-samples]
 description = "Build the full gallery with the pinned Yarn compiler SDK for Last Train"
 depends = ["build"]

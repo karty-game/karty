@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"html"
 	"image"
 	"image/jpeg"
 	"os"
@@ -74,6 +75,10 @@ func TestGalleryExplainsEachPublishedSample(t *testing.T) {
 	page := string(contents)
 	if !strings.Contains(page, website.CSS()) {
 		t.Fatal("gallery does not use the shared guide theme")
+	}
+
+	if !strings.Contains(html.UnescapeString(page), `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,`) {
+		t.Fatal("gallery is missing its embedded favicon")
 	}
 
 	for index, name := range names {

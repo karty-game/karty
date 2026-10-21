@@ -7,6 +7,8 @@ import { chromium } from "playwright";
 
 const directory = await realpath(process.env.KARTY_DOCS_SITE ?? "dist/samples-site");
 const captures = resolve("dist/validation/docs-web");
+const expectedFavicon = await readFile("internal/brand/favicon.svg");
+const expectedBanner = await readFile("website/assets/banner.png");
 await mkdir(captures, { recursive: true });
 const mime = {
   ".html": "text/html; charset=utf-8",
@@ -42,6 +44,42 @@ const sections = {
   design: ["index", "why", "architecture", "sdk-and-toolchain", "asset-pipeline", "packages"],
   guide: ["index", "2d", "fps"],
 };
+
+async function checkBrand(page) {
+  const favicon = await page.locator('link[rel="icon"]').getAttribute("href");
+  assert.ok(favicon.startsWith("data:image/svg+xml;base64,"), "Missing shared favicon");
+  assert.deepEqual(Buffer.from(favicon.split(",")[1], "base64"), expectedFavicon, "Stale favicon artwork");
+  const images = page.locator(".brand img, .footer-brand img");
+  assert.equal(await images.count(), 2, "Header and footer must share the mascot");
+  for (const image of await images.all()) {
+    assert.equal(await image.getAttribute("src"), favicon, "Brand artwork differs from favicon");
+    assert.equal(await image.getAttribute("alt"), "", "Decorative mascot repeats the Karty label");
+    await image.evaluate((element) => element.decode());
+  }
+
+  const meta = async (selector) => page.locator(selector).getAttribute("content");
+  assert.equal(await meta('meta[name="twitter:card"]'), "summary_large_image");
+  assert.equal(await meta('meta[property="og:title"]'), await page.title());
+  assert.equal(await meta('meta[name="twitter:title"]'), await page.title());
+  assert.equal(await meta('meta[property="og:description"]'), await meta('meta[name="description"]'));
+  const image = new URL(await meta('meta[property="og:image"]'));
+  const published = new URL(await meta('meta[property="og:url"]'));
+  assert.equal(image.origin, published.origin);
+  assert.ok(["http:", "https:"].includes(image.protocol));
+  assert.ok(image.pathname.endsWith("/guide/assets/banner.png"));
+  const prefix = image.pathname.slice(0, -"guide/assets/banner.png".length);
+  assert.equal(published.pathname, prefix + new URL(page.url()).pathname.slice(1));
+  assert.equal(await meta('meta[name="twitter:image"]'), image.href);
+  assert.equal(await meta('meta[property="og:image:width"]'), "640");
+  assert.equal(await meta('meta[property="og:image:height"]'), "320");
+  const response = await page.request.get(`${base}/guide/assets/banner.png`);
+  assert.equal(response.status(), 200);
+  const bytes = await response.body();
+  assert.deepEqual(bytes, expectedBanner, "Published social image differs from the selected banner");
+  assert.equal(bytes.readUInt32BE(16), 640);
+  assert.equal(bytes.readUInt32BE(20), 320);
+}
+
 let browser;
 try {
   browser = await chromium.launch({ headless: true });
@@ -60,6 +98,7 @@ try {
         const response = await page.goto(`${base}/${section}/${name}.html`, { waitUntil: "networkidle" });
         assert.equal(response.status(), 200);
         assert.equal(await page.locator("h1").count(), 1);
+        await checkBrand(page);
         const active = await page.locator(".site-nav a[aria-current=page]").innerText();
         assert.equal(active, section === "guide" ? "Guides" : section === "design" ? "Design" : "API");
         assert.deepEqual(
@@ -134,6 +173,7 @@ try {
     report.redirects.push({ oldPage, target });
   }
   await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  await checkBrand(page);
   assert.deepEqual(
     (await page.locator(".site-nav a").allTextContents()).map((label) => label.trim()),
     ["Samples", "Guides", "API", "Design", "GitHub"],

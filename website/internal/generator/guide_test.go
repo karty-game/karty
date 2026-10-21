@@ -8,6 +8,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	htmlstd "html"
 	"maps"
 	"os"
 	"path/filepath"
@@ -62,6 +63,10 @@ func TestGenerateDeterministicGuideAndLinks(t *testing.T) {
 
 	if !bytes.Contains(html, []byte(website.CSS())) {
 		t.Fatal("guide does not use the shared site theme")
+	}
+
+	if !strings.Contains(htmlstd.UnescapeString(string(html)), `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,`) {
+		t.Fatal("guide is missing its embedded favicon")
 	}
 
 	if !bytes.Contains(html, []byte(`href="guide.md" download`)) || bytes.Count(html, []byte("<h2 ")) != 12 {

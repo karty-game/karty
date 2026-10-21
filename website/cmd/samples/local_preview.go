@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/karty-game/karty/internal/brand"
 	"github.com/karty-game/karty/website"
 )
 
@@ -128,17 +129,27 @@ func validateLocalSampleWeb(source fs.FS, name string) error {
 }
 
 func writeLocalSampleInstructions(project *os.Root, stage string, card sampleCard) error {
+	social, err := website.NewSocial(card.Preview.Title+" · Karty samples", card.Preview.Description, card.DemoURL)
+	if err != nil {
+		return err
+	}
+
 	page, err := template.New("local-preview.html").Funcs(template.FuncMap{
+		"faviconURL": brand.FaviconURL,
 		"siteCSS": func() template.CSS {
 			return template.CSS(website.CSS()) // #nosec G203 -- trusted embedded stylesheet.
 		},
-	}).ParseFS(website.Files, "templates/local-preview.html")
+	}).ParseFS(website.Files, "templates/local-preview.html", "templates/social.html")
 	if err != nil {
 		return err
 	}
 
 	var output bytes.Buffer
-	if err = page.Execute(&output, card); err != nil {
+	if err = page.Execute(&output, struct {
+		Preview   samplePreview
+		SourceURL string
+		Social    website.Social
+	}{card.Preview, card.SourceURL, social}); err != nil {
 		return err
 	}
 

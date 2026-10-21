@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/karty-game/karty/internal/brand"
 	"github.com/karty-game/karty/website"
 	"github.com/pelletier/go-toml/v2"
 )
@@ -140,18 +141,31 @@ func writeGallery(directory string, cards []sampleCard) error {
 	// Hidden projects still build and retain their direct URLs.
 	cards = slices.DeleteFunc(slices.Clone(cards), func(card sampleCard) bool { return card.Preview.Hidden })
 
+	social, err := website.NewSocial(
+		"Karty samples",
+		"Play Karty samples, explore their Go source, and choose a guide for your own 2D or 3D game.",
+		"",
+	)
+	if err != nil {
+		return err
+	}
+
 	page, err := template.New("gallery.html").Funcs(template.FuncMap{
+		"faviconURL": brand.FaviconURL,
 		"siteCSS": func() template.CSS {
 			return template.CSS(website.CSS()) // #nosec G203 -- stylesheet is trusted, embedded repository source.
 		},
-	}).ParseFS(website.Files, "templates/gallery.html")
+	}).ParseFS(website.Files, "templates/gallery.html", "templates/social.html")
 	if err != nil {
 		return err
 	}
 
 	var output bytes.Buffer
 
-	if err = page.Execute(&output, cards); err != nil {
+	if err = page.Execute(&output, struct {
+		Cards  []sampleCard
+		Social website.Social
+	}{cards, social}); err != nil {
 		return err
 	}
 

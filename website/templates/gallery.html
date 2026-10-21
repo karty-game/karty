@@ -3,11 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0b1218" />
-    <meta
-      name="description"
-      content="Play Karty samples, explore their Go source, and choose a guide for your own 2D or 3D game."
-    />
+    <meta name="theme-color" content="#111827" />
+    <link rel="icon" type="image/svg+xml" href="{{faviconURL}}" />
+    <meta name="description" content="{{.Social.Description}}" />
+    {{template "social" .Social}}
     <title>Karty samples</title>
     <style>
       {{siteCSS}}
@@ -18,15 +17,7 @@
     <header class="site-header">
       <div class="header-inner">
         <a class="brand" href="./" aria-label="Karty samples">
-          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
-            <path
-              d="M7 5v22m0-11L25 5M7 16l18 11"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          <img src="{{faviconURL}}" alt="" width="44" height="44" />
           <span>Karty</span>
         </a>
         <nav class="site-nav" aria-label="Main navigation">
@@ -79,10 +70,10 @@ karty dev</code></pre>
       </div>
       <div class="sample-section-header">
         <h2>Explore the samples</h2>
-        <span class="sample-count">{{len .}} playable samples</span>
+        <span class="sample-count">{{len .Cards}} playable samples</span>
       </div>
       <ul class="samples">
-        {{range .}}
+        {{range .Cards}}
         <li>
           <article class="sample-card">
             <a class="preview" href="{{.DemoURL}}" aria-label="Play {{.Preview.Title}}">
@@ -117,7 +108,10 @@ karty dev</code></pre>
     </main>
     <footer class="site-footer">
       <div>
-        <span class="footer-brand">Karty</span>
+        <span class="footer-brand">
+          <img src="{{faviconURL}}" alt="" width="32" height="32" />
+          <span>Karty</span>
+        </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
       </div>
       <div class="footer-links">

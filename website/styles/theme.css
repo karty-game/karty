@@ -1,16 +1,16 @@
 :root {
   color-scheme: dark;
-  --canvas: #0b1218;
-  --surface: #111d26;
-  --surface-raised: #172630;
-  --ink: #edf4f5;
-  --body: #c4d2d8;
-  --muted: #93a8b2;
-  --line: #283d48;
-  --accent: #6ee7cc;
-  --accent-ink: #09231e;
-  --focus: #baf7e9;
-  --radius: 16px;
+  --canvas: #111827;
+  --surface: #192438;
+  --surface-raised: #23314a;
+  --ink: #fff4e7;
+  --body: #cfd8e8;
+  --muted: #a3b2c9;
+  --line: #30405a;
+  --accent: #ffad48;
+  --accent-ink: #321d2d;
+  --focus: #ffcf7c;
+  --radius: 10px;
   font-family:
     Inter,
     ui-sans-serif,
@@ -44,7 +44,7 @@ body::before {
   height: 540px;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(ellipse at 82% 0, #14363480, transparent 60%);
+  background: radial-gradient(ellipse at 82% 0, #37537e55, transparent 60%);
 }
 a {
   color: var(--accent);
@@ -61,7 +61,7 @@ summary:focus-visible {
   border-radius: 3px;
 }
 ::selection {
-  background: #287868;
+  background: #4c4457;
   color: white;
 }
 h1,
@@ -110,7 +110,7 @@ img {
 }
 .site-header {
   border-bottom: 1px solid var(--line);
-  background: #0b1218e8;
+  background: #111827e8;
 }
 .header-inner {
   max-width: 1280px;
@@ -128,14 +128,16 @@ img {
   color: var(--ink);
   text-decoration: none;
   font-size: 1.3rem;
-  font-weight: 750;
+  font-weight: 800;
   letter-spacing: -0.055em;
 }
-.brand svg {
-  width: 30px;
-  height: 30px;
+.brand:hover {
+  color: var(--ink);
+}
+.brand img {
+  width: 44px;
+  height: 44px;
   flex: none;
-  color: var(--accent);
 }
 .site-nav {
   display: flex;
@@ -155,7 +157,7 @@ img {
   color: var(--ink);
 }
 .site-nav a[aria-current="page"] {
-  background: #1b3c36;
+  background: #3b302d;
   color: var(--accent);
 }
 .site-nav .github {
@@ -224,10 +226,10 @@ img {
 }
 code {
   padding: 0.14em 0.35em;
-  border: 1px solid #304450;
+  border: 1px solid #3b4d6c;
   border-radius: 5px;
-  background: #182730;
-  color: #d8f0e9;
+  background: #20304a;
+  color: #e7dec9;
   font:
     0.85em/1.7 ui-monospace,
     SFMono-Regular,
@@ -241,7 +243,7 @@ pre {
   padding: 1.2rem 1.4rem;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #071016;
+  background: #0b1220;
   box-shadow: inset 0 1px #ffffff04;
   overflow-x: auto;
   tab-size: 4;
@@ -275,10 +277,18 @@ pre code {
   margin: 0.5rem 0 0;
 }
 .footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
   color: var(--ink);
   font-size: 1rem;
   font-weight: 650;
   letter-spacing: -0.035em;
+}
+.footer-brand img {
+  width: 32px;
+  height: 32px;
+  flex: none;
 }
 .footer-links {
   display: flex;
@@ -348,8 +358,8 @@ pre code {
   color: var(--ink);
 }
 .guide-nav a[aria-current="page"] {
-  background: #17342f;
-  border-color: #31564a;
+  background: #352c2e;
+  border-color: #79543b;
   color: var(--accent);
   font-weight: 600;
 }
@@ -522,8 +532,8 @@ pre code {
     background 160ms ease;
 }
 .path:hover {
-  border-color: #4c8a7a;
-  background: #172b33;
+  border-color: #b06c3d;
+  background: #24324b;
   color: var(--ink);
 }
 .path img {
@@ -597,9 +607,9 @@ pre code {
 }
 .starter-card {
   padding: 1.5rem;
-  border: 1px solid #31534a;
+  border: 1px solid #79543b;
   border-radius: var(--radius);
-  background: linear-gradient(145deg, #18342e, var(--surface));
+  background: linear-gradient(145deg, #263652, var(--surface));
 }
 .starter-card .eyebrow {
   margin: 0 0 0.9rem;
@@ -611,13 +621,13 @@ pre code {
 .starter-card p {
   margin: 0.65rem 0 1rem;
   font-size: 0.8rem;
-  color: #a7c1be;
+  color: #b4c3db;
 }
 .starter-card pre {
   margin: 1rem 0 1.2rem;
   padding: 0.85rem 1rem;
-  background: #091a19;
-  border-color: #31534a;
+  background: #101c30;
+  border-color: #79543b;
 }
 .starter-card pre code {
   font-size: 0.75rem;
@@ -665,12 +675,12 @@ pre code {
   transition: border-color 160ms ease;
 }
 .sample-card:hover {
-  border-color: #476573;
+  border-color: #536b91;
 }
 .preview {
   display: block;
   overflow: hidden;
-  background: #060d12;
+  background: #090f1c;
   border-bottom: 1px solid var(--line);
 }
 .preview img {
@@ -884,9 +894,9 @@ pre code {
     font-size: 1.15rem;
     gap: 0.45rem;
   }
-  .brand svg {
-    width: 26px;
-    height: 26px;
+  .brand img {
+    width: 36px;
+    height: 36px;
   }
   .site-nav {
     width: 100%;
@@ -989,13 +999,13 @@ pre code {
   :root {
     color-scheme: light;
     --canvas: white;
-    --ink: #172630;
-    --body: #172630;
-    --muted: #40535e;
-    --line: #ccd6db;
-    --surface: #f3f6f7;
-    --surface-raised: #f3f6f7;
-    --accent: #186f60;
+    --ink: #23314a;
+    --body: #23314a;
+    --muted: #66545e;
+    --line: #ded4d8;
+    --surface: #faf6f2;
+    --surface-raised: #faf6f2;
+    --accent: #96501e;
   }
   body {
     font-size: 11pt;
@@ -1032,18 +1042,18 @@ pre code {
     color: inherit;
   }
   code {
-    background: #f3f6f7;
-    border-color: #ccd6db;
-    color: #172630;
+    background: #faf6f2;
+    border-color: #ded4d8;
+    color: #23314a;
   }
   pre {
     white-space: pre-wrap;
     overflow: visible;
     box-shadow: none;
-    background: #f3f6f7;
+    background: #faf6f2;
   }
   pre code {
-    color: #172630;
+    color: #23314a;
   }
   .paths {
     display: grid;

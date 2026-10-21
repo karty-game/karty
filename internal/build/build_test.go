@@ -389,6 +389,10 @@ func TestRunStagesWebTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if !strings.Contains(string(index), `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,`) {
+		t.Fatal("web build is missing its embedded favicon")
+	}
+
 	if strings.Contains(string(index), "karty-dev-status") ||
 		strings.Contains(string(index), "kartyDevelopmentConfig") ||
 		strings.Contains(string(index), "__karty_dev/") {
