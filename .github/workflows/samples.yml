@@ -13,14 +13,32 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      GOWORK: "off"
+      GOCACHE: ${{ github.workspace }}/tmp/ci/go-build
+      GOMODCACHE: ${{ github.workspace }}/tmp/ci/go-mod
+      KARTY_HOME: ${{ github.workspace }}/tmp/ci/karty
+      GOMAXPROCS: "2"
+      GOFLAGS: "-p=1"
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: jdx/mise-action@v4
+      - name: Cache Go compilation and verified sample SDK tools
+        id: tools-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+            ${{ env.GOMODCACHE }}
+            ${{ env.KARTY_HOME }}
+          key: ${{ runner.os }}-${{ runner.arch }}-sample-tools-${{ hashFiles('mise.toml', 'go.sum', 'samples/**/karty.toml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-sample-tools-${{ hashFiles('mise.toml', 'go.sum', 'samples/**/karty.toml') }}-
       - name: Restore sample lightmap bakes
         id: bake-cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: samples/*/.karty/bakes
           key: ${{ runner.os }}-sample-bakes-v1-${{ github.sha }}
@@ -31,8 +49,8 @@ jobs:
       - name: Bake offline lightmaps and build sample web previews
         run: mise run build-samples -- --cdn
       - name: Save sample lightmap bakes
-        if: steps.bake-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v5
+        if: ${{ !cancelled() && steps.bake-cache.outputs.cache-primary-key != '' && steps.bake-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
         with:
           path: samples/*/.karty/bakes
           key: ${{ steps.bake-cache.outputs.cache-primary-key }}
@@ -51,3 +69,12 @@ jobs:
           destination=main
           if [ -n "$PR_NUMBER" ]; then destination="pr/$PR_NUMBER"; fi
           printf '[Sample preview](%s/%s/) — available after **Publish samples** succeeds.\n' "${base%/}" "$destination" >> "$GITHUB_STEP_SUMMARY"
+      - name: Save Go compilation and verified sample SDK tools
+        if: ${{ !cancelled() && steps.tools-cache.outputs.cache-primary-key != '' && steps.tools-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+            ${{ env.GOMODCACHE }}
+            ${{ env.KARTY_HOME }}
+          key: ${{ steps.tools-cache.outputs.cache-primary-key }}

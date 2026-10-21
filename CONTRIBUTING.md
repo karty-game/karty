@@ -38,8 +38,15 @@ go work edit -replace=github.com/karty-game/karty-sdk=../karty-sdk
 Use `GOWORK=off` to check the public dependencies pinned in `go.mod`.
 Root tasks enable `GOEXPERIMENT=simd`; use `mise exec -- go ...` for ad hoc Go
 commands. Tests prepare the SDK selected by `internal/release`; an uncached
-published bundle needs a download. This checkout selects SDK 0.0.15 and its
+published bundle needs a download. This checkout selects SDK 0.0.16 and its
 matching public hosts. `KARTY_HOME` selects the SDK/toolchain cache root.
+
+Repository tools use the Go version in `mise.toml`. Contributor sample and
+integration checks resolve each installed SDK's own Go pin independently using
+mise; `go run ./cmd/karty-test-sdk --go-path` prepares and prints the selected
+SDK's compiler path. An explicit `KARTY_GO` is still checked exactly and is never
+silently replaced. Normal CLI commands continue to require a user-installed
+compiler as described in the toolchain documentation.
 
 For build, browser, or development-flow changes, run the relevant integration
 tasks listed by `mise tasks`. Common tasks stay in `mise.toml`; integration,
@@ -104,7 +111,10 @@ mise run check-integration
 ```
 
 Linux CI uses these worker and package scheduling settings to keep the existing
-test deadlines while checking public dependencies independently.
+test deadlines while checking public dependencies independently. Runtime checks
+execute without Go test-result caching; compiler and download caches remain
+available. Windows platform tasks use portable command quoting and also execute
+their assertions on each runner.
 
 Run integration against downloaded public hosts. `mise run check-release-config`
 validates GoReleaser configuration; `mise run release-snapshot` builds local

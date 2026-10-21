@@ -11,7 +11,7 @@ run = "go test -timeout=9s ./internal/levelbuild -run SpriteDensity -count=1 -v"
 
 [test-process-lifecycle]
 description = "Execute real build-tool process tree cancellation and development server shutdown checks"
-run = "go test -timeout=9s ./internal/process ./internal/commands/dev"
+run = "go test -count=1 -timeout=9s ./internal/process ./internal/commands/dev"
 
 [bench-dev-watcher]
 description = "Measure metadata polling and periodic content verification over 10,000 files and a 128 MiB asset"

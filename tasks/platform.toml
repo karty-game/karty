@@ -2,5 +2,5 @@
 description = "Check project creation and portable TinyGo archive, cache and override handling"
 run = [
   "go run ./cmd/karty-test-sdk",
-  "go test -timeout=9s ./internal/scaffold ./internal/toolchain -run '^Test(CreateGameWritesPinnedSDKFiles|TinyGo|EnsureTinyGo)'",
+  'go test -count=1 -timeout=9s ./internal/scaffold ./internal/toolchain -run "^Test(CreateGameWritesPinnedSDKFiles|TinyGo|EnsureTinyGo)"',
 ]

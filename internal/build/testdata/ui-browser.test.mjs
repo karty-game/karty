@@ -2,11 +2,15 @@
 // lives exclusively in this test; production needs no test/debug UI API.
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve, relative, extname } from "node:path";
 import { chromium } from "playwright";
 
 const root = resolve(process.argv[2]);
+const output = resolve("dist/validation/ui-browser");
+await mkdir(output, { recursive: true });
+const levelRequests = [];
+let rejectLevels = false;
 const server = createServer(async (request, response) => {
   try {
     const path = resolve(root, "." + new URL(request.url, "http://test").pathname.replace(/^\/proxy\/4242/, ""));
@@ -16,6 +20,14 @@ const server = createServer(async (request, response) => {
       return;
     }
     const file = path === root ? resolve(root, "index.html") : path;
+    if (extname(file) === ".kld") {
+      levelRequests.push({ url: request.url, status: rejectLevels ? 404 : 200 });
+      if (rejectLevels) {
+        response.writeHead(404, { "Cache-Control": "no-store" });
+        response.end("intentional missing level");
+        return;
+      }
+    }
     const bytes = await readFile(file);
     const mime = {
       ".html": "text/html",
@@ -35,6 +47,10 @@ await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const browser = await chromium.launch({ headless: true });
 try {
   for (const mobile of [false, true]) {
+    // Fail at the origin before startup. The release worker can prefetch levels
+    // before the menu opens, and page routes cannot intercept its own requests.
+    rejectLevels = true;
+    const firstLevelRequest = levelRequests.length;
     const context = await browser.newContext({
       viewport: mobile ? { width: 390, height: 844 } : { width: 960, height: 640 },
       deviceScaleFactor: mobile ? 2 : 1,
@@ -50,175 +66,207 @@ try {
       logs.push(message.text());
       if (logs.length > 40) logs.shift();
     });
-    await page.addInitScript(() => {
-      let submit;
-      globalThis.uiObserved = { values: {}, nodes: {}, shows: 0, commands: 0 };
-      Object.defineProperty(globalThis, "kartyHostSubmitCommands", {
-        configurable: true,
-        get: () => submit,
-        set: (original) => {
-          submit = (bytes) => {
-            const data = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-            for (let offset = 24; offset < bytes.length;) {
-              const tag = data.getUint8(offset),
-                length = data.getUint16(offset + 1, true),
-                start = offset + 3;
-              const text = (from, count) => new TextDecoder().decode(bytes.subarray(from, from + count));
-              if (tag === 18) {
-                uiObserved.shows++;
-                uiObserved.asset = text(start + 10, data.getUint16(start + 8, true));
-                uiObserved.values = {};
-                uiObserved.nodes = {};
-              }
-              if (tag === 23) uiObserved.nodes[data.getUint32(start, true)] = {};
-              if (tag === 25) delete uiObserved.nodes[data.getUint32(start, true)];
-              if (tag === 20 && uiObserved.nodes[data.getUint32(start, true)])
-                uiObserved.nodes[data.getUint32(start, true)][data.getUint32(start + 4, true)] = text(
-                  start + 11,
-                  data.getUint16(start + 9, true),
-                );
-              if (tag === 20)
-                uiObserved.values[data.getUint32(start + 4, true)] = text(start + 11, data.getUint16(start + 9, true));
-              if (tag === 21) uiObserved.row = text(start + 19, data.getUint16(start + 17, true));
-              uiObserved.commands++;
-              offset = start + length;
-            }
-            return original(bytes);
-          };
-        },
-      });
-    });
-    await page.goto(`http://127.0.0.1:${server.address().port}/proxy/4242/`);
     try {
-      await page.waitForFunction(() => document.documentElement.dataset.kartyState === "running", null, {
-        timeout: 9000,
+      await page.addInitScript(() => {
+        let submit;
+        globalThis.uiObserved = { values: {}, nodes: {}, shows: 0, commands: 0 };
+        Object.defineProperty(globalThis, "kartyHostSubmitCommands", {
+          configurable: true,
+          get: () => submit,
+          set: (original) => {
+            submit = (bytes) => {
+              const data = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+              for (let offset = 24; offset < bytes.length;) {
+                const tag = data.getUint8(offset),
+                  length = data.getUint16(offset + 1, true),
+                  start = offset + 3;
+                const text = (from, count) => new TextDecoder().decode(bytes.subarray(from, from + count));
+                if (tag === 18) {
+                  uiObserved.shows++;
+                  uiObserved.asset = text(start + 10, data.getUint16(start + 8, true));
+                  uiObserved.values = {};
+                  uiObserved.nodes = {};
+                }
+                if (tag === 23) uiObserved.nodes[data.getUint32(start, true)] = {};
+                if (tag === 25) delete uiObserved.nodes[data.getUint32(start, true)];
+                if (tag === 20 && uiObserved.nodes[data.getUint32(start, true)])
+                  uiObserved.nodes[data.getUint32(start, true)][data.getUint32(start + 4, true)] = text(
+                    start + 11,
+                    data.getUint16(start + 9, true),
+                  );
+                if (tag === 20)
+                  uiObserved.values[data.getUint32(start + 4, true)] = text(
+                    start + 11,
+                    data.getUint16(start + 9, true),
+                  );
+                if (tag === 21) uiObserved.row = text(start + 19, data.getUint16(start + 17, true));
+                uiObserved.commands++;
+                offset = start + length;
+              }
+              return original(bytes);
+            };
+          },
+        });
       });
-    } catch (error) {
-      throw new Error(
-        `UI startup failed: ${await page.locator("#error-detail").textContent()}; ${errors.join("; ")}; ${logs.join("\n")}; ${error.message}`,
+      await page.goto(`http://127.0.0.1:${server.address().port}/proxy/4242/`);
+      try {
+        await page.waitForFunction(() => document.documentElement.dataset.kartyState === "running", null, {
+          timeout: 9000,
+        });
+      } catch (error) {
+        throw new Error(
+          `UI startup failed: ${await page.locator("#error-detail").textContent()}; ${errors.join("; ")}; ${logs.join("\n")}; ${error.message}`,
+        );
+      }
+      const canvas = page.locator("canvas");
+      await canvas.waitFor({ state: "visible" });
+      await page.waitForFunction(() => uiObserved.asset === "ui.menu");
+      const box = await canvas.boundingBox();
+      assert.ok(box);
+      const cdp = await context.newCDPSession(page);
+      const click = async (y) => {
+        const frame = await page.evaluate(
+          () => globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame,
+        );
+        await page.waitForFunction(
+          (frame) =>
+            BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) >
+            BigInt(frame) + 2n,
+          frame,
+        );
+        if (mobile) {
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchStart",
+            touchPoints: [{ x: box.x + 60, y: box.y + y }],
+          });
+          await page.waitForTimeout(100);
+          await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        } else await page.mouse.click(box.x + 60, box.y + y, { delay: 100 });
+      };
+      await canvas.screenshot({ path: resolve(output, `${mobile ? "phone" : "desktop"}-menu.png`) });
+      const dimensions = await canvas.evaluate((canvas) => ({
+        width: canvas.width,
+        height: canvas.height,
+        cssWidth: canvas.getBoundingClientRect().width,
+      }));
+      assert.ok(
+        dimensions.width >= dimensions.cssWidth * (mobile ? 1.9 : 0.9),
+        "UI is not using display-density pixels",
       );
-    }
-    const canvas = page.locator("canvas");
-    await canvas.waitFor({ state: "visible" });
-    await page.waitForFunction(() => uiObserved.asset === "ui.menu");
-    const box = await canvas.boundingBox();
-    assert.ok(box);
-    const cdp = await context.newCDPSession(page);
-    const click = async (y) => {
+      // Let actual host updates observe key release before pressing the same key
+      // again. Consecutive Playwright presses can otherwise look like one held Tab.
+      const press = async (key) => {
+        await page.keyboard.press(key, { delay: 100 });
+        const releasedFrame = await page.evaluate(
+          () => globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame,
+        );
+        await page.waitForFunction(
+          (frame) =>
+            BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) >
+            BigInt(frame) + 2n,
+          releasedFrame,
+        );
+      };
+      // Navigate the current scaffold by focus order; theme spacing is not an API.
+      const activate = async (tabs = 0, reverse = false) => {
+        await page.waitForTimeout(150);
+        for (let i = 0; i < tabs; i++) await press(reverse ? "Shift+Tab" : "Tab");
+        await press("Enter");
+      };
+      await activate();
+      await page.waitForFunction(() => uiObserved.asset === "ui.levels");
+      await activate();
+      await page.waitForFunction(() => uiObserved.asset === "ui.error");
+      assert.ok(
+        levelRequests.slice(firstLevelRequest).some(({ status }) => status === 404),
+        "missing-level fault was not exercised",
+      );
+      rejectLevels = false;
+      await activate();
+      await page.waitForFunction(() => uiObserved.asset === "ui.hud");
+      await click(310);
+      await page.waitForFunction(() => uiObserved.asset === "ui.pause");
+      await activate(1);
+      await page.waitForFunction(() => uiObserved.asset === "ui.inventory");
+      await canvas.screenshot({ path: resolve(output, `${mobile ? "phone" : "desktop"}-inventory.png`) });
+      await activate(4);
+      await page.waitForFunction(() =>
+        Object.values(uiObserved.nodes).some((values) =>
+          Object.values(values).some((text) => text.includes("used 1 times")),
+        ),
+      );
+      await page.waitForFunction(() =>
+        Object.values(uiObserved.nodes).some((values) => Object.values(values).some((text) => text.includes("2 left"))),
+      );
+      // Exercise the inventory through actual UI action events and command batches.
+      await activate();
+      await page.waitForFunction(() =>
+        Object.values(uiObserved.nodes).some((values) =>
+          Object.values(values).some((text) => text.includes("used 2 times")),
+        ),
+      );
+      await page.waitForFunction(() =>
+        Object.values(uiObserved.nodes).some((values) => Object.values(values).some((text) => text.includes("1 left"))),
+      );
+      const before = await page.evaluate(() => uiObserved.commands);
       const frame = await page.evaluate(
         () => globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame,
       );
       await page.waitForFunction(
         (frame) =>
-          BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) > BigInt(frame) + 2n,
+          BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) >
+          BigInt(frame) + 10n,
         frame,
       );
-      if (mobile) {
-        await cdp.send("Input.dispatchTouchEvent", {
-          type: "touchStart",
-          touchPoints: [{ x: box.x + 60, y: box.y + y }],
-        });
-        await page.waitForTimeout(100);
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-      } else await page.mouse.click(box.x + 60, box.y + y, { delay: 100 });
-    };
-    await canvas.screenshot({ path: `/tmp/karty-ui-${mobile ? "phone" : "desktop"}.png` });
-    const dimensions = await canvas.evaluate((canvas) => ({
-      width: canvas.width,
-      height: canvas.height,
-      cssWidth: canvas.getBoundingClientRect().width,
-    }));
-    assert.ok(dimensions.width >= dimensions.cssWidth * (mobile ? 1.9 : 0.9), "UI is not using display-density pixels");
-    // Let actual host updates observe key release before pressing the same key
-    // again. Consecutive Playwright presses can otherwise look like one held Tab.
-    const press = async (key) => {
-      await page.keyboard.press(key, { delay: 100 });
-      const releasedFrame = await page.evaluate(
-        () => globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame,
+      assert.equal(await page.evaluate(() => uiObserved.commands), before, "idle UI emitted commands");
+      await activate(4, true);
+      await page.waitForFunction(() => uiObserved.asset === "ui.pause");
+      await activate(1);
+      await page.waitForFunction(() => uiObserved.asset === "ui.inventory");
+      await page.waitForFunction(() =>
+        Object.values(uiObserved.nodes).some((values) =>
+          Object.values(values).some((text) => text.includes("used 0 times")),
+        ),
       );
-      await page.waitForFunction(
-        (frame) =>
-          BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) > BigInt(frame) + 2n,
-        releasedFrame,
+      await page.waitForFunction(() =>
+        Object.values(uiObserved.nodes).some((values) => Object.values(values).some((text) => text.includes("1 left"))),
       );
-    };
-    // Navigate the current scaffold by focus order; theme spacing is not an API.
-    const activate = async (tabs = 0, reverse = false) => {
-      await page.waitForTimeout(150);
-      for (let i = 0; i < tabs; i++) await press(reverse ? "Shift+Tab" : "Tab");
-      await press("Enter");
-    };
-    await activate();
-    await page.waitForFunction(() => uiObserved.asset === "ui.levels");
-    await page.route("**/*.kld", (route) => route.fulfill({ status: 404, body: "intentional missing level" }));
-    await activate();
-    await page.waitForFunction(() => uiObserved.asset === "ui.error");
-    await page.unroute("**/*.kld");
-    await activate();
-    await page.waitForFunction(() => uiObserved.asset === "ui.hud");
-    await click(310);
-    await page.waitForFunction(() => uiObserved.asset === "ui.pause");
-    await activate(1);
-    await page.waitForFunction(() => uiObserved.asset === "ui.inventory");
-    await canvas.screenshot({ path: `/tmp/karty-ui-inventory-${mobile ? "phone" : "desktop"}.png` });
-    await activate(4);
-    await page.waitForFunction(() =>
-      Object.values(uiObserved.nodes).some((values) =>
-        Object.values(values).some((text) => text.includes("used 1 times")),
-      ),
-    );
-    await page.waitForFunction(() =>
-      Object.values(uiObserved.nodes).some((values) => Object.values(values).some((text) => text.includes("2 left"))),
-    );
-    // Exercise the inventory through actual UI action events and command batches.
-    await activate();
-    await page.waitForFunction(() =>
-      Object.values(uiObserved.nodes).some((values) =>
-        Object.values(values).some((text) => text.includes("used 2 times")),
-      ),
-    );
-    await page.waitForFunction(() =>
-      Object.values(uiObserved.nodes).some((values) => Object.values(values).some((text) => text.includes("1 left"))),
-    );
-    const before = await page.evaluate(() => uiObserved.commands);
-    const frame = await page.evaluate(
-      () => globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame,
-    );
-    await page.waitForFunction(
-      (frame) =>
-        BigInt(globalThis.kartyFrame?.toString() ?? document.documentElement.dataset.kartyFrame) > BigInt(frame) + 10n,
-      frame,
-    );
-    assert.equal(await page.evaluate(() => uiObserved.commands), before, "idle UI emitted commands");
-    await activate(4, true);
-    await page.waitForFunction(() => uiObserved.asset === "ui.pause");
-    await activate(1);
-    await page.waitForFunction(() => uiObserved.asset === "ui.inventory");
-    await page.waitForFunction(() =>
-      Object.values(uiObserved.nodes).some((values) =>
-        Object.values(values).some((text) => text.includes("used 0 times")),
-      ),
-    );
-    await page.waitForFunction(() =>
-      Object.values(uiObserved.nodes).some((values) => Object.values(values).some((text) => text.includes("1 left"))),
-    );
-    await activate();
-    await page.waitForFunction(() => uiObserved.asset === "ui.pause");
-    await activate(2);
-    await page.waitForFunction(() => uiObserved.asset === "ui.menu");
-    await activate();
-    await page.waitForFunction(() => uiObserved.asset === "ui.levels");
-    await activate(1);
-    await page.waitForFunction(() => uiObserved.asset === "ui.hud");
-    await click(310);
-    await page.waitForFunction(() => uiObserved.asset === "ui.pause");
-    await activate(2);
-    await page.waitForFunction(() => uiObserved.asset === "ui.menu");
-    await page.setViewportSize(mobile ? { width: 844, height: 390 } : { width: 640, height: 480 });
-    await page.waitForTimeout(100);
-    assert.ok((await canvas.screenshot()).length > 1024, "UI disappeared on resize");
-    assert.deepEqual(errors, []);
-    await context.close();
+      await activate();
+      await page.waitForFunction(() => uiObserved.asset === "ui.pause");
+      await activate(2);
+      await page.waitForFunction(() => uiObserved.asset === "ui.menu");
+      await activate();
+      await page.waitForFunction(() => uiObserved.asset === "ui.levels");
+      await activate(1);
+      await page.waitForFunction(() => uiObserved.asset === "ui.hud");
+      await click(310);
+      await page.waitForFunction(() => uiObserved.asset === "ui.pause");
+      await activate(2);
+      await page.waitForFunction(() => uiObserved.asset === "ui.menu");
+      await page.setViewportSize(mobile ? { width: 844, height: 390 } : { width: 640, height: 480 });
+      await page.waitForTimeout(100);
+      assert.ok((await canvas.screenshot()).length > 1024, "UI disappeared on resize");
+      assert.deepEqual(errors, []);
+    } catch (error) {
+      const state = await page.evaluate(() => ({
+        observed: globalThis.uiObserved,
+        frame: String(globalThis.kartyFrame),
+        state: document.documentElement.dataset.kartyState,
+      }));
+      const report = {
+        mode: mobile ? "phone" : "desktop",
+        state,
+        errors,
+        logs,
+        levelRequests: levelRequests.slice(firstLevelRequest),
+        error: error.stack,
+      };
+      await writeFile(resolve(output, `${report.mode}-failure.json`), JSON.stringify(report, null, 2));
+      await page.screenshot({ path: resolve(output, `${report.mode}-failure.png`), timeout: 5000 });
+      throw new Error(`UI ${report.mode} check failed: ${JSON.stringify(state)}; artifact=${output}; ${error.message}`);
+    } finally {
+      await context.close();
+    }
   }
   console.log("UI browser: desktop and high-DPI primary touch lifecycle passed");
 } finally {

@@ -32,7 +32,7 @@ mise run build-willowbrook-web
 mise run serve-willowbrook
 ```
 
-The sample uses SDK 0.0.14 with Camera2D and its matching public host.
+The sample uses SDK 0.0.16 with Camera2D and its matching public host.
 No engine source is imported by the sample. `KARTY_HOST_WEB` selects a contributor
 host override; native packaging uses `mise run build-willowbrook-native`.
 

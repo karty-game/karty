@@ -14,7 +14,9 @@ import (
 )
 
 func TestEnsureRejectsMissingPlatformArtifactBeforeDownload(t *testing.T) {
-	t.Parallel()
+	// This checks managed artifact resolution. A contributor's local override
+	// intentionally bypasses that path and must not change the test's inputs.
+	t.Setenv("KARTY_TINYGO", "")
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {

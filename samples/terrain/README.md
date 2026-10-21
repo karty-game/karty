@@ -17,7 +17,7 @@ mise run build-terrain-web
 mise exec -- ./dist/karty serve samples/terrain/dist/web --addr 127.0.0.1:8080
 ```
 
-Open `http://127.0.0.1:8080/`. The sample pins SDK 0.0.14 and uses its matching
+Open `http://127.0.0.1:8080/`. The sample pins SDK 0.0.16 and uses its matching
 public host. For native packaging, run `mise run build-terrain-native`.
 Run native and web builds sequentially because they share generated UI staging.
 

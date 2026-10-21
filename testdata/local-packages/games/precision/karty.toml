@@ -5,4 +5,4 @@ compiler = "tinygo"
 width = 960
 height = 540
 [sdk]
-version = "0.0.15"
+version = "0.0.16"

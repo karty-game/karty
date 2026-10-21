@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"os/exec"
@@ -13,11 +14,14 @@ import (
 	"slices"
 	"time"
 
+	"github.com/karty-game/karty/internal/sdk"
+	"github.com/karty-game/karty/internal/testtoolchain"
 	"github.com/karty-game/karty/website/internal/generator"
 	"github.com/pelletier/go-toml/v2"
 )
 
 const noticeTimeout = 60 * time.Second
+const maxNoticeBytes = 1 << 20
 
 func samplePriority(name string) int {
 	sampleOrder := [...]string{
@@ -135,49 +139,75 @@ func buildSamples(root string, cdn bool) error {
 }
 
 func buildPublishedSamples(root, site, cli string, names []string, cdn bool) error {
-	installed := map[string]bool{}
-	hostURLs := map[string]string{}
+	compilers := map[string]string{}
+	versions := map[string]string{}
 
+	// Resolve every SDK and compiler before expensive sample bakes. Repository
+	// tools and guest programs have independent Go pins.
 	for _, name := range names {
-		sample := filepath.Join(root, "samples", name)
+		version, err := sampleVersion(filepath.Join(root, "samples", name))
+		if err != nil {
+			return fmt.Errorf("sample %s SDK: %w", name, err)
+		}
 
-		version, err := sampleVersion(sample)
+		versions[name] = version
+		if compilers[version] != "" {
+			continue
+		}
+
+		if err = runCLI(root, cli, "sdk", "install", version); err != nil {
+			return fmt.Errorf("install sample SDK %s: %w", version, err)
+		}
+
+		manifest, err := sdk.Resolve(version)
 		if err != nil {
 			return err
 		}
 
-		if !installed[version] {
-			if err = runCLI(root, cli, "sdk", "install", version); err != nil {
-				return err
-			}
-
-			installed[version] = true
+		compilers[version], err = testtoolchain.Go(context.Background(), manifest)
+		if err != nil {
+			return err
 		}
 
+		fmt.Fprintf(os.Stdout, "Prepared sample SDK %s with Go %s (%s)\n", version, manifest.Tools.Go, compilers[version])
+	}
+
+	notices, err := prepareSampleNotices(slices.Sorted(maps.Values(versions)), downloadNotice)
+	if err != nil {
+		return err
+	}
+
+	hostURLs := map[string]string{}
+
+	for _, name := range names {
+		sample := filepath.Join(root, "samples", name)
+		version := versions[name]
+		fmt.Fprintf(os.Stdout, "Building sample %s (SDK %s)\n", name, version)
+
 		if cdn && hostURLs[version] == "" {
-			hostURLs[version], err = mirrorSampleHost(site, version)
+			url, err := mirrorSampleHost(site, version)
 			if err != nil {
 				return err
 			}
+
+			hostURLs[version] = url
 		}
 
-		if err = buildSample(sample, cli, hostURLs[version]); err != nil {
-			return err
+		if err := buildSample(sample, cli, hostURLs[version], compilers[version]); err != nil {
+			return fmt.Errorf("sample %s (SDK %s): %w", name, version, err)
 		}
 
 		target := filepath.Join(site, name)
-		if err = os.CopyFS(target, os.DirFS(filepath.Join(sample, "dist", "web"))); err != nil {
+		if err := os.CopyFS(target, os.DirFS(filepath.Join(sample, "dist", "web"))); err != nil {
 			return err
 		}
 
-		if err = copySamplePreview(sample, target); err != nil {
+		if err := copySamplePreview(sample, target); err != nil {
 			return err
 		}
 
-		for _, notice := range []string{"RUNTIME_LICENSE.md", "SDK_LICENSE.md"} {
-			if err = downloadNotice(version, notice, filepath.Join(target, notice)); err != nil {
-				return err
-			}
+		if err := writeSampleNotices(target, notices[version]); err != nil {
+			return err
 		}
 	}
 
@@ -186,8 +216,19 @@ func buildPublishedSamples(root, site, cli string, names []string, cdn bool) err
 
 // buildSample refreshes missing/stale offline lighting before packaging it. The
 // project's public SDK is installed by buildSamples before invoking either CLI command.
-func buildSample(directory, cli, cdnURL string) error {
-	return buildSampleWithRunner(directory, cli, cdnURL, runCLI)
+func buildSample(directory, cli, cdnURL, goPath string) error {
+	return buildSampleWithRunner(directory, cli, cdnURL, sampleRunner(cli, goPath, runCLIEnvironment))
+}
+
+func sampleRunner(cli, goPath string, run func(string, []string, string, ...string) error) func(string, string, ...string) error {
+	return func(directory, executable string, args ...string) error {
+		var environment []string
+		if executable == cli {
+			environment = []string{"KARTY_GO=" + goPath}
+		}
+
+		return run(directory, environment, executable, args...)
+	}
 }
 
 func buildSampleWithRunner(directory, cli, cdnURL string, run func(string, string, ...string) error) error {
@@ -309,44 +350,88 @@ func sampleVersion(directory string) (string, error) {
 }
 
 func runCLI(directory, cli string, args ...string) error {
+	return runCLIEnvironment(directory, nil, cli, args...)
+}
+
+func runCLIEnvironment(directory string, environment []string, cli string, args ...string) error {
 	command := exec.CommandContext(context.Background(), cli, args...)
 	command.Dir = directory
+
+	command.Env = append(os.Environ(), environment...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 
-	return command.Run()
+	if err := command.Run(); err != nil {
+		return fmt.Errorf("%s %v (in %s): %w", cli, args, directory, err)
+	}
+
+	return nil
 }
 
-func downloadNotice(version, name, output string) error {
+func prepareSampleNotices(versions []string, download func(string, string) ([]byte, error)) (map[string]map[string][]byte, error) {
+	notices := map[string]map[string][]byte{}
+	for _, version := range versions {
+		if notices[version] != nil {
+			continue
+		}
+
+		notices[version] = map[string][]byte{}
+		for _, name := range []string{"RUNTIME_LICENSE.md", "SDK_LICENSE.md"} {
+			contents, err := download(version, name)
+			if err != nil {
+				return nil, fmt.Errorf("sample SDK %s notice %s: %w", version, name, err)
+			}
+
+			notices[version][name] = contents
+		}
+	}
+
+	return notices, nil
+}
+
+func downloadNotice(version, name string) ([]byte, error) {
 	client := &http.Client{Timeout: noticeTimeout}
 	url := "https://github.com/karty-game/karty-sdk/releases/download/sdk-v" + version + "/" + name
 
 	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	response, err := client.Do(request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("license download %s: HTTP %d: %w", name, response.StatusCode, os.ErrInvalid)
+		return nil, fmt.Errorf("license download %s: HTTP %d: %w", name, response.StatusCode, os.ErrInvalid)
 	}
 
-	file, err := os.Create(output)
+	contents, err := io.ReadAll(io.LimitReader(response.Body, maxNoticeBytes+1))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(contents) > maxNoticeBytes {
+		return nil, fmt.Errorf("license download %s exceeds size limit: %w", name, os.ErrInvalid)
+	}
+
+	return contents, nil
+}
+
+func writeSampleNotices(directory string, notices map[string][]byte) error {
+	root, err := os.OpenRoot(directory)
 	if err != nil {
 		return err
 	}
+	defer root.Close()
 
-	_, copyErr := io.Copy(file, response.Body)
-	closeErr := file.Close()
-
-	if copyErr != nil {
-		return copyErr
+	for _, name := range []string{"RUNTIME_LICENSE.md", "SDK_LICENSE.md"} {
+		if err := root.WriteFile(name, notices[name], 0o600); err != nil {
+			return err
+		}
 	}
 
-	return closeErr
+	return nil
 }

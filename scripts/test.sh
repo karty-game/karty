@@ -11,13 +11,14 @@ while IFS= read -r package; do
     unit_packages+=("$package")
   fi
 done <<< "$package_list"
-go test -timeout=9s "${unit_packages[@]}"
+# Reuse compiler output, but execute assertions on this runner and SDK install.
+go test -count=1 -timeout=9s "${unit_packages[@]}"
 
 # Controllers are a separately consumable module, so ./... cannot discover it.
-GOWORK=off go -C packages/controllers test -timeout=9s ./...
+GOWORK=off go -C packages/controllers test -count=1 -timeout=9s ./...
 
 # Tiled is also a separate module; keep its sprite-residency guards in CI.
-GOWORK=off go -C packages/tiled test -timeout=9s ./...
+GOWORK=off go -C packages/tiled test -count=1 -timeout=9s ./...
 
 # The level builder's cache/bake and real WASM cases have outgrown one shared
 # nine-second package deadline on small CI runners. Discover every root test
@@ -37,7 +38,7 @@ fi
 batch_size=8
 for (( offset=0; offset<${#level_tests[@]}; offset+=batch_size )); do
   pattern=$(printf '%s|' "${level_tests[@]:offset:batch_size}")
-  go test -timeout=9s "$level_package" -run "^(${pattern%|})$"
+  go test -count=1 -timeout=9s "$level_package" -run "^(${pattern%|})$"
 done
 
 # The shipped reconnecting client is part of the development server contract.

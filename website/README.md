@@ -53,6 +53,9 @@ For a complete site with playable samples, run
 building because Last Train compiles its dialogue with the official Yarn Spinner
 compiler. It is an authoring dependency of that sample; the CLI and packaged
 games use Go. Ordinary documentation previews reuse existing game builds.
+Before baking, the gallery verifies every selected SDK and resolves its exact
+guest Go compiler through mise. `KARTY_GO` overrides this selection and must
+match each SDK's pin. Asset generators keep the repository's Go compiler.
 The Pages assembly task validates its input before replacing a published preview.
 
 ## Edit content

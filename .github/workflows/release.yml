@@ -4,6 +4,8 @@ on:
     tags: ["v*"]
 permissions:
   contents: write
+env:
+  GOWORK: "off"
 jobs:
   validate-windows-process-lifecycle:
     runs-on: windows-2025
@@ -41,8 +43,28 @@ jobs:
       - name: Install the pinned public SDK
         run: ./dist/karty sdk install "$(./dist/karty sdk current)"
       - run: mise run install-browser
-      - name: Validate the customer workflow against published hosts
-        run: mise run check-integration
+      - name: Check new-project native and web builds against published hosts
+        run: mise run smoke
+      - name: Check staged JavaScript and both guest compilers
+        run: mise run check-web
+      - name: Execute the public host and guest in Chromium
+        run: mise run check-browser
+      - name: Check the UI template in native WASM and Chromium
+        run: mise run check-ui
+      - name: Check Hangar guest allocations
+        run: mise run check-hangar-fps-allocations
+      - name: Check runtime guest allocations
+        run: mise run check-guest-allocations
+      - name: Check development watcher and publication
+        run: mise run check-dev
+      - name: Preserve failed UI browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cli-ui-diagnostics-${{ runner.arch }}
+          path: dist/validation/ui-browser/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Package Windows ARM64 game on Linux
         if: matrix.runner == 'ubuntu-24.04'
         working-directory: samples/ui-demo

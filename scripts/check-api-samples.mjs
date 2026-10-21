@@ -1,11 +1,17 @@
 // Build every current sample through the public CLI and its installed SDK.
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const root = process.cwd();
+const expectedSDK = execFileSync(resolve(root, "dist/karty"), ["sdk", "current"], { encoding: "utf8" }).trim();
+assert.match(expectedSDK, /^\d+\.\d+\.\d+$/);
+const guestGo = execFileSync("go", ["run", "./cmd/karty-test-sdk", "--go-path"], {
+  encoding: "utf8",
+  stdio: ["ignore", "pipe", "inherit"],
+}).trim();
 const available = (await readdir("samples", { withFileTypes: true }))
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name);
@@ -31,7 +37,6 @@ try {
     }
     const sdk = config.match(/\[sdk\]\s*version\s*=\s*["']([^"']+)/)?.[1];
     // Maintained samples select the released SDK and its matching host.
-    const expectedSDK = "0.0.14";
     assert.equal(sdk, expectedSDK, `${name} must use SDK ${expectedSDK}`);
     console.log(`Building ${name} against SDK ${sdk}`);
     const args = ["build", "--target", "web"];
@@ -42,6 +47,7 @@ try {
         stdio: "inherit",
         env: {
           ...process.env,
+          KARTY_GO: guestGo,
           GOWORK: "off",
           GOFLAGS: [process.env.GOFLAGS, "-buildvcs=false"].filter(Boolean).join(" "),
         },

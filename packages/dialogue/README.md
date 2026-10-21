@@ -49,7 +49,7 @@ progressive reveal, choices and history. The package automatically supplies
 `NovelFrame`, `NovelDialogue`/`NovelDialogueProps`, and
 `NovelHistory`/`NovelHistoryProps` to the game's generated KartUI bindings.
 No separate UI package or engine-specific bindings are distributed. The packaged
-UI requires SDK 0.0.14 and its matching host for full-layout character reveal
+UI requires SDK 0.0.16 and its matching host for full-layout character reveal
 (`UI.Reveal`), plus a CLI compiler using KartUI v0.0.8 or newer. The portable
 runtime and model remain independent of engine bindings.
 

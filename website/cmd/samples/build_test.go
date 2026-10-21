@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/karty-game/karty/internal/release"
@@ -40,6 +41,48 @@ func TestSampleBakeLevelsSelectConfiguredOfflineRecipes(t *testing.T) {
 	names, err = sampleBakeLevels(t.TempDir())
 	if err != nil || len(names) != 0 {
 		t.Fatalf("project without levels: %v, %v", names, err)
+	}
+}
+
+func TestSampleNoticesArePreparedOncePerSDKBeforePackaging(t *testing.T) {
+	t.Parallel()
+
+	calls := 0
+
+	notices, err := prepareSampleNotices([]string{"0.0.15", "0.0.15", "0.0.16"}, func(version, name string) ([]byte, error) {
+		calls++
+
+		return []byte(version + "/" + name), nil
+	})
+	if err != nil || calls != 4 {
+		t.Fatalf("notice preparation made %d requests: %v", calls, err)
+	}
+
+	// Each sample receives complete local copies; packaging needs no download.
+	for _, version := range []string{"0.0.15", "0.0.15", "0.0.16"} {
+		directory := t.TempDir()
+		if err := writeSampleNotices(directory, notices[version]); err != nil {
+			t.Fatal(err)
+		}
+
+		for _, name := range []string{"RUNTIME_LICENSE.md", "SDK_LICENSE.md"} {
+			contents, err := os.ReadFile(filepath.Join(directory, name))
+			if err != nil || string(contents) != version+"/"+name {
+				t.Fatalf("packaged notice %s: %q, %v", name, contents, err)
+			}
+		}
+	}
+
+	calls = 0
+
+	notices, err = prepareSampleNotices([]string{"0.0.15", "0.0.16"}, func(string, string) ([]byte, error) {
+		calls++
+
+		return nil, os.ErrPermission
+	})
+	if notices != nil || calls != 1 || !errors.Is(err, os.ErrPermission) ||
+		!strings.Contains(err.Error(), "0.0.15 notice RUNTIME_LICENSE.md") {
+		t.Fatalf("partial notice preparation was accepted: %v, %d calls, %v", notices, calls, err)
 	}
 }
 
@@ -105,6 +148,36 @@ func TestSampleBakeLevelsRejectInvalidManifest(t *testing.T) {
 
 	if _, err := sampleBakeLevels(directory); err == nil {
 		t.Fatal("invalid level manifest accepted")
+	}
+}
+
+func TestSampleBuildKeepsRepositoryAndGuestCompilersSeparate(t *testing.T) {
+	t.Parallel()
+
+	directory := filepath.Join(t.TempDir(), "samples", "particle-lab")
+	writeFixture(t, filepath.Join(directory, "levels", "lab", "level.toml"), "[lightmap]\nenabled = true\noffline = true\n")
+
+	var commands []string
+
+	run := sampleRunner("fixture-karty", "guest-go", func(cwd string, environment []string, executable string, args ...string) error {
+		commands = append(commands, executable)
+		if executable == "mise" {
+			if cwd != filepath.Dir(filepath.Dir(directory)) || len(environment) != 0 ||
+				!slices.Equal(args, []string{"run", "generate-particle-lab"}) {
+				t.Fatalf("repository generation inherited guest compiler: %q %q %q", cwd, environment, args)
+			}
+		} else if cwd != directory || !slices.Equal(environment, []string{"KARTY_GO=guest-go"}) {
+			t.Fatalf("sample command missing guest compiler: %q %q", cwd, environment)
+		}
+
+		return nil
+	})
+	if err := buildSampleWithRunner(directory, "fixture-karty", "", run); err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Equal(commands, []string{"mise", "fixture-karty", "fixture-karty"}) {
+		t.Fatalf("generation, bake and build commands: %q", commands)
 	}
 }
 

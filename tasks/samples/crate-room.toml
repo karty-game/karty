@@ -3,7 +3,7 @@ description = "Regenerate crate room procedural material PNGs"
 run = "go run samples/crate-room/generate-assets.go"
 
 [build-crate-room-web]
-description = "Build the regular box-physics sample with installed SDK 0.0.13"
+description = "Build the regular box-physics sample with its pinned SDK"
 dir = "samples/crate-room"
 run = "../../dist/karty build --target web"
 

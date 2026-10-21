@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cli_root=$(pwd)
+# Repository tools use the root compiler; cartridges use their signed SDK pin.
+KARTY_GO=$(go run ./cmd/karty-test-sdk --go-path)
+export KARTY_GO
 smoke_dir=$(mktemp -d)
 trap 'rm -rf "$smoke_dir"' EXIT
 sdk_version=$("$cli_root/dist/karty" sdk current)

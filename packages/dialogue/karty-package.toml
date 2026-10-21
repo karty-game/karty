@@ -1,7 +1,7 @@
 format_version = 1
 name = "dialogue"
 version = "0.1.0"
-sdk = "0.0.15"
+sdk = "0.0.16"
 
 [[processors]]
 name = "compile"

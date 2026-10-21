@@ -18,8 +18,8 @@ below to explore its source, controls and authoring tools.
 
 ## Run a sample
 
-These sources target candidate SDK 0.0.15. Its build-time image atlases require
-the matching candidate host; released SDK 0.0.14 hosts cannot load those bundles.
+These sources target released SDK 0.0.16 and its matching hosts, including support
+for their build-time image atlases.
 The CLI installs the pinned SDK and matching hosts as needed. See
 [contributor setup](../CONTRIBUTING.md#local-setup) for toolchain and cache settings.
 

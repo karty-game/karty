@@ -15,6 +15,7 @@ import (
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/testfixture"
+	"github.com/karty-game/karty/internal/testtoolchain"
 	"github.com/karty-game/karty/internal/toolchain"
 )
 
@@ -94,6 +95,15 @@ func run(ctx context.Context, web, browser, watcher, allocations bool) error {
 		return err
 	}
 
+	var guestGo string
+
+	if web {
+		guestGo, err = testtoolchain.Go(ctx, manifest)
+		if err != nil {
+			return err
+		}
+	}
+
 	if _, err := exec.LookPath("node"); err != nil {
 		return fmt.Errorf("node.js is required: %w", err)
 	}
@@ -151,7 +161,7 @@ func run(ctx context.Context, web, browser, watcher, allocations bool) error {
 		return err
 	}
 
-	options := build.Options{}
+	options := build.Options{Go: guestGo}
 	if web || browser {
 		options.Target = "web"
 		options.Host = os.Getenv("KARTY_HOST_WEB")
