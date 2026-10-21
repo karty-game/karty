@@ -3,10 +3,19 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 import { startDeliveryServer } from "./check-web-delivery-server.mjs";
+
+const playwrightVersion = createRequire(import.meta.url)("playwright/package.json").version;
+const lock = JSON.parse(await readFile(new URL("../package-lock.json", import.meta.url), "utf8"));
+assert.equal(
+  playwrightVersion,
+  lock.packages["node_modules/playwright"].version,
+  "Browser checks require the lockfile's Playwright version; run mise run install-browser",
+);
 
 const argument = (name, fallback) => {
   const at = process.argv.indexOf(name);
@@ -34,6 +43,7 @@ const server = await startDeliveryServer(fixtures);
 const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
 const report = {
   passed: false,
+  tools: { node: process.version, playwright: playwrightVersion, chromium: browser.version() },
   scope: "Real Chromium worker/fetch/cache execution; no graphics or device qualification",
   checks: [],
   failures: [],
@@ -293,32 +303,16 @@ try {
       const start = server.requests.length;
       const fault = { [phase]: true };
       server.faults.set(path, fault);
-      // Chromium maps an errored custom response body to TypeError when
-      // arrayBuffer consumes it. Compare with the same browser's native stream
-      // behavior rather than requiring a name it does not preserve.
-      const expectedError =
-        phase === "headers"
-          ? "AbortError"
-          : await opened.page.evaluate(async () => {
-              const controller = new AbortController();
-              const stream = new ReadableStream({
-                start(body) {
-                  controller.signal.addEventListener("abort", () => body.error(controller.signal.reason));
-                },
-              });
-              const pending = new Response(stream).arrayBuffer().then(
-                () => "unexpected success",
-                (error) => error.name,
-              );
-              controller.abort();
-              return pending;
-            });
-      assert.notEqual(expectedError, "unexpected success");
       await opened.page.evaluate((url) => {
         globalThis.deliveryAbort = new AbortController();
         globalThis.deliverySettled = null;
+        globalThis.deliveryPhase = "headers";
         globalThis.deliveryPending = fetch(url, { signal: globalThis.deliveryAbort.signal })
-          .then((response) => response.arrayBuffer())
+          .then((response) => {
+            const pending = response.arrayBuffer();
+            globalThis.deliveryPhase = "body";
+            return pending;
+          })
           .then(
             () => (globalThis.deliverySettled = { name: "unexpected success" }),
             (error) =>
@@ -326,6 +320,7 @@ try {
                 name: error.name,
                 message: error.message,
                 aborted: globalThis.deliveryAbort.signal.aborted,
+                reason: globalThis.deliveryAbort.signal.reason?.name,
               }),
           );
       }, changed.url);
@@ -333,22 +328,35 @@ try {
         () => server.requests.slice(start).some((entry) => entry.path === path && entry[phase + "Blocked"]),
         "delayed request never reached the tested phase",
       );
-      const result = await opened.page.evaluate(async () => {
+      // Server writes can precede page receipt of headers. Wait for actual body
+      // consumption so the body case cannot accidentally test header aborts.
+      if (phase === "body")
+        await opened.page.waitForFunction(
+          () => globalThis.deliveryPhase === "body" || globalThis.deliverySettled !== null,
+          null,
+          { timeout: 9000 },
+        );
+      const transfer = server.requests.slice(start).find((entry) => entry.path === path && entry[phase + "Blocked"]);
+      assert.equal(transfer.aborted, false, "server transfer ended before cancellation");
+      const result = await opened.page.evaluate(() => {
         const before = globalThis.deliverySettled;
+        const phase = globalThis.deliveryPhase;
         globalThis.deliveryAbort.abort();
-        return {
-          before,
-          result: await globalThis.deliveryPending,
-        };
+        return { before, phase };
       });
       (report.cancelEvidence ||= {})[phase] = result;
       assert.equal(result.before, null, "request failed before cancellation");
-      assert.equal(result.result.name, expectedError);
+      assert.equal(result.phase, phase, "page was not consuming the tested request phase");
+      await opened.page.waitForFunction(() => globalThis.deliverySettled !== null, null, { timeout: 9000 });
+      result.result = await opened.page.evaluate(() => globalThis.deliverySettled);
+      // A bridged fetch can reject with AbortError, or surface a failed custom
+      // response body as TypeError. A synthetic Response is a different path.
+      if (phase === "headers") assert.equal(result.result.name, "AbortError");
+      else assert.ok(["AbortError", "TypeError"].includes(result.result.name), JSON.stringify(result));
       assert.equal(result.result.aborted, true);
-      await waitUntil(
-        () => server.requests.slice(start).some((entry) => entry.path === path && entry.aborted),
-        "cancellation did not reach server",
-      );
+      assert.equal(result.result.reason, "AbortError");
+      await waitUntil(() => transfer.aborted, "cancellation did not reach the blocked server request");
+      result.server = { aborted: transfer.aborted, path: transfer.path, query: transfer.query };
       fault.release?.();
       server.faults.clear();
       assert.deepEqual(await fetchBytes(opened.page, changed.url), [
