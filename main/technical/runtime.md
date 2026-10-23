@@ -95,6 +95,26 @@ their references when release completes. Project-level menu UI can outlive a lev
 Admission bounds and cancellation semantics are in
 `.karty/docs/level-lifecycle.md`.
 
+When the installed runtime supports prepared chunk streams, the CLI packages
+final render batches, material surface slots and liquid rest geometry at build
+time. The builder checks geometry and lightmap coverage before publishing the
+chunk checksum; the shipped file contains prepared streams without a duplicate
+semantic mesh. The host checks file identity and bounded stream structure, then
+uploads it without proving geometry again, rebuilding faces or tessellating
+liquid after download. Waves still animate in the vertex shader.
+The builder keeps output compatible with the installed runtime. Shader compilation
+and GPU uploads still need a live graphics device; the complete encoded chunk
+budget includes the prepared streams.
+
+A render chunk downloads as one immutable file. With baked lighting enabled, its
+geometry, lighting layout and completed default lightmap travel together. Its
+checksum covers all of these resources; the host publishes the chunk after the
+complete unit is validated and uploaded.
+Shared material atlases belong to the root level, which is ready before its chunks.
+For time-of-day or weather lightmaps, the initial chunk embeds its default image.
+Other baked conditions are optional image modules loaded when selected. A
+replacement becomes active after its complete image is validated and uploaded.
+
 [Room setup](../guide/levels.html) · [UI demo loading states](https://github.com/karty-game/karty/blob/main/samples/ui-demo/src/main.go)
 
 ## World bodies and queries
