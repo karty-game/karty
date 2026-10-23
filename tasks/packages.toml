@@ -1,26 +1,11 @@
-[test-controllers]
-description = "Test first-person, top-down 2D and isometric presets without generated bindings"
-run = "GOWORK=off go -C packages/controllers test -timeout=9s ./..."
-
-[build-controllers]
-description = "Compile the portable controllers for native Go and WASI"
-run = [
-  "GOWORK=off go -C packages/controllers build ./...",
-  "GOWORK=off GOOS=wasip1 GOARCH=wasm go -C packages/controllers build ./...",
-]
-
-[lint-controllers]
-description = "Run standard Go analysis on the standalone controller module"
-dir = "packages/controllers"
-run = "GOWORK=off golangci-lint run --no-config --default standard ./..."
-
-[export-controllers-starter]
-description = "Export the portable package as self-contained SDK starter template files"
-run = "node scripts/export-controllers-starter.mjs"
+[check-fps-kit]
+description = "Verify published FPS kit restoration, geometry and transparent decal exports"
+depends = ["prepare-test-packages"]
+run = "go test -count=1 -timeout=9s ./internal/packages -run '^TestFPSKit(Archive|Decals)'"
 
 [check-controllers-archive]
-description = "Export controllers and compile an independent archive-only Go/TinyGo game"
-depends = ["build"]
+description = "Compile an independent Go/TinyGo game using published controller archives"
+depends = ["build", "prepare-test-packages"]
 run = "node scripts/check-controllers-archive.mjs"
 
 [build-controllers-willowbrook-snapshot]
@@ -32,25 +17,25 @@ run = "node scripts/build-controllers-willowbrook-snapshot.mjs"
 description = "Verify package processor input bounds, transactional outputs and generated-file ownership"
 run = "go test -timeout=9s ./internal/packages ./internal/build -run 'Processor|LocalArchive|ProjectManifest'"
 
-[generate-yarn-fixtures]
-description = "Compile authored compatibility fixtures with pinned Yarn Spinner 3.2.1"
-run = "mise exec dotnet@9.0.203 -- node scripts/yarn-fixtures.mjs"
+[test-last-train-rules]
+description = "Test Last Train's game-owned persistence and presentation rules"
+depends = ["restore-last-train-packages"]
+run = "GOWORK=off go -C samples/last-train test -timeout=9s ./internal/persistence ./internal/presentation"
 
-[test-dialogue-packages]
-description = "Test portable Yarn, dialogue presentation and save storage packages"
-run = [
-  "GOWORK=off go -C packages/dialogue test -timeout=9s ./...",
-  "GOWORK=off go -C packages/savegame test -timeout=9s ./...",
-  "GOWORK=off go -C samples/last-train test -timeout=9s ./internal/persistence ./internal/presentation",
-]
+[restore-last-train-packages]
+description = "Restore Last Train's pinned dialogue and savegame packages"
+depends = ["build"]
+dir = "samples/last-train"
+run = "../../dist/karty package restore"
 
 [check-last-train-packages]
-description = "Export dialogue packages and play clean archive consumers with Go and TinyGo"
-depends = ["build"]
+description = "Play clean consumers of published dialogue/savegame archives with Go and TinyGo"
+depends = ["build", "prepare-test-packages"]
 run = "mise exec dotnet@9.0.203 -- node scripts/check-last-train-packages.mjs"
 
 [test-local-packages]
 description = "Validate local package archives, folder links, source confinement and level integration"
+depends = ["prepare-test-packages"]
 run = [
   "go test -timeout=9s ./internal/packages ./internal/assetusage ./internal/commands/packagecmd ./internal/commands/schema ./internal/commands/quality",
   "go test -timeout=9s ./internal/devserver -run 'Package|ExplicitPackage'",
@@ -73,16 +58,6 @@ depends = ["build"]
 dir = "samples/willowbrook"
 run = "../../dist/karty package restore"
 
-[test-tiled-package]
-description = "Test the portable Tiled parser, image importer and bounded Karty 2D adapter"
-dir = "packages/tiled"
-run = "GOWORK=off go test -timeout=9s ./..."
-
-[build-tiled-package]
-description = "Build the reusable Tiled package without any generated game bindings"
-dir = "packages/tiled"
-run = "GOWORK=off go build ./..."
-
 [restore-tiled-room]
 depends = ["build"]
 dir = "testdata/tiled-room"
@@ -102,8 +77,8 @@ run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
 run = "node scripts/check-tiled-package-web.mjs"
 
 [check-tiled-package-archive]
-description = "Export Tiled and build an independent consumer from only its checked archive"
-depends = ["build"]
+description = "Build an independent consumer from the checksum-verified published Tiled archive"
+depends = ["build", "prepare-test-packages"]
 run = "node scripts/check-tiled-package-archive.mjs"
 
 [check-willowbrook-tiled]
@@ -111,6 +86,14 @@ description = "Open/export/render the authoritative village with official Tiled 
 run = "bash scripts/check-willowbrook-tiled.sh"
 
 [check-controller-starters]
-description = "Scaffold all three bundled presets and compile each with Go and TinyGo using an installed SDK candidate"
+description = "Scaffold all three genre starters and compile their published package pins with Go and TinyGo"
 depends = ["build"]
 run = "node scripts/check-controller-starters.mjs"
+
+[check-fps-controller-web]
+description = "Exercise a built independent FPS starter in Chromium with keyboard and responsive multi-touch"
+run = 'node scripts/check-fps-controller-web.mjs "${KARTY_FPS_CONTROLLER_WEB_DIRECTORY:?Set KARTY_FPS_CONTROLLER_WEB_DIRECTORY to the built FPS starter dist/web}"'
+
+[check-fps-traversal-web]
+description = "Walk actual Crate Room banks and Terrain slopes through the shared capsule motor in Chromium"
+run = 'node scripts/check-fps-traversal-web.mjs "${KARTY_CRATE_ROOM_WEB_DIRECTORY:?Set the built Crate Room dist/web}" "${KARTY_TERRAIN_WEB_DIRECTORY:?Set the built Terrain dist/web}"'

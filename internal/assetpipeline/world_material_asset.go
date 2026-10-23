@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	worldMaterialAssetProcessor = "world-material-asset@3"
+	worldMaterialAssetProcessor = "world-material-asset@4"
 	materialTileLengthBytes     = 4
 	materialTileHeaderBytes     = 2 * materialTileLengthBytes
 )
@@ -146,10 +146,16 @@ func cachedMaterialTile(ctx context.Context, projectRoot string, manifest sdk.Ma
 		return materialTile{}, err
 	}
 
+	geometry, err := materialGeometrySource(ctx, tile, tileRect)
+	if err != nil {
+		return materialTile{}, err
+	}
+
 	digest := sha256.Sum256(raw)
 
 	recipe, err := NewRecipe("world-material-asset", worldMaterialAssetProcessor, []Revision{
-		{Name: "normalizer", Version: "1"}, {Name: "merge", Version: "1"},
+		{Name: "normalizer", Version: "2"}, {Name: "merge", Version: "1"},
+		{Name: "geometry-luminance", Version: "1"}, {Name: "generation-passes", Version: "2"},
 		{Name: "coverage-extension", Version: "1"}, {Name: "qoi", Version: "1"},
 		{Name: "materialize", Version: manifest.Tools.MaterializeRevision},
 		{Name: "tool-version", Version: manifest.Tools.Materialize}, {Name: "archive", Version: checksum},
@@ -164,7 +170,7 @@ func cachedMaterialTile(ctx context.Context, projectRoot string, manifest sdk.Ma
 
 	artifact, err := NewProjectCache(projectRoot).Resolve(ctx, source, recipe,
 		func(ctx context.Context, source SourceSnapshot, _ Recipe) (Processed, error) {
-			return generateMaterialTile(ctx, manifest, source, tile.Bounds(), options, execute)
+			return generateMaterialTile(ctx, manifest, source, geometry, tile.Bounds(), options, execute)
 		})
 	if err != nil {
 		return materialTile{}, err
@@ -173,7 +179,7 @@ func cachedMaterialTile(ctx context.Context, projectRoot string, manifest sdk.Ma
 	return loadMaterialTile(ctx, artifact, tile.Bounds(), materialReflectanceEnabled(manifest))
 }
 
-func generateMaterialTile(ctx context.Context, manifest sdk.Manifest, source SourceSnapshot,
+func generateMaterialTile(ctx context.Context, manifest sdk.Manifest, source, geometry SourceSnapshot,
 	bounds image.Rectangle, options MaterializeOptions, execute materializeExecutor) (Processed, error) {
 	directory, err := os.MkdirTemp("", "karty-material-asset-")
 	if err != nil {
@@ -182,11 +188,11 @@ func generateMaterialTile(ctx context.Context, manifest sdk.Manifest, source Sou
 	defer os.RemoveAll(directory)
 
 	inputPath := filepath.Join(directory, "atlas.png")
-	if err := os.WriteFile(inputPath, source.Bytes(), 0o600); err != nil {
+	if err := os.WriteFile(inputPath, geometry.Bytes(), 0o600); err != nil {
 		return Processed{}, err
 	}
 
-	if err := execute(ctx, manifest, directory, materializeManifestArguments(manifest, inputPath, directory, options)); err != nil {
+	if err := execute(ctx, manifest, directory, materializeArguments(inputPath, directory, options)); err != nil {
 		return Processed{}, err
 	}
 
@@ -199,26 +205,9 @@ func generateMaterialTile(ctx context.Context, manifest sdk.Manifest, source Sou
 
 	var reflectance *image.NRGBA
 	if materialReflectanceEnabled(manifest) {
-		reflectance = newNeutralReflectance(bounds)
-		for _, name := range []string{"metallic", "smoothness"} {
-			if err := mergeMaterialMap(ctx, directory, name, reflectance); err != nil {
-				return Processed{}, err
-			}
-		}
-
-		// The pinned tool adds specular evidence after multiplying its detector
-		// by metallic_scale. Honor an explicit nonmetal classification even if
-		// that evidence leaves residual metallic pixels. Keep smoothness intact.
-		if options.MetallicScale != nil && *options.MetallicScale == 0 {
-			for row := range bounds.Dy() {
-				if err := ctx.Err(); err != nil {
-					return Processed{}, err
-				}
-
-				for column := range bounds.Dx() {
-					reflectance.Pix[reflectance.PixOffset(column, row)] = 0
-				}
-			}
+		reflectance, err = generateMaterialReflectance(ctx, manifest, directory, source, bounds, options, execute)
+		if err != nil {
+			return Processed{}, err
 		}
 	}
 

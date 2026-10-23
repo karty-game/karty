@@ -11,12 +11,9 @@ karty dev
 The terminal wizard offers `blank`, `2d`, `fps`, `isometric`, and `ui`, plus optional
 Git initialization and GitHub Actions. Use `--yes --template 2d` for scripts.
 Use `--no-template` for just the base folders and an empty entry point.
-Current starters use SDK 0.0.17, which the CLI installs when needed.
-
-The SDK 0.0.17 2D, first-person and isometric starters use one reusable
-controllers package with different presets. They include its source under
-`packages/controllers/` so generated projects work without a published module.
-Keep that folder in Git. Blank and UI projects add controls only when needed.
+The 2D, first-person and isometric starters include their controller plugins.
+The [first-person starter](fps.html) provides walking, physics and touch controls.
+Blank and UI projects add controls only when needed.
 
 Open the address printed by the preview. Change a color or a movement speed in
 `src/main.go`, save, and try it again. The first setup downloads tools; later
@@ -31,8 +28,19 @@ flowchart TD
 ```
 
 Keep `karty.toml`, your Go source, and source assets in Git. The CLI recreates
-`.karty/` and `dist/`. Your project pins an exact SDK; use its `.karty/docs/`
+`.karty/` and `dist/`. Use your project's `.karty/docs/`
 reference for API names and supported features.
+
+New projects also include the [Karty game development agent skill](https://github.com/karty-game/karty/tree/main/skills/karty-game)
+in `.agents/skills/karty-game/`. Agents that support project skills can discover
+it there; invoke `$karty-game` when your agent supports named skills. It explains
+asset and level organization, Go and KartUI capabilities, commands and validation.
+Keep this guidance with your game's source if your team uses it. It is copied
+from the CLI at creation and is not overwritten by builds or updates;
+the game's generated `.karty/docs/` remains authoritative for its API.
+For an existing game, copy the repository's `skills/karty-game/` directory into
+its `.agents/skills/` directory after reviewing any existing guidance. Review
+future skill updates deliberately; there is no automatic skill update command.
 
 Make one small game rule work before adding more art: collect an item, reach a
 goal, or restart after losing. For a 3D game, choose the first-person or isometric starter, then extend its

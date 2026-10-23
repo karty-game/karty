@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/karty-game/controllers"
+	"github.com/karty-game/controllers-topdown"
 )
 
 // These smoothed routes were produced by the real engine navigation solver.

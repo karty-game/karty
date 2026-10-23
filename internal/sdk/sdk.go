@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	assetcontract "github.com/karty-game/karty-sdk/format/asset"
+	"golang.org/x/mod/semver"
 )
 
 type staticError string
@@ -79,6 +80,11 @@ type Compatibility struct {
 func (manifest Manifest) SupportsAuthoredActions() bool {
 	return manifest.Compatibility.ProjectCodegen == authoredActionProjectCodegen ||
 		manifest.Compatibility.ProjectCodegen == ReviewedProjectCodegen
+}
+
+// SupportsLevelReferences reports whether the API supplies typed level names.
+func (manifest Manifest) SupportsLevelReferences() bool {
+	return semver.Compare("v"+manifest.API.Version, "v0.0.14") >= 0
 }
 
 // AssetProfile pins the processor selected for an SDK asset profile.

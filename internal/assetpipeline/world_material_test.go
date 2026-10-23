@@ -142,14 +142,12 @@ func executePackedMaterialFixture(directory string, args []string, _ worldmateri
 		return ErrCacheOutput
 	}
 
-	want := []color.NRGBA{{R: 200, A: 255}, {G: 150, A: 255}, {R: 192, G: 192, B: 192, A: 255}, {B: 100, A: 255}}
-
 	pixel, ok := color.NRGBAModel.Convert(input.At(0, 0)).(color.NRGBA)
 	if !ok {
 		return ErrCacheOutput
 	}
 
-	if !slices.Contains(want, pixel) {
+	if pixel != (color.NRGBA{R: 128, G: 128, B: 128, A: 255}) {
 		return ErrCacheOutput
 	}
 
@@ -246,6 +244,7 @@ func TestWorldMaterialPerAssetOptionsAndLayoutIndependence(t *testing.T) {
 	manifest, textures, document := fixtureMaterialManifest(), fixtureTextures(t), fixtureMaterialWorld()
 	root := t.TempDir()
 	calls := 0
+	overridden := 0
 	execute := func(_ context.Context, _ sdk.Manifest, directory string, args []string) error {
 		calls++
 
@@ -272,7 +271,13 @@ func TestWorldMaterialPerAssetOptionsAndLayoutIndependence(t *testing.T) {
 			return ErrCacheOutput
 		}
 
-		if pixel.R == 200 {
+		if pixel != (color.NRGBA{R: 128, G: 128, B: 128, A: 255}) {
+			t.Fatalf("flat geometry input: %v", pixel)
+		}
+
+		if slices.Contains(args, "--normal-strength") {
+			overridden++
+
 			want := []string{
 				"--preset",
 				"metal",
@@ -298,7 +303,7 @@ func TestWorldMaterialPerAssetOptionsAndLayoutIndependence(t *testing.T) {
 	}
 
 	first, _, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute, options)
-	if err != nil || calls != 4 {
+	if err != nil || calls != 4 || overridden != 1 {
 		t.Fatalf("cold perasset build: calls=%d err=%v", calls, err)
 	}
 	// Changing one preset regenerates just that asset.

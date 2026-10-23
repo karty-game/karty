@@ -5,7 +5,7 @@ import (
 
 	"example.com/vigil/.karty/engine"
 	"example.com/vigil/.karty/ui"
-	"github.com/karty-game/controllers"
+	"github.com/karty-game/controllers-isometric"
 )
 
 // The sample owns these controls; the portable composer has no UI dependency.
@@ -15,41 +15,48 @@ type cameraLab struct {
 	outlines             [2]*engine.Shape2D
 }
 
-func (g *Game) cameraSettingsProps() ui.CameraSettingsProps {
+func (c *cameraRig) settingsProps() ui.CameraSettingsProps {
 	return ui.CameraSettingsProps{
-		Open:   func() bool { return g.cameraLab.open },
-		Locked: func() bool { return g.cameraLab.locked },
-		Guides: func() bool { return g.cameraLab.guides },
-		Value:  g.cameraSettingValue, Label: g.cameraSettingLabel,
-		Change: g.changeCameraSetting, Toggle: g.toggleCameraSettings,
-		Compare: func() { g.cameraLab.locked = !g.cameraLab.locked; g.applyCameraSettings() },
-		Reset: func() {
-			g.cameraLab.options = g.cameraLab.defaults
-			g.cameraLab.locked = false
-			g.applyCameraSettings()
+		Open:   func() bool { return c.lab.open },
+		Locked: func() bool { return c.lab.locked },
+		Guides: func() bool { return c.lab.guides },
+		Value:  c.settingValue, Label: c.settingLabel,
+		Change: c.changeSetting, Toggle: c.toggleSettings,
+		Compare: func() {
+			c.lab.locked = !c.lab.locked
+			c.applySettings()
 		},
-		SetGuides: func(on bool) { g.cameraLab.guides = on; g.drawCameraGuides() },
+		Reset: func() {
+			c.lab.options = c.lab.defaults
+			c.lab.locked = false
+			c.applySettings()
+		},
+		SetGuides: func(on bool) {
+			c.lab.guides = on
+			c.drawGuides()
+		},
 	}
 }
 
-func (g *Game) toggleCameraSettings() {
-	g.cameraLab.open = !g.cameraLab.open
-	g.hud.Invalidate()
+func (c *cameraRig) toggleSettings() {
+	c.lab.open = !c.lab.open
+	c.hud.refresh()
 }
 
-func (g *Game) cameraSettingValue(field int) int32 {
-	o := g.cameraLab.options
+// Sliders use 0..100; labels convert damping and lookahead to milliseconds.
+func (c *cameraRig) settingValue(field int) int32 {
+	o := c.lab.options
 	values := [7]float64{o.Damping.X * 100, o.Damping.Y * 100, o.DeadZone.X * 100,
 		o.DeadZone.Y * 100, o.SoftZone.X * 100, o.SoftZone.Y * 100, o.LookaheadTime * 200}
 	return int32(values[field] + .5)
 }
 
-func (g *Game) cameraSettingLabel(field int) string {
+func (c *cameraRig) settingLabel(field int) string {
 	names := [7]string{"X", "Y", "X", "Y", "X", "Y", "Lookahead"}
-	value := int(g.cameraSettingValue(field))
+	value := int(c.settingValue(field))
 	unit := "%"
 	if field >= 2 && field <= 5 {
-		o := g.cameraLab.options
+		o := c.lab.options
 		values := [4]float64{o.DeadZone.X, o.DeadZone.Y, o.SoftZone.X, o.SoftZone.Y}
 		return names[field] + ": " + strconv.FormatFloat(values[field-2]*100, 'f', 1, 64) + "%"
 	}
@@ -64,12 +71,12 @@ func (g *Game) cameraSettingLabel(field int) string {
 	return names[field] + ": " + strconv.Itoa(value) + unit
 }
 
-func (g *Game) changeCameraSetting(field int, value int32) {
-	if g.cameraLab.locked {
+func (c *cameraRig) changeSetting(field int, value int32) {
+	if c.lab.locked {
 		return
 	}
 	v := float64(max(0, min(100, value))) / 100
-	o := &g.cameraLab.options
+	o := &c.lab.options
 	switch field {
 	case 0:
 		o.Damping.X = v
@@ -92,27 +99,28 @@ func (g *Game) changeCameraSetting(field int, value int32) {
 	default:
 		return
 	}
-	g.applyCameraSettings()
+	c.applySettings()
 }
 
-func (g *Game) applyCameraSettings() {
-	o := g.cameraLab.options
-	if g.cameraLab.locked {
+// Hard lock overrides the applied settings without losing the editable follow preset.
+func (c *cameraRig) applySettings() {
+	o := c.lab.options
+	if c.lab.locked {
 		o.Damping, o.DeadZone, o.SoftZone = controllers.Vec2{}, controllers.Vec2{}, controllers.Vec2{}
 		o.LookaheadTime = 0
 	}
-	if err := g.framing.Configure(o); err != nil {
+	if err := c.framing.Configure(o); err != nil {
 		panic(err)
 	}
-	g.drawCameraGuides()
-	g.hud.Invalidate()
+	c.drawGuides()
+	c.hud.refresh()
 }
 
-func (g *Game) drawCameraGuides() {
-	o := g.framing.Options()
+func (c *cameraRig) drawGuides() {
+	o := c.framing.Options()
 	for i, zone := range [2]controllers.Vec2{o.DeadZone, o.SoftZone} {
-		shape := g.cameraLab.outlines[i]
-		if !g.cameraLab.guides || zone.X == 0 || zone.Y == 0 {
+		shape := c.lab.outlines[i]
+		if !c.lab.guides || zone.X == 0 || zone.Y == 0 {
 			if shape != nil {
 				shape.SetStroke(engine.ColorTransparent, 0)
 			}
@@ -121,10 +129,10 @@ func (g *Game) drawCameraGuides() {
 		w, h := float32(zone.X*1280), float32(zone.Y*720)
 		position := engine.NewVec2(float32(o.ScreenPosition.X*1280)-w/2, float32(o.ScreenPosition.Y*720)-h/2)
 		if shape == nil {
-			shape = g.NewShape2D(engine.Rectangle(w, h), position)
+			shape = c.game.NewShape2D(engine.Rectangle(w, h), position)
 			shape.SetFill(engine.ColorTransparent)
 			shape.SetLayer(1000000050)
-			g.cameraLab.outlines[i] = shape
+			c.lab.outlines[i] = shape
 		} else {
 			shape.SetShape(engine.Rectangle(w, h))
 			shape.SetTransform(position, engine.NewVec2(1, 1), 0)

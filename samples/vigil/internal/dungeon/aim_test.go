@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/karty-game/controllers"
+	"github.com/karty-game/controllers-isometric"
 )
 
 func TestFireballMatchesProjectedKeyboardMovement(t *testing.T) {

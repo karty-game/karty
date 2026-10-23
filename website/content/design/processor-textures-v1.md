@@ -2,7 +2,7 @@
 
 Build processors may return an optional `assets.json` alongside ordinary files in
 the existing KPR1 response. This extends the build contract; it changes neither
-the cartridge wire protocol nor SDK 0.0.13. Processors without a catalog keep
+the cartridge wire protocol. Processors without a catalog keep
 returning opaque resources through `processed.Read`.
 
 ```json
@@ -30,7 +30,7 @@ the build.
 
 The CLI validates every result before replacing its owned `.karty/processed/`
 transaction. Images live under that ignored directory and pass through the normal
-SDK texture profile and level packager. They are not embedded into generated Go
+texture processing profile and level packager. They are not embedded into generated Go
 source. The catalog and generated lookup are also ignored build outputs:
 
 ```go

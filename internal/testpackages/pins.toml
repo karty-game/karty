@@ -1,0 +1,29 @@
+# Public release fixtures. Update archive URLs and checksums together.
+
+[packages.controllers-3d]
+archive = "https://github.com/karty-game/karty-packages/releases/download/controllers-3d-v0.0.2/controllers-3d-0.0.2.kpkg"
+sha256 = "f6f1869743270910ec365ab41a9e7ec8741ac7808c71081c7df7dff403a40946"
+
+[packages.controllers-isometric]
+archive = "https://github.com/karty-game/karty-packages/releases/download/controllers-isometric-v0.0.1/controllers-isometric-0.0.1.kpkg"
+sha256 = "e198004bfa928503ad8518556f8b1e3c8fc208bec7f5ae57db7dbbaa951adc3c"
+
+[packages.controllers-topdown]
+archive = "https://github.com/karty-game/karty-packages/releases/download/controllers-topdown-v0.0.1/controllers-topdown-0.0.1.kpkg"
+sha256 = "f6dd9e1c5612f24456d550d75aa88980ed8905d59881ea7e793f6a030ff055d8"
+
+[packages.dialogue]
+archive = "https://github.com/karty-game/karty-packages/releases/download/dialogue-v0.0.1/dialogue-0.0.1.kpkg"
+sha256 = "100498ee22c69c7533d48d901d5411cbd1c3a5dd28da30f6a45d551033ef8753"
+
+[packages.fps-kit]
+archive = "https://github.com/karty-game/karty-packages/releases/download/fps-kit-v0.0.1/fps-kit-0.0.1.kpkg"
+sha256 = "abd850832310fecda264664b11edf8e6e6c43fd047842351f6a1cd0e8ca42144"
+
+[packages.savegame]
+archive = "https://github.com/karty-game/karty-packages/releases/download/savegame-v0.0.1/savegame-0.0.1.kpkg"
+sha256 = "b056ff8b970ba9eb993a29b33e14f29c9c5a733415b92f23c5da340609265616"
+
+[packages.tiled]
+archive = "https://github.com/karty-game/karty-packages/releases/download/tiled-v0.0.1/tiled-0.0.1.kpkg"
+sha256 = "0c4d8ebaab2fcfc7d487af5d248b42ffc69b02ae4d56d0a7fa3ee96368c739b9"

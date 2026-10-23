@@ -1,34 +1,43 @@
 // Package art owns the sample's three ordinary, content-addressed level packs.
-// The engine verifies and decodes a complete pack before OnLevelReady. One extra
+// The engine verifies and decodes a complete pack before its ready callback. One extra
 // rendered update lets its queued 2D texture uploads run before story use.
 package art
 
-import "example.com/last-train/.karty/engine"
+import (
+	"example.com/last-train/.karty/assets"
+	"example.com/last-train/.karty/engine"
+)
 
 type asset struct {
 	pack string
 	id   uint32
 }
 type pack struct {
+	name    engine.LevelName
 	request engine.RequestID
 	handle  engine.LevelHandle
 	settle  uint8
 	failure string
 }
 type Loader struct {
-	game  *engine.Game
-	packs map[string]*pack
+	game    *engine.Game
+	packs   map[string]*pack
+	onReady func()
 }
 
-func New(game *engine.Game) *Loader {
-	return &Loader{game: game, packs: map[string]*pack{"opening": {}, "investigation": {}, "conclusion": {}}}
+func New(game *engine.Game, onReady func()) *Loader {
+	return &Loader{game: game, onReady: onReady, packs: map[string]*pack{
+		"opening":       {name: assets.LevelArtOpening},
+		"investigation": {name: assets.LevelArtInvestigation},
+		"conclusion":    {name: assets.LevelArtConclusion},
+	}}
 }
 func (l *Loader) Request(names ...string) {
 	for _, name := range names {
 		p := l.packs[name]
 		if p != nil && p.request == 0 && p.handle == 0 && p.failure == "" {
 			p.failure = ""
-			p.request = l.game.RequestLevel("art." + name)
+			l.load(p)
 		}
 	}
 }
@@ -56,17 +65,20 @@ func (l *Loader) Step() {
 		}
 	}
 }
-func (l *Loader) Mounted(e engine.LevelReady) {
-	for _, p := range l.packs {
-		if p.request == e.RequestID {
-			p.request = 0
-			p.handle = e.Handle
-			p.settle = 2
+func (l *Loader) load(p *pack) {
+	var request engine.RequestID
+	request = l.game.LoadLevel(p.name, func(event engine.LevelReady) {
+		// A cancelled speculative load can win its race with publication.
+		if p.request != request {
+			l.game.ReleaseLevel(event.Handle)
 			return
 		}
-	}
-	// A cancelled speculative request can race successful publication.
-	l.game.ReleaseLevel(e.Handle)
+		p.request, p.handle, p.settle = 0, event.Handle, 2
+		if l.onReady != nil {
+			l.onReady()
+		}
+	})
+	p.request = request
 }
 func (l *Loader) Failed(e engine.LevelFailed) {
 	for _, p := range l.packs {

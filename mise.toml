@@ -27,13 +27,22 @@ test = "mise run test"
 includes = ["tasks/*.toml", "tasks/samples/*.toml"]
 
 [tasks.test]
-depends = ["generate-hangar-walk"]
-run = ["go run ./cmd/karty-release --check", "go run ./cmd/karty-test-sdk", "bash scripts/test.sh"]
+depends = ["generate-hangar-ceiling-lights"]
+run = [
+  "go run ./cmd/karty-release --check",
+  "go run ./cmd/karty-test-sdk",
+  "go run ./cmd/karty-test-packages",
+  "bash scripts/test.sh",
+]
 
 [tasks.test-unit]
 description = "Run unit tests without the published SDK download check"
-depends = ["generate-hangar-walk"]
-run = "bash scripts/test.sh"
+depends = ["generate-hangar-ceiling-lights"]
+run = ["go run ./cmd/karty-test-packages", "bash scripts/test.sh"]
+
+[tasks.prepare-test-packages]
+description = "Prepare checksum-pinned published packages before timed consumer tests"
+run = "go run ./cmd/karty-test-packages"
 
 [tasks.build]
 run = "go build -o dist/karty ./cmd/karty"
@@ -55,7 +64,7 @@ run = "hk check --all"
 
 [tasks.lint-go]
 description = "Lint CLI and website Go packages, excluding ignored build output"
-run = "golangci-lint run ./cmd/... ./internal/... ./website/..."
+run = "golangci-lint run ./cmd/... ./internal/... ./skills/... ./website/..."
 
 [tasks.install-hooks]
 description = "Install repository hk hooks with the pinned mise environment"

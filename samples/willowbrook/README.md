@@ -1,232 +1,31 @@
 # Willowbrook
 
-A small sunny treasure hunt, authored in Tiled and rendered by Karty's ordinary
-Ebiten 2D sprites. Follow the cottage note, explore the garden up the stone
-steps, and find the hidden cache across the bridge.
+A sunny village treasure hunt: follow the cottage note, explore the garden and
+find the hidden cache across the bridge. It shows a 2D game built with Tiled
+maps, animated scenery, click-to-move navigation and a following camera.
 
-![Willowbrook's Tiled village.](preview.jpg)
+![Willowbrook's village and river.](preview.jpg)
 
-WASD or arrows walk; Shift runs. Tap the ground to find a route around obstacles.
-Tap a note or cache to find a walkable route and inspect it, or approach with
-the keyboard and press E or Space. R restarts the hunt. Losing focus cancels
-held input and automatic walking.
+[Play](https://karty-game.github.io/karty/main/willowbrook/) · [All samples](../README.md)
 
-Press **C** or tap **Camera settings** to tune horizontal/vertical damping,
-dead/soft zone sizes and lookahead live. Compare **Hard lock / Follow** while
-walking, stopping, reversing and running. Higher damping catches up more slowly;
-the dead zone permits small movement and the soft zone limits target drift.
-Zone sizes are percentages of the view, including the target's framing offset.
-Enable the green/amber zone guides to see those bounds. R tests a spawn snap;
-**Reset** restores the sample defaults. Changes last until reload.
-This first version covers target framing only.
+## Try it
 
-Camera controls use the village's parchment, green and brown palette from
-`ui/theme.toml`. The camera button sits beneath the centered title; the open
-panel scrolls on short screens. Offline status and downloads live inside the
-shared browser Debug panel, which retains its standard appearance.
+Use **WASD / arrows** to walk and **Shift** to run, or **click / tap** your
+destination. Tap a note or cache to approach it, or press **E / Space** nearby.
+**R** restarts the hunt. Open **Camera settings** to try different follow behavior.
 
-Ground clicks use the SDK's shared `World.FindPath` solver with the authored
-collision geometry. A 24-pixel grid covers the village within the engine's
-4,096-cell bound; returned routes still pass the game's collision checks.
-New clicks replace the route, and keyboard movement cancels it. Quest clicks
-retain their finer approach search so signs can be inspected from nearby.
+## Built with
 
-The title, journal and nearby Read/Open action use KartUI's presentation layer,
-so text stays sharp independently of game-image scaling. Interaction hints stay
-in the journal above the scenery. Tap a painted sign or chest to approach it
-through the same collisions, then read or open it. E/Space and the journal
-button also interact with a nearby item. The journal stays compact at the bottom
-during play; tap it to reopen a page, and tap again or use E/Space or Escape to
-close it.
+- [Tiled](https://karty-game.github.io/karty-packages/packages/tiled.html): loading maps and displaying animated scenery.
+- [Top-down Controllers](https://karty-game.github.io/karty-packages/packages/controllers-topdown.html): movement, pointer targeting and camera follow.
 
-From the CLI repository root:
+## Run locally
+
+[Set up the CLI](../README.md#run-a-sample), then from the repository root:
 
 ```sh
-mise run author-willowbrook
-mise run check-willowbrook
-mise run build-willowbrook-web
-mise run serve-willowbrook
+cd samples/willowbrook
+../../dist/karty dev
 ```
 
-The sample uses SDK 0.0.17 with Camera2D and its matching public host.
-No engine source is imported by the sample. `KARTY_HOST_WEB` selects a contributor
-host override; native packaging uses `mise run build-willowbrook-native`.
-
-## Edit the level
-
-Open [internal/village/village.tmj](internal/village/village.tmj) in Tiled 1.11
-or later. Its external image collection is [internal/village/village.tsj](internal/village/village.tsj).
-Run asset authoring first if the tile PNGs are absent.
-
-- Ground and Paths contain ordinary resolved tile IDs. The corner terrain brush
-  uses the approved grass tile plus fifteen nonempty dirt configurations.
-- River and Terrain details hold visible terrain and intact structures. The
-  legacy Bridge deck layer is empty; it contributes no extra plank strips.
-- Riverbed sits below the translucent River surface. Ground shadows and grass
-  are separate editable layers; they do not alter collisions or quest routes.
-- Scenery contains bottom-anchored image objects, sorted by their feet. The hero
-  joins this same drawing band, so trees and cottages occlude it naturally.
-- Collision contains authored rectangles and polygons for every visible rock
-  cluster, house body, tree roots and stone stair cheeks. `playerRadius` and
-  `playerRadiusY` describe a 14×10 foot ellipse, keeping soles outside stone
-  while preserving the narrow stair landing.
-- Gameplay contains the spawn, two clues, treasure, and named traversal areas.
-  Custom properties hold clue order and text. Map properties hold camera zoom,
-  follow offset, movement speeds and character dimensions.
-
-Ground/Paths tiles and their source images are compiled into background chunks
-by the normal build. The authored `internal/village/tiled-build.json` selects
-those layers and their source resolution. Chunk images, render-map records and
-texture IDs stay under ignored `.karty/processed`; they are packaged with the
-level automatically. Map or source-image edits are picked up on the next build.
-Run `mise run author-willowbrook` only when changing the reusable source-image
-extraction or metadata-driven foreground masks.
-
-Changing a house, path, collision or clue requires editing the map. Ordinary
-asset generation and builds preserve the TMJ and TSJ. There is no scene-placement
-generator in the game: the map itself owns every tile and object position.
-
-The map includes painted ground beyond the village's collision boundary so
-camera following stays filled in portrait, desktop and landscape views up to
-2.5:1. Portrait keeps the same vertical view and follows the hero through a
-narrower horizontal slice. The quest panel stays in the central HUD safe area.
-
-## Rendering with the reusable Tiled package
-
-[The shared parser](../../packages/tiled/README.md) reads a documented subset of Tiled JSON:
-finite orthogonal maps, array tile data, external JSON tilesets, image collections
-and regular atlases, groups, offsets, visibility, opacity, tile flips and
-bottom-anchored tile objects. The loader has no Karty or village dependency.
-Unsupported map orientation, image layers and collision shapes return errors.
-
-The staircase and bridge each use one complete, uniformly scaled sprite.
-Their foreground masks copy pixels from the same image, using editable
-`foreground` rectangles/polygons in the tile's Tiled object group. The matching
-base/front image objects share a pose; the foreground joins the hero's sorted
-scenery band so stone cheeks and front posts cover the correct parts of it.
-Move the base, matching foreground and collision objects together when editing.
-`check-willowbrook` checks their alignment. Regeneration does not replace them
-with tread or plank strips.
-
-Ground and Paths are baked separately into 135 chunk placements covering
-256×256 world pixels each. Each 1024×1024 image retains the original four source
-pixels per world pixel; there is no downsampling. The 117 identical ground
-chunks share one image, and eighteen path chunks use eighteen more images: 76 MiB
-of decoded RGBA pixels across the complete map, with compressed PNG downloads.
-
-This replaces 7,828 individual tile entities. The complete render map has 332
-entries; all 197 other sprites retain their original transforms, layer/Y sorting,
-animation and wind. This is build-time image composition using ordinary
-sprites, not a new GPU batching API. The shared chunker bounds unique output
-pixels and cumulative raster work, and rejects moving or actor content in
-selected static layers. The build processor compiles both the unchanged gameplay
-map and its render map from the same current sources; there are no checked-in
-chunk images or placement binaries to refresh.
-
-The asset importer derives atlas rectangles from tileset dimensions, spacing
-and margins. The cartridge resolves image keys to bundled textures and uses
-`NewLevelSprite2D` and `Transform2D`. No handwritten UV coordinates or 3D world
-geometry appear in the renderer. The camera uses `SetCamera2D`; pointer input
-uses its matching `ScreenToWorld` helper. Static tile transforms are sent once.
-The view creates/removes sprites in bounded batches as the camera moves, using
-complete image bounds and an overscan area.
-
-Water, tree foliage and loose flowers use standard [Tiled tile animation](https://doc.mapeditor.org/en/stable/reference/json-map-format/#frame)
-with tileset-local frame IDs and millisecond durations. The importer includes
-frames even when no map cell places them directly. A shared map clock preserves
-phase when sprites enter the view. Trees keep their trunk/root pixels fixed;
-only the foliage changes. Water keeps its footprint fixed above the riverbed.
-
-Shallow grass/earth banks use a transparent paired image in the Tiled `River banks`
-layer. They cover the flat grass/water edge, join beneath the intact waterfall
-and bridge, and continue through the camera buffer. The bridge's water opening
-allows the player to use the visible plank depth; all four support posts remain
-solid. Planned routes reserve 0.25px extra clearance so they avoid numerically
-tangent post corners without reducing the physical walking area.
-
-Grass uses custom tile properties `windAmplitude` (degrees) and `windPeriod`
-(seconds), interpreted by this adapter as a gentle rotation around the root.
-These properties are sample conventions. They are not a built-in Tiled wind
-feature. Soft contact shadows ground props and follow the character's soles.
-
-Character animation advances with actual distance, using the map properties
-`heroWalkStride` and `heroRunStride` for pixels per four-pose cycle. Defaults of
-64 and 80 give roughly 6.8 walking and 8.8 running pose changes per second at
-the authored speeds. Idle and collision stops return to a neutral pose.
-
-The parser, image importer and sprite presentation now live in the reusable
-[`tiled` package](../../packages/tiled/README.md), version `0.1.0`. This sample
-imports it through `[packages.tiled]` in `karty.toml`; its generated SDK backend
-only creates, updates and destroys ordinary `Sprite2D` entities. Collision,
-treasure gameplay and artwork preparation remain game-owned. The shared package
-contains no generated engine bindings or hand-coded texture UV coordinates.
-
-A [second independent Go consumer](../../testdata/tiled-room/README.md) uses a
-non-square atlas, all eight flip combinations, standard Tiled animation,
-continuous camera movement and portrait touch. Willowbrook uses TinyGo. The
-package can be linked as a folder during development or exported/imported as a
-`.kpkg` archive. See its README for supported Tiled features, limits and backend
-integration. It is a local candidate; no registry release has been published.
-
-## Validation
-
-```sh
-mise run check-willowbrook
-mise run check-willowbrook-web -- --art
-mise run check-willowbrook-web -- --portrait
-mise run check-willowbrook-web -- --quest
-mise run check-willowbrook-web -- --structures
-mise run check-willowbrook-web -- --bridge
-mise run check-willowbrook-web -- --motion
-mise run check-willowbrook-web -- --collision-house
-mise run check-willowbrook-web -- --collision-tree
-mise run check-willowbrook-web -- --collision-terrain
-mise run check-willowbrook-web -- --interactions
-mise run check-willowbrook-web -- --navigation
-```
-
-The browser checker passively observes normal submitted commands. It verifies
-zero 3D commands/views, bounded batches, camera follow, ordered clue interaction,
-cache opening/restart, focus cancellation, touch and a live framebuffer. The
-portrait fixture checks 390×844, landscape rotation and return. The structure
-fixture walks beside the stair cheeks and behind/across/in front of the bridge,
-capturing the actual sprite overlap at 2560×1440. Each fixture has
-a separate 120-second deadline. Captures use Chromium SwiftShader at full scale
-with synthetic input; they do not qualify physical devices or FPS. Reports and
-screenshots go to `dist/validation/willowbrook/`. The motion fixture records eight
-sequential ambient frames and passively verifies actual frame swaps, slower
-walk/run cadence, idle stillness and the character's contact-shadow position.
-Separate house/tree collision fixtures use sustained real input from all four
-sides, including passage behind the roof/canopy. The house fixture also checks
-diagonal sliding at the annex. Native regressions cover the solid body and root
-areas of every authored house/tree footprint and the complete quest routes.
-The bridge fixture drives both landings, both off-center plank lanes in either
-direction, rail stops and diagonal deflections using actual held input.
-The navigation fixture checks ground-click detours, stairs, bridge crossings,
-wall-contact recovery, replacement destinations and portrait touch through the
-actual host pathfinder.
-
-For checks during concurrent authoring, use
-`mise run build-controllers-willowbrook-snapshot` and set
-`KARTY_WILLOWBROOK_PROJECT` to its printed frozen directory.
-`KARTY_WILLOWBROOK_OUTPUT` selects a separate reports/captures directory.
-The checker then uses the snapshot's map, texture metadata and distribution
-together instead of observing frozen game bytes with live asset IDs.
-
-The official Tiled editor/rasterizer also opens, exports and renders the TMJ.
-See [art sources and prompts](../../scripts/willowbrook/assets/README.md).
-Retained source sheets live with the contributor tools; runtime PNGs stay in
-`levels/village`. The map, tileset and `map.generated.json` stay together in
-`internal/village`, including in frozen browser-check snapshots.
-
-## Reusable controller
-
-This sample uses the [top-down 2D preset](../../packages/controllers/README.md)
-from the shared `controllers` package. Input state and camera calculations are
-portable; this game owns its SDK adapter, entities and gameplay. Normal builds
-restore the declared package automatically.
-
-Map JSON is a build input selected by `tiled.compile` in `karty.toml`. The
-processor emits binary `.karty/processed` resources; the cartridge decodes KTM1
-records and does not embed the editable map or tileset. Source edits rebuild
-these resources during normal `karty build` and `karty dev`.
+Explore [the game](src/main.go), [quest](src/quest.go) and [Tiled map](internal/village/village.tmj).

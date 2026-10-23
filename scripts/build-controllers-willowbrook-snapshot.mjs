@@ -20,20 +20,28 @@ try {
   assert.deepEqual(copied, before, "Source changed during snapshot; retry after authoring finishes");
   assert.deepEqual(await inventory(source), before, "Source changed during snapshot; retry after authoring finishes");
   report.sourceFiles = before;
-  let configuration = await readFile(resolve(directory, "karty.toml"), "utf8");
-  for (const name of ["controllers", "tiled"]) {
-    const declaration = new RegExp(`(\\[packages\\.${name}\\]\\s*\\n\\s*folder\\s*=\\s*)["'][^"']+["']`);
-    assert.match(configuration, declaration);
-    configuration = configuration.replace(
-      declaration,
-      (_, prefix) => prefix + JSON.stringify(resolve(root, "packages", name)),
+  const configuration = await readFile(resolve(directory, "karty.toml"), "utf8");
+  for (const name of ["controllers-topdown", "tiled"]) {
+    const section = configuration.match(
+      new RegExp(`^\\[packages\\.${name}\\]\\s*\\n([\\s\\S]*?)(?=^\\[|$(?![\\s\\S]))`, "m"),
+    )?.[1];
+    assert.ok(section, `Missing published ${name} dependency`);
+    assert.doesNotMatch(section, /^\s*folder\s*=/m);
+    assert.match(
+      section,
+      /^\s*archive\s*=\s*["']https:\/\/github.com\/karty-game\/karty-packages\/releases\/download\//m,
     );
+    assert.match(section, /^\s*sha256\s*=\s*["'][a-f0-9]{64}["']/m);
   }
-  await writeFile(resolve(directory, "karty.toml"), configuration);
   await command(["package", "restore"]);
   const args = ["build", "--target", "web", "--development", "--compiler", "tinygo"];
   if (process.env.KARTY_HOST_WEB) args.push("--host", process.env.KARTY_HOST_WEB);
   await command(args);
+  assert.equal(
+    await readFile(resolve(directory, "karty.toml"), "utf8"),
+    configuration,
+    "Build changed authored package pins",
+  );
   report.cartridgeSHA256 = sha(await readFile(resolve(directory, "dist/web/game.kart")));
   report.hostSHA256 = sha(await readFile(resolve(directory, "dist/web/karty-host.wasm")));
   report.passed = true;

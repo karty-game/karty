@@ -30,7 +30,7 @@ if err != nil {
 }
 ```
 
-Propose movement from `camera.Settings()`, which the SDK keeps synchronized automatically
+Propose movement from `camera.Settings()`, which the engine keeps synchronized automatically
 with the accepted pose. Do not accumulate a separate guessed player position.
 
 The position check defines a one-metre trigger around `(6, 6)`. Call this method

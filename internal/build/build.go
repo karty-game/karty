@@ -291,6 +291,12 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	}
 
 	generated["assets/textures.go"] = assetFile
+	if manifest.SupportsLevelReferences() {
+		generated["assets/levels.go"], err = project.LevelAssetPackageFile(ctx, directory, engineImport)
+		if err != nil {
+			return fmt.Errorf("generate typed levels: %w", err)
+		}
+	}
 
 	generated["assets/sounds.go"], err = soundAssetFile(config.Assets.Sounds, engineImport)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -46,7 +47,9 @@ func TestWorldMaterialReleaseAtlas(t *testing.T) {
 			return err
 		}
 
-		for _, name := range []string{"normal", "height", "ao", "metallic", "smoothness"} {
+		materializePassInput(t, directory, args)
+
+		for name := range strings.SplitSeq(args[4], ",") {
 			encoded, err := readBoundedMaterialFile(filepath.Join(directory, "atlas_"+name+".png"))
 			if err != nil {
 				return err
@@ -78,7 +81,7 @@ func TestWorldMaterialReleaseAtlas(t *testing.T) {
 	}
 
 	warmPair, warm, err := processWorldMaterials(ctx, root, manifest, document, textures, execute, options)
-	if err != nil || calls != 1 || cold.CacheHit || !warm.CacheHit || !bytes.Equal(pair.Data, warmPair.Data) ||
+	if err != nil || calls != 2 || cold.CacheHit || !warm.CacheHit || !bytes.Equal(pair.Data, warmPair.Data) ||
 		len(pair.Reflectance) == 0 || len(pair.ReflectanceMipTail) == 0 ||
 		!bytes.Equal(pair.Reflectance, warmPair.Reflectance) || !bytes.Equal(pair.ReflectanceMipTail, warmPair.ReflectanceMipTail) {
 		t.Fatalf("actual native cold/warm atlas: calls=%d warm=%v err=%v", calls, warm.CacheHit, err)

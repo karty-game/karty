@@ -55,12 +55,13 @@ options.
 
 ## Explore Karty
 
-| Looking for             | Start here                                                                                                                            |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| A working example       | [Sample projects](samples/README.md)                                                                                                  |
-| Reusable game code      | [Controllers, dialogue, saves and Tiled maps](packages/README.md)                                                                     |
-| API behavior and design | [API reference](https://karty-game.github.io/karty/main/technical/) · [Design notes](https://karty-game.github.io/karty/main/design/) |
-| CLI development         | [Contributing and repository layout](CONTRIBUTING.md)                                                                                 |
+| Looking for                | Start here                                                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| A working example          | [Sample projects](samples/README.md)                                                                                                  |
+| Reusable code and assets   | [Plugins catalog](https://karty-game.github.io/karty-packages/)                                                                       |
+| Guidance for coding agents | [Karty game development skill](skills/karty-game/SKILL.md), included in new projects                                                  |
+| API behavior and design    | [API reference](https://karty-game.github.io/karty/main/technical/) · [Design notes](https://karty-game.github.io/karty/main/design/) |
+| CLI development            | [Contributing and repository layout](CONTRIBUTING.md)                                                                                 |
 
 [KartUI](https://github.com/karty-game/karty-ui) ·
 [SDK](https://github.com/karty-game/karty-sdk) ·

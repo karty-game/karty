@@ -16,8 +16,12 @@ type Game struct {
 }
 
 //go:wasmexport karty_register
-func main() { game := &Game{}; engine.Run(game.Hooks()) }
+func main() {
+	game := &Game{}
+	engine.Run(game.Hooks())
+}
 
+// Initialize builds the gallery once; playback and mixing are owned by the host.
 func (game *Game) Initialize() {
 	background := game.NewSprite2D(assets.TextureGalleryBackground, engine.NewVec2(480, 270))
 	background.SetLayer(-20)
@@ -35,14 +39,21 @@ func (game *Game) Initialize() {
 	game.hud = ui.MediaHud(ui.MediaHUDProps{
 		Status:       func() string { return game.status },
 		MusicEnabled: func() bool { return game.musicEnabled },
-		PlayVideo:    game.playVideo, StopVideo: game.stopVideo,
-		OneShot: game.oneShot, Burst: game.startBurst, ToggleMusic: game.toggleMusic,
+		PlayVideo:    game.playVideo,
+		StopVideo:    game.stopVideo,
+		OneShot:      game.oneShot,
+		Burst:        game.startBurst,
+		ToggleMusic:  game.toggleMusic,
 	})
 }
 
 func (game *Game) Hooks() engine.Hooks {
-	return engine.Hooks{OnStart: game.Initialize, OnUpdate: game.advanceBurst,
-		OnStop: game.Shutdown, OnPointerReleased: game.onPointerReleased}
+	return engine.Hooks{
+		OnStart:           game.Initialize,
+		OnUpdate:          game.advanceBurst,
+		OnStop:            game.Shutdown,
+		OnPointerReleased: game.onPointerReleased,
+	}
 }
 
 func (game *Game) onPointerReleased(event engine.PointerEvent) {
@@ -51,13 +62,14 @@ func (game *Game) onPointerReleased(event engine.PointerEvent) {
 	}
 	// Keep the image itself interactive; the labelled controls are KartUI
 	// buttons and never fall through into these game-coordinate hit regions.
-	if event.Y >= 120 && event.Y < 340 && event.X >= 300 && event.X <= 660 {
-		if event.X < 480 {
-			game.playVideo()
-		} else {
-			game.stopVideo()
-		}
+	if !(event.Y >= 120 && event.Y < 340 && event.X >= 300 && event.X <= 660) {
+		return
 	}
+	if event.X < 480 {
+		game.playVideo()
+		return
+	}
+	game.stopVideo()
 }
 
 func (game *Game) playVideo() {
@@ -94,6 +106,7 @@ func (game *Game) advanceBurst(engine.Frame) {
 	}
 }
 
+// toggleMusic fades a looping stream without interrupting the independent sound effects.
 func (game *Game) toggleMusic() {
 	game.musicEnabled = !game.musicEnabled
 	if game.musicEnabled {

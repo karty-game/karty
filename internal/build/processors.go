@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
@@ -156,6 +157,13 @@ func runProcessorsWith(ctx context.Context, directory string, set *packages.Set,
 		}
 
 		generated = append(generated, textures...)
+
+		goFiles, err := stageProcessorGo(output, job.name, files)
+		if err != nil {
+			return fmt.Errorf("processor %s: %w", job.name, err)
+		}
+
+		maps.Copy(assetFiles, goFiles)
 
 		if err := writeProcessorResources(output, job.name, files, assetFiles, &declarations, &lookups); err != nil {
 			return err

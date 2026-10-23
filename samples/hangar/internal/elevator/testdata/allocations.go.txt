@@ -1,0 +1,23 @@
+package main
+
+import (
+	"example.com/hangar/internal/elevator"
+	"runtime"
+)
+
+var stats runtime.MemStats
+var control []byte
+
+func main() {}
+
+//go:wasmexport tick
+func tick(frame uint64) float32 { return elevator.Floor(frame) }
+
+//go:wasmexport allocations
+func allocations() uint64 { runtime.ReadMemStats(&stats); return stats.Mallocs }
+
+//go:wasmexport allocated_bytes
+func allocatedBytes() uint64 { runtime.ReadMemStats(&stats); return stats.TotalAlloc }
+
+//go:wasmexport negative_control
+func negativeControl() { control = make([]byte, 2048); control[0] = 1 }

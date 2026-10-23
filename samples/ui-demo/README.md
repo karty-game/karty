@@ -1,32 +1,30 @@
-# 🚀 Orbital flight deck
+# Orbital flight deck
 
-**Your ship. Your call sign. Your cockpit.**
+Customize a ship while it cruises above a live flight console. This sample
+shows how menus, tabs, settings, tooltips and inventory connect to a running game.
 
-Tune your ship while it cruises above a live flight console.
-From the main menu to the pause screen and inventory, this demo shows how
-Karty can give your game a complete interface.
+![The orbital flight deck interface.](preview.jpg)
 
-**[▶ Play Orbital](https://karty-game.github.io/karty/main/ui-demo/)** · [More demos](../README.md)
+[Play](https://karty-game.github.io/karty/main/ui-demo/) · [All samples](../README.md)
 
-## Take the controls
+## Try it
 
-Choose **Play flight demo**, then make yourself at home:
+Choose **Play flight demo**. Complete a delivery under **Mission**, change
+ships under **Loadout**, or adjust your call sign and thruster power in
+**Settings**. Press **Escape** to pause and open the inventory. Resize the
+window to see the interface adapt.
 
-- **Mission:** complete a delivery and watch your counter grow.
-- **Loadout:** pick Explorer or Interceptor. Your ship changes color and speed.
-- **Settings:** choose a call sign, slide the thruster power up or switch autopilot off.
-- **Pause → Inventory:** add, use and reorder supplies, then get back to flying.
+## Built with
 
-Hover for tooltips. Resize the window to see the cockpit adapt.
-Press **Escape** to pause; resume with your settings just as you left them.
+- [KartUI](https://github.com/karty-game/karty-ui): menus, settings, tooltips and inventory layouts.
 
-Tabs, ship selection, text inputs, sliders and checkboxes all do something
-in the game. Try a control and watch the result.
+## Run locally
 
-## Run it
-
-[Set up once](../README.md#run-a-sample), then from this sample's folder:
+[Set up the CLI](../README.md#run-a-sample), then from the repository root:
 
 ```sh
+cd samples/ui-demo
 ../../dist/karty dev
 ```
+
+Explore [the game](src/main.go), [cockpit](src/cockpit.go) and [UI layouts](ui/).

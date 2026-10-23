@@ -12,7 +12,10 @@
 </template>
 
 <script setup lang="go">
-import "example.com/ui-demo/.karty/engine"
+import (
+"example.com/ui-demo/.karty/assets"
+"example.com/ui-demo/.karty/engine"
+)
 
 // AppProps supplies domain operations without coupling screens to a concrete Game.
 // The screen owns navigation; the game owns data and lifecycle operations.
@@ -20,8 +23,8 @@ type AppProps struct {
 	Show        func(*engine.UI)
 	Quantity    func() int
 	UsePotion   func() bool
-	Mount       func(string)
-	Level       func() string
+	Mount       func(engine.LevelName)
+	Level       func() engine.LevelName
 	Destination func() string
 	Pause       func()
 	Flight      *FlightSettings
@@ -42,7 +45,7 @@ type FlightSettings struct {
 }
 
 func setup(props AppProps) {
-	play := func() { props.Mount("levels.first") }
+	play := func() { props.Mount(assets.LevelFirst) }
 	choose := func() { props.Show(Levels(props)) }
 	inventory := func() {
 		props.Show(Inventory(InventoryProps{

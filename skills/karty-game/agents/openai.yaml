@@ -1,0 +1,4 @@
+interface:
+  display_name: "Karty Game Development"
+  short_description: "Author and validate games with the pinned Karty SDK"
+  default_prompt: "Use $karty-game to build or modify this game and validate the changed behavior."

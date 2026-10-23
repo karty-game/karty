@@ -74,10 +74,47 @@ func TestDesignPagesAndGuideMigration(t *testing.T) {
 		t.Fatal("design explanation is still included in the complete tutorial")
 	}
 
+	oldWorkflow := string(before["sdk-and-toolchain.html"])
+	if !strings.Contains(oldWorkflow, `http-equiv="refresh" content="0; url=workflow.html"`) ||
+		!strings.Contains(oldWorkflow, `rel="canonical" href="workflow.html"`) {
+		t.Fatal("old setup bookmark must forward to the current workflow")
+	}
+
 	if !bytes.Contains(before["why.html"], []byte("assets/design-room.png")) ||
 		!bytes.Contains(before["architecture.html"], []byte("assets/design-architecture.svg")) ||
 		!bytes.Contains(before["asset-pipeline.html"], []byte(`<figure class="journey"><svg`)) {
 		t.Fatal("design pages are missing their illustration or offline diagrams")
+	}
+}
+
+func TestPublicDocsUseDefaultSetup(t *testing.T) {
+	t.Parallel()
+
+	var pages []guidePage
+
+	for _, load := range []func() ([]guidePage, error){guidePages, designPages, technicalPages} {
+		loaded, err := load()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		pages = append(pages, loaded...)
+	}
+
+	for _, page := range pages {
+		// Actual processor identifiers and repository URLs remain valid code/links.
+		text := strings.ReplaceAll(page.markdown, "controllers-3d.sdk", "controllers-3d.adapter")
+		text = strings.ReplaceAll(text, "github.com/karty-game/karty-sdk/", "github.com/karty-game/library/")
+
+		if regexp.MustCompile(`(?i)\bsdk\b`).MatchString(text) || strings.Contains(text, "--sdk") {
+			t.Errorf("public page %s exposes internal version selection", page.name)
+		}
+	}
+
+	for _, topic := range designTopics() {
+		if topic.URL == "sdk-and-toolchain.html" || strings.Contains(strings.ToLower(topic.Name), "sdk") {
+			t.Fatal("public navigation still advertises internal version selection")
+		}
 	}
 }
 

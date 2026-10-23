@@ -1,55 +1,32 @@
-# Physics lab: crate room
+# Crate room
 
-Shoot and blast 80 wooden crates, walk into them to push, then reset the stacks.
-Sloped side and rear banks return flying crates toward the middle, with three
-low bumpers for ricochets. Every crate uses one box collider. The engine owns gravity, collisions and
-angular momentum; this regular TinyGo WASI cartridge only creates props and sends input.
+A physics playground full of stacked wooden crates. Shoot, push and blast them
+around to see collisions, bouncing and tumbling in action, with desktop and
+touch controls.
 
-![Wooden crate stacks surrounded by hazard-striped ramps and red pinball bumpers.](preview.jpg)
+![Crate stacks surrounded by ramps and red bumpers.](preview.jpg)
 
-Desktop: WASD move, Shift run, mouse look after clicking, arrows aim,
-click or Space shoot, B/right-click blast, R reset, Escape release the cursor.
-Touch: drag MOVE to walk, drag LOOK to aim, hold SHOOT, tap BLAST or RESET.
-SHOOT is centered near the bottom to stay visible when narrow screens crop the
-full-frame view. BLAST and RESET are presentation UI buttons; the passive SHOOT
-label leaves down/up events available for continuous fire. Status and control
-instructions also use KartUI, so text is drawn at presentation resolution above
-world rendering and effects. The joystick and crosshair remain game graphics.
-Independent fingers can move, aim and shoot together. Landscape gives the
-largest view on a phone.
+[Play](https://karty-game.github.io/karty/main/crate-room/) · [All samples](../README.md)
 
-Build and preview the project with:
+## Try it
+
+Use **WASD** to move and **Shift** to run. Click to capture the mouse and look
+around; **Escape** releases it. **Click / Space** shoots, **B / right-click**
+blasts, and **R** resets the crates. On touch screens, use the movement, look
+and weapon controls.
+
+## Built with
+
+- [FPS Kit](https://karty-game.github.io/karty-packages/packages/fps-kit.html): crate models, room materials and bumpers.
+- [3D Controllers](https://karty-game.github.io/karty-packages/packages/controllers-3d.html): first-person movement, mouse look and touch controls.
+
+## Run locally
+
+[Set up the CLI](../README.md#run-a-sample), then from the repository root:
 
 ```sh
 cd samples/crate-room
-../../dist/karty build --target web
-../../dist/karty serve
+../../dist/karty dev
 ```
 
-Normal `karty build`/`karty dev` installs the pinned public host automatically.
-
-Use the same project for native builds, with `--target native`.
-There are no private engine imports
-and no cartridge physics dependency. Generated bindings live in ignored
-`.karty/`; level sources, procedural material PNGs and the stdlib-only asset
-generator are tracked. From the CLI root, `mise run generate-crate-room` rebuilds
-textures. The room uses source version 11's reusable solid renderer prefab.
-
-The static room lighting uses 32 hemisphere samples, three diffuse bounces and
-medium denoising at 16 texels per world unit. Movable crates use live lighting.
-
-Automatic website builds include this sample; publication is separate from a
-local build. The local docs gallery includes it too: after building the web target, run
-`mise run docs` from the CLI root and open `http://127.0.0.1:8081/`. The task
-copies the full web build and screenshot into the gallery. Use
-`mise run preview-docs` to refresh an already running docs server.
-
-See [the texture guide](https://karty-game.github.io/karty/main/guide/textures.html) for the asset
-inventory, Materialize presets, nonmetallic overrides and generation ownership.
-
-## Reusable controller
-
-This sample uses the [first-person preset](../../packages/controllers/README.md)
-from the shared `controllers` package. Input state and camera calculations are
-portable; this game owns its SDK adapter, entities and gameplay. Normal builds
-restore the declared package automatically.
+Explore [the game](src/main.go), [crates](src/crates.go) and [weapons](src/gun.go).

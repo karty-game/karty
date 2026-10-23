@@ -24,10 +24,10 @@ cd my-game
 karty dev
 ```
 
-Open the address printed by `karty dev`. The first setup downloads the SDK and
-build tools. Later builds reuse them.
+Open the address printed by `karty dev`. The first setup downloads the tools
+your game needs. Later builds reuse them.
 
-Your project pins an exact SDK. Keep `karty.toml`, Go source, and source assets
+Keep `karty.toml`, Go source, and source assets
 in Git. The CLI recreates `.karty/` and `dist/`. Use `.karty/docs/` for the API
 reference that matches your project.
 

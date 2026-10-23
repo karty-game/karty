@@ -1,7 +1,5 @@
 # API reference
 
-Examples on these pages target SDK 0.0.17 / Go API 0.0.13.
-
 Look up API behavior, coordinate systems and resource lifetimes. For project
 setup and complete games, use the [Guides](../guide/).
 
@@ -16,7 +14,4 @@ setup and complete games, use the [Guides](../guide/).
 
 Go snippets omit package and import declarations. `engine` and `assets` refer
 to your project's `.karty/engine` and `.karty/assets` packages. Exact signatures
-and version-specific limits live in `.karty/docs/`.
-
-Camera 2D requires SDK 0.0.13. See
-[SDK versions and toolchains](../design/sdk-and-toolchain.html) before changing a pin.
+and limits live in your project's `.karty/docs/` reference.

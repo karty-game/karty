@@ -18,7 +18,7 @@ import (
 
 // This is a private build cache revision, not a new cartridge format. Bump it
 // when changing production without changing the SDK's public schema/version.
-const chunkCacheRevision = "karty-cli-chunk-cache@4"
+const chunkCacheRevision = "karty-cli-chunk-cache@5"
 
 type worldChunkCache struct {
 	key     string

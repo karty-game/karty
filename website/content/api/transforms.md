@@ -55,7 +55,7 @@ func step(sprite *engine.Sprite3D, dx float32) error {
 
 `EntityRef` is shared by rendering, physics, queries, lights, audio and authored
 actions. Obtain it with `entity.Ref()` or a world discovery result. `Alive()`
-checks lifetime. The SDK synchronizes accepted poses before callbacks, without
+checks lifetime. Karty synchronizes accepted poses before callbacks, without
 requiring a watch. Local proposals do not notify. Physical entities use
 `Body.Teleport`; detach a body before returning to free pose control.
 

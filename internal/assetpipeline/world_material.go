@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	worldMaterialProcessor = "world-material-atlas@7"
+	worldMaterialProcessor = "world-material-atlas@8"
 	materialPixelBytes     = 4
 	materialOpaque         = 255
 	materialMidpoint       = 127

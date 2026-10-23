@@ -1,5 +1,5 @@
-// Export dialogue (compiler/runtime/UI) and optional savegame, remove their original fixture folders, and build
-// independent archive consumers with both cartridge compilers.
+// Build independent consumers of published dialogue/savegame archives with both
+// cartridge compilers. No publisher source checkout is required.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -19,16 +19,13 @@ await writeFile(resolve(game, "karty.toml"), manifest.split("\n[packages.")[0]);
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const report = { fixture, archives: [], consumers: [] };
 for (const name of ["dialogue", "savegame"]) {
-  const library = resolve(fixture, name),
-    archive = resolve(fixture, name + ".kpkg");
-  await cp(resolve("packages", name), library, {
-    recursive: true,
-    filter: (path) => ![".karty", "dist"].includes(basename(path)),
-  });
-  await cli(["package", "export", "--output", archive, library], fixture);
+  const archive = resolve(fixture, name + ".kpkg");
+  const published = (
+    await command("go", ["run", "./cmd/karty-test-packages", "--archive", name], process.cwd())
+  ).trim();
+  await cp(published, archive);
   report.archives.push({ name, sha256: digest(await readFile(archive)) });
   await cli(["package", "import", archive], game);
-  await rm(library, { recursive: true });
   await rm(archive);
 }
 await rm(resolve(game, ".karty"), { recursive: true });
@@ -89,8 +86,10 @@ function cli(args, cwd) {
 async function command(executable, args, cwd, env = process.env) {
   const child = spawn(executable, args, { cwd, env });
   let log = "";
+  let stdout = "";
   child.stdout.on("data", (bytes) => {
     log += bytes;
+    stdout += bytes;
   });
   child.stderr.on("data", (bytes) => {
     log += bytes;
@@ -101,4 +100,5 @@ async function command(executable, args, cwd, env = process.env) {
   });
   await writeFile(resolve(output, "commands.log"), log, { flag: "a" });
   assert.equal(code, 0, log);
+  return stdout;
 }

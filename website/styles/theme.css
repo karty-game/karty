@@ -966,6 +966,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }

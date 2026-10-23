@@ -39,43 +39,44 @@ the world before processing assets.
 
 Replace `src/main.go` with this room viewer. Change the import if your project
 has a different name. The camera starts at `(2, 2, 1.7)`; the text shows loading
-errors above the scene.
+errors above the scene. The CLI generates `assets.LevelRoom` from the manifest's logical
+name; the callback supplied to `LoadLevel` receives only that load's ready result.
 
 ```go
 package main
 
-import "example.com/my-game/.karty/engine"
+import (
+	"example.com/my-game/.karty/assets"
+	"example.com/my-game/.karty/engine"
+)
 
 type Game struct {
-    engine.Game
-    request engine.RequestID
-    camera *engine.Camera3D
-    label *engine.Text2D
+	engine.Game
+	camera *engine.Camera3D
+	label  *engine.Text2D
 }
 
 //go:wasmexport karty_register
 func main() {
-    game := &Game{}
-    engine.Run(engine.Hooks{
-        OnStart: func() {
-            game.label = game.NewText2D("Loading room...", engine.NewVec2(24, 24))
-            game.request = game.RequestLevel("levels.room")
-        },
-        OnLevelReady: func(event engine.LevelReady) {
-            if event.RequestID != game.request { return }
-            game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
-                Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-                Position: engine.NewVec3(2, 2, 1.7), VerticalFOV: 1.05,
-                NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
-                ViewportWidth: 960, ViewportHeight: 540,
-            })
-            game.camera.SetLayer(-1)
-            game.label.SetText("")
-        },
-        OnLevelFailed: func(event engine.LevelFailed) {
-            if event.RequestID == game.request { game.label.SetText(event.Diagnostic) }
-        },
-    })
+	game := &Game{}
+	engine.Run(engine.Hooks{
+		OnStart: func() {
+			game.label = game.NewText2D("Loading room...", engine.NewVec2(24, 24))
+			game.LoadLevel(assets.LevelRoom, func(event engine.LevelReady) {
+				game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
+					Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
+					Position: engine.NewVec3(2, 2, 1.7), VerticalFOV: 1.05,
+					NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
+					ViewportWidth: 960, ViewportHeight: 540,
+				})
+				game.camera.SetLayer(-1)
+				game.label.SetText("")
+			})
+		},
+		OnLevelFailed: func(event engine.LevelFailed) {
+			game.label.SetText(event.Diagnostic)
+		},
+	})
 }
 ```
 

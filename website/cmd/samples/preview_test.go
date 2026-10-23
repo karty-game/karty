@@ -49,8 +49,9 @@ func TestPreviewRefreshesReadingPagesWithoutReplacingGameArtifacts(t *testing.T)
 
 	for _, path := range []string{
 		"index.html", "guide/index.html", "guide/guide.md",
+		"guide/packages.html", "guide/packages.md",
 		"design/index.html", "design/why.md", "design/architecture.html",
-		"design/sdk-and-toolchain.html", "design/sdk-and-toolchain.md", "design/asset-pipeline.html", "design/packages.html",
+		"design/workflow.html", "design/workflow.md", "design/asset-pipeline.html", "design/packages.html",
 		"design/assets/design-room.png", "design/assets/design-architecture.svg", "design/assets/design-materialize.svg",
 		"technical/index.html", "technical/runtime.html", "technical/transforms.html", "technical/cameras.html",
 		"technical/graphics.md", "technical/camera-2d.html", "technical/audio.md", "technical/assets/particle-spark.png",

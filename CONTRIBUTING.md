@@ -38,8 +38,19 @@ go work edit -replace=github.com/karty-game/karty-sdk=../karty-sdk
 Use `GOWORK=off` to check the public dependencies pinned in `go.mod`.
 Root tasks enable `GOEXPERIMENT=simd`; use `mise exec -- go ...` for ad hoc Go
 commands. Tests prepare the SDK selected by `internal/release`; an uncached
-published bundle needs a download. This checkout selects SDK 0.0.17 and its
-matching public hosts. `KARTY_HOME` selects the SDK/toolchain cache root.
+published bundle needs a download. This checkout selects published SDK 0.0.18.
+Release checks use its signed bundle and matching public hosts. `KARTY_HOME`
+selects the SDK/toolchain cache root.
+
+Package consumer tests use the public release URLs and SHA-256 pins committed in
+`internal/testpackages/pins.toml`. `mise run prepare-test-packages` restores and
+validates those archives under ignored `dist/validation/released-packages/`
+before test timers start; the root test task includes this preparation. Tests
+read the prepared fixtures without contacting the catalog or downloading files.
+Verified cached archives allow offline reruns. Set `KARTY_TEST_PACKAGES` to an
+absolute path to select another fixture project; keep preparation separate from
+active consumers. Package source tests and authoring generators belong in
+[`karty-packages`](https://github.com/karty-game/karty-packages).
 
 Repository tools use the Go version in `mise.toml`. Contributor sample and
 integration checks resolve each installed SDK's own Go pin independently using
@@ -47,6 +58,11 @@ mise; `go run ./cmd/karty-test-sdk --go-path` prepares and prints the selected
 SDK's compiler path. An explicit `KARTY_GO` is still checked exactly and is never
 silently replaced. Normal CLI commands continue to require a user-installed
 compiler as described in the toolchain documentation.
+
+For WebGL captures, open the `karty dev` URL with `?spector=1`. This loads
+Spector.js from its pinned CDN before the host creates its graphics context
+and displays capture controls when the game canvas is ready. Omit the query
+parameter for timing measurements without capture instrumentation.
 
 For build, browser, or development-flow changes, run the relevant integration
 tasks listed by `mise tasks`. Common tasks stay in `mise.toml`; integration,
@@ -59,23 +75,30 @@ and Xvfb. Record which checks you actually ran in your pull request.
 
 ## Source ownership
 
-| Directory                         | Contents                                                               |
-| --------------------------------- | ---------------------------------------------------------------------- |
-| [`cmd/`](cmd/)                    | CLI entry point, release tooling and integration commands              |
-| [`internal/`](internal/)          | Project building, scaffolding, SDK installation and development server |
-| [`packages/`](packages/README.md) | Reusable game packages, each with its own Go module                    |
-| [`samples/`](samples/README.md)   | Playable examples and their source assets                              |
-| [`website/`](website/README.md)   | Public documentation, site templates and build tools                   |
-| [`scripts/`](scripts/README.md)   | Integration checks and asset generators                                |
-| [`tasks/`](tasks/)                | Focused mise task definitions                                          |
-| [`testdata/`](testdata/README.md) | Shared test and integration fixtures                                   |
+| Directory                               | Contents                                                               |
+| --------------------------------------- | ---------------------------------------------------------------------- |
+| [`cmd/`](cmd/)                          | CLI entry point, release tooling and integration commands              |
+| [`internal/`](internal/)                | Project building, scaffolding, SDK installation and development server |
+| [`skills/`](skills/karty-game/SKILL.md) | Maintained game-author agent guidance embedded in new projects         |
+| [`samples/`](samples/README.md)         | Playable examples and their source assets                              |
+| [`website/`](website/README.md)         | Public documentation, site templates and build tools                   |
+| [`scripts/`](scripts/README.md)         | Integration checks and asset generators                                |
+| [`tasks/`](tasks/)                      | Focused mise task definitions                                          |
+| [`testdata/`](testdata/README.md)       | Shared test and integration fixtures                                   |
 
 Website tools may invoke the CLI; CLI packages must not import website code.
+
+Keep sample READMEs short: explain the sample, its showcased features and how to
+use it. Under **Built with**, link to external packages, directly used Go
+libraries, authoring tools and creative resources, with a brief role for each.
 
 The engine owns `core/api`, binding generators, the host/runtime and SDK
 publication. KartUI owns its compiler, schema and project adapters. The public
 SDK owns cartridge/level formats and codecs; `karty-tools` owns native
 Materialize builds. The CLI installs released tools and builds projects.
+Reusable game packages and their releases live in
+[`karty-packages`](https://github.com/karty-game/karty-packages). CLI samples
+pin their published archives and checksums rather than carrying package source.
 Public repositories must build without private source or credentials.
 
 Keep handwritten generators and templates in Git. Protocol bindings arrive in
@@ -124,12 +147,10 @@ CLI `vMAJOR.MINOR.PATCH` tag.
 After maintainer approval, pushing that tag starts [Release CLI](.github/workflows/release.yml).
 The workflow validates Linux amd64/arm64, Windows process cleanup and a packaged
 Windows ARM64 game before GoReleaser publishes the CLI archives and checksums.
-The Windows ARM64 startup smoke uses a pinned, checksum-verified Mesa llvmpipe
-driver with a private application manifest. It requires the process to load
-only that OpenGL driver and remain alive for eight seconds, retaining module
-paths and startup logs for diagnosis. This checks software-rendered startup,
-not hardware GPU support or performance. The manifest and CI driver are not
-added to distributed games.
+The Windows ARM64 gate verifies the native executable, accepts the packaged
+cartridge and rejects invalid or missing cartridges. Graphics startup is an
+optional eight-second check on a configured OpenGL runner; the default hosted
+runner does not qualify graphics support or performance.
 
 Before retrying a release, run **Windows ARM64 packaged game smoke** manually
 against an existing `windows-arm64-game` artifact. Select the branch containing

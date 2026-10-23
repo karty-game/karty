@@ -11,17 +11,26 @@ import (
 func audioGame(t *testing.T) *Game {
 	engine.FixtureBegin()
 	engine.FixtureAudioReset()
-	game := &Game{level: 9}
- if err:=game.World(9).Configure(engine.WorldSettings{Mode:engine.WorldSpatial,Gravity:engine.Vec3{Z:-9.81}});err!=nil{t.Fatal(err)}
- t.Cleanup(func(){game.stopAudio();for _,crate:=range game.crates{if crate!=nil{crate.Destroy()}}})
-	game.createCrates()
-	game.createAudio()
+	game := &Game{scene: hangarScene{level: 9}}
+	if err := game.World(9).Configure(engine.WorldSettings{Mode: engine.WorldSpatial, Gravity: engine.Vec3{Z: -9.81}}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		game.audio.stop(&game.Game)
+		for _, crate := range game.scene.crates {
+			if crate != nil {
+				crate.Destroy()
+			}
+		}
+	})
+	game.scene.createCrates(&game.Game)
+	game.audio.create(&game.Game, game.scene.level, &game.scene.crates)
 	return game
 }
 
 func TestAudioAmbientPlacementAndIdleCrateBudget(t *testing.T) {
 	game := audioGame(t)
-	defer game.stopAudio()
+	defer game.audio.stop(&game.Game)
 	calls := engine.FixtureAudioCalls()
 	if len(calls) != 8 {
 		t.Fatalf("startup created %d emitter calls, want eight ambience voices", len(calls))
@@ -51,22 +60,22 @@ func TestAudioAmbientPlacementAndIdleCrateBudget(t *testing.T) {
 			t.Fatal("stationary crate allocated an emitter")
 		}
 	}
-	game.updateAudio(1)
+	game.audio.update(&game.Game, game.tour.camera, 1)
 	engine.FixtureAudioReset()
-	for _, crate := range game.crates {
+	for _, crate := range game.scene.crates {
 		engine.FixtureSolidTransform(crate).Position.Z += .2
 	}
-	game.updateAudio(2)
+	game.audio.update(&game.Game, game.tour.camera, 2)
 	if len(engine.FixtureAudioCalls()) != 0 {
 		t.Fatal("vertical settling played crate scrape")
 	}
-	for index, crate := range game.crates {
+	for index, crate := range game.scene.crates {
 		if game.audio.previous[index] != engine.FixtureSolidTransform(crate).Position {
 			t.Fatal("idle pose tracking stalled")
 		}
 	}
 	engine.FixtureAudioReset()
-	game.stopAudio()
+	game.audio.stop(&game.Game)
 	if len(engine.FixtureAudioStops()) != 8 || game.audio != (hangarAudio{}) {
 		t.Fatal("ambience shutdown did not release/reset every voice")
 	}
@@ -74,17 +83,17 @@ func TestAudioAmbientPlacementAndIdleCrateBudget(t *testing.T) {
 
 func TestCrateAudioStartsOnAcceptedMotionAndRetiresWithoutChurn(t *testing.T) {
 	game := audioGame(t)
-	defer game.stopAudio()
-	game.updateAudio(1)
+	defer game.audio.stop(&game.Game)
+	game.audio.update(&game.Game, game.tour.camera, 1)
 	engine.FixtureAudioReset()
-	engine.FixtureSolidTransform(game.crates[0]).Position.X += .02
-	game.updateAudio(2)
+	engine.FixtureSolidTransform(game.scene.crates[0]).Position.X += .02
+	game.audio.update(&game.Game, game.tour.camera, 2)
 	calls := engine.FixtureAudioCalls()
 	if len(calls) != 1 || game.audio.crates[0] == nil {
 		t.Fatal("moving crate did not create independently attached source", calls)
 	}
 	id := calls[0].Emitter
-	if calls[0].Source != uint32(game.crates[0].ID()) || calls[0].Volume <= 0 || calls[0].Flags != 3 || calls[0].X != 0 || calls[0].Y != 0 || calls[0].Z != 0 {
+	if calls[0].Source != uint32(game.scene.crates[0].ID()) || calls[0].Volume <= 0 || calls[0].Flags != 3 || calls[0].X != 0 || calls[0].Y != 0 || calls[0].Z != 0 {
 		t.Fatal("crate onset did not submit actual entity, local offset and movement gain together", calls)
 	}
 	firstVolume := game.audio.volume[0]
@@ -93,7 +102,7 @@ func TestCrateAudioStartsOnAcceptedMotionAndRetiresWithoutChurn(t *testing.T) {
 	}
 	for frame := uint64(3); frame < 32; frame++ {
 		engine.FixtureAudioReset()
-		game.updateAudio(frame)
+		game.audio.update(&game.Game, game.tour.camera, frame)
 		if len(engine.FixtureAudioStops()) != 0 || game.audio.crates[0] == nil {
 			t.Fatal("short idle interval churned voice", frame)
 		}
@@ -102,34 +111,34 @@ func TestCrateAudioStartsOnAcceptedMotionAndRetiresWithoutChurn(t *testing.T) {
 		t.Fatal("stationary crate retained nonzero gain")
 	}
 	engine.FixtureAudioReset()
-	game.updateAudio(32)
+	game.audio.update(&game.Game, game.tour.camera, 32)
 	if len(engine.FixtureAudioStops()) != 1 || engine.FixtureAudioStops()[0] != id || game.audio.crates[0] != nil {
 		t.Fatal("idle voice did not retire after half second")
 	}
 	for frame := uint64(33); frame < 40; frame++ {
 		engine.FixtureAudioReset()
-		engine.FixtureSolidTransform(game.crates[0]).Position.X += .02
-		game.updateAudio(frame)
+		engine.FixtureSolidTransform(game.scene.crates[0]).Position.X += .02
+		game.audio.update(&game.Game, game.tour.camera, frame)
 		if len(engine.FixtureAudioCalls()) != 0 || game.audio.crates[0] != nil {
 			t.Fatal("recreated emitter during host stop fade", frame)
 		}
 	}
 	engine.FixtureAudioReset()
-	engine.FixtureSolidTransform(game.crates[0]).Position.X += .02
-	game.updateAudio(40)
+	engine.FixtureSolidTransform(game.scene.crates[0]).Position.X += .02
+	game.audio.update(&game.Game, game.tour.camera, 40)
 	calls = engine.FixtureAudioCalls()
 	if len(calls) != 1 || calls[0].Emitter == id || math.Abs(float64(game.audio.volume[0]-firstVolume)) > .001 {
 		t.Fatal("wake lost current pose or reused stopped ID", calls)
 	}
 	engine.FixtureAudioReset()
-	game.updateAudio(40)
-	game.updateAudio(39)
+	game.audio.update(&game.Game, game.tour.camera, 40)
+	game.audio.update(&game.Game, game.tour.camera, 39)
 	if len(engine.FixtureAudioCalls()) != 0 || game.audio.frame != 40 {
 		t.Fatal("duplicate/backward frame altered crate playback")
 	}
 	engine.FixtureAudioReset()
-	engine.FixtureSolidTransform(game.crates[0]).Position.X += .02
-	game.updateAudio(41)
+	engine.FixtureSolidTransform(game.scene.crates[0]).Position.X += .02
+	game.audio.update(&game.Game, game.tour.camera, 41)
 	calls = engine.FixtureAudioCalls()
 	if len(calls) != 1 || calls[0].Emitter == id || calls[0].Volume <= 0 {
 		t.Fatal("steady motion did not retry idempotent admission after a possible catch-up rejection", calls)
@@ -138,9 +147,9 @@ func TestCrateAudioStartsOnAcceptedMotionAndRetiresWithoutChurn(t *testing.T) {
 
 func TestCrateAudioCascadeCountsFadingVoicesAndPrefersClosest(t *testing.T) {
 	game := audioGame(t)
-	defer game.stopAudio()
-	game.camera = game.NewCamera3D(9, engine.Camera3DSettings{})
-	game.updateAudio(1)
+	defer game.audio.stop(&game.Game)
+	game.tour.camera = game.NewCamera3D(9, engine.Camera3DSettings{})
+	game.audio.update(&game.Game, game.tour.camera, 1)
 	resident := map[uint32]uint64{}
 	for _, call := range engine.FixtureAudioCalls() {
 		resident[call.Emitter] = 0
@@ -153,17 +162,17 @@ func TestCrateAudioCascadeCountsFadingVoicesAndPrefersClosest(t *testing.T) {
 		}
 		engine.FixtureAudioReset()
 		if frame == 3 {
-			engine.FixtureCameraSettings(game.camera).Position = engine.NewVec3(31, 7.8, 2)
+			engine.FixtureCameraSettings(game.tour.camera).Position = engine.NewVec3(31, 7.8, 2)
 		}
 		if frame == 12 {
-			engine.FixtureCameraSettings(game.camera).Position = engine.NewVec3(freightStacks[1].x,freightStacks[1].y,freightStacks[1].z)
+			engine.FixtureCameraSettings(game.tour.camera).Position = engine.NewVec3(freightStacks[1].x, freightStacks[1].y, freightStacks[1].z)
 		}
-		for _, crate := range game.crates {
+		for _, crate := range game.scene.crates {
 			if frame <= 20 || frame >= 60 {
 				engine.FixtureSolidTransform(crate).Position.X += .02
 			}
 		}
-		game.updateAudio(frame)
+		game.audio.update(&game.Game, game.tour.camera, frame)
 		for _, call := range engine.FixtureAudioCalls() {
 			if _, exists := resident[call.Emitter]; !exists {
 				resident[call.Emitter] = 0
@@ -191,7 +200,7 @@ func TestCrateAudioCascadeCountsFadingVoicesAndPrefersClosest(t *testing.T) {
 			t.Fatal("idle cascade did not return to ambience-only budget", resident)
 		}
 	}
-	for index, crate := range game.crates {
+	for index, crate := range game.scene.crates {
 		if game.audio.previous[index] != engine.FixtureSolidTransform(crate).Position {
 			t.Fatal("unvoiced cascade crate lost accepted pose", index)
 		}
@@ -200,16 +209,22 @@ func TestCrateAudioCascadeCountsFadingVoicesAndPrefersClosest(t *testing.T) {
 	for index := range moving {
 		moving[index] = .5
 	}
-	selected := game.closestMovingCrates(moving)
+	selected := game.audio.closestMovingCrates(game.tour.camera, moving)
 	if !selected[1] {
 		t.Fatal("closest crate omitted after listener moved")
 	}
 	for near, chosen := range selected {
- if chosen {continue}
- for far, chosen := range selected {if chosen && game.crateSoundDistance(near)+0.001<game.crateSoundDistance(far) {t.Fatal("farther crate displaced a closer one",near,far)}}
- }
+		if chosen {
+			continue
+		}
+		for far, chosen := range selected {
+			if chosen && game.audio.crateSoundDistance(game.tour.camera, near)+0.001 < game.audio.crateSoundDistance(game.tour.camera, far) {
+				t.Fatal("farther crate displaced a closer one", near, far)
+			}
+		}
+	}
 	engine.FixtureAudioReset()
-	game.stopAudio()
+	game.audio.stop(&game.Game)
 	if len(engine.FixtureAudioStops()) != 15 {
 		t.Fatal("shutdown lost live ambience/crate voice", len(engine.FixtureAudioStops()))
 	}
@@ -217,13 +232,13 @@ func TestCrateAudioCascadeCountsFadingVoicesAndPrefersClosest(t *testing.T) {
 
 func TestCrateAudioEvictsSilentWarmVoiceForImmediateNewMotion(t *testing.T) {
 	game := audioGame(t)
-	defer game.stopAudio()
-	game.camera = game.NewCamera3D(9, engine.Camera3DSettings{})
-	game.updateAudio(1)
-	for _, crate := range game.crates {
+	defer game.audio.stop(&game.Game)
+	game.tour.camera = game.NewCamera3D(9, engine.Camera3DSettings{})
+	game.audio.update(&game.Game, game.tour.camera, 1)
+	for _, crate := range game.scene.crates {
 		engine.FixtureSolidTransform(crate).Position.X += .02
 	}
-	game.updateAudio(2)
+	game.audio.update(&game.Game, game.tour.camera, 2)
 	resident := map[uint32]bool{}
 	for _, call := range engine.FixtureAudioCalls() {
 		resident[call.Emitter] = true
@@ -241,16 +256,16 @@ func TestCrateAudioEvictsSilentWarmVoiceForImmediateNewMotion(t *testing.T) {
 	// Every allocated crate stops, but a previously unvoiced crate begins to move.
 	// Its source must start this update instead of waiting the half-second idle debounce.
 	engine.FixtureAudioReset()
-	engine.FixtureSolidTransform(game.crates[waiting]).Position.X += .02
-	engine.FixtureCameraSettings(game.camera).Position = engine.FixtureSolidTransform(game.crates[waiting]).Position
-	game.updateAudio(3)
+	engine.FixtureSolidTransform(game.scene.crates[waiting]).Position.X += .02
+	engine.FixtureCameraSettings(game.tour.camera).Position = engine.FixtureSolidTransform(game.scene.crates[waiting]).Position
+	game.audio.update(&game.Game, game.tour.camera, 3)
 	if game.audio.crates[waiting] == nil || game.audio.volume[waiting] <= 0 || len(engine.FixtureAudioStops()) != 1 {
 		t.Fatal("silent warm voices delayed new motion or retired too many slots")
 	}
 	heard := false
 	for _, call := range engine.FixtureAudioCalls() {
 		resident[call.Emitter] = true
-		if call.Source == uint32(game.crates[waiting].ID()) && call.Volume > 0 {
+		if call.Source == uint32(game.scene.crates[waiting].ID()) && call.Volume > 0 {
 			heard = true
 		}
 	}
@@ -270,8 +285,8 @@ func TestCrateAudioEvictsSilentWarmVoiceForImmediateNewMotion(t *testing.T) {
 		t.Fatal("fixture did not retain a second unvoiced crate")
 	}
 	engine.FixtureAudioReset()
-	engine.FixtureSolidTransform(game.crates[second]).Position.X += .02
-	game.updateAudio(4)
+	engine.FixtureSolidTransform(game.scene.crates[second]).Position.X += .02
+	game.audio.update(&game.Game, game.tour.camera, 4)
 	if len(engine.FixtureAudioStops()) != 0 || game.audio.crates[second] != nil {
 		t.Fatal("full resident budget churned idle players or admitted a seventeenth voice")
 	}

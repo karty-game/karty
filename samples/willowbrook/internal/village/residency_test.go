@@ -5,7 +5,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/karty-game/controllers"
+	"github.com/karty-game/controllers-topdown"
 	"github.com/karty-game/tiled/karty2d"
 )
 

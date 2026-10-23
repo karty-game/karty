@@ -1,4 +1,4 @@
-// Package packagecmd implements local package export, import and restoration.
+// Package packagecmd implements package export, import, upgrades and restoration.
 package packagecmd
 
 import (
@@ -24,7 +24,7 @@ func Command() *cli.Command {
 		{
 			Name:      "import",
 			Usage:     "add a package to this project",
-			ArgsUsage: "<archive.kpkg|folder>",
+			ArgsUsage: "<name[@version]|archive.kpkg|folder>",
 			Flags: []cli.Flag{
 				&cli.BoolFlag{
 					Name:  "replace",
@@ -32,6 +32,12 @@ func Command() *cli.Command {
 				},
 			},
 			Action: importPackage,
+		},
+		{
+			Name:      "upgrade",
+			Usage:     "upgrade an installed package to its latest stable catalog release",
+			ArgsUsage: "<name>",
+			Action:    upgradePackage,
 		},
 		{Name: "restore", Usage: "restore this project's packages", Action: restorePackages},
 	}}
@@ -61,7 +67,7 @@ func exportPackage(ctx context.Context, command *cli.Command) error {
 
 func importPackage(ctx context.Context, command *cli.Command) error {
 	if command.NArg() != 1 {
-		return fmt.Errorf("%w: expected one local archive or development folder", packages.ErrPackage)
+		return fmt.Errorf("%w: expected a package name[@version], local archive or development folder", packages.ErrPackage)
 	}
 
 	if _, err := project.Load("."); err != nil {
@@ -76,6 +82,31 @@ func importPackage(ctx context.Context, command *cli.Command) error {
 	_, err = fmt.Fprintf(
 		command.Writer,
 		"Imported %s %s\nRecorded in karty.toml; resolved at %s\n",
+		definition.Name,
+		definition.Version,
+		filepath.Join(".karty/packages", definition.Name),
+	)
+
+	return err
+}
+
+func upgradePackage(ctx context.Context, command *cli.Command) error {
+	if command.NArg() != 1 {
+		return fmt.Errorf("%w: expected one installed package name", packages.ErrPackage)
+	}
+
+	if _, err := project.Load("."); err != nil {
+		return err
+	}
+
+	definition, err := packages.Upgrade(ctx, ".", command.Args().First())
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(
+		command.Writer,
+		"Upgraded %s to %s\nRecorded in karty.toml; resolved at %s\n",
 		definition.Name,
 		definition.Version,
 		filepath.Join(".karty/packages", definition.Name),

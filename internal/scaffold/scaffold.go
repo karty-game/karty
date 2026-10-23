@@ -17,6 +17,7 @@ import (
 	"github.com/karty-game/karty-ui/codegen"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
+	"github.com/karty-game/karty/skills"
 )
 
 type staticError string
@@ -129,6 +130,12 @@ func CreateTemplateContext(ctx context.Context, destination, name string, manife
 	}
 
 	generated["assets/textures.go"] = assetFile
+	if manifest.SupportsLevelReferences() {
+		generated["assets/levels.go"], err = project.LevelAssetPackageFile(ctx, destination, engineImport)
+		if err != nil {
+			return fmt.Errorf("generate typed levels: %w", err)
+		}
+	}
 
 	if err := addUIAssets(generated, config.Assets.UI, engineImport); err != nil {
 		return err
@@ -150,7 +157,17 @@ func CreateTemplateContext(ctx context.Context, destination, name string, manife
 		return err
 	}
 
-	return sdk.SyncDocsContext(ctx, destination, manifest)
+	if err := sdk.SyncDocsContext(ctx, destination, manifest); err != nil {
+		return err
+	}
+
+	// This runs only after the destination guard and SDK scaffolding have
+	// succeeded. Existing projects and their local agent guidance are untouched.
+	if err := os.CopyFS(filepath.Join(destination, ".agents", "skills"), skills.Files); err != nil {
+		return fmt.Errorf("copy game agent skill: %w", err)
+	}
+
+	return nil
 }
 
 func templateVersion(_ string, manifest sdk.Manifest) string {

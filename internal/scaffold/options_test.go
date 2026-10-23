@@ -140,3 +140,35 @@ func TestGitignoreIncludedForLegacyUITemplate(t *testing.T) {
 		}
 	}
 }
+
+func TestFPSStarterGeneratesTypedLevelReference(t *testing.T) {
+	t.Parallel()
+
+	manifest, err := sdk.Resolve(release.SDKVersion())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	directory := filepath.Join(t.TempDir(), "demo")
+	if err := scaffold.CreateTemplate(directory, "demo", manifest, "fps"); err != nil {
+		t.Fatal(err)
+	}
+
+	constants, err := os.ReadFile(filepath.Join(directory, ".karty", "assets", "levels.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(string(constants), `LevelRoom engine.LevelName = "levels.room"`) {
+		t.Fatalf("FPS starter has no typed room reference: %s", constants)
+	}
+
+	main, err := os.ReadFile(filepath.Join(directory, "src", "main.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(string(main), "LoadLevel(assets.LevelRoom,") {
+		t.Fatalf("FPS starter does not use its generated level reference: %s", main)
+	}
+}

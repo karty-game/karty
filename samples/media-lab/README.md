@@ -1,34 +1,30 @@
-# 🎧 Media lab
+# Media lab
 
-**Give your game something to listen to. And watch.**
+An interactive scene for trying images, sound and video together. It showcases
+overlapping sound effects, looping music, playback controls and a layout that
+adapts to smaller screens.
 
-Play a burst of effects, fade music in and out, and replay a video.
-Images, sound and video all come together in this little interactive scene.
+![The media lab's playback controls.](preview.jpg)
 
-**[▶ Try the media lab](https://karty-game.github.io/karty/main/media-lab/)** · [More demos](../README.md)
+[Play](https://karty-game.github.io/karty/main/media-lab/) · [All samples](../README.md)
 
-## Press play
+## Try it
 
-- **ONE SHOT:** play a short sound effect.
-- **36-START BURST:** layer a burst of overlapping effects.
-- **BGM REPLAY:** fade looping music in or out. Add effects while it plays.
-- **Video:** use Play / replay video and Stop video, or click the left and right halves of the video area.
+Click or tap to enable audio. **ONE SHOT** plays a sound; **36-START BURST**
+layers many at once. **BGM REPLAY** fades looping music in or out. Use the
+video's **Play / replay** and **Stop** controls to try video with sound.
 
-Click or tap to enable browser audio. The short video is a colorful test pattern
-with a tone, so you can see and hear playback together.
+## Built with
 
-The title, status and media controls use KartUI's presentation layer, keeping
-their text sharp independently of the game rendering resolution. The images
-and video remain in the game layer; sound controls stack on narrow screens.
+- [KartUI](https://github.com/karty-game/karty-ui): playback controls and responsive layouts.
 
-The music is mastered as a continuous 48 kHz loop. The burst effect leaves
-headroom for all simultaneous voices plus music. Its original WAV fixtures and
-reproducible mastering steps are in [sound-sources](sound-sources/README.md).
+## Run locally
 
-## Run it
-
-[Set up once](../README.md#run-a-sample), then from this sample's folder:
+[Set up the CLI](../README.md#run-a-sample), then from the repository root:
 
 ```sh
+cd samples/media-lab
 ../../dist/karty dev
 ```
+
+Explore [the game](src/main.go), [UI layouts](ui/) and [sound sources](sound-sources/README.md).

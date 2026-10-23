@@ -1,6 +1,8 @@
 # Karty website
 
 Sources and build tools for the public Samples, Guides, API and Design site.
+The shared header also links to the [Plugins catalog](https://karty-game.github.io/karty-packages/),
+maintained in the separate packages repository.
 The CLI implementation lives in the repository's `cmd/` and `internal/` folders.
 
 ## Source layout
@@ -9,7 +11,7 @@ The CLI implementation lives in the repository's `cmd/` and `internal/` folders.
 | -------------------------------------------- | ----------------------------------------------------------------------- |
 | [`content/guides/`](content/guides/)         | Guide introduction, game paths and shared chapters                      |
 | [`content/api/`](content/api/)               | Grouped API reference pages                                             |
-| [`content/design/`](content/design/)         | Why Karty, architecture, SDK/toolchains, assets and packages            |
+| [`content/design/`](content/design/)         | Why Karty, architecture, build workflow, assets and packages            |
 | [`assets/`](assets/)                         | Images, diagrams and capture records                                    |
 | [`templates/`](templates/)                   | Documentation, gallery and local sample HTML                            |
 | [`styles/`](styles/)                         | Shared handwritten CSS                                                  |
@@ -80,15 +82,15 @@ pages explain the framework's decisions.
 
 Edit layout in `templates/` and styling in `styles/theme.css`. The renderer
 supports headings, paragraphs, one-level bullets, fenced code, inline code,
-links, tables and local images. Its supported Mermaid chain renders as offline
+bold text, links, tables and local images. Its supported Mermaid chain renders as offline
 SVG. Raw HTML is escaped. Generated HTML and Markdown downloads use the same
 sources and need no remote scripts, fonts or image hosting.
 
 Go reference snippets omit package and import declarations. Tests supply
 `engine` and `assets` imports and type-check the displayed functions against
-the selected SDK. The particle excerpt compiles within a room fixture. Keep
-candidate requirements explicit and use the project's `.karty/docs/` for exact
-SDK contracts.
+the current engine API. The particle excerpt compiles within a room fixture.
+Public guides use the default setup without version-selection instructions;
+the project's `.karty/docs/` contains its generated API reference.
 
 ## Images and diagrams
 

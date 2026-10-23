@@ -53,7 +53,15 @@ func resolveLevelPackages(ctx context.Context, directory string, definition mani
 			return definition, err
 		}
 
-		definition.Textures = append(definition.Textures, textureEntry{Name: texture.Name, Source: name, Profile: texture.Profile})
+		entry := textureEntry{Name: texture.Name, Source: name, Profile: texture.Profile}
+		if options := texture.Materialize; options != nil {
+			entry.Materialize = &materializeSettings{
+				Preset: options.Preset, NormalStrength: options.NormalStrength,
+				HeightContrast: options.HeightContrast, MetallicScale: options.MetallicScale, AODepthScale: options.AODepthScale,
+			}
+		}
+
+		definition.Textures = append(definition.Textures, entry)
 	}
 
 	return definition, nil

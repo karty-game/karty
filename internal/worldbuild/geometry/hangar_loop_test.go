@@ -4,6 +4,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/karty-game/karty-sdk/format/world"
@@ -44,6 +45,7 @@ func TestHangarExtractionLoop(t *testing.T) {
 	}
 
 	assertHangarExtractionApproach(t, document)
+	assertHangarPoolRamps(t, document)
 
 	// Inspect the authored apertures after convex decomposition. Both outgoing
 	// links must survive and land in the room left of arrival, rather than the
@@ -153,4 +155,47 @@ func assertHangarExtractionApproach(t *testing.T, document world.Document) {
 			t.Fatalf("solid %s blocks the portal approach", solid.ID)
 		}
 	}
+}
+
+// Keep the authored ramp checks without generating a second runtime world map.
+func assertHangarPoolRamps(t *testing.T, document world.Document) {
+	t.Helper()
+
+	for _, route := range []struct {
+		name                         string
+		x0, y0, x1, y1, top, ceiling float64
+	}{
+		{"trench-stair-", 40, 22, 46, 22, .2, 3.2},
+		{"west-trench-stair-", 23, 26, 23, 32, 0, 3.1},
+	} {
+		count := 0
+
+		for _, cell := range document.Sectors {
+			if !strings.HasPrefix(cell.ID, route.name) {
+				continue
+			}
+
+			count++
+
+			if math.Abs(hangarPlaneZ(cell.Floor, route.x0, route.y0)+3.5) > .00001 ||
+				math.Abs(hangarPlaneZ(cell.Floor, route.x1, route.y1)-route.top) > .00001 ||
+				math.Abs(hangarPlaneZ(cell.Ceiling, route.x1, route.y1)-route.ceiling) > .00001 {
+				t.Fatalf("discontinuous ramp plane: %+v", cell)
+			}
+
+			for _, wall := range cell.Walls {
+				if hangarPlaneZ(cell.Ceiling, wall.Start.X, wall.Start.Y)-hangarPlaneZ(cell.Floor, wall.Start.X, wall.Start.Y) < 2 {
+					t.Fatalf("ramp lacks player headroom: %s", cell.ID)
+				}
+			}
+		}
+
+		if count != 6 {
+			t.Fatalf("%s: %d strips", route.name, count)
+		}
+	}
+}
+
+func hangarPlaneZ(plane world.Plane, x, y float64) float64 {
+	return plane.A*x + plane.B*y + plane.C
 }

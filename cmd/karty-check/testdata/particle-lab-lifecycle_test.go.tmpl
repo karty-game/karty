@@ -1,0 +1,67 @@
+package main
+
+import (
+	"example.com/particle-lab/.karty/engine"
+	"testing"
+)
+
+func TestRoomSwitchWaitsForRelease(t *testing.T) {
+	engine.FixtureBegin()
+	t.Cleanup(engine.FixtureStop)
+	game := &Game{}
+	game.start()
+	(engine.Hooks{}).Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(game.room.request), Handle: 11}}})
+	if game.camera.entity == nil {
+		t.Fatal("initial fire room did not create a camera")
+	}
+	game.selectMode(1)
+	release := game.room.release
+	if release == 0 || game.room.request != 0 || game.camera.entity != nil {
+		t.Fatal("room change must release the camera and wait before requesting smoke")
+	}
+	game.released(engine.LevelReleased{RequestID: release + 1, Handle: 11})
+	if game.room.release != release || game.room.request != 0 {
+		t.Fatal("unrelated release completed the room change")
+	}
+	game.released(engine.LevelReleased{RequestID: release, Handle: 11})
+	if game.room.release != 0 || game.room.request == 0 {
+		t.Fatal("matching release did not request the smoke room")
+	}
+	(engine.Hooks{}).Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(game.room.request), Handle: 22}}})
+	if game.room.level != 22 || game.camera.entity == nil || game.controls.status != "Thin smoke" {
+		t.Fatalf("smoke selection was lost during loading: level=%d camera=%v status=%q", game.room.level, game.camera.entity, game.controls.status)
+	}
+}
+
+func TestFireViewsReuseTheirTimeline(t *testing.T) {
+	engine.FixtureBegin()
+	t.Cleanup(engine.FixtureStop)
+	game := &Game{}
+	game.start()
+	(engine.Hooks{}).Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(game.room.request), Handle: 11}}})
+
+	game.selectFire(1)
+	if game.room.level != 11 || game.room.request != 0 || game.room.release != 0 || game.room.view != separateFireView {
+		t.Fatal("switching between fire references must reuse the mounted timeline")
+	}
+	game.selectFire(2)
+	if game.room.level != 11 || game.room.release != 0 || !game.controls.hidden {
+		t.Fatal("the fire comparison must hide controls without reloading the room")
+	}
+}
+
+func TestSmokeSelectionRecordsViewDuringLoading(t *testing.T) {
+	engine.FixtureBegin()
+	t.Cleanup(engine.FixtureStop)
+	game := &Game{}
+	game.start()
+	request := game.room.request
+
+	game.selectSmoke(2)
+	if game.room.request != request || game.room.release != 0 {
+		t.Fatal("a pending load must not start a second transition")
+	}
+	if game.room.view != smokeComparisonView || game.room.mode != smokeMode || !game.controls.hidden {
+		t.Fatal("the requested smoke comparison and panel visibility must survive a pending load")
+	}
+}

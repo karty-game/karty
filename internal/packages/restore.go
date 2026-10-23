@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"strings"
 
 	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/semver"
 )
 
 type Resolved struct {
@@ -81,6 +83,12 @@ func FolderRoots(ctx context.Context, project string) (map[string]string, error)
 // Restore regenerates only ignored cache/link state, never project manifests or
 // go.mod. Every archive is verified against the committed source and checksum.
 func Restore(ctx context.Context, project string) (_ *Set, err error) {
+	return restoreWithClient(ctx, project, nil)
+}
+
+func restoreWithClient(ctx context.Context, project string, client *http.Client) (_ *Set, err error) {
+	client = remoteArchiveClient(client)
+
 	sources, sdk, err := LoadSources(ctx, project)
 	if err != nil {
 		return nil, err
@@ -128,7 +136,7 @@ func Restore(ctx context.Context, project string) (_ *Set, err error) {
 			return nil, err
 		}
 
-		directory, target, packageRoot, err := resolveSource(ctx, root, project, sources[packageName])
+		directory, target, packageRoot, err := resolveSource(ctx, root, project, sources[packageName], client)
 		if err != nil {
 			return nil, fmt.Errorf("package %s: %w", packageName, err)
 		}
@@ -177,8 +185,8 @@ func validateResolvedManifest(name, sdk string, definition Manifest, modules map
 		return fmt.Errorf("%w: packages.%s references package %q; the key must match its manifest name", ErrPackage, name, definition.Name)
 	}
 
-	if definition.SDK != "" && definition.SDK != sdk {
-		return fmt.Errorf("%w: package %s requires SDK %s, project pins %s", ErrPackage, name, definition.SDK, sdk)
+	if !compatibleSDK(definition.SDK, sdk) {
+		return fmt.Errorf("%w: package %s requires SDK >= %s, project pins %s", ErrPackage, name, definition.SDK, sdk)
 	}
 
 	if definition.GoModule != "" && modules[definition.GoModule] {
@@ -186,6 +194,16 @@ func validateResolvedManifest(name, sdk string, definition Manifest, modules map
 	}
 
 	return nil
+}
+
+func compatibleSDK(minimum, version string) bool {
+	if minimum == "" {
+		return true
+	}
+
+	current := "v" + version
+
+	return semver.Canonical(current) == current && semver.Compare(current, "v"+minimum) >= 0
 }
 
 func restoreArchive(ctx context.Context, project *os.Root, digest string, data []byte) (*os.Root, error) {
@@ -434,7 +452,8 @@ func CheckModules(ctx context.Context, project string, set *Set) error {
 	return nil
 }
 
-func resolveSource(ctx context.Context, root *os.Root, project string, source Source) (string, string, *os.Root, error) {
+func resolveSource(ctx context.Context, root *os.Root, project string,
+	source Source, client *http.Client) (string, string, *os.Root, error) {
 	if source.Folder != "" {
 		directory, err := folderPath(project, source.Folder)
 		if err != nil {
@@ -446,7 +465,7 @@ func resolveSource(ctx context.Context, root *os.Root, project string, source So
 		return directory, directory, packageRoot, err
 	}
 
-	data, err := Read(ctx, root, source.Archive, MaxArchiveBytes)
+	data, err := readArchiveSource(ctx, root, source, client)
 	if err != nil {
 		return "", "", nil, err
 	}
@@ -456,6 +475,18 @@ func resolveSource(ctx context.Context, root *os.Root, project string, source So
 	}
 
 	packageRoot, err := restoreArchive(ctx, root, source.SHA256, data)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	if validRemoteArchiveSource(source.Archive) {
+		if err := WriteGenerated(ctx, root, remoteArchiveCachePath(source.SHA256), data, true); err != nil {
+			_ = packageRoot.Close()
+
+			return "", "", nil, err
+		}
+	}
+
 	directory := filepath.Join(project, ".karty/packages/.store", source.SHA256)
 
 	return directory, filepath.Join(".store", source.SHA256), packageRoot, err

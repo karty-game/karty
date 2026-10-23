@@ -68,6 +68,7 @@ func commonTopics() []guideLink {
 	return []guideLink{
 		{Name: "Menus and layouts", URL: "ui.html"}, {Name: "Sound and video", URL: "media.html"},
 		{Name: "Build and share", URL: "share.html"},
+		{Name: "Write a package", URL: "packages.html"},
 	}
 }
 
@@ -101,7 +102,7 @@ func renderPages(pages []guidePage) ([]generatedFile, error) {
 			description = "Karty code and API topics: lifecycle, entities, levels, input, 2D and 3D transforms and cameras, sprites, audio and particles."
 		} else if page.design {
 			siteSection = "design"
-			description = "Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages."
+			description = "Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages."
 		}
 
 		social, err := website.NewSocial(page.title+" / Karty", description, siteSection+"/"+page.name+".html")
@@ -194,6 +195,7 @@ func guidePages() ([]guidePage, error) {
 	for _, topic := range []struct{ name, chapter string }{
 		{"levels", "02-level.md"}, {"textures", "03-texture.md"}, {"prefabs", "04-prefab.md"}, {"lighting", "05-light.md"},
 		{"interactions", "06-hooks.md"}, {"media", "07-media.md"}, {"ui", "08-ui.md"}, {"share", "09-share.md"},
+		{"packages", "10-package.md"},
 	} {
 		contents, err := website.Files.ReadFile("content/guides/chapters/" + topic.chapter)
 		if err != nil {
@@ -204,7 +206,7 @@ func guidePages() ([]guidePage, error) {
 		title, _, _ := strings.Cut(strings.TrimPrefix(markdown, "# "), "\n")
 
 		topics := worldTopics()
-		if topic.name == "ui" || topic.name == "media" || topic.name == "share" {
+		if topic.name == "ui" || topic.name == "media" || topic.name == "share" || topic.name == "packages" {
 			topics = nil
 		}
 
@@ -246,9 +248,13 @@ func designTopics() []guideLink {
 	return []guideLink{
 		{Name: "Why Karty?", URL: "why.html"},
 		{Name: "Architecture", URL: "architecture.html"},
-		{Name: "SDK versions and toolchains", URL: "sdk-and-toolchain.html"},
+		{Name: "Build and preview", URL: "workflow.html"},
 		{Name: "Asset pipeline", URL: "asset-pipeline.html"},
 		{Name: "Packages", URL: "packages.html"},
+		{Name: "Package materials", URL: "package-materials-v1.html"},
+		{Name: "Remote package archives", URL: "remote-package-archives-v1.html"},
+		{Name: "Named package imports", URL: "named-package-imports-v1.html"},
+		{Name: "Package Go adapters", URL: "package-generated-code-v1.html"},
 		{Name: "Processor textures", URL: "processor-textures-v1.html"},
 		{Name: "Web delivery", URL: "web-delivery-v1.html"},
 	}
@@ -257,7 +263,10 @@ func designTopics() []guideLink {
 func designPages() ([]guidePage, error) {
 	pages := make([]guidePage, 0, len(designTopics())+1)
 
-	for _, name := range []string{"index", "why", "architecture", "sdk-and-toolchain", "asset-pipeline", "packages", "processor-textures-v1", "web-delivery-v1"} {
+	for _, name := range []string{
+		"index", "why", "architecture", "workflow", "asset-pipeline", "packages",
+		"package-materials-v1", "remote-package-archives-v1", "named-package-imports-v1", "package-generated-code-v1", "processor-textures-v1", "web-delivery-v1",
+	} {
 		contents, err := website.Files.ReadFile("content/design/" + name + ".md")
 		if err != nil {
 			return nil, err
@@ -267,6 +276,12 @@ func designPages() ([]guidePage, error) {
 		title, _, _ := strings.Cut(strings.TrimPrefix(markdown, "# "), "\n")
 		pages = append(pages, guidePage{name: name, title: title, markdown: markdown, design: true})
 	}
+
+	// Preserve existing bookmarks without publishing the old versioning guide.
+	pages = append(pages, guidePage{
+		name: "sdk-and-toolchain", title: "Build and preview", design: true, redirect: "workflow.html",
+		markdown: "# Build and preview\n\nContinue with [Build and preview](workflow.html).\n",
+	})
 
 	return pages, nil
 }

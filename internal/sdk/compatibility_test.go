@@ -81,3 +81,16 @@ func TestCandidateBundleRequiresStrictTOMLMetadata(t *testing.T) {
 		t.Fatal("released metadata compatibility changed", err)
 	}
 }
+
+func TestLevelReferencesRequireCurrentAPI(t *testing.T) {
+	t.Parallel()
+
+	for _, version := range []string{"", "0.0.13", "0.0.14", "0.0.15"} {
+		manifest := Manifest{}
+
+		manifest.API.Version = version
+		if got := manifest.SupportsLevelReferences(); got != (version == "0.0.14" || version == "0.0.15") {
+			t.Fatalf("level reference support for API %q = %v", version, got)
+		}
+	}
+}

@@ -1,4 +1,4 @@
-// Package packages resolves local Karty package archives and development folders.
+// Package packages resolves checksum-pinned Karty package archives and development folders.
 package packages
 
 import (

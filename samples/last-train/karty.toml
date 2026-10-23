@@ -8,7 +8,7 @@ width = 1280
 height = 720
 
 [sdk]
-version = "0.0.17"
+version = "0.0.18"
 
 [[build.processors]]
 use = "dialogue.compile"
@@ -43,7 +43,9 @@ name = "station-whistle"
 source = "assets/audio/station-whistle.wav"
 
 [packages.dialogue]
-folder = '../../packages/dialogue'
+archive = "https://github.com/karty-game/karty-packages/releases/download/dialogue-v0.0.1/dialogue-0.0.1.kpkg"
+sha256 = "100498ee22c69c7533d48d901d5411cbd1c3a5dd28da30f6a45d551033ef8753"
 
 [packages.savegame]
-folder = '../../packages/savegame'
+archive = "https://github.com/karty-game/karty-packages/releases/download/savegame-v0.0.1/savegame-0.0.1.kpkg"
+sha256 = "b056ff8b970ba9eb993a29b33e14f29c9c5a733415b92f23c5da340609265616"

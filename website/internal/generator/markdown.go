@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"html"
-	"net/url"
 	"regexp"
 	"strings"
 
@@ -31,7 +30,7 @@ type markdownRenderer struct {
 }
 
 // renderMarkdown supports the guide's headings, paragraphs, one-level bullets,
-// fenced code, inline code, links and simple tables. It displays raw HTML as escaped text.
+// fenced code, inline code, bold text, links and simple tables. It displays raw HTML as escaped text.
 func renderMarkdown(markdown string) (string, []section, error) {
 	renderer := markdownRenderer{identities: map[string]bool{}}
 	for line := range strings.SplitSeq(markdown, "\n") {
@@ -252,8 +251,10 @@ func headingID(title string) string {
 func renderInline(text string) (string, error) {
 	var output strings.Builder
 
+	strong := -1
+
 	for len(text) > 0 {
-		special := strings.IndexAny(text, "`[")
+		special := strings.IndexAny(text, "`[*")
 		if special < 0 {
 			output.WriteString(html.EscapeString(text))
 
@@ -263,65 +264,27 @@ func renderInline(text string) (string, error) {
 		output.WriteString(html.EscapeString(text[:special]))
 		text = text[special:]
 
-		if text[0] == '`' {
-			end := strings.IndexByte(text[1:], '`')
-			if end < 0 {
-				return "", fmt.Errorf("unclosed inline code: %w", ErrMarkdown)
-			}
-
-			code := text[1 : end+1]
-			opening := "<code>"
-
-			if strings.HasPrefix(code, "--") {
-				opening = `<code class="command-flag">`
-			}
-
-			output.WriteString(opening + html.EscapeString(code) + "</code>")
-
-			text = text[end+2:]
+		if text[0] == '*' {
+			text = writeStrongMarker(&output, text, &strong)
 
 			continue
 		}
 
-		labelEnd := strings.Index(text, "](")
-		if labelEnd < 0 {
-			output.WriteString("[")
-
-			text = text[1:]
-
-			continue
-		}
-
-		urlEnd := strings.IndexByte(text[labelEnd+2:], ')')
-		if urlEnd < 0 {
-			return "", fmt.Errorf("unclosed link: %w", ErrMarkdown)
-		}
-
-		target := text[labelEnd+2 : labelEnd+2+urlEnd]
-		if err := validateLink(target); err != nil {
+		markup, remaining, err := renderInlineSpan(text)
+		if err != nil {
 			return "", err
 		}
 
-		output.WriteString("<a href=\"" + html.EscapeString(target) + "\">" + html.EscapeString(text[1:labelEnd]) + "</a>")
-		text = text[labelEnd+urlEnd+3:]
+		output.WriteString(markup)
+
+		text = remaining
 	}
 
-	return output.String(), nil
-}
-
-func validateLink(target string) error {
-	parsed, err := url.Parse(target)
-	if err != nil || target == "" || strings.ContainsAny(target, "\\\r\n\t ") {
-		return fmt.Errorf("invalid guide link %q: %w", target, ErrMarkdown)
+	markup := output.String()
+	if strong >= 0 {
+		// An unmatched delimiter remains literal, just like ordinary Markdown text.
+		markup = markup[:strong] + "**" + markup[strong+len("<strong>"):]
 	}
 
-	if parsed.Scheme == "https" && parsed.Host != "" && parsed.User == nil {
-		return nil
-	}
-
-	if parsed.Scheme == "" && parsed.Host == "" && !strings.HasPrefix(target, "/") {
-		return nil
-	}
-
-	return fmt.Errorf("unsupported guide link %q: %w", target, ErrMarkdown)
+	return markup, nil
 }

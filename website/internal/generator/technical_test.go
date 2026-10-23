@@ -95,11 +95,13 @@ func TestTechnicalExamples(t *testing.T) {
 	enginePath := "example.com/my-game/.karty/engine"
 	enginePackage := checkExample(t, &settings, fileSet, enginePath, bindings)
 	packageImporter.packages[enginePath] = enginePackage
+	packageImporter.packages[guideControllerPath] = checkExample(t, &settings, fileSet, guideControllerPath, controllerExampleSources(t))
 	assetPath := "example.com/my-game/.karty/assets"
 	packageImporter.packages[assetPath] = checkExample(t, &settings, fileSet, assetPath, map[string][]byte{
 		"assets.go": []byte(`package assets
 import "example.com/my-game/.karty/engine"
 const TexturePlayer engine.TextureID = "player"
+const LevelRoom engine.LevelName = "levels.room"
 const SoundUiClick engine.SoundID = 1
 const SoundReactorHum engine.SoundID = 2
 const MusicTheme engine.MusicID = 1
@@ -130,6 +132,10 @@ const EnvironmentWind engine.AmbienceID = 1
 					prefix := "package main\nimport \"" + enginePath + "\"\n"
 					if strings.Contains(example, "assets.") {
 						prefix += "import \"" + assetPath + "\"\n"
+					}
+
+					if strings.Contains(example, "fpscontroller.") {
+						prefix += "import fpscontroller \"" + guideControllerPath + "\"\n"
 					}
 
 					checkExample(t, &settings, fileSet, path, map[string][]byte{"main.go": []byte(prefix + example)})

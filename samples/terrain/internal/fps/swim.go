@@ -1,9 +1,13 @@
+// Package fps contains the cove's authored swimming rules.
 package fps
 
 import "math"
 
+// Motion carries fixed-tick displacement and the current look direction.
+type Motion struct{ X, Y, Z, Yaw, Pitch float32 }
+
 // OceanSwimming uses the authored ocean's level and dry bunker footprint. The
-// host still resolves the player's box against terrain, ramps and room walls.
+// host still resolves the player's capsule against terrain, ramps and room walls.
 // Entry occurs only when the head approaches the water, so shallow beach water
 // retains walking and ordinary gravity.
 func OceanSwimming(x, y, eyeZ, seaZ float32) bool {

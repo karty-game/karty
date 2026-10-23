@@ -24,6 +24,7 @@ import (
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
+	"github.com/karty-game/karty/internal/testpackages"
 	"github.com/karty-game/karty/internal/worldbuild/geometry"
 	worldsource "github.com/karty-game/karty/internal/worldbuild/source"
 	"github.com/karty-game/karty/website"
@@ -69,7 +70,7 @@ func TestGenerateDeterministicGuideAndLinks(t *testing.T) {
 		t.Fatal("guide is missing its embedded favicon")
 	}
 
-	if !bytes.Contains(html, []byte(`href="guide.md" download`)) || bytes.Count(html, []byte("<h2 ")) != 12 {
+	if !bytes.Contains(html, []byte(`href="guide.md" download`)) || bytes.Count(html, []byte("<h2 ")) != 13 {
 		t.Fatal("complete guide is missing a shared topic or game path")
 	}
 
@@ -444,12 +445,12 @@ func TestJourneyGoExamplesTypeCheckAgainstSelectedSDK(t *testing.T) {
 	mediaExamples := codeBlocks(string(mediaMarkdown), "go")
 	media := strings.Replace(
 		viewer,
-		`import "example.com/my-game/.karty/engine"`,
-		"import (\"math\"; \"example.com/my-game/.karty/engine\"; \"example.com/my-game/.karty/assets\")",
+		"import (",
+		"import (\"math\";",
 		1,
 	) + "\n" + strings.Join(mediaExamples, "\n")
-	menu := strings.Replace(viewer, `import "example.com/my-game/.karty/engine"`,
-		"import (\"example.com/my-game/.karty/engine\"; \"example.com/my-game/.karty/ui\")", 1)
+	menu := strings.Replace(viewer, "import (",
+		"import (\"example.com/my-game/.karty/ui\";", 1)
 	menu = strings.Replace(menu, "type Game struct {", "type Game struct {\nscreen *engine.UI", 1) + "\n" + examples[4+len(mediaExamples)]
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
@@ -467,6 +468,7 @@ func TestJourneyGoExamplesTypeCheckAgainstSelectedSDK(t *testing.T) {
 	settings := types.Config{Importer: packageImporter, Sizes: types.SizesFor("gc", "wasm")}
 	enginePath := "example.com/my-game/.karty/engine"
 	packageImporter.packages[enginePath] = checkExample(t, &settings, fileSet, enginePath, bindings)
+	packageImporter.packages[guideControllerPath] = checkExample(t, &settings, fileSet, guideControllerPath, controllerExampleSources(t))
 	assetPath := "example.com/my-game/.karty/assets"
 	packageImporter.packages[assetPath] = checkExample(
 		t,
@@ -482,6 +484,7 @@ const SoundCrateScrape engine.SoundID = 4
 const MusicTheme engine.MusicID = 1
 const VideoIntro engine.VideoID = 1
 const TexturePlayer engine.TextureID = "player"
+const LevelRoom engine.LevelName = "levels.room"
 `)},
 	)
 	uiPath := "example.com/my-game/.karty/ui"
@@ -491,33 +494,36 @@ const TexturePlayer engine.TextureID = "player"
 		checkExample(t, &settings, fileSet, "example.com/my-game/"+name, map[string][]byte{"main.go": []byte(text)})
 	}
 
-	controllerSources := map[string][]byte{}
-
-	entries, err := os.ReadDir("../../../packages/controllers")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, entry := range entries {
-		if !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
-			continue
-		}
-
-		data, err := os.ReadFile(filepath.Join("../../../packages/controllers", entry.Name()))
+	for _, name := range []string{"controllers-topdown", "controllers-isometric"} {
+		packageSource, err := testpackages.Source(name)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		controllerSources[entry.Name()] = data
+		controllerSources := map[string][]byte{}
+
+		entries, err := os.ReadDir(packageSource)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, entry := range entries {
+			if !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
+				continue
+			}
+
+			data, err := os.ReadFile(filepath.Join(packageSource, entry.Name()))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			controllerSources[entry.Name()] = data
+		}
+
+		modulePath := "github.com/karty-game/" + name
+		packageImporter.packages[modulePath] = checkExample(t, &settings, fileSet, modulePath, controllerSources)
 	}
 
-	packageImporter.packages["github.com/karty-game/controllers"] = checkExample(
-		t,
-		&settings,
-		fileSet,
-		"github.com/karty-game/controllers",
-		controllerSources,
-	)
 	checkTrackExamples(t, &settings, fileSet)
 }
 

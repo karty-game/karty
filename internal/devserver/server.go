@@ -302,6 +302,10 @@ func (server *Server) asset(output http.ResponseWriter, request *http.Request) {
 		}
 
 		injection := `<head><base href="` + base + `">` + snapshot.bootstrap()
+		if request.URL.Query().Get("spector") == "1" {
+			injection += spectorScripts()
+		}
+
 		data = bytes.Replace(data, []byte("<head>"), []byte(injection), 1)
 		immutable = false
 		serveBytes(output, request, name, data, immutable)

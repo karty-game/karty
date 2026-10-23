@@ -27,7 +27,7 @@ func TestCurrentAPIConsumers(t *testing.T) {
 		`\b(Vec2D|Vec3D|NewVec2D|NewVec3D|Transform2d|Renderer2d|Sprite2d|WorldActorRef|WorldActorID|LevelRequestID|PhysicsBox|PhysicsBodySettings|PhysicsTarget|SimulationTarget|AudioEntity|TransformTarget|WorldPosition|PathPoint|PathQuery|SimulationWorld|PhysicsRayResult|PhysicsOverlapResult|PhysicsQueryRay|PhysicsQueryOverlap|OnPhysicsRayResult|OnPhysicsOverlapResult|PhysicsRay|NewSprite2DName|UpdateAssetName|SetPhysicsBox|ClearPhysicsBody|MovePhysicsBody|SetPhysicsVelocity|SetPhysicsBodySettings|SetPhysicsGravity|ApplyPhysicsImpulse|ApplyPhysicsRay|ApplyPhysicsExplosion|SetSimulationScale|QueryPhysicsRay|QueryPhysicsOverlap|ApplyAuthoritativeTransform|ApplyTransformUpdate|AttachToCamera|AttachToActor|QueryWorldTag|FindWorldActor|SetSectorFloorZ|SetSectorCeilingZ)\b`,
 	)
 
-	for _, directory := range []string{"samples", "testdata", "cmd/karty-check/testdata", "website/content", "packages/controllers"} {
+	for _, directory := range []string{"samples", "testdata", "cmd/karty-check/testdata", "website/content"} {
 		err := fs.WalkDir(workspace.FS(), directory, func(path string, entry fs.DirEntry, err error) error {
 			if err != nil {
 				return err

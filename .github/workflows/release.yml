@@ -2,22 +2,54 @@ name: Release CLI
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      release-tag:
+        description: Existing immutable CLI tag to validate or publish
+        type: string
+        required: true
+      publish:
+        description: Publish after validation (false runs validation only)
+        type: boolean
+        default: false
 permissions:
-  contents: write
+  contents: read
 env:
   GOWORK: "off"
 jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      commit: ${{ steps.resolve.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: jdx/mise-action@v4
+      - name: Check immutable tag resolution
+        run: node --test .github/scripts/resolve-release-tag.test.mjs
+      - name: Resolve exact release commit
+        id: resolve
+        env:
+          RELEASE_TAG: ${{ inputs.release-tag || github.ref_name }}
+        run: bash .github/scripts/resolve-release-tag.sh
   validate-windows-process-lifecycle:
+    needs: prepare
     runs-on: windows-2025
     timeout-minutes: 10
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
       - uses: jdx/mise-action@v4
       - run: mise run test-process-lifecycle
       - run: mise run test-platform-setup
   validate:
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.prepare.outputs.commit }}
           fetch-depth: 0
       - uses: jdx/mise-action@v4
       - run: mise run check-fmt
@@ -83,15 +116,28 @@ jobs:
     uses: ./.github/workflows/windows-arm64-smoke.yml
     with:
       source-run-id: ${{ github.run_id }}
+      graphics: false
   release:
-    needs: [validate, validate-windows-arm64, validate-windows-process-lifecycle]
+    needs: [prepare, validate, validate-windows-arm64, validate-windows-process-lifecycle]
+    if: github.event_name == 'push' || inputs.publish
+    permissions:
+      contents: write
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.prepare.outputs.commit }}
           fetch-depth: 0
       - uses: jdx/mise-action@v4
+      - name: Verify release tag still identifies the validated commit
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          VALIDATED_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+          current=$(git rev-parse --verify "refs/tags/${RELEASE_TAG}^{commit}")
+          test "$current" = "$VALIDATED_COMMIT"
       - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser

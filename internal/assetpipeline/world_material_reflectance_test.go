@@ -7,7 +7,10 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"image/png"
+	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -27,10 +30,6 @@ func reflectanceFixtureManifest() sdk.Manifest {
 
 func writeReflectanceFixture(directory string) error {
 	bounds := image.Rect(0, 0, worldmaterial.TileSize, worldmaterial.TileSize)
-	if err := fixtureMaterialMaps(directory, bounds); err != nil {
-		return err
-	}
-
 	for _, name := range []string{"metallic", "smoothness"} {
 		pixels := image.NewGray(bounds)
 		for row := range bounds.Dy() {
@@ -52,28 +51,172 @@ func writeReflectanceFixture(directory string) error {
 	return nil
 }
 
+func materializePassInput(t *testing.T, directory string, arguments []string) (image.Image, bool) {
+	t.Helper()
+
+	if len(arguments) < 11 {
+		t.Fatalf("incomplete Materialize arguments: %v", arguments)
+	}
+
+	reflectance := arguments[4] == "metallic,smoothness"
+
+	selection := "height,normal,ao"
+	if reflectance {
+		selection = "metallic,smoothness"
+	}
+
+	want := []string{filepath.Join(directory, "atlas.png"), "--output", directory, "--only", selection,
+		"--normal-format", "opengl", "--format", "png", "--preset"}
+	if !slices.Equal(arguments[:10], want) || (filepath.Base(directory) == "reflectance") != reflectance {
+		t.Fatalf("wrong pass arguments or directory: %v", arguments)
+	}
+
+	encoded, err := os.ReadFile(arguments[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	input, err := png.Decode(bytes.NewReader(encoded))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for y := range input.Bounds().Dy() {
+		for x := range input.Bounds().Dx() {
+			r, g, b, a := input.At(x, y).RGBA()
+			if a != 65535 || (!reflectance && (r != g || g != b)) {
+				t.Fatal("geometry pass must receive grayscale; both passes must receive opaque input")
+			}
+		}
+	}
+
+	return input, reflectance
+}
+
+func executeReflectanceFixture(t *testing.T, directory string, arguments []string) error {
+	t.Helper()
+
+	input, reflectance := materializePassInput(t, directory, arguments)
+	if reflectance {
+		return writeReflectanceFixture(directory)
+	}
+
+	return fixtureMaterialMaps(directory, input.Bounds())
+}
+
+func TestWorldMaterialReflectanceSeparatesGeometryFromOriginalColor(t *testing.T) {
+	t.Parallel()
+
+	root, calls := t.TempDir(), 0
+	left, right := color.NRGBA{R: 160, G: 32, B: 16, A: 255}, color.NRGBA{R: 80, G: 16, B: 8, A: 255}
+	execute := func(_ context.Context, _ sdk.Manifest, directory string, arguments []string) error {
+		calls++
+
+		input, reflectance := materializePassInput(t, directory, arguments)
+		if reflectance {
+			if color.NRGBAModel.Convert(input.At(0, 0)) != left || color.NRGBAModel.Convert(input.At(255, 255)) != right {
+				t.Fatal("reflectance pass lost the original RGB colors")
+			}
+
+			return writeReflectanceFixture(directory)
+		}
+
+		return writeGeometryInputFixture(directory, input)
+	}
+	textures := map[uint32][]byte{9: fixtureTwoColorQOI(t, left, right)}
+	document := world.Document{Sectors: []world.Sector{{FloorMaterial: 9, CeilingMaterial: 9}}}
+	manifest := reflectanceFixtureManifest()
+
+	first, cold, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute)
+	if err != nil || cold.CacheHit || calls != 2 {
+		t.Fatalf("separate cold passes: calls=%d err=%v", calls, err)
+	}
+
+	assertOriginalMaterialColors(t, first, left, right)
+
+	_, warm, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute)
+	if err != nil || !warm.CacheHit || calls != 2 {
+		t.Fatalf("warm passes were regenerated: calls=%d err=%v", calls, err)
+	}
+
+	left, right = right, left
+	textures[9] = fixtureTwoColorQOI(t, left, right)
+
+	changed, rebuilt, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute)
+	if err != nil || rebuilt.CacheHit || calls != 4 || bytes.Equal(first.Data, changed.Data) {
+		t.Fatalf("changed detail did not rebuild geometry and reflectance: calls=%d err=%v", calls, err)
+	}
+
+	assertOriginalMaterialColors(t, changed, left, right)
+}
+
+func fixtureTwoColorQOI(t *testing.T, left, right color.NRGBA) []byte {
+	t.Helper()
+
+	image := image.NewNRGBA(image.Rect(0, 0, 2, 1))
+	image.SetNRGBA(0, 0, left)
+	image.SetNRGBA(1, 0, right)
+
+	encoded, _, err := qoi.Encode(image, qoi.Options{Channels: qoi.ChannelsRGBA, Colorspace: qoi.ColorspaceSRGB})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return encoded
+}
+
+func writeGeometryInputFixture(directory string, input image.Image) error {
+	if err := fixtureMaterialMaps(directory, input.Bounds()); err != nil {
+		return err
+	}
+
+	height := image.NewGray(input.Bounds())
+	for y := range input.Bounds().Dy() {
+		for x := range input.Bounds().Dx() {
+			r, _, _, _ := input.At(x, y).RGBA()
+			height.SetGray(x, y, color.Gray{Y: uint8(r / 257)})
+		}
+	}
+
+	return writeMaterialPNG(filepath.Join(directory, "atlas_height.png"), height)
+}
+
+func assertOriginalMaterialColors(t *testing.T, pair worldmaterial.Pair, left, right color.NRGBA) {
+	t.Helper()
+
+	_, albedo, err := qoi.Decode(pair.Albedo)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rect := pair.Layout.Materials[0]
+	if albedo.NRGBAAt(rect.X, rect.Y) != left || albedo.NRGBAAt(rect.X+rect.Width-1, rect.Y+rect.Height-1) != right {
+		t.Fatal("geometry preprocessing changed packaged albedo")
+	}
+}
+
 func TestWorldMaterialReflectanceExplicitZeroSuppressesToolSpecularEvidence(t *testing.T) {
 	t.Parallel()
 
 	manifest, document, textures := reflectanceFixtureManifest(), fixtureMaterialWorld(), fixtureTextures(t)
 	root, calls := t.TempDir(), 0
-	execute := func(_ context.Context, _ sdk.Manifest, directory string, _ []string) error {
+	execute := func(_ context.Context, _ sdk.Manifest, directory string, arguments []string) error {
 		calls++
 		// Emulate the tool's nonzero specular evidence even with scale zero.
-		return writeReflectanceFixture(directory)
+		return executeReflectanceFixture(t, directory, arguments)
 	}
 	zero := 0.0
 	options := map[uint32]MaterializeOptions{3: {Preset: "concrete", MetallicScale: &zero}}
 
 	pair, _, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute, options)
-	if err != nil || calls != 4 {
+	if err != nil || calls != 8 {
 		t.Fatalf("cold nonmetal atlas: calls=%d err=%v", calls, err)
 	}
 
 	assertExplicitNonmetalAtlas(t, pair)
 
 	_, warm, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute, options)
-	if err != nil || !warm.CacheHit || calls != 4 {
+	if err != nil || !warm.CacheHit || calls != 8 {
 		t.Fatalf("warm nonmetal atlas: calls=%d err=%v", calls, err)
 	}
 	// Removing the explicit zero must restore the preset/tool result and
@@ -81,7 +224,7 @@ func TestWorldMaterialReflectanceExplicitZeroSuppressesToolSpecularEvidence(t *t
 	options[3] = MaterializeOptions{Preset: "concrete"}
 
 	restored, changed, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute, options)
-	if err != nil || changed.CacheHit || calls != 5 {
+	if err != nil || changed.CacheHit || calls != 10 {
 		t.Fatalf("omitted scale rebuild: calls=%d err=%v", calls, err)
 	}
 
@@ -151,15 +294,11 @@ func TestWorldMaterialReflectanceCacheAndLinearMips(t *testing.T) {
 	execute := func(_ context.Context, _ sdk.Manifest, directory string, arguments []string) error {
 		calls++
 
-		if len(arguments) < 5 || arguments[4] != "height,normal,ao,metallic,smoothness" {
-			return ErrCacheRecipe
-		}
-
-		return writeReflectanceFixture(directory)
+		return executeReflectanceFixture(t, directory, arguments)
 	}
 
 	pair, cold, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute)
-	if err != nil || cold.CacheHit || calls != 4 {
+	if err != nil || cold.CacheHit || calls != 8 {
 		t.Fatalf("reflectance cold build: calls=%d err=%v", calls, err)
 	}
 
@@ -202,7 +341,7 @@ func TestWorldMaterialReflectanceCacheAndLinearMips(t *testing.T) {
 	}
 
 	warmPair, warm, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute)
-	if err != nil || !warm.CacheHit || calls != 4 || !bytes.Equal(pair.Reflectance, warmPair.Reflectance) ||
+	if err != nil || !warm.CacheHit || calls != 8 || !bytes.Equal(pair.Reflectance, warmPair.Reflectance) ||
 		!bytes.Equal(pair.ReflectanceMipTail, warmPair.ReflectanceMipTail) {
 		t.Fatalf("warm reflectance atlas: calls=%d err=%v", calls, err)
 	}
@@ -210,14 +349,14 @@ func TestWorldMaterialReflectanceCacheAndLinearMips(t *testing.T) {
 	document.Sectors[0].FloorMaterial, document.Sectors[0].CeilingMaterial = 3, 9
 
 	_, reordered, err := processWorldMaterials(t.Context(), root, manifest, document, textures, execute)
-	if err != nil || reordered.CacheHit || calls != 4 {
+	if err != nil || reordered.CacheHit || calls != 8 {
 		t.Fatalf("atlas rearrangement reran native tool: calls=%d err=%v", calls, err)
 	}
 
 	textures[9] = fixtureQOI(t, 2, 2, color.NRGBA{R: 210, A: 255})
 
 	_, _, err = processWorldMaterials(t.Context(), root, manifest, document, textures, execute)
-	if err != nil || calls != 5 {
+	if err != nil || calls != 10 {
 		t.Fatalf("changed texture must regenerate only its maps: calls=%d err=%v", calls, err)
 	}
 }
@@ -228,18 +367,10 @@ func TestWorldMaterialReflectanceSDKGateAndSecondaryNeutral(t *testing.T) {
 	document := world.Document{Sectors: []world.Sector{{FloorMaterial: 9, CeilingMaterial: 9,
 		FloorSecondary: &world.SurfaceSecondary{Material: 3}}}}
 	calls := 0
-	execute := func(_ context.Context, manifest sdk.Manifest, directory string, arguments []string) error {
+	execute := func(_ context.Context, _ sdk.Manifest, directory string, arguments []string) error {
 		calls++
 
-		if materialReflectanceEnabled(manifest) {
-			return writeReflectanceFixture(directory)
-		}
-
-		if arguments[4] != "height,normal,ao" {
-			return ErrCacheRecipe
-		}
-
-		return fixtureMaterialMaps(directory, image.Rect(0, 0, worldmaterial.TileSize, worldmaterial.TileSize))
+		return executeReflectanceFixture(t, directory, arguments)
 	}
 
 	legacy, _, err := processWorldMaterials(t.Context(), root, fixtureMaterialManifest(), document, textures, execute)
@@ -248,7 +379,7 @@ func TestWorldMaterialReflectanceSDKGateAndSecondaryNeutral(t *testing.T) {
 	}
 
 	pair, _, err := processWorldMaterials(t.Context(), root, reflectanceFixtureManifest(), document, textures, execute)
-	if err != nil || calls != 2 {
+	if err != nil || calls != 3 {
 		t.Fatalf("reflectance policy must invalidate native cache: calls=%d err=%v", calls, err)
 	}
 

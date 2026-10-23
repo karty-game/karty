@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/binary"
+	"math"
 	"testing"
 
 	"example.com/crate-room/.karty/config"
@@ -9,16 +11,17 @@ import (
 
 func TestCameraAndControlsUseConfiguredCanvas(t *testing.T) {
 	engine.FixtureBegin()
+	t.Cleanup(engine.FixtureStop)
 	game := &Game{}
 	game.start()
-	game.ready(engine.LevelReady{Handle: 9})
+	(engine.Hooks{}).Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(engine.FixtureLastLevelRequest()), Handle: 9}}})
 
 	if width != float32(config.ResolutionWidth) || height != float32(config.ResolutionHeight) {
 		t.Fatalf("control canvas %gx%g differs from configured %dx%d", width, height,
 			config.ResolutionWidth, config.ResolutionHeight)
 	}
 
-	settings := game.camera.Settings()
+	settings := game.player.camera.Settings()
 	if settings.ViewportWidth != config.ResolutionWidth || settings.ViewportHeight != config.ResolutionHeight {
 		t.Fatalf("camera viewport %dx%d differs from configured %dx%d", settings.ViewportWidth, settings.ViewportHeight,
 			config.ResolutionWidth, config.ResolutionHeight)
@@ -27,5 +30,89 @@ func TestCameraAndControlsUseConfiguredCanvas(t *testing.T) {
 	if settings.VerticalFOV != config.CameraFOVY || settings.OrthoHeight != config.CameraOrthoHeight ||
 		settings.NearClip != config.CameraNear || settings.FarClip != config.CameraFar {
 		t.Fatalf("camera ignores authored project settings: %+v", settings)
+	}
+}
+
+func TestHeldFireBlastAndReset(t *testing.T) {
+	engine.FixtureBegin()
+	t.Cleanup(engine.FixtureStop)
+	game := &Game{}
+	game.start()
+	(engine.Hooks{}).Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(engine.FixtureLastLevelRequest()), Handle: 9}}})
+
+	hooks := game.Hooks()
+	hooks.Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventKeyDown, Key: engine.KeySpace}}})
+	for range 8 {
+		hooks.Update(engine.Frame{})
+	}
+	if game.player.gun.shots != 2 {
+		t.Fatalf("held fire lost its cooldown: got %d shots, want 2", game.player.gun.shots)
+	}
+
+	hooks.Update(engine.Frame{Events: []engine.InputEvent{
+		{Type: engine.EventKeyUp, Key: engine.KeySpace},
+		{Type: engine.EventKeyDown, Key: engine.KeyB},
+	}})
+	if game.player.gun.shots != 2 || game.player.gun.blasts != 1 {
+		t.Fatalf("blast during cooldown: shots=%d blasts=%d", game.player.gun.shots, game.player.gun.blasts)
+	}
+
+	hooks.Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventKeyDown, Key: engine.KeyR}}})
+	hooks.Update(engine.Frame{})
+	if game.player.gun.shots != 0 || game.player.gun.blasts != 0 {
+		t.Fatalf("reset replayed an old action: shots=%d blasts=%d", game.player.gun.shots, game.player.gun.blasts)
+	}
+}
+
+func TestTouchMoveLookAndThirdFingerFire(t *testing.T) {
+	engine.FixtureBegin()
+	t.Cleanup(engine.FixtureStop)
+	game := &Game{}
+	game.start()
+	(engine.Hooks{}).Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(engine.FixtureLastLevelRequest()), Handle: 9}}})
+	hooks := game.Hooks()
+	touch := func(phase engine.PointerPhase, id uint32, x, y float32) engine.InputEvent {
+		return engine.InputEvent{Type: engine.EventPointer, Pointer: engine.PointerInput{
+			Kind: engine.PointerTouch, Phase: phase, ID: id, X: x, Y: y,
+		}}
+	}
+	// Crate Room permits gestures above the SDK's default lower-screen region.
+	hooks.Update(engine.Frame{Events: []engine.InputEvent{
+		touch(engine.PointerDown, 1, 110, height-104),
+		touch(engine.PointerDown, 2, width-70, 60),
+	}})
+	engine.FixtureBegin()
+	hooks.Update(engine.Frame{Events: []engine.InputEvent{
+		touch(engine.PointerMove, 1, 110, height-164),
+		touch(engine.PointerMove, 2, width-60, 55),
+		touch(engine.PointerDown, 3, shootX, shootY),
+	}})
+	if game.player.gun.shots != 1 || math.Abs(float64(game.player.camera.Settings().Yaw-.06)) > .00001 {
+		t.Fatalf("third-finger fire interrupted look: shots=%d yaw=%v", game.player.gun.shots, game.player.camera.Settings().Yaw)
+	}
+	assertWalking := func() {
+		t.Helper()
+		commands := engine.FixtureCommands()
+		for offset := 24; offset < len(commands); {
+			payload := commands[offset+3:]
+			if commands[offset] == 45 && binary.LittleEndian.Uint32(payload[:4]) == uint32(game.player.camera.ID()) {
+				if y := math.Float32frombits(binary.LittleEndian.Uint32(payload[8:12])); y <= 0 {
+					t.Fatalf("third-finger action stopped walking: velocity=%v", y)
+				}
+				return
+			}
+			offset += 3 + int(binary.LittleEndian.Uint16(commands[offset+1:offset+3]))
+		}
+		t.Fatal("touch movement submitted no horizontal body velocity")
+	}
+	assertWalking()
+	engine.FixtureBegin()
+	hooks.Update(engine.Frame{Events: []engine.InputEvent{touch(engine.PointerUp, 3, shootX, shootY)}})
+	assertWalking()
+	for range 9 {
+		hooks.Update(engine.Frame{})
+	}
+	if game.player.gun.shots != 1 {
+		t.Fatal("releasing the shoot finger left held fire active")
 	}
 }

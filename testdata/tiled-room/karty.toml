@@ -7,10 +7,11 @@ width = 1280
 height = 720
 
 [sdk]
-version = "0.0.17"
+version = "0.0.18"
 
 [packages.tiled]
-folder = "../../packages/tiled"
+archive = "https://github.com/karty-game/karty-packages/releases/download/tiled-v0.0.1/tiled-0.0.1.kpkg"
+sha256 = "0c4d8ebaab2fcfc7d487af5d248b42ffc69b02ae4d56d0a7fa3ee96368c739b9"
 
 [[build.processors]]
 use = "tiled.compile"

@@ -2,7 +2,9 @@ package main
 
 import (
 	"example.com/controllers-consumer/.karty/engine"
-	"github.com/karty-game/controllers"
+	fpscontroller "github.com/karty-game/controllers-3d"
+	isometric "github.com/karty-game/controllers-isometric"
+	topdown "github.com/karty-game/controllers-topdown"
 )
 
 // A fresh archive consumer deliberately exercises every preset with the
@@ -10,25 +12,25 @@ import (
 //
 //go:wasmexport karty_register
 func main() {
-	fps, err := controllers.NewFirstPerson(controllers.DefaultFirstPersonOptions())
+	fps, err := fpscontroller.NewFirstPerson(fpscontroller.DefaultFirstPersonOptions())
 	if err != nil {
 		panic(err)
 	}
-	top, err := controllers.NewTopDown2D(controllers.DefaultTopDown2DOptions())
+	top, err := topdown.NewTopDown2D(topdown.DefaultTopDown2DOptions())
 	if err != nil {
 		panic(err)
 	}
-	iso, err := controllers.NewIsometric(controllers.DefaultIsometricOptions())
+	iso, err := isometric.NewIsometric(isometric.DefaultIsometricOptions())
 	if err != nil {
 		panic(err)
 	}
-	composer, err := controllers.NewCameraComposer(controllers.DefaultCameraFramingOptions())
+	composer, err := topdown.NewCameraComposer(topdown.DefaultCameraFramingOptions())
 	if err != nil {
 		panic(err)
 	}
 	game := &engine.Game{}
 	var marker *engine.Shape2D
-	position, focus := controllers.Vec2{}, controllers.Vec2{}
+	position, focus := topdown.Vec2{}, topdown.Vec2{}
 	engine.Run(engine.Hooks{
 		OnStart: func() {
 			marker = game.NewShape2D(engine.Circle(12), engine.NewVec2(640, 360))
@@ -36,30 +38,30 @@ func main() {
 		},
 		OnKeyDown: func(k engine.Key) {
 			if k == engine.KeyW {
-				fps.Key(controllers.Forward, true)
-				top.Key(controllers.Forward, true)
-				iso.Key(controllers.Forward, true)
+				fps.Key(fpscontroller.Forward, true)
+				top.Key(topdown.Forward, true)
+				iso.Key(isometric.Forward, true)
 			}
 		},
 		OnKeyUp: func(k engine.Key) {
 			if k == engine.KeyW {
-				fps.Key(controllers.Forward, false)
-				top.Key(controllers.Forward, false)
-				iso.Key(controllers.Forward, false)
+				fps.Key(fpscontroller.Forward, false)
+				top.Key(topdown.Forward, false)
+				iso.Key(isometric.Forward, false)
 			}
 		},
 		OnInputReset: func() { fps.Reset(); top.Reset(); iso.Reset() },
 		OnUpdate: func(engine.Frame) {
 			motion := fps.Step(0, 0)
-			a, b := top.Step(position), iso.Step(position)
+			a, b := top.Step(position), iso.Step(isometric.Vec2(position))
 			position.X += a.X + b.X + float64(motion.X)
 			position.Y += a.Y + b.Y + float64(motion.Y)
 			focus, err = top.ComposeCamera(composer, focus, position, 1280, 720, false)
 			if err != nil {
 				panic(err)
 			}
-			camera := iso.CameraPosition(focus)
-			ground, ok := iso.ScreenToGround(controllers.Vec2{X: 640, Y: 360}, focus, 1280, 720)
+			camera := iso.CameraPosition(isometric.Vec2(focus))
+			ground, ok := iso.ScreenToGround(isometric.Vec2{X: 640, Y: 360}, isometric.Vec2(focus), 1280, 720)
 			if ok {
 				marker.SetTransform(engine.NewVec2(float32(640+ground.X+camera.X), float32(360+ground.Y)), engine.NewVec2(1, 1), 0)
 			}

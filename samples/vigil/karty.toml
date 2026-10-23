@@ -12,7 +12,7 @@ far = 100
 ortho_height = 14
 
 [sdk]
-version = "0.0.17"
+version = "0.0.18"
 
 [[assets.texture]]
 name = "sight-mask"
@@ -49,5 +49,6 @@ source = "assets/sounds/shrine-chime.wav"
 name = "stone-footstep"
 source = "assets/sounds/stone-footstep.wav"
 
-[packages.controllers]
-folder = "../../packages/controllers"
+[packages.controllers-isometric]
+archive = "https://github.com/karty-game/karty-packages/releases/download/controllers-isometric-v0.0.1/controllers-isometric-0.0.1.kpkg"
+sha256 = "e198004bfa928503ad8518556f8b1e3c8fc208bec7f5ae57db7dbbaa951adc3c"

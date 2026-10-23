@@ -41,11 +41,23 @@ const base = `http://127.0.0.1:${server.address().port}`;
 const report = { pages: [], redirects: [], errors: [], failedResponses: [], artifacts: [] };
 const sections = {
   technical: ["index", "runtime", "input", "transforms", "cameras", "graphics", "audio"],
-  design: ["index", "why", "architecture", "sdk-and-toolchain", "asset-pipeline", "packages"],
-  guide: ["index", "2d", "fps"],
+  design: ["index", "why", "architecture", "workflow", "asset-pipeline", "packages"],
+  guide: ["index", "2d", "fps", "packages"],
 };
 
+async function checkMainNavigation(page) {
+  const plugins = page.locator(".site-nav a", { hasText: "Plugins" });
+  assert.equal(await plugins.count(), 1, "Missing Plugins navigation link");
+  assert.equal(
+    await plugins.getAttribute("href"),
+    "https://karty-game.github.io/karty-packages/",
+    "Plugins must open the public package catalog",
+  );
+  assert.ok(await plugins.isVisible(), "Plugins link must remain visible on mobile");
+}
+
 async function checkBrand(page) {
+  await checkMainNavigation(page);
   const favicon = await page.locator('link[rel="icon"]').getAttribute("href");
   assert.ok(favicon.startsWith("data:image/svg+xml;base64,"), "Missing shared favicon");
   assert.deepEqual(Buffer.from(favicon.split(",")[1], "base64"), expectedFavicon, "Stale favicon artwork");
@@ -99,11 +111,21 @@ try {
         assert.equal(response.status(), 200);
         assert.equal(await page.locator("h1").count(), 1);
         await checkBrand(page);
+        const readerText = (await page.locator("body").innerText()).replaceAll("controllers-3d.sdk", "controller");
+        assert.ok(!/\bsdk\b/i.test(readerText), `Internal versioning on ${section}/${name}`);
+        assert.ok(!readerText.includes("--sdk"), `Version-selection flag on ${section}/${name}`);
+        if (section === "design" && name === "why") {
+          const bold = page.locator(".guide-body strong", { hasText: "See changes immediately." });
+          assert.equal(await bold.count(), 1, "Markdown bold must render as a strong element");
+          assert.ok(Number(await bold.evaluate((element) => getComputedStyle(element).fontWeight)) >= 600);
+          assert.ok(!(await page.locator(".guide-body").innerText()).includes("**"), "Visible bold delimiters");
+          assert.equal(await page.locator(".guide-body strong", { hasText: "Good lighting." }).count(), 1);
+        }
         const active = await page.locator(".site-nav a[aria-current=page]").innerText();
         assert.equal(active, section === "guide" ? "Guides" : section === "design" ? "Design" : "API");
         assert.deepEqual(
           (await page.locator(".site-nav a").allTextContents()).map((label) => label.trim()),
-          ["Samples", "Guides", "API", "Design", "GitHub"],
+          ["Samples", "Guides", "API", "Design", "Plugins", "GitHub"],
         );
         const dimensions = await page.evaluate(() => ({
           viewport: innerWidth,
@@ -144,6 +166,8 @@ try {
   }
   await page.goto(`${base}/guide/why.html`, { waitUntil: "networkidle" });
   await page.waitForURL("**/design/why.html");
+  await page.goto(`${base}/design/sdk-and-toolchain.html`, { waitUntil: "networkidle" });
+  await page.waitForURL("**/design/workflow.html");
   await page.locator(".site-nav a", { hasText: "API" }).click();
   await page.waitForURL("**/technical/");
   await page.locator(".mobile-toc summary").click();
@@ -176,10 +200,24 @@ try {
   await checkBrand(page);
   assert.deepEqual(
     (await page.locator(".site-nav a").allTextContents()).map((label) => label.trim()),
-    ["Samples", "Guides", "API", "Design", "GitHub"],
+    ["Samples", "Guides", "API", "Design", "Plugins", "GitHub"],
   );
   await page.locator(".site-nav a", { hasText: "API" }).click();
   await page.waitForURL("**/technical/");
+  const localPreview = await readFile(resolve(directory, "crate-room/index.html"), "utf8");
+  if (localPreview.includes('id="sample"')) {
+    for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: width > 800 ? 1000 : 844 });
+      await page.goto(`${base}/crate-room/`, { waitUntil: "networkidle" });
+      await checkMainNavigation(page);
+      assert.deepEqual(
+        (await page.locator(".site-nav a").allTextContents()).map((label) => label.trim().replace(" ↗", "")),
+        ["Samples", "Guides", "API", "Design", "Plugins", "GitHub"],
+      );
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      await page.screenshot({ path: resolve(captures, `${width}-local-preview.png`), fullPage: true });
+    }
+  }
   assert.deepEqual(report.errors, []);
   assert.deepEqual(report.failedResponses, []);
   for (const [section, pages] of Object.entries(sections)) {

@@ -1,0 +1,159 @@
+package main
+
+import (
+	"example.com/fps-fixture/.karty/engine"
+	fpscontroller "example.com/fps-fixture/.karty/processed/code/controllers-3d.sdk/controller"
+	"math"
+	"testing"
+)
+
+const StickRadius = float32(__STICK_RADIUS__)
+
+type inputMotion struct{ X, Y, Z, Yaw, Pitch float32 }
+
+type firstPersonInput struct {
+	controller *fpscontroller.FirstPersonController
+	camera     *engine.Camera3D
+	events     []engine.InputEvent
+	motion     inputMotion
+}
+
+func newFirstPersonInput(t *testing.T) *firstPersonInput {
+	t.Helper()
+	engine.FixtureBegin()
+	host := &engine.Game{}
+	input := &firstPersonInput{}
+	input.camera = host.NewCamera3D(9, engine.Camera3DSettings{Projection: engine.CameraProjectionPerspective, ViewportWidth: 1280, ViewportHeight: 720})
+	options := fpscontroller.DefaultFirstPersonOptions()
+	options.Mode = fpscontroller.FirstPersonFree
+	options.Width, options.Height = 1280, 720
+	options.ArrowKeysLook, options.TurnKeys = true, false
+	options.Touch.StickRadius = StickRadius
+	options.Move = func(_ *fpscontroller.FirstPersonController, motion fpscontroller.FirstPersonMotion) error {
+		input.motion = inputMotion{motion.X, motion.Y, motion.Z, motion.Yaw, motion.Pitch}
+		return nil
+	}
+	var err error
+	input.controller, err = fpscontroller.AttachFirstPerson(*host, input.camera, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { input.controller.Close(); input.camera.Destroy() })
+	return input
+}
+
+func (input *firstPersonInput) frame() {
+	engine.FixtureBegin()
+	(engine.Hooks{}).Update(engine.Frame{Events: input.events})
+	input.events = input.events[:0]
+}
+func (input *firstPersonInput) key(key engine.Key, down bool) {
+	kind := engine.EventKeyUp
+	if down {
+		kind = engine.EventKeyDown
+	}
+	input.events = append(input.events, engine.InputEvent{Type: kind, Key: key})
+}
+func (input *firstPersonInput) mouse(x, y float32) {
+	input.events = append(input.events, engine.InputEvent{Type: engine.EventPointer, Pointer: engine.PointerInput{Kind: engine.PointerMouse, Phase: engine.PointerMove, Captured: true, DeltaX: x, DeltaY: y}})
+}
+func (input *firstPersonInput) step(yaw, pitch float32) inputMotion {
+	settings := engine.FixtureCameraSettings(input.camera)
+	settings.Yaw, settings.Pitch = yaw, pitch
+	input.frame()
+	return input.motion
+}
+func (input *firstPersonInput) reset() { input.events = input.events[:0]; input.controller.Reset() }
+func (input *firstPersonInput) beginTouch(side int, id uint32, x, y float32) bool {
+	input.events = append(input.events, engine.InputEvent{Type: engine.EventPointer, Pointer: engine.PointerInput{Kind: engine.PointerTouch, Phase: engine.PointerDown, ID: id, X: x, Y: y}})
+	input.frame()
+	return input.stick(side).ID == id
+}
+func (input *firstPersonInput) moveTouch(id uint32, x, y float32) {
+	input.events = append(input.events, engine.InputEvent{Type: engine.EventPointer, Pointer: engine.PointerInput{Kind: engine.PointerTouch, Phase: engine.PointerMove, ID: id, X: x, Y: y}})
+	input.frame()
+}
+func (input *firstPersonInput) endTouch(id uint32) {
+	input.events = append(input.events, engine.InputEvent{Type: engine.EventPointer, Pointer: engine.PointerInput{Kind: engine.PointerTouch, Phase: engine.PointerUp, ID: id}})
+}
+func (input *firstPersonInput) stick(side int) fpscontroller.FixtureFirstPersonStickState {
+	return fpscontroller.FixtureFirstPersonStick(input.controller, side)
+}
+func hypot(x, y float32) float32 { return float32(math.Hypot(float64(x), float64(y))) }
+
+func TestDesktopMovementAndMouse(t *testing.T) {
+	input := newFirstPersonInput(t)
+	input.key(engine.KeyW, true)
+	input.key(engine.KeyD, true)
+	motion := input.step(0, 0)
+	if math.Abs(float64(hypot(motion.X, motion.Y)-.055)) > .00001 {
+		t.Fatalf("diagonal walk changed speed: %+v", motion)
+	}
+	input.key(engine.KeyShiftLeft, true)
+	motion = input.step(0, 0)
+	if speed := hypot(motion.X, motion.Y); math.Abs(float64(speed-.11)) > .00001 {
+		t.Fatalf("run speed: %v", speed)
+	}
+	input.reset()
+	input.mouse(100, -80)
+	motion = input.step(0, 0)
+	if motion.Yaw != .25 || math.Abs(float64(motion.Pitch-.2)) > .00001 {
+		t.Fatalf("mouse look direction: %+v", motion)
+	}
+	if next := input.step(motion.Yaw, motion.Pitch); next != motion {
+		t.Fatalf("mouse displacement was applied twice: %+v", next)
+	}
+	input.mouse(0, -10000)
+	if got := input.step(0, 0).Pitch; got != 1.35 {
+		t.Fatalf("pitch clamp: %v", got)
+	}
+}
+
+func TestTwoIndependentTouchSticks(t *testing.T) {
+	input := newFirstPersonInput(t)
+	if !input.beginTouch(0, 1, 140, 520) || !input.beginTouch(1, 2, 1140, 520) {
+		t.Fatal("both sticks must accept simultaneous fingers")
+	}
+	if input.beginTouch(0, 3, 200, 520) || input.beginTouch(1, 1, 1140, 520) {
+		t.Fatal("a finger stole an occupied stick")
+	}
+	input.moveTouch(1, 140, 500)  // Beyond the deadzone, below full speed.
+	input.moveTouch(2, 1500, 520) // Clamps at the rim.
+	if got := hypot(input.stick(1).DX, input.stick(1).DY); got != StickRadius {
+		t.Fatalf("thumb escaped base: %v", got)
+	}
+	motion := input.step(0, 0)
+	if motion.Y <= 0 || motion.Yaw <= 0 {
+		t.Fatalf("simultaneous walk and look: %+v", motion)
+	}
+	input.endTouch(2)
+	motion = input.step(0, 0)
+	if motion.Y <= 0 || motion.Yaw != 0 {
+		t.Fatalf("releasing look stopped walking: %+v", motion)
+	}
+	input.endTouch(1)
+	if motion := input.step(0, 0); motion != (inputMotion{}) {
+		t.Fatalf("release left stale input: %+v", motion)
+	}
+}
+
+func TestDeadzoneAndReset(t *testing.T) {
+	input := newFirstPersonInput(t)
+	input.beginTouch(0, 1, 140, 520)
+	input.moveTouch(1, 145, 525)
+	if motion := input.step(0, 0); motion != (inputMotion{}) {
+		t.Fatalf("deadzone moved camera: %+v", motion)
+	}
+	input.moveTouch(1, 140, 400)
+	input.beginTouch(1, 2, 1140, 520)
+	input.moveTouch(2, 1200, 520)
+	input.key(engine.KeyW, true)
+	input.mouse(50, 50)
+	input.reset()
+	if motion := input.step(.7, -.3); motion != (inputMotion{Yaw: .7, Pitch: -.3}) {
+		t.Fatalf("focus/viewpoint reset left stale input: %+v", motion)
+	}
+	if !input.beginTouch(0, 3, 140, 520) {
+		t.Fatal("reset retained a finger owner")
+	}
+}

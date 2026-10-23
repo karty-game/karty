@@ -1,0 +1,28 @@
+package main
+
+import (
+	"example.com/effect-lab/.karty/engine"
+	"testing"
+)
+
+func TestViewChangeReleasesHeldMovement(t *testing.T) {
+	engine.FixtureBegin()
+	t.Cleanup(engine.FixtureStop)
+	game := &Game{}
+	game.start()
+	(engine.Hooks{}).Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(game.request), Handle: 7}}})
+	gameHooks := engine.Hooks{OnKeyDown: func(key engine.Key) { game.key(key, true) }}
+	gameHooks.Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventKeyDown, Key: engine.KeyW}}})
+	if game.rig.entity.Settings().Position.Y <= -9 {
+		t.Fatal("held forward key did not move the camera")
+	}
+	gameHooks.Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventKeyDown, Key: engine.KeyDigit2}}})
+	position := game.rig.entity.Settings().Position
+	if game.rig.view != 1 || position.Y != 4.5 {
+		t.Fatalf("viewpoint shortcut did not reach the color ramps: view=%d position=%+v", game.rig.view, position)
+	}
+	gameHooks.Update(engine.Frame{})
+	if game.rig.entity.Settings().Position != position {
+		t.Fatal("old movement input carried into the new viewpoint")
+	}
+}

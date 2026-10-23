@@ -4,7 +4,7 @@ set -euo pipefail
 level_package=$(go list ./internal/levelbuild)
 # Only project sources belong to the suite. Local investigations and generated
 # output can contain Go packages of their own.
-package_list=$(go list ./cmd/... ./internal/... ./website/...)
+package_list=$(go list ./cmd/... ./internal/... ./skills/... ./website/...)
 unit_packages=()
 while IFS= read -r package; do
   if [[ "$package" != "$level_package" ]]; then
@@ -13,12 +13,6 @@ while IFS= read -r package; do
 done <<< "$package_list"
 # Reuse compiler output, but execute assertions on this runner and SDK install.
 go test -count=1 -timeout=9s "${unit_packages[@]}"
-
-# Controllers are a separately consumable module, so ./... cannot discover it.
-GOWORK=off go -C packages/controllers test -count=1 -timeout=9s ./...
-
-# Tiled is also a separate module; keep its sprite-residency guards in CI.
-GOWORK=off go -C packages/tiled test -count=1 -timeout=9s ./...
 
 # The level builder's cache/bake and real WASM cases have outgrown one shared
 # nine-second package deadline on small CI runners. Discover every root test

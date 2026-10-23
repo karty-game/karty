@@ -7,12 +7,13 @@ import (
 	"slices"
 
 	"github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty/internal/assetpipeline"
 	worldschema "github.com/karty-game/karty/internal/worldbuild/schema"
 	"github.com/karty-game/karty/internal/worldbuild/source"
 	"go.yaml.in/yaml/v3"
 )
 
-// V1 exports static solids, nested prefab instances, and PNG materials.
+// V1 exports static solids, nested prefab instances, and PNG textures.
 // Other reference kinds require explicit namespace/closure semantics first.
 func fragment(ctx context.Context, root *os.Root, definition Manifest) ([]map[string]any, error) {
 	if definition.Prefabs == "" {
@@ -123,6 +124,7 @@ rooms:
 type WorldTexture struct {
 	Name, Profile string
 	Data          []byte
+	Materialize   *assetpipeline.MaterializeOptions
 }
 
 // ResolveWorld merges selected static prefab exports into an ordinary authored
@@ -341,6 +343,18 @@ func selectWorldTextures(
 			}
 		}
 
+		// Actor sprites select PNG exports just like surfaces. Keep this scoped
+		// to actor.sprite.texture rather than treating every texture-like key
+		// as a package reference.
+		if key == "actor" {
+			actor, _ := value.(map[string]any)
+			sprite, _ := actor["sprite"].(map[string]any)
+
+			if name, ok := sprite["texture"].(string); ok {
+				needed[name] = true
+			}
+		}
+
 		return value
 	})
 
@@ -378,7 +392,9 @@ func selectWorldTextures(
 			return nil, nil, ErrPackage
 		}
 
-		imported = append(imported, WorldTexture{name, entry.texture.Profile, data})
+		imported = append(imported, WorldTexture{
+			Name: name, Profile: entry.texture.Profile, Data: data, Materialize: entry.texture.Materialize,
+		})
 	}
 
 	allNames := append(slices.Clone(localTextures), names...)

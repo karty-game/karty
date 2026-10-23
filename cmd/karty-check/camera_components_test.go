@@ -265,6 +265,7 @@ func FixtureSolidTransform(solid *Solid3D) *Transform3D {return &solid.transform
 func FixtureCameraSettings(camera *Camera3D) *Camera3DSettings { return &camera.settings }
 var fixtureCommands []byte
 func FixtureBegin(){beginCommands(1)}
+func FixtureLastLevelRequest() RequestID {return RequestID(nextLevelRequestID-1)}
 func FixtureEntityRef(id uint32,level LevelHandle) EntityRef{return registerEntity(id,level,nil)}
 func FixtureAcceptedPose(id uint32,pose Transform3D){synchronizeEntity(&InputEvent{Type:EventAuthoritativeTransform,EntityID:id,Transform3D:pose})}
 func FixtureCommands()[]byte{finishCommands();return fixtureCommands}

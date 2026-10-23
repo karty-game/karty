@@ -13,7 +13,12 @@ far = 80
 ortho_height = 24
 
 [sdk]
-version = "0.0.17"
+version = "0.0.18"
 
-[packages.controllers]
-folder = "../../packages/controllers"
+[packages.controllers-3d]
+archive = "https://github.com/karty-game/karty-packages/releases/download/controllers-3d-v0.0.2/controllers-3d-0.0.2.kpkg"
+sha256 = "f6f1869743270910ec365ab41a9e7ec8741ac7808c71081c7df7dff403a40946"
+
+[[build.processors]]
+use = "controllers-3d.sdk"
+inputs = ["go.mod"]

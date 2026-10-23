@@ -1,22 +1,30 @@
 package main
 
 import (
+	"errors"
+
 	"example.com/vigil/.karty/engine"
 	"example.com/vigil/internal/dungeon"
 )
 
-func (g *Game) requestPath(target dungeon.Point) {
-	g.nav.Cancel()
-	if g.level == 0 || g.resetPending {
-		return
-	}
-	start, ok := dungeon.RouteStart(g.position())
+var errPassageBlocked = errors.New("The passage is blocked.")
+
+type navigator struct {
+	path               dungeon.Navigation
+	held               bool
+	pointer            uint32
+	pointerX, pointerY float32
+	routePending       bool
+}
+
+// requestPath queues a bounded route; failed starts and searches share the HUD message.
+func (n *navigator) requestPath(game *engine.Game, level engine.LevelHandle, position, target dungeon.Point) error {
+	start, ok := dungeon.RouteStart(position)
 	if !ok {
-		g.pathBlocked()
-		return
+		return errPassageBlocked
 	}
 	goal := dungeon.ProjectGoal(target)
-	request, err := g.World(g.level).FindPath(engine.NavigationAgent{
+	request, err := game.World(level).FindPath(engine.NavigationAgent{
 		Position: engine.Vec3{
 			X: float32(start.X),
 			Y: float32(start.Y),
@@ -26,16 +34,15 @@ func (g *Game) requestPath(target dungeon.Point) {
 		MaxSearchCells: dungeon.Cells,
 	}, engine.Vec3{X: float32(goal.X), Y: float32(goal.Y)})
 	if err != nil {
-		g.pathBlocked()
-		return
+		return errPassageBlocked
 	}
 
-	g.nav.Begin(uint32(request), uint32(g.level), start)
+	n.path.Begin(uint32(request), uint32(level), start)
+	return nil
 }
-func (g *Game) pathResult(result engine.PathResult) {
-	if g.hero == nil || g.resetPending || result.Handle != g.level || uint32(result.RequestID) != g.nav.Pending {
-		return
-	}
+
+// acceptPath preserves the fixed waypoint bound, including rejected or oversized results.
+func (n *navigator) acceptPath(result engine.PathResult, position dungeon.Point) error {
 	var points [dungeon.MaxRoutePoints]dungeon.Point
 	count := 0
 	if result.Status == engine.PathFound && len(result.Points) <= len(points) {
@@ -44,8 +51,27 @@ func (g *Game) pathResult(result engine.PathResult) {
 			points[i] = dungeon.Point{X: float64(p.X), Y: float64(p.Y)}
 		}
 	}
-	if matched, usable := g.nav.Accept(uint32(result.RequestID), uint32(result.Handle), g.position(), points[:count]); matched && !usable {
-		g.pathBlocked()
+	matched, usable := n.path.Accept(uint32(result.RequestID), uint32(result.Handle), position, points[:count])
+	if matched && !usable {
+		return errPassageBlocked
+	}
+	return nil
+}
+
+// Retain the latest drag sample; the update loop sends at most one query per frame.
+func (n *navigator) point(p engine.PointerInput) {
+	if p.Phase == engine.PointerDown && p.Buttons&1 != 0 {
+		n.pointer = p.ID
+		n.held = true
+		n.pointerX, n.pointerY = p.X, p.Y
+		n.routePending = true
+	} else if p.Phase == engine.PointerUp && p.ID == n.pointer {
+		n.held = false
+		if n.routePending {
+			n.pointerX, n.pointerY = p.X, p.Y
+		}
+	} else if p.Phase == engine.PointerMove && p.ID == n.pointer && n.held && p.Buttons&1 != 0 {
+		n.pointerX, n.pointerY = p.X, p.Y
+		n.routePending = true
 	}
 }
-func (g *Game) pathBlocked() { g.status = "The passage is blocked."; g.refresh() }

@@ -27,16 +27,36 @@ var freightStacks = [...]freight{
 	{25.4, 29.8, -1.20, .6, .6, .6, 3.5},
 }
 
-func (game *Game) createCrates() {
+// Match each visible box to a dynamic body; the host handles pushing and buoyancy.
+func (scene *hangarScene) createCrates(host *engine.Game) {
 	for index, box := range freightStacks {
 		transform := engine.NewTransform3D(engine.NewVec3(box.x, box.y, box.z))
 		transform.Scale = engine.NewVec3(box.width, box.depth, box.height)
-		crate := game.NewSolid3D(game.level, transform, engine.SolidRenderer{Prefab: "cargo-crate"})
-		if _, err := game.World(game.level).
-			AttachBody(crate.Ref(), engine.BodySettings{Kind: engine.BodyDynamic, Collider: engine.BoxCollider{HalfExtents: engine.NewVec3(box.width/2, box.depth/2, box.height/2)}, AllowRotation: true, Forces: engine.BodyForceSettings{GravityScale: 1, Buoyancy: true}, Mass: box.mass, Friction: .5, Restitution: .02}); err != nil {
+		crate := host.NewSolid3D(scene.level, transform, engine.SolidRenderer{Prefab: "cargo-crate"})
+		if _, err := host.World(scene.level).
+			AttachBody(crate.Ref(), engine.BodySettings{
+				Kind: engine.BodyDynamic,
+				Collider: engine.BoxCollider{
+					HalfExtents: engine.NewVec3(box.width/2, box.depth/2, box.height/2),
+				},
+				AllowRotation: true,
+				Forces:        engine.BodyForceSettings{GravityScale: 1, Buoyancy: true},
+				Mass:          box.mass,
+				Friction:      .5,
+				Restitution:   .02,
+			}); err != nil {
 			panic(err)
 		}
 
-		game.crates[index] = crate
+		scene.crates[index] = crate
 	}
+}
+
+func (scene *hangarScene) clearCrates() {
+	for _, crate := range scene.crates {
+		if crate != nil {
+			crate.Destroy()
+		}
+	}
+	clear(scene.crates[:])
 }

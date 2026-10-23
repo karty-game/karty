@@ -71,16 +71,23 @@ func TestGuideWorkflowBuildsAndUploadsMatchingDistributions(t *testing.T) {
 	}
 
 	for _, required := range []string{
-		"go install github.com/karty-game/karty/cmd/karty@", "karty sdk install \"$SDK_VERSION\"", "tomllib", "karty.toml",
-		"karty build --target web", "karty build --target native --platform windows-arm64", "RUNTIME_LICENSE.md", "SDK_LICENSE.md",
+		"go install github.com/karty-game/karty/cmd/karty@latest",
+		"karty build --target web", "karty build --target native --platform windows-arm64",
+		"cp -R LICENSES dist/web/", "cp -R LICENSES dist/native/windows-arm64/",
 	} {
 		if !strings.Contains(commands.String(), required) {
 			t.Fatalf("workflow omits %q", required)
 		}
 	}
 
-	if !strings.Contains(commands.String(), "sdk-v$SDK_VERSION/$notice") {
-		t.Fatal("license downloads must follow the project's SDK pin")
+	for _, internal := range []string{"SDK_VERSION", "karty sdk", "python", "tomllib"} {
+		if strings.Contains(commands.String(), internal) {
+			t.Fatalf("workflow exposes internal setup through %q", internal)
+		}
+	}
+
+	if !strings.Contains(string(chapter), "Commit this folder") || !strings.Contains(string(chapter), "LICENSES/") {
+		t.Fatal("distribution guide must explain the checked-in license notices used by CI")
 	}
 
 	if artifacts["game-web"] != "dist/web/" || artifacts["game-windows-arm64"] != "dist/native/windows-arm64/" {

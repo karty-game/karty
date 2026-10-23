@@ -6,6 +6,7 @@ import (
 
 	"example.com/willowbrook/.karty/engine"
 	"example.com/willowbrook/.karty/processed"
+	"example.com/willowbrook/internal/village"
 	"github.com/karty-game/tiled"
 	"github.com/karty-game/tiled/karty2d"
 )
@@ -54,12 +55,20 @@ func (v *tiledView) build(camera engine.Camera2DSettings) bool {
 	}
 	return ready
 }
-func (g *Game) mapLayer(layer int, footY float64) int32 {
-	n, err := g.view.renderer.LayerFor(layer, footY)
+func (v *tiledView) mapLayer(layer int, footY float64) int32 {
+	n, err := v.renderer.LayerFor(layer, footY)
 	if err != nil {
 		panic(err)
 	}
 	return n
+}
+
+func (v *tiledView) footSprite(asset uint32, p village.Point, w, h float64) *engine.Sprite2D {
+	s := v.game.NewLevelSprite2D(engine.LevelTexture(v.level, asset), engine.NewVec2(float32(p.X), float32(p.Y-h/2)))
+	dims := textureSizes[asset]
+	s.SetScale(float32(w)/float32(dims[0]), float32(h)/float32(dims[1]))
+	s.SetLayer(v.mapLayer(village.ActorLayer, p.Y))
+	return s
 }
 
 type boundSprite struct {

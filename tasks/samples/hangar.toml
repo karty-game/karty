@@ -11,11 +11,6 @@ run = "go run scripts/hangar-material-assets.go"
 description = "Verify Hangar surface variants match their handwritten generator"
 run = "go run scripts/hangar-material-assets.go -check"
 
-[generate-hangar-walk]
-description = "Compile Hangar's authored floors, portals and solids for bounded player stepping"
-depends = ["generate-hangar-ceiling-lights"]
-run = "go run scripts/hangar-walk-assets.go"
-
 [generate-hangar-ceiling-lights]
 description = "Regenerate suspended strip fixtures above Hangar's authored overhead lights"
 depends = ["generate-hangar-heroes"]
@@ -33,10 +28,6 @@ run = "go run scripts/hangar-hero-assets.go"
 [check-hangar-heroes]
 description = "Verify bounded hero trim matches its owning handwritten generator"
 run = "go run scripts/hangar-hero-assets.go -check"
-
-[check-hangar-walk]
-description = "Verify Hangar player support data matches its authored geometry"
-run = "go run scripts/hangar-walk-assets.go -check"
 
 [generate-hangar-effects]
 description = "Reuse Particle Lab fire, smoke, discharge and acid recipes in confined Hangar placements"
@@ -56,12 +47,12 @@ description = "Verify Hangar sound loops match their retained recordings and pro
 run = "go run scripts/hangar-sound-assets.go -check"
 
 [build-hangar-native]
-depends = ["build", "generate-hangar-materials", "generate-hangar-walk", "generate-hangar-sounds"]
+depends = ["build", "generate-hangar-materials", "generate-hangar-ceiling-lights", "generate-hangar-sounds"]
 dir = "samples/hangar"
 run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
 
 [build-hangar-web]
-depends = ["build", "generate-hangar-materials", "generate-hangar-walk", "generate-hangar-sounds"]
+depends = ["build", "generate-hangar-materials", "generate-hangar-ceiling-lights", "generate-hangar-sounds"]
 dir = "samples/hangar"
 run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
 
@@ -156,8 +147,8 @@ dir = "samples/hangar"
 run = '../../dist/karty render screenshot levels.hangar --width 960 --height 540 --batch pool-screenshots.toml --host "${KARTY_HOST_NATIVE:-}"'
 
 [check-hangar-fps-allocations]
-description = "Execute Hangar floor and stepping helpers under TinyGo with strict zero-allocation bounds"
-run = "mise exec go@1.27.1 tinygo@0.42.0 -- node scripts/check-hangar-fps-allocations.mjs"
+description = "Execute Hangar's elevator schedule under TinyGo with strict zero-allocation bounds"
+run = "mise exec go@1.27.3 tinygo@0.43.0 -- node scripts/check-hangar-fps-allocations.mjs"
 
 [check-hangar-loop]
 description = "Compile Hangar and verify its reciprocal non-Euclidean extraction loop"

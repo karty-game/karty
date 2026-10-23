@@ -50,17 +50,11 @@ live in [`vigil/`](vigil/assets/README.md); Willowbrook's retained artwork and
 prompts live in [`willowbrook/assets/`](willowbrook/assets/README.md). These asset-generation tools are not needed to
 compile the CLI.
 
-`export-controllers-starter.mjs` copies the public controller package into a
-starter directory, including its license and contract:
-
-```sh
-mise run export-controllers-starter -- /path/to/template/packages/controllers
-```
-
-Add `--check` to verify an existing copy without rewriting it. SDK template
-revision 0.0.4 includes a copy in each of its three genre starters. The
-`check-controller-starters` task requires the released SDK 0.0.13,
-compiler and web host.
+Reusable package sources and generators live in
+[`karty-packages`](https://github.com/karty-game/karty-packages).
+SDK starters and CLI samples pin published archives; they do not copy package
+source into this repository. `check-controller-starters` validates the selected
+SDK's genre starters with their pinned packages, matching compiler and web host.
 
 Website generation, browser checks and sample capture tools live in
 [`website/`](../website/README.md).

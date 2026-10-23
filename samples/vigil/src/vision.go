@@ -6,39 +6,54 @@ import (
 	"example.com/vigil/internal/dungeon"
 )
 
-func (g *Game) updateVision(p dungeon.Point) {
+type sightMask struct {
+	game              *engine.Game
+	model             dungeon.Vision
+	fog               [dungeon.MaxFog]*engine.Sprite2D
+	fogBounds         [dungeon.MaxFog]dungeon.Box
+	fogUsed, fogReady int
+	curtain           *engine.Shape2D
+}
+
+func (v *sightMask) update(p dungeon.Point, height float64, focus dungeon.Point) {
 	// Populate the bounded pool over several updates so initial entity commands
 	// stay below the SDK's complete-batch 64 KiB limit. The curtain hides loading.
-	for end := min(g.fogReady+64, len(g.fog)); g.fogReady < end; g.fogReady++ {
-		s := g.NewSprite2D(assets.TextureSightMask, engine.NewVec2(0, 0))
+	for end := min(v.fogReady+64, len(v.fog)); v.fogReady < end; v.fogReady++ {
+		s := v.game.NewSprite2D(assets.TextureSightMask, engine.NewVec2(0, 0))
 		s.SetLayer(-9)
 		s.SetAlpha(0)
-		g.fog[g.fogReady] = s
+		v.fog[v.fogReady] = s
 	}
-	if g.fogReady < len(g.fog) {
+	if v.fogReady < len(v.fog) {
 		return
 	}
-	if !g.vision.Update(p, g.height, g.focus) {
+	if !v.model.Update(p, height, focus) {
 		return
 	}
-	for i, b := range g.vision.Fog[:g.vision.Count] {
-		if i >= g.fogUsed || b != g.fogBounds[i] {
-			g.fog[i].SetTransform(
+	for i, b := range v.model.Fog[:v.model.Count] {
+		if i >= v.fogUsed || b != v.fogBounds[i] {
+			v.fog[i].SetTransform(
 				engine.NewVec2(float32(b.X+(b.W+.5)/2), float32(b.Y+b.D/2)),
 				engine.NewVec2(float32((b.W+.5)/2), float32(b.D/2)),
 				0,
 			)
-			g.fogBounds[i] = b
+			v.fogBounds[i] = b
 		}
-		if i >= g.fogUsed {
-			g.fog[i].SetAlpha(1)
+		if i >= v.fogUsed {
+			v.fog[i].SetAlpha(1)
 		}
 	}
-	for i := g.vision.Count; i < g.fogUsed; i++ {
-		g.fog[i].SetAlpha(0)
+	for i := v.model.Count; i < v.fogUsed; i++ {
+		v.fog[i].SetAlpha(0)
 	}
-	g.fogUsed = g.vision.Count
-	if g.curtain.Alpha() != 0 {
-		g.curtain.SetAlpha(0)
+	v.fogUsed = v.model.Count
+	if v.curtain.Alpha() != 0 {
+		v.curtain.SetAlpha(0)
 	}
+}
+
+func (v *sightMask) createCurtain() {
+	v.curtain = v.game.NewShape2D(engine.Rectangle(dungeon.FogRight-dungeon.FogLeft, 720), engine.NewVec2(dungeon.FogLeft, 0))
+	v.curtain.SetFill(engine.ColorBlack)
+	v.curtain.SetLayer(-8)
 }

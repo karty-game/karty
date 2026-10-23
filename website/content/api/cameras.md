@@ -5,7 +5,7 @@ Use a 2D camera for canvas layers or a 3D camera for a mounted world.
 ## Camera 2D
 
 `Camera2DSettings` pans and zooms an inclusive range of drawing layers. Layers
-outside that range stay fixed for HUDs and menus. This API requires SDK 0.0.13.
+outside that range stay fixed for HUDs and menus.
 
 ```go
 func showWorld(game *engine.Game) engine.Camera2DSettings {
@@ -35,14 +35,14 @@ width and height. Browser CSS dimensions do not belong here.
 Zoom must be finite and within `1/64` to `64`. The minimum layer cannot exceed
 the maximum. There is one active ordinary 2D camera.
 
-[Camera 3D](cameras.html#camera-3d) · [Willowbrook camera and picking](https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/main.go)
+[Camera 3D](cameras.html#camera-3d) · [Willowbrook camera](https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/camera.go) · [Pointer picking](https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/game_input.go)
 
 Exact bounds are in `.karty/docs/cameras.md`.
 
 ## Camera 3D
 
 `Camera3D` projects a mounted world into a 2D output rectangle. Create it
-after `OnLevelReady`, using that event's handle.
+inside a level's ready callback, using that event's handle.
 
 ```go
 func roomCamera(game *engine.Game, level engine.LevelHandle) *engine.Camera3D {
@@ -77,4 +77,36 @@ Use accepted poses for movement, as described in [Transform 3D](transforms.html#
 `Destroy` removes the camera; level release also removes it. Camera count and
 viewport bounds are in `.karty/docs/cameras.md`.
 
-[Hangar camera setup](https://github.com/karty-game/karty/blob/main/samples/hangar/src/main.go) · [Isometric guide](../guide/isometric.html)
+[Hangar camera setup](https://github.com/karty-game/karty/blob/main/samples/hangar/src/tour.go) · [Isometric guide](../guide/isometric.html)
+
+## First-person player
+
+The `controllers-3d` package supplies the first-person controller. Its
+`controllers-3d.sdk` build processor generates a typed adapter for your project.
+After creating a camera in a ready level, attach the controller:
+
+```go
+// Import the package-generated adapter as fpscontroller from
+// "YOURMODULE/.karty/processed/code/controllers-3d.sdk/controller".
+func attachPlayer(game *engine.Game, camera *engine.Camera3D) (*fpscontroller.FirstPersonController, error) {
+    options := fpscontroller.DefaultFirstPersonOptions()
+    options.Speed = 4 // metres per second
+    return fpscontroller.AttachFirstPerson(*game, camera, options)
+}
+```
+
+It owns keyboard and pointer input, mouse capture, visible touch sticks and a
+physics body with gravity and collision. It moves before the game's `OnUpdate`;
+keep ordinary hooks for interactions and other game actions.
+
+The game owns the camera. The controller cleans up its body and display when
+closed, when the camera is destroyed, when its level is released, or at cartridge
+shutdown. Only one local controller can be attached at a time.
+`SetEnabled(false)` releases held controls; `Teleport` clears input and momentum
+while retaining the camera and body. `FirstPersonFree` mode omits the body for
+an inspection camera. `BeforeMove` and `Move` extend movement for authored rules.
+
+[First-person guide](../guide/fps.html) · [Hangar traversal](https://github.com/karty-game/karty/blob/main/samples/hangar/src/main.go)
+
+Exact options and lifecycle rules are in the installed package's README and
+component documentation under `.karty/packages/controllers-3d/`.

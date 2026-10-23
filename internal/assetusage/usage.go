@@ -98,12 +98,24 @@ func loadTypeInfo(
 		return nil, nil, nil, nil, nil, err
 	}
 
-	enginePackage, err := (&types.Config{Importer: importer.Default()}).Check(enginePath, fileSet, engineFiles, nil)
+	fallback := importer.ForCompiler(fileSet, "gc", nil)
+
+	enginePackage, err := (&types.Config{Importer: fallback}).Check(enginePath, fileSet, engineFiles, nil)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
 
-	resolver := packageImporter{enginePath: enginePath, engine: enginePackage, fallback: importer.Default()}
+	info := &types.Info{
+		Types:      make(map[ast.Expr]types.TypeAndValue),
+		Uses:       make(map[*ast.Ident]types.Object),
+		Selections: make(map[*ast.SelectorExpr]*types.Selection),
+	}
+	resolver := &packageImporter{
+		enginePath: enginePath, engine: enginePackage, fallback: fallback,
+		directory: directory, generatedPrefix: modulePath + "/.karty/processed/code/",
+		fileSet: fileSet, context: context, info: info,
+		generated: make(map[string]*types.Package), loading: make(map[string]bool),
+	}
 	assetsPath := modulePath + "/.karty/assets"
 
 	assetsFiles, err := parsePackageFiles(fileSet, filepath.Join(directory, ".karty", "assets"), context)
@@ -126,12 +138,6 @@ func loadTypeInfo(
 	sourceFiles, err = appendUIFiles(fileSet, directory, modulePath, sourceFiles, components, uiAdapterVersion(enginePackage))
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
-	}
-
-	info := &types.Info{
-		Types:      make(map[ast.Expr]types.TypeAndValue),
-		Uses:       make(map[*ast.Ident]types.Object),
-		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 	}
 
 	configuration := &types.Config{Importer: resolver}
@@ -165,7 +171,7 @@ func loadTypeInfo(
 		return nil, nil, nil, nil, nil, err
 	}
 
-	return fileSet, enginePackage, assetsPackage, sourceFiles, info, nil
+	return fileSet, enginePackage, assetsPackage, append(sourceFiles, resolver.generatedFiles...), info, nil
 }
 
 func inspectUses(
@@ -272,32 +278,6 @@ func inspectCalls(
 
 func textureFunction(name string) bool {
 	return name == "NewSprite2D" || name == "UpdateAsset" || name == "SetTexture"
-}
-
-type packageImporter struct {
-	assetsPath string
-	assets     *types.Package
-	uiPath     string
-	ui         *types.Package
-	enginePath string
-	engine     *types.Package
-	fallback   types.Importer
-}
-
-func (resolver packageImporter) Import(path string) (*types.Package, error) {
-	if resolver.assets != nil && path == resolver.assetsPath {
-		return resolver.assets, nil
-	}
-
-	if resolver.ui != nil && path == resolver.uiPath {
-		return resolver.ui, nil
-	}
-
-	if path == resolver.enginePath {
-		return resolver.engine, nil
-	}
-
-	return resolver.fallback.Import(path)
 }
 
 func parsePackageFiles(fileSet *token.FileSet, directory string, context build.Context) ([]*ast.File, error) {

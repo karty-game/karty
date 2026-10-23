@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,10 +15,18 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-// Import records a portable local archive reference or an explicit development
-// folder. External archives are copied into the project, never merely cached.
+// Import records a checksum-pinned catalog release, portable local archive or
+// explicit development folder. External local archives are copied into the project.
 // --replace is explicit permission to update one existing package declaration.
 func Import(ctx context.Context, project, input string, replace bool) (Manifest, error) {
+	return importWithCatalog(ctx, project, input, replace, DefaultCatalogURL, nil)
+}
+
+func importWithCatalog(ctx context.Context, project, input string, replace bool, catalogURL string, client *http.Client) (Manifest, error) {
+	return importPackage(ctx, project, importRequest{input: input, replace: replace}, catalogURL, client)
+}
+
+func importPackage(ctx context.Context, project string, request importRequest, catalogURL string, client *http.Client) (Manifest, error) {
 	project, err := filepath.Abs(project)
 	if err != nil {
 		return Manifest{}, err
@@ -39,10 +48,38 @@ func Import(ctx context.Context, project, input string, replace bool) (Manifest,
 		return Manifest{}, err
 	}
 
-	source, packageRoot, err := openImportSource(ctx, root, project, input)
+	client = remoteArchiveClient(client)
+
+	selected, named, err := request.selection(sources)
 	if err != nil {
 		return Manifest{}, err
 	}
+
+	var (
+		source      Source
+		packageRoot *os.Root
+	)
+
+	if named {
+		if err := validateImportTarget(sources, selected.Name, request.replace); err != nil {
+			return Manifest{}, err
+		}
+
+		var cancel context.CancelFunc
+
+		ctx, cancel = context.WithTimeout(ctx, remoteArchiveTimeout)
+		defer cancel()
+
+		selected, packageRoot, err = openCatalogImport(ctx, root, project, selected, catalogURL, client)
+		source = selected.Source
+	} else {
+		source, packageRoot, err = openImportSource(ctx, root, project, request.input)
+	}
+
+	if err != nil {
+		return Manifest{}, err
+	}
+
 	defer packageRoot.Close()
 
 	definition, err := ReadManifest(ctx, packageRoot)
@@ -50,20 +87,27 @@ func Import(ctx context.Context, project, input string, replace bool) (Manifest,
 		return definition, err
 	}
 
+	if named && (definition.Name != selected.Name || definition.Version != selected.Version) {
+		return definition, fmt.Errorf(
+			"%w: catalog selected %s@%s but archive declares %s@%s",
+			ErrPackage,
+			selected.Name,
+			selected.Version,
+			definition.Name,
+			definition.Version,
+		)
+	}
+
 	name := definition.Name
+	if err := validateImportTarget(sources, name, request.replace); err != nil {
+		return definition, err
+	}
+
+	if !compatibleSDK(definition.SDK, sdk) {
+		return definition, fmt.Errorf("%w: package requires SDK >= %s, project pins %s", ErrPackage, definition.SDK, sdk)
+	}
 
 	_, exists := sources[name]
-	if exists && !replace {
-		return definition, fmt.Errorf("%w: package %s already exists; use --replace to update it", ErrPackage, name)
-	}
-
-	if !exists && len(sources) >= MaxPackages {
-		return definition, ErrPackage
-	}
-
-	if definition.SDK != "" && definition.SDK != sdk {
-		return definition, fmt.Errorf("%w: package requires SDK %s, project pins %s", ErrPackage, definition.SDK, sdk)
-	}
 
 	after, err := editDeclaration(before, name, source, exists)
 	if err != nil {
@@ -75,26 +119,48 @@ func Import(ctx context.Context, project, input string, replace bool) (Manifest,
 		return definition, err
 	}
 
-	var oldMod, newMod []byte
-	if definition.GoModule != "" || exists {
-		oldMod, err = Read(ctx, root, "go.mod", MaxManifestBytes)
-		if err != nil && (!os.IsNotExist(err) || definition.GoModule != "") {
-			return definition, err
-		}
-
-		if oldMod != nil {
-			newMod, err = editModule(oldMod, name, definition)
-			if err != nil {
-				return definition, err
-			}
-		}
+	oldMod, newMod, err := prepareImportModule(ctx, root, name, definition, exists)
+	if err != nil {
+		return definition, err
 	}
 
-	if err := commitImport(ctx, root, project, before, after, oldMod, newMod); err != nil {
+	if err := commitImport(ctx, root, project, before, after, oldMod, newMod, client); err != nil {
 		return definition, err
 	}
 
 	return definition, nil
+}
+
+func prepareImportModule(ctx context.Context, root *os.Root, name string, definition Manifest, exists bool) ([]byte, []byte, error) {
+	if definition.GoModule == "" && !exists {
+		return nil, nil, nil
+	}
+
+	before, err := Read(ctx, root, "go.mod", MaxManifestBytes)
+	if err != nil && (!os.IsNotExist(err) || definition.GoModule != "") {
+		return nil, nil, err
+	}
+
+	if before == nil {
+		return nil, nil, nil
+	}
+
+	after, err := editModule(before, name, definition)
+
+	return before, after, err
+}
+
+func validateImportTarget(sources map[string]Source, name string, replace bool) error {
+	_, exists := sources[name]
+	if exists && !replace {
+		return fmt.Errorf("%w: package %s already exists; use --replace to update it", ErrPackage, name)
+	}
+
+	if !exists && len(sources) >= MaxPackages {
+		return ErrPackage
+	}
+
+	return nil
 }
 
 func editModule(data []byte, packageName string, definition Manifest) ([]byte, error) {
@@ -293,7 +359,7 @@ func openImportSource(ctx context.Context, root *os.Root, project, input string)
 	return source, packageRoot, nil
 }
 
-func commitImport(ctx context.Context, root *os.Root, project string, before, after, oldMod, newMod []byte) error {
+func commitImport(ctx context.Context, root *os.Root, project string, before, after, oldMod, newMod []byte, client *http.Client) error {
 	if len(after) > MaxManifestBytes || len(newMod) > MaxManifestBytes {
 		return ErrPackage
 	}
@@ -323,7 +389,7 @@ func commitImport(ctx context.Context, root *os.Root, project string, before, af
 	if err = WriteGenerated(ctx, root, "karty.toml", after, false); err == nil {
 		var set *Set
 
-		set, err = Restore(ctx, project)
+		set, err = restoreWithClient(ctx, project, client)
 		if set != nil {
 			set.Close()
 		}

@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/pelletier/go-toml/v2"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
@@ -26,7 +27,7 @@ type Manifest struct {
 	FormatVersion int         `toml:"format_version"`
 	Name          string      `toml:"name"`
 	Version       string      `toml:"version"`
-	SDK           string      `toml:"sdk,omitempty"`
+	SDK           string      `toml:"sdk,omitempty"` // Minimum supported SDK version.
 	Prefabs       string      `toml:"prefabs,omitempty"`
 	Textures      []Texture   `toml:"textures,omitempty"`
 	UI            UIExports   `toml:"ui,omitempty"`
@@ -36,9 +37,10 @@ type Manifest struct {
 }
 
 type Texture struct {
-	Name    string `toml:"name"`
-	Source  string `toml:"source"`
-	Profile string `toml:"profile"`
+	Name        string                            `toml:"name"`
+	Source      string                            `toml:"source"`
+	Profile     string                            `toml:"profile"`
+	Materialize *assetpipeline.MaterializeOptions `toml:"materialize,omitempty"`
 }
 
 func LoadSources(ctx context.Context, directory string) (map[string]Source, string, error) {
@@ -110,32 +112,8 @@ func ReadManifest(ctx context.Context, root *os.Root) (Manifest, error) {
 		return definition, ErrPackage
 	}
 
-	if len(definition.Textures) > MaxTextures {
-		return definition, ErrPackage
-	}
-
-	seen := map[string]bool{}
-
-	var total int
-
-	for _, texture := range definition.Textures {
-		if !namePattern.MatchString(texture.Name) || seen[texture.Name] || !validPath(texture.Source) ||
-			!strings.HasSuffix(strings.ToLower(texture.Source), ".png") ||
-			texture.Profile == "" {
-			return definition, fmt.Errorf("%w: invalid texture %q", ErrPackage, texture.Name)
-		}
-
-		seen[texture.Name] = true
-
-		data, err := Read(ctx, root, texture.Source, MaxFileBytes)
-		if err != nil {
-			return definition, fmt.Errorf("texture %s: %w", texture.Name, err)
-		}
-
-		total += len(data)
-		if total > MaxTotalBytes {
-			return definition, ErrPackage
-		}
+	if err := validateTextures(ctx, root, definition.Textures); err != nil {
+		return definition, err
 	}
 
 	definition.GoModule, err = readGoModule(ctx, root, definition.Version)
@@ -161,6 +139,57 @@ func ReadManifest(ctx context.Context, root *os.Root) (Manifest, error) {
 	}
 
 	return definition, nil
+}
+
+func validateTextures(ctx context.Context, root *os.Root, textures []Texture) error {
+	if len(textures) > MaxTextures {
+		return ErrPackage
+	}
+
+	seen := map[string]bool{}
+
+	var total int
+
+	for _, texture := range textures {
+		if !namePattern.MatchString(texture.Name) || seen[texture.Name] || !validPath(texture.Source) ||
+			!strings.HasSuffix(strings.ToLower(texture.Source), ".png") || texture.Profile == "" {
+			return fmt.Errorf("%w: invalid texture %q", ErrPackage, texture.Name)
+		}
+
+		seen[texture.Name] = true
+
+		if err := validateTextureMaterialize(texture); err != nil {
+			return err
+		}
+
+		data, err := Read(ctx, root, texture.Source, MaxFileBytes)
+		if err != nil {
+			return fmt.Errorf("texture %s: %w", texture.Name, err)
+		}
+
+		total += len(data)
+		if total > MaxTotalBytes {
+			return ErrPackage
+		}
+	}
+
+	return nil
+}
+
+func validateTextureMaterialize(texture Texture) error {
+	if texture.Materialize == nil {
+		return nil
+	}
+
+	if texture.Profile != "environment" {
+		return fmt.Errorf("%w: texture %q materialize settings require the environment profile", ErrPackage, texture.Name)
+	}
+
+	if err := texture.Materialize.Validate(); err != nil {
+		return fmt.Errorf("%w: texture %q materialize settings: %w", ErrPackage, texture.Name, err)
+	}
+
+	return nil
 }
 
 func readGoModule(ctx context.Context, root *os.Root, version string) (string, error) {
@@ -217,7 +246,7 @@ func validateSources(sources map[string]Source, raw map[string]map[string]any) e
 				return ErrPackage
 			}
 		case !validArchiveSource(source.Archive) || !strings.HasSuffix(source.Archive, ".kpkg") || len(source.SHA256) != 64 || strings.ToLower(source.SHA256) != source.SHA256:
-			return fmt.Errorf("%w: %s needs a confined .kpkg path and SHA-256", ErrPackage, packageName)
+			return fmt.Errorf("%w: %s needs a confined .kpkg path or HTTPS archive URL and SHA-256", ErrPackage, packageName)
 		default:
 			for _, c := range source.SHA256 {
 				if !strings.ContainsRune("0123456789abcdef", c) {
@@ -231,6 +260,10 @@ func validateSources(sources map[string]Source, raw map[string]map[string]any) e
 }
 
 func validArchiveSource(name string) bool {
+	if validRemoteArchiveSource(name) {
+		return true
+	}
+
 	if !validPath(name) {
 		return false
 	}

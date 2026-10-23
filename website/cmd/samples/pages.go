@@ -87,7 +87,7 @@ func validateSiteDirectories(source fs.FS) error {
 				}
 			}
 		case "design":
-			for _, name := range []string{"index", "why", "architecture", "sdk-and-toolchain", "asset-pipeline", "packages"} {
+			for _, name := range []string{"index", "why", "architecture", "workflow", "asset-pipeline", "packages"} {
 				if err = requireSampleFile(source, "design/"+name+".html"); err != nil {
 					break
 				}

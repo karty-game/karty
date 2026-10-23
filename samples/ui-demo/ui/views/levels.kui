@@ -9,9 +9,10 @@
 </template>
 
 <script setup lang="go">
+import "example.com/ui-demo/.karty/assets"
 func setup(props AppProps) {
-	first := func() { props.Mount("levels.first") }
-	second := func() { props.Mount("levels.second") }
+	first := func() { props.Mount(assets.LevelFirst) }
+	second := func() { props.Mount(assets.LevelSecond) }
 	back := func() { props.Show(Menu(props)) }
 }
 </script>
