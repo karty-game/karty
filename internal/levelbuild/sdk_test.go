@@ -4,10 +4,12 @@ import (
 	"slices"
 
 	"github.com/karty-game/karty-sdk/format/asset"
+	"github.com/karty-game/karty-sdk/format/worldchunk"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
-// geometrySDK exercises released geometry packaging without prepared image/material atlases.
+// geometrySDK keeps legacy geometry fixtures independent of prepared atlases and chunks.
+// Prepared chunk tests opt in explicitly, even when the current SDK enables them.
 // Complete SDK manifests remain covered by the sample integration builds.
 func geometrySDK(manifest sdk.Manifest) sdk.Manifest {
 	return withoutRuntimeCapabilities(
@@ -15,6 +17,7 @@ func geometrySDK(manifest sdk.Manifest) sdk.Manifest {
 		asset.CapabilityWorldMaterialAtlasV1,
 		asset.CapabilityWorldMaterialAtlasV2,
 		asset.CapabilityTextureAtlasV1,
+		asset.Capability(worldchunk.ReadyFeature),
 	)
 }
 
