@@ -29,11 +29,15 @@ type chunkCacheValidationFixture struct {
 	children   []level.Envelope
 }
 
-func chunkCacheSemanticFixture(t *testing.T, lighting bool) chunkCacheValidationFixture {
+func chunkCacheSemanticFixture(t *testing.T, lighting bool, ready ...bool) chunkCacheValidationFixture {
 	t.Helper()
 	root := lightingLevelFixture(t, "version: 4\n"+chunkRoomsYAML+directLightmapYAML)
 	selected := directLightmapSDK(t)
+
 	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.Capability(worldchunk.Feature))
+	if len(ready) != 0 && ready[0] {
+		selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.Capability(worldchunk.ReadyFeature))
+	}
 
 	if lighting {
 		enableFixtureLightmap(

@@ -17,6 +17,14 @@ Scale is metres per repeat: a larger value makes the pattern larger. Set a
 room's `wall_uv`, `floor_uv`, or `ceiling_uv` to change only those surfaces.
 World anchoring keeps repeats aligned when you place prefabs.
 
+Use `mode: planar` for a flat surface that needs one texture projection, including
+a sloped floor or ceiling. For example, `floor_uv: {mode: planar}` keeps the
+inherited scale, offset and rotation while projecting in world XY. Solids support
+the same choice through `top_uv` and `bottom_uv`. This avoids blended triplanar
+sampling on slopes, but changes the pattern and normal-map response: compare the
+result before replacing an intentional triplanar blend. The compiler preserves
+explicit triplanar mapping.
+
 Materialize generates height, normal, and ambient occlusion maps for world
 surfaces, along with metallic and smoothness maps. Add a preset immediately
 after the texture entry in `level.toml`:

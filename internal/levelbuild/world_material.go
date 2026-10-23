@@ -10,6 +10,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/level"
 	"github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty-sdk/format/worldchunk"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	worldgeometry "github.com/karty-game/karty/internal/worldbuild/geometry"
@@ -23,6 +24,7 @@ type worldMaterialBuild struct {
 	features []string
 	chunks   []ChunkArtifact
 	sources  []level.SourceEntry
+	ready    *worldchunk.ReadyOptions
 }
 
 func compileMaterialWorld(
@@ -195,11 +197,6 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 
 	data = append(data, level.SourceEntry{Name: world.EntryName, Kind: level.EntryData, Data: encoded})
 
-	definition, chunkCache, cachedChunks, err := prepareWorldChunkCache(ctx, directory, definition, compiled, assets)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
 	var projectDirectory string
 	if assets != nil {
 		projectDirectory = assets.projectRoot
@@ -242,8 +239,9 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 	atlas.features = append(atlas.features, world.Feature)
 
 	atlas.sources = textures
+
 	if definition.Chunks != nil && definition.Chunks.Enabled {
-		atlas, err = finishWorldChunks(ctx, directory, definition, compiled, atlas, assets, chunkCache, cachedChunks)
+		atlas, err = prepareAndFinishWorldChunks(ctx, directory, definition, compiled, atlas, assets)
 		if err != nil {
 			return worldMaterialBuild{}, fmt.Errorf("level %q chunks: %w", definition.Level.Name, err)
 		}
@@ -266,6 +264,10 @@ func buildWorldMaterials(
 	options ...map[uint32]assetpipeline.MaterializeOptions,
 ) (worldMaterialBuild, error) {
 	result := worldMaterialBuild{data: data, metadata: metadata}
+	if supportsReadyChunks(assets) {
+		result.ready = &worldchunk.ReadyOptions{CleanupStatic: true}
+	}
+
 	if assets == nil || (!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1) &&
 		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV2)) {
 		return result, nil
@@ -311,6 +313,13 @@ func buildWorldMaterials(
 	pair.Layout = applyMaterialStrengths(pair.Layout, strengths)
 	if err := worldmaterial.ValidateAnimationCoverage(&document, pair.Layout); err != nil {
 		return worldMaterialBuild{}, err
+	}
+
+	if result.ready != nil {
+		result.ready.Masked = make([]bool, len(pair.Layout.Materials))
+		for slot, material := range pair.Layout.Materials {
+			result.ready.Masked[slot] = material.Coverage == worldmaterial.CoverageMasked
+		}
 	}
 
 	result.data, result.metadata, err = packageWorldMaterials(data, metadata, document, pair)

@@ -1,3 +1,25 @@
+textures = [
+  { name = "blast-smoke", source = "effects/fade/smoke-00.png" },
+  { name = "crate-oak-panel", source = "wood/oak-panel.png", materialize = { preset = "wood", normal_strength = 1.7, height_contrast = 1.2, metallic_scale = 0 } },
+  { name = "crate-oak-lid", source = "wood/oak-lid.png", materialize = { preset = "wood", normal_strength = 1.7, height_contrast = 1.2, metallic_scale = 0 } },
+  { name = "crate-oak-frame", source = "wood/oak-frame.png", materialize = { preset = "wood", normal_strength = 1.5, height_contrast = 1.15, metallic_scale = 0 } },
+  { name = "blast-smoke-fade-01", source = "effects/fade/smoke-01.png" },
+  { name = "blast-smoke-fade-02", source = "effects/fade/smoke-02.png" },
+  { name = "blast-smoke-fade-03", source = "effects/fade/smoke-03.png" },
+  { name = "blast-smoke-fade-04", source = "effects/fade/smoke-04.png" },
+  { name = "blast-smoke-fade-05", source = "effects/fade/smoke-05.png" },
+  { name = "blast-smoke-fade-06", source = "effects/fade/smoke-06.png" },
+  { name = "blast-smoke-fade-07", source = "effects/fade/smoke-07.png" },
+  { name = "blast-smoke-fade-08", source = "effects/fade/smoke-08.png" },
+  { name = "blast-smoke-fade-09", source = "effects/fade/smoke-09.png" },
+  { name = "blast-smoke-fade-10", source = "effects/fade/smoke-10.png" },
+  { name = "blast-smoke-fade-11", source = "effects/fade/smoke-11.png" },
+  { name = "blast-smoke-fade-12", source = "effects/fade/smoke-12.png" },
+  { name = "blast-smoke-fade-13", source = "effects/fade/smoke-13.png" },
+  { name = "blast-smoke-fade-14", source = "effects/fade/smoke-14.png" },
+  { name = "blast-smoke-fade-15", source = "effects/fade/smoke-15.png" },
+]
+
 [level]
 name = "levels.crate-room"
 kind = "world"

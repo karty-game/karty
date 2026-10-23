@@ -7,7 +7,7 @@ width = 1280
 height = 720
 
 [sdk]
-version = "0.0.18"
+version = "0.0.19"
 
 [packages.tiled]
 archive = "https://github.com/karty-game/karty-packages/releases/download/tiled-v0.0.1/tiled-0.0.1.kpkg"

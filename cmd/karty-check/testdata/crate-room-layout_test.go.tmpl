@@ -5,6 +5,7 @@ import (
 	"math"
 	"testing"
 
+	"example.com/crate-room/.karty/assets"
 	"example.com/crate-room/.karty/config"
 	"example.com/crate-room/.karty/engine"
 )
@@ -30,6 +31,116 @@ func TestCameraAndControlsUseConfiguredCanvas(t *testing.T) {
 	if settings.VerticalFOV != config.CameraFOVY || settings.OrthoHeight != config.CameraOrthoHeight ||
 		settings.NearClip != config.CameraNear || settings.FarClip != config.CameraFar {
 		t.Fatalf("camera ignores authored project settings: %+v", settings)
+	}
+}
+
+func TestImpactDetectionRejectsGravityLaunchesAndSettling(t *testing.T) {
+	for _, test := range []struct {
+		name          string
+		before, after engine.Vec3
+		impact        bool
+	}{
+		{"ground", engine.NewVec3(0, 0, -5), engine.Vec3{}, true},
+		{"wall", engine.NewVec3(5, 0, 0), engine.Vec3{}, true},
+		{"bounce", engine.NewVec3(0, -4, 0), engine.NewVec3(0, 1, 0), true},
+		{"gravity", engine.NewVec3(0, 0, -5), engine.NewVec3(0, 0, -5-9.81/60), false},
+		{"launch", engine.NewVec3(0, 0, -1), engine.NewVec3(0, 0, -6), false},
+		{"settling", engine.NewVec3(.1, -.1, .1), engine.Vec3{}, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := impactSpeed(test.before, test.after) >= 1.25; got != test.impact {
+				t.Fatalf("impact=%v, want %v", got, test.impact)
+			}
+		})
+	}
+}
+
+func TestFallingStackAudioIsBoundedAndSettlesToSilence(t *testing.T) {
+	engine.FixtureBegin()
+	t.Cleanup(engine.FixtureStop)
+	game := &Game{}
+	game.start()
+	(engine.Hooks{}).Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(engine.FixtureLastLevelRequest()), Handle: 9}}})
+	setHeight := func(z float32) {
+		for _, crate := range game.crates.crates {
+			pose := crate.Transform()
+			pose.Position.Z = z
+			engine.FixtureAcceptedPose(uint32(crate.ID()), pose)
+		}
+	}
+	setHeight(3)
+	game.audio.reset(&game.crates)
+	for range 46 {
+		game.update(engine.Frame{})
+	}
+	engine.FixtureAudioReset()
+	setHeight(2.9)
+	game.update(engine.Frame{})
+	if len(engine.FixtureAudioCalls()) != 0 {
+		t.Fatal("falling crates played an impact before contact")
+	}
+	setHeight(2.8)
+	game.update(engine.Frame{})
+	game.update(engine.Frame{}) // stopped on the surface
+	calls := engine.FixtureAudioCalls()
+	if len(calls) != 1 || calls[0].Sound != uint32(assets.SoundCrateHit) || calls[0].Z != 2.8 {
+		t.Fatalf("80 simultaneous contacts must yield one XYZ impact: %+v", calls)
+	}
+	for range 60 {
+		game.update(engine.Frame{})
+	}
+	if len(engine.FixtureAudioCalls()) != 1 {
+		t.Fatal("resting crates continued playing")
+	}
+}
+
+func TestBlastHitCorrelationParticleBudgetAndReset(t *testing.T) {
+	engine.FixtureBegin()
+	t.Cleanup(engine.FixtureStop)
+	game := &Game{}
+	game.start()
+	(engine.Hooks{}).Update(engine.Frame{Events: []engine.InputEvent{{Type: engine.EventLevelReady, RequestID: uint32(engine.FixtureLastLevelRequest()), Handle: 9}}})
+	engine.FixtureAudioReset()
+	for range 6 {
+		game.fire(true)
+		request := game.player.gun.pending[0]
+		if request == 0 {
+			t.Fatal("blast did not request a hit")
+		}
+		result := engine.RaycastResult{RequestID: request, Handle: game.level, Hit: true,
+			Position: engine.NewVec3(1, 2, 3), Normal: engine.NewVec3(0, 0, 1)}
+		game.blastHit(result)
+		game.blastHit(result) // duplicate responses must not restart effects
+	}
+	if len(engine.FixtureAudioCalls()) != 4 {
+		t.Fatal("blast audio exceeded four live/fading voices")
+	}
+	active := func() int {
+		count := 0
+		for _, burst := range game.particles.bursts {
+			for _, particle := range burst {
+				if particle.sprite != nil {
+					count++
+				}
+			}
+		}
+		return count
+	}
+	if active() != 24 {
+		t.Fatalf("burst replacement exceeded particle budget: %d", active())
+	}
+	for range 180 {
+		game.particles.update(game.level)
+	}
+	if active() != 0 {
+		t.Fatal("expired smoke particles remained alive")
+	}
+	game.fire(true)
+	late := game.player.gun.pending[0]
+	game.reset()
+	game.blastHit(engine.RaycastResult{RequestID: late, Handle: game.level, Hit: true})
+	if active() != 0 {
+		t.Fatal("reset replayed a late blast response")
 	}
 }
 

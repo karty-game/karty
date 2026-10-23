@@ -2,6 +2,7 @@ package levelbuild
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -105,5 +106,26 @@ preset="concrete"
 
 	if definition.World.Source == "world.yaml" || !strings.HasPrefix(entry.Source, ".karty/packages/") {
 		t.Fatal("package inputs escaped ordinary generated staging")
+	}
+}
+
+func TestPackageMaterialOverrideOmitsReplacedRecipe(t *testing.T) {
+	t.Parallel()
+
+	entries := []textureEntry{
+		{Name: "kit.wood", Imported: true, Materialize: &materializeSettings{Preset: "wood"}},
+		{Name: "oak", Materialize: &materializeSettings{Preset: "wood"}},
+	}
+	metadata := []metadataTexture{{Name: "kit.wood", ID: 1}, {Name: "oak", ID: 2}}
+	document := world.Document{Sectors: []world.Sector{{FloorMaterial: 2, CeilingMaterial: 2}}}
+
+	options, err := resolveMaterializeSettings(entries, metadata, document)
+	if err != nil || len(options) != 1 || options[2].Preset != "wood" {
+		t.Fatalf("overridden package recipe: %v %v", options, err)
+	}
+
+	entries[0].Imported = false
+	if _, err := resolveMaterializeSettings(entries, metadata, document); !errors.Is(err, ErrManifest) {
+		t.Fatal("unused authored recipe lost strict validation", err)
 	}
 }

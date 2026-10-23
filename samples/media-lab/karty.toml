@@ -7,7 +7,7 @@ width = 960
 height = 540
 
 [sdk]
-version = "0.0.18"
+version = "0.0.19"
 
 [[assets.texture]]
 name = "gallery.background"

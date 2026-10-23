@@ -151,7 +151,19 @@ func buildWorldChunks(ctx context.Context, directory string, definition manifest
 		}
 	}
 
-	plan, err := worldchunk.Plan(document, options)
+	planOptions := options
+	if result.ready != nil {
+		// The intermediate semantic encoding is not shipped. Partition against
+		// the completed ready-only module below, retaining semantic format bounds.
+		planOptions.MaxEncodedBytes = worldchunk.MaxEncodedBytes
+	}
+
+	plan, err := worldchunk.Plan(document, planOptions)
+	if err != nil {
+		return worldMaterialBuild{}, err
+	}
+
+	result, err = prepareWorldChunkStreams(result, plan.Chunks, &document)
 	if err != nil {
 		return worldMaterialBuild{}, err
 	}
@@ -195,7 +207,7 @@ func buildWorldChunks(ctx context.Context, directory string, definition manifest
 		)
 		if definition.Lightmap != nil && definition.Lightmap.Environment != nil {
 			artifact, descriptor, variants, err = encodeEnvironmentWorldChunk(ctx, document, definition.Level.Name, chunk,
-				materials, bakeOptions, *definition.Lightmap.Environment, cache)
+				materials, bakeOptions, *definition.Lightmap.Environment, cache, result.ready)
 		} else {
 			artifact, descriptor, err = encodeWorldChunk(
 				ctx,
@@ -206,25 +218,19 @@ func buildWorldChunks(ctx context.Context, directory string, definition manifest
 				bakeOptions,
 				options.NoLightmap,
 				cache,
+				result.ready,
 			)
 		}
 
-		if err != nil {
-			return worldMaterialBuild{}, err
+		retry, buildErr := chunkArtifactLimit(descriptor, chunk, options, result.ready != nil, err)
+		if retry {
+			definition = repartitionChunkSettings(definition, len(chunk.Sectors)-1)
+
+			return buildWorldChunks(ctx, directory, definition, document, shared, cache)
 		}
 
-		if descriptor.Size > options.MaxEncodedBytes {
-			if len(chunk.Sectors) > 1 {
-				settings := *definition.Chunks
-				limit := len(chunk.Sectors) - 1
-				settings.MaxSectors = &limit
-				definition.Chunks = &settings
-
-				return buildWorldChunks(ctx, directory, definition, document, shared, cache)
-			}
-
-			return worldMaterialBuild{}, fmt.Errorf("chunk %d sectors %v needs %d encoded bytes, budget %d: %w",
-				chunk.ID, chunk.Sectors, descriptor.Size, options.MaxEncodedBytes, ErrManifest)
+		if buildErr != nil {
+			return worldMaterialBuild{}, buildErr
 		}
 
 		result.chunks = append(result.chunks, artifact)
@@ -276,6 +282,9 @@ func applyWorldChunks(
 	}
 
 	identity[worldchunk.MetadataKey] = level.StringValue(worldchunk.Schema)
+	if result.ready != nil {
+		identity[worldchunk.ReadyMetadataKey] = level.StringValue(worldchunk.ReadySchema)
+	}
 
 	result.metadata, err = level.EncodeMetadata(identity)
 	if err != nil {
@@ -286,6 +295,10 @@ func applyWorldChunks(
 	result.chunks = chunks
 
 	result.features = append(result.features, worldchunk.Feature)
+	if result.ready != nil {
+		result.features = append(result.features, worldchunk.ReadyFeature)
+	}
+
 	if definition.Lightmap != nil && definition.Lightmap.Enabled {
 		result.features = append(result.features, worldlightmap.Feature)
 		if definition.Lightmap.Environment != nil {
@@ -336,6 +349,7 @@ func encodeWorldChunk(
 	ctx context.Context, document world.Document, name string, chunk worldchunk.PlannedChunk,
 	materials []worldlightmapbake.Material, options worldlightmapbake.Options, noLightmap bool,
 	cache *chunkPixelCache,
+	ready ...*worldchunk.ReadyOptions,
 ) (ChunkArtifact, worldchunk.Chunk, error) {
 	mesh, err := worldchunk.EncodeMesh(chunk.Mesh, &document)
 	if err != nil {
@@ -348,6 +362,16 @@ func encodeWorldChunk(
 		"geometrySha256":            level.StringValue(chunk.Mesh.GeometrySHA256),
 	}
 	entries := []level.SourceEntry{{Name: worldchunk.MeshEntryName, Kind: level.EntryData, Data: mesh}}
+
+	var layout *worldlightmap.Layout
+	if !noLightmap {
+		layout = &chunk.Layout
+	}
+
+	entries, meshBytes, err := appendWorldChunkStreams(entries, identity, &chunk.Mesh, mesh, &document, layout, ready...)
+	if err != nil {
+		return ChunkArtifact{}, worldchunk.Chunk{}, err
+	}
 
 	var lightmapBytes uint64
 
@@ -378,7 +402,7 @@ func encodeWorldChunk(
 	contentDigest := hex.EncodeToString(digest[:])
 	artifact := ChunkArtifact{ID: chunk.ID, Bytes: module, ContentSHA256: contentDigest, EnvelopeVersion: level.EnvelopeVersion}
 	descriptor := worldchunk.Chunk{ID: chunk.ID, Sectors: chunk.Sectors, Solids: chunk.Solids, ContentSHA256: contentDigest,
-		Size: uint64(len(module)), MeshBytes: chunk.MeshBytes, LightmapBytes: lightmapBytes, Bounds: chunk.Bounds}
+		Size: uint64(len(module)), MeshBytes: meshBytes, LightmapBytes: lightmapBytes, Bounds: chunk.Bounds}
 
 	return artifact, descriptor, nil
 }

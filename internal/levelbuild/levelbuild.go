@@ -69,6 +69,7 @@ type worldSettings struct {
 
 type textureEntry struct {
 	Generated              bool                 `toml:"-"`
+	Imported               bool                 `toml:"-"`
 	Name                   string               `toml:"name"`
 	Source                 string               `toml:"source"`
 	Profile                string               `toml:"profile"`

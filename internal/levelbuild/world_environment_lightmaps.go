@@ -75,7 +75,7 @@ func (settings environmentLightmapSettings) validate() error {
 
 func encodeEnvironmentWorldChunk(ctx context.Context, document world.Document, name string, chunk worldchunk.PlannedChunk,
 	materials []worldlightmapbake.Material, options worldlightmapbake.Options, settings environmentLightmapSettings,
-	cache *chunkPixelCache) (ChunkArtifact, worldchunk.Chunk, []ChunkArtifact, error) {
+	cache *chunkPixelCache, ready ...*worldchunk.ReadyOptions) (ChunkArtifact, worldchunk.Chunk, []ChunkArtifact, error) {
 	if err := settings.validate(); err != nil {
 		return ChunkArtifact{}, worldchunk.Chunk{}, nil, err
 	}
@@ -185,13 +185,10 @@ func encodeEnvironmentWorldChunk(ctx context.Context, document world.Document, n
 		return ChunkArtifact{}, worldchunk.Chunk{}, nil, err
 	}
 
-	identity, err := level.EncodeMetadata(level.Metadata{
+	identity := level.Metadata{
 		worldchunk.ChunkMetadataKey: level.StringValue(worldchunk.Schema), "chunkID": level.UintValue(uint64(chunk.ID)),
 		"geometrySha256": level.StringValue(chunk.Mesh.GeometrySHA256), worldlightmap.MetadataKey: level.StringValue(worldlightmap.Schema),
 		worldlightmap.EnvironmentVariantsMetadataKey: level.StringValue(worldlightmap.EnvironmentVariantsSchema),
-	})
-	if err != nil {
-		return ChunkArtifact{}, worldchunk.Chunk{}, nil, err
 	}
 
 	entries := []level.SourceEntry{{Name: worldchunk.MeshEntryName, Kind: level.EntryData, Data: mesh},
@@ -199,7 +196,17 @@ func encodeEnvironmentWorldChunk(ctx context.Context, document world.Document, n
 		{Name: worldlightmap.EnvironmentVariantsEntryName, Kind: level.EntryData, Data: encodedCatalog},
 		{Name: worldlightmap.EnvironmentImageEntryName, Kind: level.EntryData, Data: defaultImage}}
 
-	module, err := encodeLevelModule(name, identity, entries)
+	entries, meshBytes, err := appendWorldChunkStreams(entries, identity, &chunk.Mesh, mesh, &document, &chunk.Layout, ready...)
+	if err != nil {
+		return ChunkArtifact{}, worldchunk.Chunk{}, nil, err
+	}
+
+	metadata, err := level.EncodeMetadata(identity)
+	if err != nil {
+		return ChunkArtifact{}, worldchunk.Chunk{}, nil, err
+	}
+
+	module, err := encodeLevelModule(name, metadata, entries)
 	if err != nil {
 		return ChunkArtifact{}, worldchunk.Chunk{}, nil, err
 	}
@@ -208,7 +215,7 @@ func encodeEnvironmentWorldChunk(ctx context.Context, document world.Document, n
 	contentHash := hex.EncodeToString(digest[:])
 	artifact := ChunkArtifact{ID: chunk.ID, Bytes: module, ContentSHA256: contentHash, EnvelopeVersion: level.EnvelopeVersion}
 	descriptor := worldchunk.Chunk{ID: chunk.ID, Sectors: chunk.Sectors, Solids: chunk.Solids, ContentSHA256: contentHash,
-		Size: uint64(len(module)), MeshBytes: chunk.MeshBytes, LightmapBytes: decoded, Bounds: chunk.Bounds}
+		Size: uint64(len(module)), MeshBytes: meshBytes, LightmapBytes: decoded, Bounds: chunk.Bounds}
 
 	return artifact, descriptor, children, nil
 }

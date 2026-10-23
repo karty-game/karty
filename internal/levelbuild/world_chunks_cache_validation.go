@@ -33,6 +33,8 @@ func validateWorldChunkCacheChild(
 	catalog *worldchunk.Catalog,
 	document *world.Document,
 	noLightmap bool,
+	readyOptions *worldchunk.ReadyOptions,
+	prepared *cachedWorldChunkGeometry,
 	settings ...*lightmapBuildSettings,
 ) error {
 	envelope, err := level.DecodePassiveModule(module)
@@ -57,9 +59,27 @@ func validateWorldChunkCacheChild(
 		return err
 	}
 
-	mesh, err := worldchunk.DecodeMesh(entries[worldchunk.MeshEntryName], document)
-	if err != nil || !slices.Equal(mesh.Sectors, child.Sectors) || !slices.Equal(mesh.Solids, child.Solids) ||
-		mesh.Bounds != child.Bounds || mesh.GeometrySHA256 != catalog.GeometrySHA256 || worldchunk.DecodedMeshBytes(mesh) != child.MeshBytes {
+	if readyOptions != nil {
+		if !chunkMetadataMatches(metadata, worldchunk.ReadyMetadataKey, worldchunk.ReadySchema) ||
+			len(entries[worldchunk.ReadyEntryName]) == 0 || entries[worldchunk.MeshEntryName] != nil || prepared == nil {
+			return worldchunk.ErrChunk
+		}
+	} else if chunkMetadataPresent(metadata, worldchunk.ReadyMetadataKey) || entries[worldchunk.ReadyEntryName] != nil {
+		return worldchunk.ErrChunk
+	}
+
+	var (
+		mesh        worldchunk.Mesh
+		encodedMesh []byte
+	)
+	if readyOptions != nil {
+		mesh, encodedMesh = prepared.mesh, prepared.encoded
+	} else {
+		encodedMesh = entries[worldchunk.MeshEntryName]
+		mesh, err = worldchunk.DecodeMesh(encodedMesh, document)
+	}
+
+	if err != nil || !cachedWorldChunkMeshMatches(&mesh, child, catalog.GeometrySHA256, readyOptions != nil) {
 		return worldchunk.ErrChunk
 	}
 
@@ -69,10 +89,28 @@ func validateWorldChunkCacheChild(
 			return worldchunk.ErrChunk
 		}
 
-		return worldchunk.ValidateMeshBinding(&mesh, nil)
+		if err := worldchunk.ValidateMeshBinding(&mesh, nil); err != nil {
+			return err
+		}
+
+		return validateCachedWorldChunkStreams(entries, &mesh, encodedMesh, document, nil, readyOptions, child.MeshBytes)
 	}
 
-	return validateWorldChunkCacheLightmap(entries, metadata, &mesh, child, catalog, document, settings...)
+	if err := validateWorldChunkCacheLightmap(entries, metadata, &mesh, child, catalog, document, settings...); err != nil {
+		return err
+	}
+
+	if readyOptions == nil {
+		return nil
+	}
+
+	return validateCachedWorldChunkStreams(entries, &mesh, encodedMesh, document, prepared.layout, readyOptions, child.MeshBytes)
+}
+
+func cachedWorldChunkMeshMatches(mesh *worldchunk.Mesh, child worldchunk.Chunk, geometrySHA256 string, ready bool) bool {
+	return slices.Equal(mesh.Sectors, child.Sectors) && slices.Equal(mesh.Solids, child.Solids) &&
+		mesh.Bounds == child.Bounds && mesh.GeometrySHA256 == geometrySHA256 &&
+		(ready || worldchunk.DecodedMeshBytes(*mesh) == child.MeshBytes)
 }
 
 func validateWorldChunkCacheLightmap(entries map[string][]byte, metadata level.Metadata, mesh *worldchunk.Mesh,
@@ -136,7 +174,7 @@ func chunkMetadataPresent(metadata level.Metadata, key string) bool {
 }
 
 func readWorldChunkCacheEntries(envelope level.Envelope) (map[string][]byte, error) {
-	if len(envelope.Entries) != 1 && len(envelope.Entries) != 4 {
+	if len(envelope.Entries) < 1 || len(envelope.Entries) > 4 {
 		return nil, worldchunk.ErrChunk
 	}
 
@@ -147,7 +185,11 @@ func readWorldChunkCacheEntries(envelope level.Envelope) (map[string][]byte, err
 		}
 
 		switch entry.Name {
-		case worldchunk.MeshEntryName, worldlightmap.EntryName, worldlightmap.PrebakeEntryName, worldlightmap.PrebakeImageEntryName:
+		case worldchunk.MeshEntryName,
+			worldchunk.ReadyEntryName,
+			worldlightmap.EntryName,
+			worldlightmap.PrebakeEntryName,
+			worldlightmap.PrebakeImageEntryName:
 		default:
 			return nil, worldchunk.ErrChunk
 		}

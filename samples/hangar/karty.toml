@@ -13,7 +13,7 @@ far = 120
 ortho_height = 50
 
 [sdk]
-version = "0.0.18"
+version = "0.0.19"
 
 [[assets.sound]]
 name = "reactor-hum"

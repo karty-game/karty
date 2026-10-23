@@ -18,7 +18,7 @@ import (
 
 // This is a private build cache revision, not a new cartridge format. Bump it
 // when changing production without changing the SDK's public schema/version.
-const chunkCacheRevision = "karty-cli-chunk-cache@5"
+const chunkCacheRevision = "karty-cli-chunk-cache@8"
 
 type worldChunkCache struct {
 	key     string
@@ -89,6 +89,7 @@ func readWorldChunkCache(
 	root, directory, key string,
 	document *world.Document,
 	definition manifest,
+	ready ...*worldchunk.ReadyOptions,
 ) (worldChunkCache, bool) {
 	cache := worldChunkCache{key: key}
 
@@ -146,31 +147,30 @@ func readWorldChunkCache(
 		}
 	}
 
-	for _, child := range catalog.Chunks {
+	cache.chunks, err = readWorldChunkCacheModules(ctx, root, path, catalog.Chunks, options, groups)
+	if err != nil {
+		return cache, false
+	}
+
+	readyOptions, geometry, err := cachedWorldChunkStreams(cache.chunks, catalog.Chunks, document, ready...)
+	if err != nil {
+		return cache, false
+	}
+
+	for index, child := range catalog.Chunks {
 		if ctx.Err() != nil {
 			return cache, false
 		}
 
-		if !chunkDescriptorWithinOptions(child, options, groups) {
-			return cache, false
+		var prepared *cachedWorldChunkGeometry
+		if readyOptions != nil {
+			prepared = &geometry[index]
 		}
 
-		data, err := readConfinedFile(root, filepath.Join(path, child.ContentSHA256+".chunk.kld"), int(child.Size))
-		if err != nil || uint64(len(data)) != child.Size {
+		if err := validateWorldChunkCacheChild(cache.chunks[index].Bytes, child, &catalog, document, options.NoLightmap,
+			readyOptions, prepared, definition.Lightmap); err != nil {
 			return cache, false
 		}
-
-		digest := sha256.Sum256(data)
-		if hex.EncodeToString(digest[:]) != child.ContentSHA256 {
-			return cache, false
-		}
-
-		if err := validateWorldChunkCacheChild(data, child, &catalog, document, options.NoLightmap, definition.Lightmap); err != nil {
-			return cache, false
-		}
-
-		cache.chunks = append(cache.chunks, ChunkArtifact{ID: child.ID, Bytes: data,
-			ContentSHA256: child.ContentSHA256, EnvelopeVersion: level.EnvelopeVersion})
 	}
 
 	return cache, true
@@ -223,6 +223,7 @@ func prepareWorldChunkCache(
 	definition manifest,
 	document world.Document,
 	assets *assetBuild,
+	ready ...*worldchunk.ReadyOptions,
 ) (manifest, worldChunkCache, bool, error) {
 	if definition.Chunks == nil || !definition.Chunks.Enabled {
 		return definition, worldChunkCache{}, false, nil
@@ -243,7 +244,7 @@ func prepareWorldChunkCache(
 		return definition, worldChunkCache{}, false, err
 	}
 
-	cache, found := readWorldChunkCache(ctx, assets.projectRoot, directory, key, &document, definition)
+	cache, found := readWorldChunkCache(ctx, assets.projectRoot, directory, key, &document, definition, ready...)
 	if err := ctx.Err(); err != nil {
 		return definition, worldChunkCache{}, false, err
 	}
@@ -259,7 +260,7 @@ func prepareWorldChunkCache(
 				return definition, worldChunkCache{}, false, err
 			}
 
-			cache, found = readWorldChunkCache(ctx, assets.projectRoot, directory, key, &document, definition)
+			cache, found = readWorldChunkCache(ctx, assets.projectRoot, directory, key, &document, definition, ready...)
 		}
 
 		log.Info("Using mesh-only preview chunks with live lighting", "level_name", definition.Level.Name)

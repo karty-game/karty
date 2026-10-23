@@ -25,6 +25,10 @@ prefabs:
     instances:
       - id: shape
         prefab: fps-kit.crate-medium-dynamic
+        materials:
+          - { from: fps-kit.crate-panel, to: crate-oak-panel }
+          - { from: fps-kit.crate-lid, to: crate-oak-lid }
+          - { from: fps-kit.crate-frame, to: crate-oak-frame }
 
 # Banks and bumpers use the same collision-enabled geometry as rendering.
 solids:

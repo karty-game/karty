@@ -13,7 +13,19 @@ far = 80
 ortho_height = 24
 
 [sdk]
-version = "0.0.18"
+version = "0.0.19"
+
+[[assets.sound]]
+name = "shoot"
+source = "assets/sounds/shoot.wav"
+
+[[assets.sound]]
+name = "blast"
+source = "assets/sounds/blast.wav"
+
+[[assets.sound]]
+name = "crate-hit"
+source = "assets/sounds/crate-hit.wav"
 
 [packages.fps-kit]
 archive = "https://github.com/karty-game/karty-packages/releases/download/fps-kit-v0.0.1/fps-kit-0.0.1.kpkg"

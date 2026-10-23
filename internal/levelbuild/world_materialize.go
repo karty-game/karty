@@ -88,6 +88,12 @@ func resolveMaterializeSettings(entries []textureEntry, textures []metadataTextu
 		}
 
 		materialID := ids[texture.Name]
+		// Prefab material overrides can replace an imported surface completely.
+		// Its package recipe remains valid, but no atlas tile needs generation.
+		if texture.Imported && materialID != 0 && !slices.Contains(used, materialID) {
+			continue
+		}
+
 		if materialID == 0 || !slices.Contains(used, materialID) {
 			return nil, fmt.Errorf("texture %q materialize settings require a used world surface: %w", texture.Name, ErrManifest)
 		}

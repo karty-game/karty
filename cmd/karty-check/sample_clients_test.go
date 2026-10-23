@@ -284,6 +284,10 @@ const (SoundEmberCrackle engine.SoundID=1; SoundFireballCast engine.SoundID=2; S
 		copyComponentFixture(t, "testdata/particle-lab-lifecycle_test.go.tmpl", directory, "src/lifecycle_test.go")
 	case "crate-room":
 		copyComponentFixture(t, "testdata/crate-room-layout_test.go.tmpl", directory, "src/layout_test.go")
+		writeComponentFixture(t, directory, ".karty/assets/sounds.go", []byte(`package assets
+import "example.com/crate-room/.karty/engine"
+const (SoundShoot engine.SoundID=1; SoundBlast engine.SoundID=2; SoundCrateHit engine.SoundID=3)
+`))
 	case "ui-demo":
 		prepareFlightTests(t, directory, views)
 	case "media-lab":

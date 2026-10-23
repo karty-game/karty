@@ -1469,9 +1469,11 @@ rooms:
       - { id: edge-5, start: { x: 32.00, y: 38.00 }, end: { x: 30.00, y: 38.00 }, material: ribbed }
       - { id: edge-6, start: { x: 30.00, y: 38.00 }, end: { x: 30.00, y: 34.00 }, material: ribbed }
   # Continuous pool-exit ramps; strips retain the existing directed portals.
+  # Explicit planar UVs keep these flat slopes on one material projection.
   - id: trench-stair-0
     floor: { a: 0.616666666667, c: -28.1666666667 }
     ceiling: { a: 0.333333333333, c: -12.1333333333 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1484,6 +1486,7 @@ rooms:
   - id: west-trench-stair-0
     floor: { b: 0.583333333333, c: -18.6666666667 }
     ceiling: { b: 0.333333333333, c: -7.56666666667 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1496,6 +1499,7 @@ rooms:
   - id: trench-stair-1
     floor: { a: 0.616666666667, c: -28.1666666667 }
     ceiling: { a: 0.333333333333, c: -12.1333333333 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1508,6 +1512,7 @@ rooms:
   - id: west-trench-stair-1
     floor: { b: 0.583333333333, c: -18.6666666667 }
     ceiling: { b: 0.333333333333, c: -7.56666666667 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1520,6 +1525,7 @@ rooms:
   - id: trench-stair-2
     floor: { a: 0.616666666667, c: -28.1666666667 }
     ceiling: { a: 0.333333333333, c: -12.1333333333 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1532,6 +1538,7 @@ rooms:
   - id: west-trench-stair-2
     floor: { b: 0.583333333333, c: -18.6666666667 }
     ceiling: { b: 0.333333333333, c: -7.56666666667 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1544,6 +1551,7 @@ rooms:
   - id: trench-stair-3
     floor: { a: 0.616666666667, c: -28.1666666667 }
     ceiling: { a: 0.333333333333, c: -12.1333333333 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1556,6 +1564,7 @@ rooms:
   - id: west-trench-stair-3
     floor: { b: 0.583333333333, c: -18.6666666667 }
     ceiling: { b: 0.333333333333, c: -7.56666666667 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1568,6 +1577,7 @@ rooms:
   - id: trench-stair-4
     floor: { a: 0.616666666667, c: -28.1666666667 }
     ceiling: { a: 0.333333333333, c: -12.1333333333 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1580,6 +1590,7 @@ rooms:
   - id: west-trench-stair-4
     floor: { b: 0.583333333333, c: -18.6666666667 }
     ceiling: { b: 0.333333333333, c: -7.56666666667 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1592,6 +1603,7 @@ rooms:
   - id: trench-stair-5
     floor: { a: 0.616666666667, c: -28.1666666667 }
     ceiling: { a: 0.333333333333, c: -12.1333333333 }
+    floor_uv: { mode: planar }
     floor_material: recess
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -1604,6 +1616,7 @@ rooms:
   - id: west-trench-stair-5
     floor: { b: 0.583333333333, c: -18.6666666667 }
     ceiling: { b: 0.333333333333, c: -7.56666666667 }
+    floor_uv: { mode: planar }
     floor_material: floor
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
@@ -4854,6 +4867,8 @@ solids:
     bottom: { a: 0.333333333333, c: -12.4133333333 }
     top: { a: 0.333333333333, c: -12.1333333333 }
     side_material: steel
+    top_uv: { mode: planar }
+    bottom_uv: { mode: planar }
     top_material: steel
     bottom_material: steel
     collision: false
@@ -4862,6 +4877,8 @@ solids:
     bottom: { a: 0.333333333333, c: -12.4133333333 }
     top: { a: 0.333333333333, c: -12.1333333333 }
     side_material: steel
+    top_uv: { mode: planar }
+    bottom_uv: { mode: planar }
     top_material: steel
     bottom_material: steel
     collision: false
@@ -4870,6 +4887,8 @@ solids:
     bottom: { b: 0.333333333333, c: -7.84666666667 }
     top: { b: 0.333333333333, c: -7.56666666667 }
     side_material: steel
+    top_uv: { mode: planar }
+    bottom_uv: { mode: planar }
     top_material: steel
     bottom_material: steel
     collision: false
@@ -4878,6 +4897,8 @@ solids:
     bottom: { b: 0.333333333333, c: -7.84666666667 }
     top: { b: 0.333333333333, c: -7.56666666667 }
     side_material: steel
+    top_uv: { mode: planar }
+    bottom_uv: { mode: planar }
     top_material: steel
     bottom_material: steel
     collision: false

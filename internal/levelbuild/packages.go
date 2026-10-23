@@ -53,7 +53,7 @@ func resolveLevelPackages(ctx context.Context, directory string, definition mani
 			return definition, err
 		}
 
-		entry := textureEntry{Name: texture.Name, Source: name, Profile: texture.Profile}
+		entry := textureEntry{Name: texture.Name, Source: name, Profile: texture.Profile, Imported: true}
 		if options := texture.Materialize; options != nil {
 			entry.Materialize = &materializeSettings{
 				Preset: options.Preset, NormalStrength: options.NormalStrength,

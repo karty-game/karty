@@ -13,10 +13,12 @@ const shootX, shootY = width / 2, height * .8125
 
 type Game struct {
 	engine.Game
-	level  engine.LevelHandle
-	player roomPlayer
-	crates crateStack
-	hud    roomHUD
+	level     engine.LevelHandle
+	player    roomPlayer
+	crates    crateStack
+	hud       roomHUD
+	audio     roomAudio
+	particles roomParticles
 }
 
 //go:wasmexport karty_register
@@ -27,13 +29,15 @@ func main() {
 
 func (game *Game) Hooks() engine.Hooks {
 	return engine.Hooks{
-		OnStart:       game.start,
-		OnUpdate:      game.update,
-		OnKeyDown:     func(key engine.Key) { game.player.input.key(key, true) },
-		OnKeyUp:       func(key engine.Key) { game.player.input.key(key, false) },
-		OnPointer:     func(pointer engine.PointerInput) { game.player.input.pointer(&game.Game, pointer) },
-		OnInputReset:  game.player.input.reset,
-		OnLevelFailed: func(event engine.LevelFailed) { game.hud.setStatus("Level failed: " + event.Diagnostic) },
+		OnStart:         game.start,
+		OnUpdate:        game.update,
+		OnStop:          game.stop,
+		OnRaycastResult: game.blastHit,
+		OnKeyDown:       func(key engine.Key) { game.player.input.key(key, true) },
+		OnKeyUp:         func(key engine.Key) { game.player.input.key(key, false) },
+		OnPointer:       func(pointer engine.PointerInput) { game.player.input.pointer(&game.Game, pointer) },
+		OnInputReset:    game.player.input.reset,
+		OnLevelFailed:   func(event engine.LevelFailed) { game.hud.setStatus("Level failed: " + event.Diagnostic) },
 	}
 }
 
@@ -51,6 +55,7 @@ func (game *Game) ready(event engine.LevelReady) {
 	}
 	game.player.create(&game.Game, game.level)
 	game.crates.create(&game.Game, game.level)
+	game.audio.reset(&game.crates)
 	game.hud.refresh(game.player.gun.shots, game.player.gun.blasts)
 }
 
@@ -64,12 +69,16 @@ func (game *Game) update(engine.Frame) {
 		game.reset()
 		return
 	}
+	game.audio.update(&game.Game, game.level, game.player.camera, &game.crates)
+	game.particles.update(game.level)
 	game.player.gun.update(&game.player.input, game.fire)
 }
 
 // fire keeps the world impulse and displayed shot counters in the same action.
 func (game *Game) fire(blast bool) {
 	game.player.gun.fire(&game.Game, game.level, game.player.camera, blast)
+	// An applied weapon impulse can reverse velocity just like a contact.
+	game.audio.quiet = max(game.audio.quiet, 2)
 	game.hud.refresh(game.player.gun.shots, game.player.gun.blasts)
 }
 
@@ -77,7 +86,30 @@ func (game *Game) fire(blast bool) {
 func (game *Game) reset() {
 	game.player.input.reset()
 	game.player.gun.shots, game.player.gun.blasts = 0, 0
+	game.player.gun.pending = [4]engine.RequestID{}
 	game.player.reset()
 	game.crates.reset(&game.Game, game.level)
+	game.audio.reset(&game.crates)
+	game.particles.clear()
 	game.hud.refresh(game.player.gun.shots, game.player.gun.blasts)
+}
+
+func (game *Game) blastHit(result engine.RaycastResult) {
+	if result.Handle != game.level || !game.player.gun.acceptHit(result) {
+		return
+	}
+	// Match the physics blast's 12 cm outward bias, away from the struck face.
+	position := engine.NewVec3(
+		result.Position.X+result.Normal.X*.12,
+		result.Position.Y+result.Normal.Y*.12,
+		result.Position.Z+result.Normal.Z*.12,
+	)
+	playRoomVoice(&game.Game, game.level, &game.audio.blasts, assets.SoundBlast, position, .85, 40)
+	game.particles.burst(&game.Game, game.level, position)
+}
+
+func (game *Game) stop() {
+	game.audio.stop()
+	game.particles.clear()
+	game.ClearAudioListener()
 }

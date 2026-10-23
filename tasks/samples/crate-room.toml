@@ -12,3 +12,31 @@ run = "../../dist/karty build --target native"
 [check-crate-room-ui]
 description = "Check presentation HUD, held fire and independent touch movement/aim in actual browser WASM"
 run = "node scripts/check-crate-room-ui.mjs"
+
+[generate-crate-room-sounds]
+description = "Generate original cartoon weapon and wooden impact sounds"
+run = "go run scripts/crate-room-sounds.go"
+
+[check-crate-room-sounds]
+description = "Verify deterministic crate room sound assets"
+run = "go run scripts/crate-room-sounds.go --check"
+
+[check-crate-room-effects]
+description = "Check real WASM blast particles, crate impact limits and stereo WebAudio"
+run = "node scripts/check-crate-room-effects.mjs"
+
+[generate-crate-room-wood]
+description = "Generate original seamless oak planks, knots and frame grain"
+run = "go run scripts/crate-room-wood.go"
+
+[check-crate-room-wood]
+description = "Verify the crate room's original wood assets"
+run = "go run scripts/crate-room-wood.go --check"
+
+[generate-crate-room-smoke]
+description = "Prepare bounded smoke opacity frames from the approved artwork"
+run = "go run scripts/crate-room-smoke.go"
+
+[check-crate-room-smoke]
+description = "Verify deterministic smoke opacity frames"
+run = "go run scripts/crate-room-smoke.go --check"

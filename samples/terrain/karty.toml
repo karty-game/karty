@@ -16,7 +16,7 @@ ortho_height = 60
 renderer = true
 
 [sdk]
-version = "0.0.18"
+version = "0.0.19"
 
 [packages.controllers-3d]
 archive = "https://github.com/karty-game/karty-packages/releases/download/controllers-3d-v0.0.2/controllers-3d-0.0.2.kpkg"

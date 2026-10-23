@@ -46,6 +46,7 @@ func TestHangarExtractionLoop(t *testing.T) {
 
 	assertHangarExtractionApproach(t, document)
 	assertHangarPoolRamps(t, document)
+	assertHangarRampMaterialMapping(t, document)
 
 	// Inspect the authored apertures after convex decomposition. Both outgoing
 	// links must survive and land in the room left of arrival, rather than the
@@ -198,4 +199,41 @@ func assertHangarPoolRamps(t *testing.T, document world.Document) {
 
 func hangarPlaneZ(plane world.Plane, x, y float64) float64 {
 	return plane.A*x + plane.B*y + plane.C
+}
+
+// Flat ramp surfaces opt into one world projection; intentional triplanar
+// materials elsewhere keep their authored blend. Physics and portal checks
+// above continue to cover the same ramp geometry.
+func assertHangarRampMaterialMapping(t *testing.T, document world.Document) {
+	t.Helper()
+
+	assertPlanar := func(mapping *world.SurfaceUV) {
+		t.Helper()
+
+		if mapping == nil || len(mapping.Projections) != 1 || len(mapping.Weights) != 1 || mapping.Weights[0] != 1 ||
+			mapping.Projections[0] != (world.UVProjection{U: world.UVPlane{X: .5}, V: world.UVPlane{Y: .5}}) {
+			t.Fatalf("ramp lost its single world-anchored, two-meter material repeat: %+v", mapping)
+		}
+	}
+
+	for _, sector := range document.Sectors {
+		if strings.HasPrefix(sector.ID, "trench-stair-") || strings.HasPrefix(sector.ID, "west-trench-stair-") {
+			assertPlanar(sector.FloorUV)
+		}
+	}
+
+	cornices := 0
+
+	for _, solid := range document.StaticSolids.Items {
+		if strings.HasPrefix(solid.ID, "trench-ramp-") && strings.HasSuffix(solid.ID, "-cornice") {
+			cornices++
+
+			assertPlanar(solid.TopUV)
+			assertPlanar(solid.BottomUV)
+		}
+	}
+
+	if cornices != 4 {
+		t.Fatalf("ramp cornices: %d, want 4", cornices)
+	}
 }
