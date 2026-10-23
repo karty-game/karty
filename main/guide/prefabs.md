@@ -33,7 +33,7 @@ also contain rooms and sprites. Light positions remain global; placing a
 prefab does not place or move lights for it.
 
 Keep static objects static. Visual animation does not move collision or
-gameplay query positions. For a door or moving platform, check the pinned SDK's
+gameplay query positions. For a door or moving platform, check the engine's
 supported behavior before designing the interaction.
 
 ![The Hangar combines static machinery, repeating materials, and room lights.](assets/hangar.jpg)

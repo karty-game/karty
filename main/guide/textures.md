@@ -18,8 +18,8 @@ room's `wall_uv`, `floor_uv`, or `ceiling_uv` to change only those surfaces.
 World anchoring keeps repeats aligned when you place prefabs.
 
 Materialize generates height, normal, and ambient occlusion maps for world
-surfaces. SDKs with material reflectance also generate metallic and smoothness
-maps. Add a preset immediately after the texture entry in `level.toml`:
+surfaces, along with metallic and smoothness maps. Add a preset immediately
+after the texture entry in `level.toml`:
 
 ```toml
 [textures.materialize]
@@ -60,7 +60,7 @@ Start with their defaults. Use `normal_strength`, `height_contrast`,
 `metallic_scale`, or `ao_depth_scale` only when the result needs adjustment.
 The separate `textures.material_strengths` settings control how strongly the
 game displays those maps. Your generated `.karty/docs/assets.md` lists the
-overrides and limits for your SDK.
+overrides and limits for your project.
 
 Check the result at player height. A material that looks good close up may
 repeat too obviously across a large wall. [The Hangar](../hangar/) shows wall

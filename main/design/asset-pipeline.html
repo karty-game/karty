@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#111827" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" />
-    <meta name="description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+    <meta name="description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
     
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Karty" />
 <meta property="og:title" content="Asset pipeline / Karty" />
-<meta property="og:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta property="og:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta property="og:url" content="https://karty-game.github.io/karty/main/design/asset-pipeline.html" />
 <meta property="og:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta property="og:image:type" content="image/png" />
@@ -22,7 +22,7 @@
 />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Asset pipeline / Karty" />
-<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta name="twitter:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta
   name="twitter:image:alt"
@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1127,6 +1128,7 @@ pre code {
           <a href="index.html"  aria-current="page" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1158,11 +1160,19 @@ pre code {
             
             <li><a href="architecture.html" aria-current="false">Architecture</a></li>
             
-            <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+            <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
             
             <li><a href="asset-pipeline.html" aria-current="page">Asset pipeline</a></li>
             
             <li><a href="packages.html" aria-current="false">Packages</a></li>
+            
+            <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+            
+            <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+            
+            <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+            
+            <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
             
             <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
             
@@ -1202,11 +1212,19 @@ pre code {
               
               <li><a href="architecture.html" aria-current="false">Architecture</a></li>
               
-              <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+              <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
               
               <li><a href="asset-pipeline.html" aria-current="page">Asset pipeline</a></li>
               
               <li><a href="packages.html" aria-current="false">Packages</a></li>
+              
+              <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+              
+              <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+              
+              <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+              
+              <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
               
               <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
               
@@ -1255,10 +1273,10 @@ pre code {
 <p>Keep the files you author. Let Karty build the files the host needs. A PNG, WAV, world YAML file or KartUI component is a source asset; the runtime loads the processed result.</p>
 <figure class="journey"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" role="img" aria-label="Source files and package exports → Project and level declarations → Resolve, validate and process → Cartridge, levels and sidecars → Host loads runtime content"><rect x="20" y="12" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="37" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Source files and package exports</text><path d="M200 56V72M195 67L200 72L205 67" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="76" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="101" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Project and level declarations</text><path d="M200 120V136M195 131L200 136L205 131" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="140" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="165" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Resolve, validate and process</text><path d="M200 184V200M195 195L200 200L205 195" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="204" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="229" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Cartridge, levels and sidecars</text><path d="M200 248V264M195 259L200 264L205 259" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="268" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="293" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Host loads runtime content</text></svg></figure>
 <h2 id="declarations-give-assets-a-place-in-the-game">Declarations give assets a place in the game</h2>
-<p><code>karty.toml</code> selects the SDK and declares project assets. Each level&#39;s <code>level.toml</code> selects its world source and resources. Logical asset names connect those declarations to game code and authored content.</p>
+<p><code>karty.toml</code> declares project settings and assets. Each level&#39;s <code>level.toml</code> selects its world source and resources. Logical asset names connect those declarations to game code and authored content.</p>
 <p>For example, a world material can start as <code>surface.png</code>. A level declares the texture and its processing profile, then refers to its name from world YAML. Moving the original image does not require changing every surface; update its source declaration instead.</p>
 <h2 id="builds-prepare-runtime-content">Builds prepare runtime content</h2>
-<p>The <a href="sdk-and-toolchain.html">selected SDK</a> defines processing profiles and pins required tools. The CLI applies those profiles and any supported overrides, validates the result, and caches it for later builds. Changing an input or processing recipe selects a new cached result.</p>
+<p>Karty provides processing profiles and prepares the required tools automatically. The CLI applies those profiles and authored overrides, validates the result, and caches it for later builds. Changing an input or processing recipe selects a new cached result.</p>
 <p>Images become runtime textures. Audio is converted for effects or streaming. World sources become compiled geometry and resource descriptions. Material generation and offline light baking prepare work that would otherwise happen while the game runs. KartUI compiles authored components into the game&#39;s UI bindings and packaged presentation data.</p>
 <p>Each asset follows the processing it needs. An interface image, a world material and a music track do not all use the same recipe.</p>
 <h2 id="materialize-turns-colour-into-surface-detail">Materialize turns colour into surface detail</h2>
@@ -1266,7 +1284,7 @@ pre code {
 <p>Materialize estimates those properties from your image. Karty uses it during world material builds so you can start with one texture and a preset, rather than authoring every map separately.</p>
 <figure><img src="assets/design-materialize.svg" alt="The Hangar&#39;s 128-pixel brick source beside five real Materialize outputs using the brick preset. These are diagnostic map views, not final game lighting." loading="lazy"><figcaption>The Hangar&#39;s 128-pixel brick source beside five real Materialize outputs using the brick preset. These are diagnostic map views, not final game lighting.</figcaption></figure>
 <p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Map</th><th scope="col">What the host uses it for</th></tr></thead><tbody><tr><td>Source colour, also called albedo</td><td>The painted colour of the surface</td></tr><tr><td>Normal</td><td>Changes the local lighting direction so ridges and recesses catch light differently</td></tr><tr><td>Height</td><td>Adds bounded, view-dependent relief to the texture</td></tr><tr><td>Ambient occlusion, or AO</td><td>Dims ambient light in estimated small crevices</td></tr><tr><td>Metallic</td><td>Controls the material&#39;s metallic reflectance</td></tr><tr><td>Smoothness</td><td>Controls how concentrated the reflected highlights appear</td></tr></tbody></table></div>
-<p>Metallic and smoothness maps require an SDK with material reflectance support. Older atlas-capable SDKs use normal, height and AO. These maps change shading; they do not add geometry, change the wall&#39;s silhouette or create collision.</p>
+<p>These maps change shading; they do not add geometry, change the wall&#39;s silhouette or create collision.</p>
 <h3 id="choose-a-material-preset">Choose a material preset</h3>
 <p>For a world surface, declare the source and its Materialize preset in <code>level.toml</code>:</p>
 <pre><code class="language-toml">[[textures]]
@@ -1283,20 +1301,21 @@ preset = &#34;brick&#34;
 <p>Use a preset that matches the surface, such as <code>brick</code>, <code>wood</code> or <code>metal</code>. The image profile controls ordinary texture processing; the Materialize preset controls map generation. Both contribute to the processing recipe.</p>
 <p>The generated maps are estimates, so review the result under the game&#39;s lighting. A dark painted mark or a shadow already in the source can be mistaken for a recess. A preset is a starting point, and a material named <code>metal</code> does not make painted areas physically metallic by itself.</p>
 <h3 id="do-the-expensive-work-before-the-game-runs">Do the expensive work before the game runs</h3>
-<p>The world pipeline normalizes each surface material to a 256-pixel tile and runs the SDK-pinned Materialize executable for each uncached material. The illustration above shows the original 128-pixel image and standalone native map outputs; the game build also performs normalization and packaging.</p>
+<p>The world pipeline resizes each surface material to a 256-pixel tile. Before generating height, normal and AO, it converts that texture&#39;s own luminance to a neutral midpoint and a bounded contrast range. Covered pixels determine the range; transparent padding does not. Flat images remain flat, and near-flat images do not receive contrast amplification. This reduces the influence of paint brightness while retaining local differences, including extra details. It requires no knowledge of related textures. Albedo colors remain unchanged.</p>
+<p>Materialize runs once for geometry maps and again on the original RGB for metallic and smoothness maps. Both passes are cached per source texture. The illustration above shows the original 128-pixel image and standalone native map outputs; the game build also performs normalization and packaging.</p>
 <p>Karty validates the generated maps, packs their channels into material atlases, and builds smaller texture levels, called mipmaps, with borders that keep neighbouring materials from bleeding into each other. The host loads those prepared textures and samples them while drawing. It never runs Materialize on a player&#39;s machine.</p>
 <p>World materials use the packaged atlas directly. The build omits their individual texture payloads when they have no separate sprite, animation, particle, vegetation or level UI use. This also avoids decoding those duplicate images and packing an unused sprite atlas at runtime. Textures outside the material atlas remain available as standalone level assets.</p>
 <p>A cold build does more work. Later builds reuse maps whose source, preset, generation settings and tool identity still match. Changing one material regenerates that material and repacks the atlas; unchanged maps are reused. The separate <code>textures.material_strengths</code> settings adjust how strongly the host displays normal, height and AO effects while reusing the generated maps.</p>
-<p>The <a href="../guide/textures.html">texture guide</a> covers presets and surface mapping. The generated <code>.karty/docs/</code> reference lists the controls supported by your SDK.</p>
+<p>The <a href="../guide/textures.html">texture guide</a> covers presets and surface mapping. The generated <code>.karty/docs/</code> reference lists the available material controls.</p>
 <h2 id="generated-files-have-separate-homes">Generated files have separate homes</h2>
-<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Location</th><th scope="col">Purpose</th><th scope="col">Keep in Git</th></tr></thead><tbody><tr><td>Source folders and manifests</td><td>Go, KartUI, world sources, original media and configuration</td><td>Yes</td></tr><tr><td><code>packages/</code></td><td>Fixed package archives referenced by the project</td><td>Yes</td></tr><tr><td><code>.karty/</code></td><td>Generated bindings, installed package views, processing caches and SDK reference</td><td>No</td></tr><tr><td><code>dist/</code></td><td>Packaged output for the selected target</td><td>No</td></tr></tbody></table></div>
+<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Location</th><th scope="col">Purpose</th><th scope="col">Keep in Git</th></tr></thead><tbody><tr><td>Source folders and manifests</td><td>Go, KartUI, world sources, original media and configuration</td><td>Yes</td></tr><tr><td><code>packages/</code></td><td>Fixed package archives referenced by the project</td><td>Yes</td></tr><tr><td><code>.karty/</code></td><td>Generated bindings, installed package views, processing caches and game reference</td><td>No</td></tr><tr><td><code>dist/</code></td><td>Packaged output for the selected target</td><td>No</td></tr></tbody></table></div>
 <p>Edit the original files and rebuild. A clean checkout can recreate generated output from the committed sources and declared dependencies. Linked package folders must also be available; use archives when you need a fixed copy.</p>
 <h2 id="shipping-includes-more-than-the-cartridge">Shipping includes more than the cartridge</h2>
 <p><code>game.kart</code> carries the client and embedded content. Levels and streaming resources can live beside it. The native output includes its host; web output includes the launcher and either local runtime files or verified shared-runtime references, according to the build options.</p>
-<p>Share the complete target directory so those pieces stay together. Follow <a href="../guide/share.html">Build and share</a> for packaging commands, or <a href="../guide/textures.html">Textures</a> for a world material example. Your project&#39;s <code>.karty/docs/</code> records its SDK&#39;s contracts.</p>
+<p>Share the complete target directory so those pieces stay together. Follow <a href="../guide/share.html">Build and share</a> for packaging commands, or <a href="../guide/textures.html">Textures</a> for a world material example. Your project&#39;s <code>.karty/docs/</code> contains the full authoring reference.</p>
 <h2 id="source-formats-and-runtime-data">Source formats and runtime data</h2>
 <p>TOML configures projects and tools; YAML describes worlds and prefabs. Importers may also consume editor formats such as Tiled JSON. Builds convert game data into bounded binary resources before cartridge compilation. Runtime game code uses the compiled records, with no general JSON, CSV, XML, gob or YAML/TOML decoder dependency. Development-server messages, source-package inventories, editor schemas and authoring reports remain tooling formats.</p>
-<p>SDK 0.0.17 packs game images and all remaining level images into build-time QOI atlas pages with a binary region layout (<code>texture/atlas@1</code>). Sprites, UI, animation, particles and vegetation keep stable logical references and original dimensions. Identical processed images share one rectangle; connected particle frames share one page. The verified cache includes source bytes, names, frame groups and packing revision. Reports count emitted page bytes and decoded memory once, and retain source records for inspection. Runtime loads the prepared pages and views; it does not rebuild these atlases.</p>
+<p>Karty packs game images and all remaining level images into build-time QOI atlas pages with a binary region layout (<code>texture/atlas@1</code>). Sprites, UI, animation, particles and vegetation keep stable logical references and original dimensions. Identical processed images share one rectangle; connected particle frames share one page. The verified cache includes source bytes, names, frame groups and packing revision. Reports count emitted page bytes and decoded memory once, and retain source records for inspection. Runtime loads the prepared pages and views; it does not rebuild these atlases.</p>
 </div>
         
       </main>
@@ -1308,7 +1327,7 @@ preset = &#34;brick&#34;
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

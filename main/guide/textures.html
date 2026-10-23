@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1202,6 +1204,8 @@ pre code {
             
             <li><a href="share.html" aria-current="false">Build and share</a></li>
             
+            <li><a href="packages.html" aria-current="false">Write a package</a></li>
+            
           </ul>
           
         </div>
@@ -1246,6 +1250,8 @@ pre code {
               
               <li><a href="share.html" aria-current="false">Build and share</a></li>
               
+              <li><a href="packages.html" aria-current="false">Write a package</a></li>
+              
             </ul>
              
             <p>On this page</p>
@@ -1284,7 +1290,7 @@ pre code {
   scale: {x: 2, y: 2}
 </code></pre>
 <p>Scale is metres per repeat: a larger value makes the pattern larger. Set a room&#39;s <code>wall_uv</code>, <code>floor_uv</code>, or <code>ceiling_uv</code> to change only those surfaces. World anchoring keeps repeats aligned when you place prefabs.</p>
-<p>Materialize generates height, normal, and ambient occlusion maps for world surfaces. SDKs with material reflectance also generate metallic and smoothness maps. Add a preset immediately after the texture entry in <code>level.toml</code>:</p>
+<p>Materialize generates height, normal, and ambient occlusion maps for world surfaces, along with metallic and smoothness maps. Add a preset immediately after the texture entry in <code>level.toml</code>:</p>
 <pre><code class="language-toml">[textures.materialize]
 preset = &#34;concrete&#34;
 </code></pre>
@@ -1313,7 +1319,7 @@ preset = &#34;concrete&#34;
 <li><code>lava</code> produces partly metallic, molten surface detail.</li>
 <li><code>water</code> produces smooth water surface detail.</li>
 </ul>
-<p>Presets change generated maps. They do not add liquid motion or light emission. Start with their defaults. Use <code>normal_strength</code>, <code>height_contrast</code>, <code>metallic_scale</code>, or <code>ao_depth_scale</code> only when the result needs adjustment. The separate <code>textures.material_strengths</code> settings control how strongly the game displays those maps. Your generated <code>.karty/docs/assets.md</code> lists the overrides and limits for your SDK.</p>
+<p>Presets change generated maps. They do not add liquid motion or light emission. Start with their defaults. Use <code>normal_strength</code>, <code>height_contrast</code>, <code>metallic_scale</code>, or <code>ao_depth_scale</code> only when the result needs adjustment. The separate <code>textures.material_strengths</code> settings control how strongly the game displays those maps. Your generated <code>.karty/docs/assets.md</code> lists the overrides and limits for your project.</p>
 <p>Check the result at player height. A material that looks good close up may repeat too obviously across a large wall. <a href="../hangar/">The Hangar</a> shows wall bands, secondary weathering, and small sprite decals.</p>
 </div>
         
@@ -1326,7 +1332,7 @@ preset = &#34;concrete&#34;
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

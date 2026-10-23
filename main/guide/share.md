@@ -3,14 +3,14 @@
 Use `--target web` for browsers and `--target native` for desktop games.
 The supported game runtimes are:
 
-| Game platform       | `--platform`    | Build on this machine             |
-| ------------------- | --------------- | --------------------------------- |
-| Browser             | Omit this flag  | Any supported development machine |
-| Linux x64           | `linux-amd64`   | Yes                               |
-| Linux ARM64         | `linux-arm64`   | Yes                               |
-| macOS Apple silicon | `darwin-arm64`  | Yes                               |
-| Windows x64         | `windows-amd64` | Yes                               |
-| Windows ARM64       | `windows-arm64` | No native TinyGo toolchain        |
+| Game platform       | `--platform`    |
+| ------------------- | --------------- |
+| Browser             | Omit this flag  |
+| Linux x64           | `linux-amd64`   |
+| Linux ARM64         | `linux-arm64`   |
+| macOS Apple silicon | `darwin-arm64`  |
+| Windows x64         | `windows-amd64` |
+| Windows ARM64       | `windows-arm64` |
 
 Every supported development machine can package any listed game platform.
 The CLI compiles one WASM cartridge and downloads the destination's
@@ -54,12 +54,35 @@ Explicit platforms use separate folders, such as
 `dist/native/windows-arm64/`. On the destination Windows machine, open that
 folder and run `.\karty-host.exe --cartridge game.kart`.
 
-Share the whole selected folder, including its `content/` files.
-Include `RUNTIME_LICENSE.md` and `SDK_LICENSE.md`
-from your project's selected [SDK release](https://github.com/karty-game/karty-sdk/releases), plus notices required by your own assets and dependencies.
+Keep a `LICENSES/` folder in your project containing Karty's runtime and library
+notices from the [release downloads](https://github.com/karty-game/karty-sdk/releases/latest),
+plus notices required by your own assets and dependencies. Commit this folder
+with your source. Copy it into each distribution before sharing:
+
+```sh
+cp -R LICENSES dist/web/
+cp -R LICENSES dist/native/
+```
+
+For a named native platform, use its output folder instead, such as
+`cp -R LICENSES dist/native/windows-arm64/`.
+Share the whole selected folder, including its `content/` and `LICENSES/` files.
 Browser and desktop use the same source. Test each platform you ship.
 
 ## Share reusable code, prefabs and UI
+
+To publish your own package, follow [Write and publish a package](packages.html).
+
+Install published code and assets from the
+[Plugins catalog](https://karty-game.github.io/karty-packages/) by name:
+
+```sh
+karty package import fps-kit@0.0.1
+```
+
+Omit the version to select the latest stable release. Commit the resolved
+archive URL and SHA-256 in `karty.toml`; future builds restore that same pin.
+Use `karty package import --replace fps-kit` for an explicit update.
 
 For a package folder containing `karty-package.toml`, export a local archive:
 
@@ -77,10 +100,10 @@ Commit the referenced archive and updated `karty.toml`/`go.mod`; the CLI restore
 its checked contents under ignored `.karty/packages/`. To edit the package live,
 use `karty package import --replace ../placeholder-kit` instead.
 `karty dev` watches that working folder, including outside the game. The current
-local-package CLI supports Go behavior, static/nested prefabs, PNG world
+package CLI supports Go behavior, static/nested prefabs, PNG world
 materials and KartUI components/layouts with images, fonts and theme defaults;
 use a CLI build containing that feature. UI exports compile against the consuming
-game's SDK and keep normal typed props/callbacks. The game owns state and lifecycle.
+game and keep normal typed props/callbacks. The game owns state and lifecycle.
 
 ## Build in CI
 
@@ -89,8 +112,8 @@ when your dependencies create it.
 The runner recreates `.karty/` and `dist/`; do not commit those folders.
 
 Save this as `.github/workflows/game.yml` in your game project. It builds a browser game and a Windows ARM64 distribution on Linux,
-then uploads each folder for review. It pins a public CLI source revision
-so the workflow and CLI behavior stay reproducible.
+then uploads each folder for review. Include the `LICENSES/` folder described above
+so the artifacts contain the required notices. The workflow installs the latest CLI.
 No private engine checkout or credentials are needed.
 
 ```yaml
@@ -110,28 +133,22 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: "1.27.1"
+          go-version: "1.27.3"
           cache: false
-      - name: Install the pinned public CLI
+      - name: Install Karty
         run: |
-          go install github.com/karty-game/karty/cmd/karty@3bb2953071e02795e59cf96b8acd362cd21edbdf
+          go install github.com/karty-game/karty/cmd/karty@latest
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-      - name: Install SDK and software material generation
+      - name: Prepare material generation
         run: |
-          SDK_VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("karty.toml", "rb"))["sdk"]["version"])')
-          echo "SDK_VERSION=$SDK_VERSION" >> "$GITHUB_ENV"
-          karty sdk install "$SDK_VERSION"
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
       - name: Build distributions
         run: |
           karty build --target web
           karty build --target native --platform windows-arm64
-          for notice in RUNTIME_LICENSE.md SDK_LICENSE.md; do
-            curl -fsSL "https://github.com/karty-game/karty-sdk/releases/download/sdk-v$SDK_VERSION/$notice" -o "$RUNNER_TEMP/$notice"
-            cp "$RUNNER_TEMP/$notice" dist/web/
-            cp "$RUNNER_TEMP/$notice" dist/native/windows-arm64/
-          done
+          cp -R LICENSES dist/web/
+          cp -R LICENSES dist/native/windows-arm64/
       - uses: actions/upload-artifact@v7.0.0
         with:
           name: game-web

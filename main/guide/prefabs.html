@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1195,6 +1197,8 @@ pre code {
             
             <li><a href="share.html" aria-current="false">Build and share</a></li>
             
+            <li><a href="packages.html" aria-current="false">Write a package</a></li>
+            
           </ul>
           
         </div>
@@ -1238,6 +1242,8 @@ pre code {
               <li><a href="media.html" aria-current="false">Sound and video</a></li>
               
               <li><a href="share.html" aria-current="false">Build and share</a></li>
+              
+              <li><a href="packages.html" aria-current="false">Write a package</a></li>
               
             </ul>
              
@@ -1283,7 +1289,7 @@ instances:
 </code></pre>
 <p>Solid footprints must be convex and counterclockwise. Split an L-shaped object into several solids. Use room geometry for passages and platforms: a solid&#39;s collision blocks movement, but does not make its top walkable.</p>
 <p>An instance can translate, rotate, uniformly scale, or substitute materials. Its expanded object keeps a stable name such as <code>crate-a/body</code>. Prefabs can also contain rooms and sprites. Light positions remain global; placing a prefab does not place or move lights for it.</p>
-<p>Keep static objects static. Visual animation does not move collision or gameplay query positions. For a door or moving platform, check the pinned SDK&#39;s supported behavior before designing the interaction.</p>
+<p>Keep static objects static. Visual animation does not move collision or gameplay query positions. For a door or moving platform, check the engine&#39;s supported behavior before designing the interaction.</p>
 <figure><img src="assets/hangar.jpg" alt="The Hangar combines static machinery, repeating materials, and room lights." loading="lazy"><figcaption>The Hangar combines static machinery, repeating materials, and room lights.</figcaption></figure>
 </div>
         
@@ -1296,7 +1302,7 @@ instances:
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

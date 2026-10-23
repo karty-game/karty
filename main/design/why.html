@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#111827" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" />
-    <meta name="description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+    <meta name="description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
     
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Karty" />
 <meta property="og:title" content="Why Karty? / Karty" />
-<meta property="og:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta property="og:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta property="og:url" content="https://karty-game.github.io/karty/main/design/why.html" />
 <meta property="og:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta property="og:image:type" content="image/png" />
@@ -22,7 +22,7 @@
 />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Why Karty? / Karty" />
-<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta name="twitter:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta
   name="twitter:image:alt"
@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1127,6 +1128,7 @@ pre code {
           <a href="index.html"  aria-current="page" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1158,11 +1160,19 @@ pre code {
             
             <li><a href="architecture.html" aria-current="false">Architecture</a></li>
             
-            <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+            <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
             
             <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
             
             <li><a href="packages.html" aria-current="false">Packages</a></li>
+            
+            <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+            
+            <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+            
+            <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+            
+            <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
             
             <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
             
@@ -1202,11 +1212,19 @@ pre code {
               
               <li><a href="architecture.html" aria-current="false">Architecture</a></li>
               
-              <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+              <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
               
               <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
               
               <li><a href="packages.html" aria-current="false">Packages</a></li>
+              
+              <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+              
+              <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+              
+              <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+              
+              <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
               
               <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
               
@@ -1259,58 +1277,58 @@ pre code {
 <p>Karty is aimed at small games and prototypes, including retro first-person games, isometric adventures and 2D games. For worlds, I want to work with floor plans, heights, materials and reusable objects. That should be enough to make a space worth exploring without first learning a full 3D modeling tool.</p>
 <h2 id="development">Development</h2>
 <ul>
-<li>**See changes immediately.** <code>karty dev</code> watches your level files and updates</li>
+<li><strong>See changes immediately.</strong> <code>karty dev</code> watches your level files and updates</li>
 </ul>
 <p>the preview as you work.</p>
 <ul>
-<li>**Iterate quickly.** Target code recompilation in 2–3 seconds.</li>
+<li><strong>Iterate quickly.</strong> Target code recompilation in 2–3 seconds.</li>
 </ul>
 <h2 id="visual">Visual</h2>
 <ul>
-<li>**Good lighting.** Bake bounced light with Karty&#39;s built-in light baker,</li>
+<li><strong>Good lighting.</strong> Bake bounced light with Karty&#39;s built-in light baker,</li>
 </ul>
 <p>without extra tools.</p>
 <ul>
-<li>**Give the scene personality.** Use built-in post-processing effects for</li>
+<li><strong>Give the scene personality.</strong> Use built-in post-processing effects for</li>
 </ul>
 <p>atmosphere, storytelling and gameplay highlights.</p>
 <ul>
-<li>**Fire, smoke and more.** A flexible GPU particle system draws thousands of</li>
+<li><strong>Fire, smoke and more.</strong> A flexible GPU particle system draws thousands of</li>
 </ul>
 <p>sprites.</p>
 <h2 id="performance">Performance</h2>
 <ul>
-<li>**Run on modest hardware.** Target 720p at 60 FPS in WebGL on a five-year-old</li>
+<li><strong>Run on modest hardware.</strong> Target 720p at 60 FPS in WebGL on a five-year-old</li>
 </ul>
 <p>smartphone.</p>
 <ul>
-<li>**Start playing your game quickly.** Keep downloads small and aim for startup within</li>
+<li><strong>Start playing your game quickly.</strong> Keep downloads small and aim for startup within</li>
 </ul>
 <p>a few seconds.</p>
 <ul>
-<li>**Play offline.** Prefetch and cache assets in the background, ready to play</li>
+<li><strong>Play offline.</strong> Prefetch and cache assets in the background, ready to play</li>
 </ul>
 <p>without internet once the download is complete.</p>
 <h2 id="assets">Assets</h2>
 <ul>
-<li>**Skip image preparation.** Let the <a href="asset-pipeline.html">asset pipeline</a></li>
+<li><strong>Skip image preparation.</strong> Let the <a href="asset-pipeline.html">asset pipeline</a></li>
 </ul>
 <p>resize textures, pack atlases and handle compression.</p>
 <ul>
-<li>**One texture is enough.** Generate normal, height and ambient occlusion maps</li>
+<li><strong>One texture is enough.</strong> Generate normal, height and ambient occlusion maps</li>
 </ul>
 <p>from a single albedo image.</p>
 <ul>
-<li>**Build large maps.** Automatic chunking and background streaming let your</li>
+<li><strong>Build large maps.</strong> Automatic chunking and background streaming let your</li>
 </ul>
 <p>world grow.</p>
 <h2 id="flexibility">Flexibility</h2>
 <ul>
-<li>**UI with less code.** KartUI provides a dedicated language and reusable</li>
+<li><strong>UI with less code.</strong> KartUI provides a dedicated language and reusable</li>
 </ul>
 <p>components for game interfaces.</p>
 <ul>
-<li>**Bring other tools.** <a href="packages.html">Packages</a> let the community share</li>
+<li><strong>Bring other tools.</strong> <a href="packages.html">Packages</a> let the community share</li>
 </ul>
 <p>reusable integrations, code and components.</p>
 <p>Continue with <a href="architecture.html">Architecture</a>, or <a href="../guide/index.html">make your first game</a>.</p>
@@ -1325,7 +1343,7 @@ pre code {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1255,7 +1257,7 @@ pre code {
     return sprite.Ref().SetPose(accepted)
 }
 </code></pre>
-<p><code>EntityRef</code> is shared by rendering, physics, queries, lights, audio and authored actions. Obtain it with <code>entity.Ref()</code> or a world discovery result. <code>Alive()</code> checks lifetime. The SDK synchronizes accepted poses before callbacks, without requiring a watch. Local proposals do not notify. Physical entities use <code>Body.Teleport</code>; detach a body before returning to free pose control.</p>
+<p><code>EntityRef</code> is shared by rendering, physics, queries, lights, audio and authored actions. Obtain it with <code>entity.Ref()</code> or a world discovery result. <code>Alive()</code> checks lifetime. Karty synchronizes accepted poses before callbacks, without requiring a watch. Local proposals do not notify. Physical entities use <code>Body.Teleport</code>; detach a body before returning to free pose control.</p>
 <p>A zero-valued <code>Transform3D</code> has zero scale. Use the constructor for visible objects. World authoring fields named <code>yaw_degrees</code> use degrees.</p>
 <p><a href="cameras.html#camera-3d">Camera 3D</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/hangar/src/fps_controller.go">Hangar camera movement</a></p>
 </div>
@@ -1269,7 +1271,7 @@ pre code {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

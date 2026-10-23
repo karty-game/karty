@@ -1,5 +1,11 @@
 # Input
 
+For a default first-person player, attach the
+[`controllers-3d` package component](cameras.html#first-person-player). It owns movement
+input, pointer capture and touch feedback; keep game hooks for your own actions.
+Its generated adapter connects those controls to the engine's camera, body
+and component lifecycle APIs.
+
 ## Keyboard
 
 Keyboard hooks deliver presses and releases. Keep held state for `OnUpdate`
@@ -32,6 +38,6 @@ Track each touch by ID. `PointerCancel` ends one gesture; `OnInputReset` clears
 all held state. Modal UI can consume gameplay input before your hooks receive it.
 Use [Camera 2D](cameras.html#camera-2d) to convert logical pointer positions into world positions.
 
-[UI input routing](../guide/ui.html) · [Crate room touch controls](https://github.com/karty-game/karty/blob/main/samples/crate-room/src/main.go)
+[UI input routing](../guide/ui.html) · [Crate room touch controls](https://github.com/karty-game/karty/blob/main/samples/crate-room/src/input.go)
 
 The full event bounds and routing rules are in `.karty/docs/pointer-input.md`.

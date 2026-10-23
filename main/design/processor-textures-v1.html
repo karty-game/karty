@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#111827" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" />
-    <meta name="description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+    <meta name="description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
     
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Karty" />
 <meta property="og:title" content="Processor-generated level textures, version 1 / Karty" />
-<meta property="og:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta property="og:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta property="og:url" content="https://karty-game.github.io/karty/main/design/processor-textures-v1.html" />
 <meta property="og:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta property="og:image:type" content="image/png" />
@@ -22,7 +22,7 @@
 />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Processor-generated level textures, version 1 / Karty" />
-<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta name="twitter:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta
   name="twitter:image:alt"
@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1127,6 +1128,7 @@ pre code {
           <a href="index.html"  aria-current="page" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1158,11 +1160,19 @@ pre code {
             
             <li><a href="architecture.html" aria-current="false">Architecture</a></li>
             
-            <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+            <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
             
             <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
             
             <li><a href="packages.html" aria-current="false">Packages</a></li>
+            
+            <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+            
+            <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+            
+            <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+            
+            <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
             
             <li><a href="processor-textures-v1.html" aria-current="page">Processor textures</a></li>
             
@@ -1185,11 +1195,19 @@ pre code {
               
               <li><a href="architecture.html" aria-current="false">Architecture</a></li>
               
-              <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+              <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
               
               <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
               
               <li><a href="packages.html" aria-current="false">Packages</a></li>
+              
+              <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+              
+              <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+              
+              <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+              
+              <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
               
               <li><a href="processor-textures-v1.html" aria-current="page">Processor textures</a></li>
               
@@ -1218,7 +1236,7 @@ pre code {
         </div>
         
         <div class="guide-body"><h1 id="processor-generated-level-textures-version-1">Processor-generated level textures, version 1</h1>
-<p>Build processors may return an optional <code>assets.json</code> alongside ordinary files in the existing KPR1 response. This extends the build contract; it changes neither the cartridge wire protocol nor SDK 0.0.13. Processors without a catalog keep returning opaque resources through <code>processed.Read</code>.</p>
+<p>Build processors may return an optional <code>assets.json</code> alongside ordinary files in the existing KPR1 response. This extends the build contract; it changes neither the cartridge wire protocol. Processors without a catalog keep returning opaque resources through <code>processed.Read</code>.</p>
 <pre><code class="language-json">{
   &#34;version&#34;: 1,
   &#34;textures&#34;: [
@@ -1233,7 +1251,7 @@ pre code {
 }
 </code></pre>
 <p><code>level</code> names an existing directory under the project&#39;s <code>levels/</code>. <code>source</code> names a PNG in the same response; it is a logical path, never a filesystem write destination. <code>key</code> is the processor&#39;s lookup identity. Names must be unique within a level, and keys unique within a processor. Paths cannot escape, contain NUL, use backslashes or contain drive prefixes. Unknown catalog fields, invalid PNGs, missing sources and collisions with authored texture names fail the build.</p>
-<p>The CLI validates every result before replacing its owned <code>.karty/processed/</code> transaction. Images live under that ignored directory and pass through the normal SDK texture profile and level packager. They are not embedded into generated Go source. The catalog and generated lookup are also ignored build outputs:</p>
+<p>The CLI validates every result before replacing its owned <code>.karty/processed/</code> transaction. Images live under that ignored directory and pass through the normal texture processing profile and level packager. They are not embedded into generated Go source. The catalog and generated lookup are also ignored build outputs:</p>
 <pre><code class="language-go">id, ok := processed.TextureID(&#34;tiled.compile&#34;, imageKey)
 </code></pre>
 <p>Authored texture IDs retain their existing name-sorted order. Generated textures follow them in name order. A changed authored catalog requires rebuilding the processor output; stale generated IDs are rejected. Rebuilding creates a complete matching map, lookup and level distribution without editing authored assets.</p>
@@ -1250,7 +1268,7 @@ pre code {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

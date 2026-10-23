@@ -14,7 +14,7 @@ Package --> Host[Host loads runtime content]
 
 ## Declarations give assets a place in the game
 
-`karty.toml` selects the SDK and declares project assets. Each level's
+`karty.toml` declares project settings and assets. Each level's
 `level.toml` selects its world source and resources. Logical asset names connect
 those declarations to game code and authored content.
 
@@ -25,8 +25,8 @@ source declaration instead.
 
 ## Builds prepare runtime content
 
-The [selected SDK](sdk-and-toolchain.html) defines processing profiles and pins required tools.
-The CLI applies those profiles and any supported overrides, validates the
+Karty provides processing profiles and prepares the required tools automatically.
+The CLI applies those profiles and authored overrides, validates the
 result, and caches it for later builds. Changing an input or processing recipe
 selects a new cached result.
 
@@ -61,8 +61,7 @@ than authoring every map separately.
 | Metallic                          | Controls the material's metallic reflectance                                        |
 | Smoothness                        | Controls how concentrated the reflected highlights appear                           |
 
-Metallic and smoothness maps require an SDK with material reflectance support.
-Older atlas-capable SDKs use normal, height and AO. These maps change shading;
+These maps change shading;
 they do not add geometry, change the wall's silhouette or create collision.
 
 ### Choose a material preset
@@ -97,8 +96,16 @@ not make painted areas physically metallic by itself.
 
 ### Do the expensive work before the game runs
 
-The world pipeline normalizes each surface material to a 256-pixel tile and
-runs the SDK-pinned Materialize executable for each uncached material. The
+The world pipeline resizes each surface material to a 256-pixel tile. Before
+generating height, normal and AO, it converts that texture's own luminance to a
+neutral midpoint and a bounded contrast range. Covered pixels determine the
+range; transparent padding does not. Flat images remain flat, and near-flat
+images do not receive contrast amplification. This reduces the influence of
+paint brightness while retaining local differences, including extra details.
+It requires no knowledge of related textures. Albedo colors remain unchanged.
+
+Materialize runs once for geometry maps and again on the original RGB for metallic
+and smoothness maps. Both passes are cached per source texture. The
 illustration above shows the original 128-pixel image and standalone native map
 outputs; the game build also performs normalization and packaging.
 
@@ -121,16 +128,16 @@ The separate `textures.material_strengths` settings adjust how strongly the
 host displays normal, height and AO effects while reusing the generated maps.
 
 The [texture guide](../guide/textures.html) covers presets and surface mapping.
-The generated `.karty/docs/` reference lists the controls supported by your SDK.
+The generated `.karty/docs/` reference lists the available material controls.
 
 ## Generated files have separate homes
 
-| Location                     | Purpose                                                                          | Keep in Git |
-| ---------------------------- | -------------------------------------------------------------------------------- | ----------- |
-| Source folders and manifests | Go, KartUI, world sources, original media and configuration                      | Yes         |
-| `packages/`                  | Fixed package archives referenced by the project                                 | Yes         |
-| `.karty/`                    | Generated bindings, installed package views, processing caches and SDK reference | No          |
-| `dist/`                      | Packaged output for the selected target                                          | No          |
+| Location                     | Purpose                                                                           | Keep in Git |
+| ---------------------------- | --------------------------------------------------------------------------------- | ----------- |
+| Source folders and manifests | Go, KartUI, world sources, original media and configuration                       | Yes         |
+| `packages/`                  | Fixed package archives referenced by the project                                  | Yes         |
+| `.karty/`                    | Generated bindings, installed package views, processing caches and game reference | No          |
+| `dist/`                      | Packaged output for the selected target                                           | No          |
 
 Edit the original files and rebuild. A clean checkout can recreate generated
 output from the committed sources and declared dependencies. Linked package
@@ -145,7 +152,7 @@ references, according to the build options.
 
 Share the complete target directory so those pieces stay together.
 Follow [Build and share](../guide/share.html) for packaging commands,
-or [Textures](../guide/textures.html) for a world material example. Your project's `.karty/docs/` records its SDK's contracts.
+or [Textures](../guide/textures.html) for a world material example. Your project's `.karty/docs/` contains the full authoring reference.
 
 ## Source formats and runtime data
 
@@ -156,7 +163,7 @@ uses the compiled records, with no general JSON, CSV, XML, gob or YAML/TOML
 decoder dependency. Development-server messages, source-package inventories,
 editor schemas and authoring reports remain tooling formats.
 
-SDK 0.0.17 packs game images and all remaining level images into
+Karty packs game images and all remaining level images into
 build-time QOI atlas pages with a binary region layout (`texture/atlas@1`).
 Sprites, UI, animation, particles and vegetation keep stable logical references
 and original dimensions. Identical processed images share one rectangle;

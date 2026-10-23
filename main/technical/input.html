@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1232,6 +1234,7 @@ pre code {
         </div>
         
         <div class="guide-body"><h1 id="input">Input</h1>
+<p>For a default first-person player, attach the <a href="cameras.html#first-person-player"><code>controllers-3d</code> package component</a>. It owns movement input, pointer capture and touch feedback; keep game hooks for your own actions. Its generated adapter connects those controls to the engine&#39;s camera, body and component lifecycle APIs.</p>
 <h2 id="keyboard">Keyboard</h2>
 <p>Keyboard hooks deliver presses and releases. Keep held state for <code>OnUpdate</code> and clear it through <code>OnInputReset</code>.</p>
 <pre><code class="language-go">func keyboard(held map[engine.Key]bool) engine.Hooks {
@@ -1246,7 +1249,7 @@ pre code {
 <p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col"><code>PointerInput</code> field</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>ID</code>, <code>Kind</code></td><td>Pointer identity and mouse/touch source</td></tr><tr><td><code>Phase</code></td><td>Down, move, up or cancel</td></tr><tr><td><code>X</code>, <code>Y</code></td><td>Logical canvas coordinates</td></tr><tr><td><code>DeltaX</code>, <code>DeltaY</code></td><td>Relative movement for dragging or mouse look</td></tr><tr><td><code>Captured</code></td><td>Whether capture is active</td></tr></tbody></table></div>
 <p><code>SetCursorCaptured(true)</code> requests mouse capture. Check <code>Captured</code> before using capture-dependent controls, and release capture when leaving them.</p>
 <p>Track each touch by ID. <code>PointerCancel</code> ends one gesture; <code>OnInputReset</code> clears all held state. Modal UI can consume gameplay input before your hooks receive it. Use <a href="cameras.html#camera-2d">Camera 2D</a> to convert logical pointer positions into world positions.</p>
-<p><a href="../guide/ui.html">UI input routing</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/crate-room/src/main.go">Crate room touch controls</a></p>
+<p><a href="../guide/ui.html">UI input routing</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/crate-room/src/input.go">Crate room touch controls</a></p>
 <p>The full event bounds and routing rules are in <code>.karty/docs/pointer-input.md</code>.</p>
 </div>
         
@@ -1259,7 +1262,7 @@ pre code {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

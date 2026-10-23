@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#111827" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" />
-    <meta name="description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+    <meta name="description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
     
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Karty" />
-<meta property="og:title" content="SDK versions and toolchains / Karty" />
-<meta property="og:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta property="og:title" content="Build and preview / Karty" />
+<meta property="og:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta property="og:url" content="https://karty-game.github.io/karty/main/design/sdk-and-toolchain.html" />
 <meta property="og:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta property="og:image:type" content="image/png" />
@@ -21,15 +21,18 @@
   content="Orange Candy Buddy controller beside the Karty wordmark on a midnight-blue banner reading Retro looks, modern tools."
 />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="SDK versions and toolchains / Karty" />
-<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta name="twitter:title" content="Build and preview / Karty" />
+<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta name="twitter:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta
   name="twitter:image:alt"
   content="Orange Candy Buddy controller beside the Karty wordmark on a midnight-blue banner reading Retro looks, modern tools."
 />
 
-    <title>SDK versions and toolchains / Karty</title>
+    <title>Build and preview / Karty</title>
+    
+    <link rel="canonical" href="workflow.html" />
+    <meta http-equiv="refresh" content="0; url=workflow.html" />
     
     <style>
       :root {
@@ -1000,6 +1003,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1127,6 +1131,7 @@ pre code {
           <a href="index.html"  aria-current="page" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1158,31 +1163,26 @@ pre code {
             
             <li><a href="architecture.html" aria-current="false">Architecture</a></li>
             
-            <li><a href="sdk-and-toolchain.html" aria-current="page">SDK versions and toolchains</a></li>
+            <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
             
             <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
             
             <li><a href="packages.html" aria-current="false">Packages</a></li>
+            
+            <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+            
+            <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+            
+            <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+            
+            <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
             
             <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
             
             <li><a href="web-delivery-v1.html" aria-current="false">Web delivery</a></li>
             
           </ul>
-           
-          <p>On this page</p>
-          <ol class="on-page">
-            
-            <li><a href="#the-project-chooses-its-sdk">The project chooses its SDK</a></li>
-            
-            <li><a href="#cli-and-sdk-versions-have-different-jobs">CLI and SDK versions have different jobs</a></li>
-            
-            <li><a href="#prepare-the-build-tools">Prepare the build tools</a></li>
-            
-            <li><a href="#upgrade-deliberately">Upgrade deliberately</a></li>
-            
-          </ol>
-            
+             
         </div>
         <details class="mobile-toc">
           <summary>Browse design</summary>
@@ -1198,11 +1198,19 @@ pre code {
               
               <li><a href="architecture.html" aria-current="false">Architecture</a></li>
               
-              <li><a href="sdk-and-toolchain.html" aria-current="page">SDK versions and toolchains</a></li>
+              <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
               
               <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
               
               <li><a href="packages.html" aria-current="false">Packages</a></li>
+              
+              <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+              
+              <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+              
+              <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+              
+              <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
               
               <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
               
@@ -1210,19 +1218,6 @@ pre code {
               
             </ul>
                
-            <p>On this page</p>
-            <ol class="on-page">
-              
-              <li><a href="#the-project-chooses-its-sdk">The project chooses its SDK</a></li>
-              
-              <li><a href="#cli-and-sdk-versions-have-different-jobs">CLI and SDK versions have different jobs</a></li>
-              
-              <li><a href="#prepare-the-build-tools">Prepare the build tools</a></li>
-              
-              <li><a href="#upgrade-deliberately">Upgrade deliberately</a></li>
-              
-            </ol>
-            
           </div>
         </details>
       </nav>
@@ -1243,35 +1238,10 @@ pre code {
           ></a>
         </div>
         
-        <div class="guide-body"><h1 id="sdk-versions-and-toolchains">SDK versions and toolchains</h1>
-<p>The CLI builds your game, but the SDK pinned in <code>karty.toml</code> decides which engine API, asset processors and hosts it builds against. Keeping that version explicit lets one game stay on a known release while another uses a newer one.</p>
-<h2 id="the-project-chooses-its-sdk">The project chooses its SDK</h2>
-<p>A project&#39;s manifest contains an exact version, for example:</p>
-<pre><code class="language-toml">[sdk]
-version = &#34;0.0.17&#34;
-</code></pre>
-<p>The version above is an example pin, rather than a request for the latest SDK. The bundle supplies generated Go bindings, starter templates, asset processing rules, tool versions and reference documentation. Compatible native and web hosts are separate downloads selected through that release&#39;s metadata.</p>
-<p>The build copies the matching reference into <code>.karty/docs/</code>. Read it for the APIs and authoring features your project supports. A newer website example may use a capability your pinned SDK does not have.</p>
-<h2 id="cli-and-sdk-versions-have-different-jobs">CLI and SDK versions have different jobs</h2>
-<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Version</th><th scope="col">What it selects</th></tr></thead><tbody><tr><td>CLI release</td><td>Project commands, build orchestration and supported SDK formats</td></tr><tr><td>Project SDK pin</td><td>Game bindings, templates, asset capabilities and compatible hosts</td></tr><tr><td>Tool versions in the SDK</td><td>The compiler and processing tools used to produce game files</td></tr></tbody></table></div>
-<p>Installing a newer CLI does not change an existing project&#39;s SDK pin. Likewise, installing an SDK adds it to the local cache; it does not select it for a game. Ordinary Go dependencies still follow the game&#39;s <code>go.mod</code> and <code>go.sum</code>.</p>
-<h2 id="prepare-the-build-tools">Prepare the build tools</h2>
-<p>Install the version declared by your project, then prepare its tools:</p>
-<pre><code class="language-sh"># Use the version from your game&#39;s [sdk] table.
-karty sdk install 0.0.17
-
-# Run this from the game project.
-karty sdk toolchain install
-</code></pre>
-<p>The toolchain includes Go, TinyGo, wasm-tools and, for SDKs with generated world materials, Materialize. Install the SDK&#39;s required Go version yourself and make it available on <code>PATH</code>, or select it with <code>KARTY_GO</code>. Karty checks the version; <code>sdk toolchain install</code> does not download Go. It downloads and verifies the managed TinyGo, wasm-tools and Materialize artifacts selected by the SDK.</p>
-<p>Builds prepare the tools they need, so explicit installation is useful when setting up a machine or CI cache. <code>karty dev</code> defaults to the standard Go compiler for its feedback loop. Regular builds follow <code>project.compiler</code>, which defaults to TinyGo. Both produce a WebAssembly cartridge for a compatible host; the compiler does not choose the destination&#39;s host executable.</p>
-<p>Players need the packaged game files, not your compiler or CLI.</p>
-<p>SDK setup commands share the <code>karty sdk</code> group: <code>current</code> prints the SDK selected by this CLI, <code>install VERSION</code> caches an exact release, and <code>toolchain install</code> prepares tools for the current project&#39;s SDK pin. Run <code>karty sdk --help</code> to explore them. The earlier <code>karty toolchain install</code> spelling remains available for existing scripts.</p>
-<h2 id="upgrade-deliberately">Upgrade deliberately</h2>
-<p>To move a game to another SDK, install that released version, change <code>[sdk]</code> in <code>karty.toml</code>, and rebuild. Review the regenerated <code>.karty/docs/</code>, update code and sources for any changed contracts, then test the packaged game on its target platforms. Commit the pin with those source changes. Generated files under <code>.karty/</code> are recreated by the build.</p>
-<p>SDK 0.0.17 selects API/reference 0.0.13 and project adapter contract 3. Its reviewed Go API uses renamed types and setters, snapshot getters and typed authored renderer handles, without compatibility aliases. Update authored Go code against the matching <code>.karty/docs/</code> reference and rebuild generated adapters with this CLI when adopting that SDK.</p>
-<p>SDK bundles and runtime downloads are verified before reuse. Tool versions and checksums also participate in asset cache identity, so changed processing inputs rebuild rather than silently reusing an older result.</p>
-<p>Continue with the <a href="asset-pipeline.html">asset pipeline</a> to see what the selected tools produce.</p>
+        <p>This page has moved to <a href="workflow.html">Build and preview</a>.</p>
+        
+        <div class="guide-body"><h1 id="build-and-preview">Build and preview</h1>
+<p>Continue with <a href="workflow.html">Build and preview</a>.</p>
 </div>
         
       </main>
@@ -1283,7 +1253,7 @@ karty sdk toolchain install
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

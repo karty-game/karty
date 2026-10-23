@@ -2,17 +2,19 @@
 
 The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.
 
-Create the SDK 0.0.17 starter:
+Create an isometric game:
 
 ```sh
-karty new --yes --sdk 0.0.17 --template isometric my-game
+karty new --yes --template isometric my-game
 cd my-game
 karty dev
 ```
 
-The starter includes controllers 0.1.0 in `packages/controllers/` and declares
-that folder in `karty.toml`. Keep it in Git. If extending an existing project,
-import the package as described in [reusable packages](../design/packages.html).
+The starter pins the `controllers-isometric` plugin's archive and checksum
+in `karty.toml`. The first build restores its source under ignored
+`.karty/packages/controllers-isometric/`; keep the declaration in Git.
+For an existing project, run `karty package import controllers-isometric@0.0.1`;
+see [reusable packages](../design/packages.html).
 Use the room and material files from [one room](levels.html); the isometric
 starter also supplies its `player` solid prefab in `world.yaml`.
 
@@ -20,7 +22,7 @@ starter also supplies its `player` solid prefab in `world.yaml`.
 
 ## Connect the isometric preset
 
-The complete `src/main.go` below is the starter's SDK adapter. Change its module
+The complete `src/main.go` below connects the controller to your game. Change its module
 imports if your project has a different name. Keep the viewport and project
 resolution at 960 by 540. Constructors validate their options; `Reset` clears
 held controls when focus changes.
@@ -29,7 +31,7 @@ held controls when focus changes.
 package main
 
 import (
-	"github.com/karty-game/controllers"
+	"github.com/karty-game/controllers-isometric"
 
 	"example.com/my-game/.karty/engine"
 )
@@ -168,12 +170,12 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 ```
 
 `Step` proposes movement from the accepted player position. Apply your game
-constraints; the SDK refreshes the accepted pose automatically before the next
+constraints; the engine refreshes the accepted pose automatically before the next
 update. `WatchPose` adds an optional notification. `Follow` takes that
 accepted position. The fixed diagonal camera keeps
 its angle as the player moves; `ZoomBy` clamps the visible world height.
 
-Read `packages/controllers/docs/presets-v1.md` in the generated project for
+Read `.karty/packages/controllers-isometric/docs/presets-v1.md` after restore for
 the complete contract, including picking and pointer targets. Extend the game
 with [textures](textures.html), [prefabs](prefabs.html),
 [lighting](lighting.html) and [interactions](interactions.html), then

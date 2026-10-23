@@ -14,7 +14,7 @@ a menu. Here, client means game code on both desktop and web; it does not imply
 a network connection or multiplayer server.
 
 The CLI compiles that code to WebAssembly and packages it in `game.kart`, the
-cartridge. The selected SDK supplies the generated API your code calls.
+cartridge. Karty generates the game API your code calls.
 Your game requests actions through that API and handles updates and events
 from the host.
 
@@ -30,10 +30,9 @@ from that accepted position. Game rules remain in your code; the host keeps the
 world and its presented state consistent.
 
 Native releases include a platform host executable. Web releases use a
-WebAssembly host and browser support files. The game's SDK pin selects compatible
-bindings and hosts, so a game developer does not need the engine source.
-Read [SDK versions and toolchains](sdk-and-toolchain.html) for what that pin
-selects and how to prepare the build tools.
+WebAssembly host and browser support files. Karty prepares the matching game
+bindings and runtime files automatically. Read [Build and preview](workflow.html)
+to create a project and package it for players.
 
 ## A level groups content and its lifetime
 
@@ -55,4 +54,4 @@ you edit, then publishes a compatible resource update or reloads the preview.
 The [asset pipeline](asset-pipeline.html) explains those build steps.
 The [interaction guide](../guide/interactions.html) shows how game code connects
 to authored content. Your project's `.karty/docs/` defines the exact lifecycle
-and API available in its selected SDK.
+and game API.

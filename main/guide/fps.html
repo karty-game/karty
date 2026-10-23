@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1174,7 +1176,7 @@ pre code {
           <p>On this page</p>
           <ol class="on-page">
             
-            <li><a href="#connect-the-first-person-preset">Connect the first-person preset</a></li>
+            <li><a href="#make-the-camera-playable">Make the camera playable</a></li>
             
           </ol>
            
@@ -1201,6 +1203,8 @@ pre code {
             <li><a href="media.html" aria-current="false">Sound and video</a></li>
             
             <li><a href="share.html" aria-current="false">Build and share</a></li>
+            
+            <li><a href="packages.html" aria-current="false">Write a package</a></li>
             
           </ul>
           
@@ -1246,12 +1250,14 @@ pre code {
               
               <li><a href="share.html" aria-current="false">Build and share</a></li>
               
+              <li><a href="packages.html" aria-current="false">Write a package</a></li>
+              
             </ul>
              
             <p>On this page</p>
             <ol class="on-page">
               
-              <li><a href="#connect-the-first-person-preset">Connect the first-person preset</a></li>
+              <li><a href="#make-the-camera-playable">Make the camera playable</a></li>
               
             </ol>
             
@@ -1276,144 +1282,69 @@ pre code {
         </div>
         
         <div class="guide-body"><h1 id="make-a-first-person-game">Make a first-person game</h1>
-<p>The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.</p>
-<p>Create the SDK 0.0.17 starter:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.17 --template fps my-game
+<p>Create a camera and attach the <code>controllers-3d</code> package&#39;s first-person component. It supplies walking, running, mouse look, two visible touch sticks, a physics body, gravity and collision. Keep game hooks for your own interactions and objectives.</p>
+<pre><code class="language-sh">karty new --yes --template fps my-game
 cd my-game
 karty dev
 </code></pre>
-<p>The starter includes controllers 0.1.0 in <code>packages/controllers/</code> and declares that folder in <code>karty.toml</code>. Keep it in Git. If extending an existing project, import the package as described in <a href="../design/packages.html">reusable packages</a>. Use the room and material files from <a href="levels.html">one room</a>; the isometric starter also supplies its <code>player</code> solid prefab in <code>world.yaml</code>.</p>
-<figure><img src="assets/hangar.jpg" alt="The Hangar sample uses the first-person preset to explore industrial rooms." loading="lazy"><figcaption>The Hangar sample uses the first-person preset to explore industrial rooms.</figcaption></figure>
-<h2 id="connect-the-first-person-preset">Connect the first-person preset</h2>
-<p>The complete <code>src/main.go</code> below is the starter&#39;s SDK adapter. Change its module imports if your project has a different name. Keep the viewport and project resolution at 960 by 540. Constructors validate their options; <code>Reset</code> clears held controls when focus changes.</p>
+<p>The starter references an independently released <a href="https://karty-game.github.io/karty-packages/packages/fps-kit.html">FPS Kit</a> archive by HTTPS URL and SHA-256 in <code>karty.toml</code>. Its first build downloads and verifies the package under <code>.karty/packages/fps-kit</code>; later builds can reuse the verified cache offline. A four-metre corridor, two metres wide, connects two eight-metre rooms. They use the kit’s 256px grid, brick and concrete materials. Three crates have static collision; two are spawned with dynamic box bodies so you can push them. Keep the pinned package declaration in Git. Material normal/height/AO maps are generated during the ordinary build. Room numbers, a floor arrow and a tagged goal star demonstrate the package&#39;s transparent decals for temporary goals and points of interest. The starter also includes <code>controllers-3d</code> for player movement and mobile controls. The CLI reads <code>[level].name</code> from <code>levels/*/level.toml</code> to generate typed references such as <code>assets.LevelRoom</code>. The callback passed to <code>LoadLevel</code> receives that request&#39;s ready result; loading errors still arrive through <code>OnLevelFailed</code>.</p>
+<figure><img src="assets/hangar.jpg" alt="The Hangar sample uses the controller package to explore industrial rooms." loading="lazy"><figcaption>The Hangar sample uses the controller package to explore industrial rooms.</figcaption></figure>
+<h2 id="make-the-camera-playable">Make the camera playable</h2>
+<p>The complete <code>src/main.go</code> below attaches the controller after the room is ready. Change its module import if your project has a different name. Keep the viewport and project resolution at 960 by 540.</p>
 <pre><code class="language-go">package main
 
 import (
-	&#34;github.com/karty-game/controllers&#34;
-
+	&#34;example.com/my-game/.karty/assets&#34;
 	&#34;example.com/my-game/.karty/engine&#34;
+	fpscontroller &#34;example.com/my-game/.karty/processed/code/controllers-3d.sdk/controller&#34;
 )
 
 type Game struct {
 	engine.Game
-	request                        engine.RequestID
-	camera                         *engine.Camera3D
-	label                          *engine.Text2D
-	controller *controllers.FirstPerson
-	fpsReady bool
+	label *engine.Text2D
 }
 
 //go:wasmexport karty_register
 func main() {
-	options := controllers.DefaultFirstPersonOptions()
-	options.Width, options.Height = 960, 540
-	options.Speed, options.KeyYawSpeed = 2.4, 1.5
-	controller, err := controllers.NewFirstPerson(options)
-	if err != nil { panic(err) }
-	game := &amp;Game{controller: controller}
+	game := &amp;Game{}
 	engine.Run(engine.Hooks{
-		OnUpdate:     func(engine.Frame) { game.updateFPS() },
-		OnKeyDown:    func(key engine.Key) { game.keyFPS(key, true) },
-		OnKeyUp:      func(key engine.Key) { game.keyFPS(key, false) },
-		OnInputReset: game.resetFPS,
-		OnPointer: game.pointerFPS,
-
-		OnStart: func() {
-			game.label = game.NewText2D(&#34;Loading room...&#34;, engine.NewVec2(24, 24))
-			game.request = game.RequestLevel(&#34;levels.room&#34;)
-		},
-		OnLevelReady: func(event engine.LevelReady) {
-			if event.RequestID != game.request {
-				return
-			}
-			game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
-				Projection: engine.CameraProjectionPerspective,
-				Output:     engine.CameraOutputFull,
-				Position:   engine.NewVec3(2, 2, 1.7),
-				Yaw:        0, Pitch: 0, VerticalFOV: 1.05,
-				NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
-				ViewportWidth: 960, ViewportHeight: 540,
-			})
-			game.camera.SetLayer(-1)
-
-			game.fpsReady = true
-
-			game.label.SetText(&#34;WASD: walk | Q/E: turn | click: mouse look | touch: dual sticks&#34;)
-		},
-		OnLevelFailed: func(event engine.LevelFailed) {
-			if event.RequestID == game.request {
-				game.label.SetText(event.Diagnostic)
-			}
-		},
+		OnStart: game.start, OnLevelFailed: game.failed,
 	})
 }
 
+func (game *Game) start() {
+	game.label = game.NewText2D(&#34;Loading room...&#34;, engine.NewVec2(24, 24))
+	game.LoadLevel(assets.LevelRoom, game.ready)
+}
 
-func (game *Game) keyFPS(key engine.Key, down bool) {
-	if key == engine.KeyEscape &amp;&amp; down { game.resetFPS(); return }
-	if control, ok := movementKey(key); ok { game.controller.Key(control, down); return }
-	switch key {
-	case engine.KeyQ: game.controller.Key(controllers.LookLeft, down)
-	case engine.KeyE: game.controller.Key(controllers.LookRight, down)
+// The mounted room supplies the world that will resolve player collisions.
+func (game *Game) ready(event engine.LevelReady) {
+	camera := game.NewCamera3D(event.Handle, engine.Camera3DSettings{
+		Projection:  engine.CameraProjectionPerspective,
+		Output:      engine.CameraOutputFull,
+		Position:    engine.NewVec3(2, 2, 1.7),
+		VerticalFOV: 1.05, NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
+		ViewportWidth: 960, ViewportHeight: 540,
+	})
+	camera.SetLayer(-1)
+	options := fpscontroller.DefaultFirstPersonOptions()
+	options.Speed = 2.4 // metres per second
+	if _, err := fpscontroller.AttachFirstPerson(game.Game, camera, options); err != nil {
+		game.label.SetText(&#34;Could not create player: &#34; + err.Error())
+		return
 	}
+	game.label.SetText(&#34;WASD / arrows: walk | Shift: run | click: mouse look | touch: move and look&#34;)
 }
 
-func (game *Game) resetFPS() {
-	game.controller.Reset()
-	game.SetCursorCaptured(false)
-}
-
-func (game *Game) pointerFPS(pointer engine.PointerInput) {
-	if game.camera == nil || !game.fpsReady { return }
-	if pointer.Kind != engine.PointerMouse &amp;&amp; pointer.Kind != engine.PointerTouch { return }
-	var phase controllers.PointerPhase
-	switch pointer.Phase {
-	case engine.PointerDown: phase = controllers.PointerDown
-	case engine.PointerMove: phase = controllers.PointerMove
-	case engine.PointerUp: phase = controllers.PointerUp
-	case engine.PointerCancel: phase = controllers.PointerCancel
-	default: return
-	}
-	result := game.controller.Pointer(controllers.Pointer{
-		Phase: phase, Touch: pointer.Kind == engine.PointerTouch, ID: pointer.ID,
-		X: pointer.X, Y: pointer.Y, DeltaX: pointer.DeltaX, DeltaY: pointer.DeltaY,
-		Primary: pointer.Buttons&amp;1 != 0, Captured: pointer.Captured,
-	}, pointer.X &gt;= 0 &amp;&amp; pointer.X &lt;= 960 &amp;&amp; pointer.Y &gt;= 0 &amp;&amp; pointer.Y &lt;= 540)
-	if result.Capture { game.SetCursorCaptured(true) }
-	if result.Release { game.SetCursorCaptured(false) }
-}
-
-func (game *Game) updateFPS() {
-	if game.camera == nil || !game.fpsReady { return }
-	// Settings contains the last host-accepted pose automatically.
-	settings := game.camera.Settings()
-	motion := game.controller.Step(settings.Yaw, settings.Pitch)
-	if motion.X == 0 &amp;&amp; motion.Y == 0 &amp;&amp; motion.Yaw == settings.Yaw &amp;&amp; motion.Pitch == settings.Pitch { return }
-	settings.Yaw, settings.Pitch = motion.Yaw, motion.Pitch
-	settings.Position.X += motion.X
-	settings.Position.Y += motion.Y
-	game.camera.SetSettings(settings)
-}
-
-func movementKey(key engine.Key) (controllers.Control, bool) {
-	switch key {
-	case engine.KeyW: return controllers.Forward, true
-	case engine.KeyS: return controllers.Backward, true
-	case engine.KeyA: return controllers.Left, true
-	case engine.KeyD: return controllers.Right, true
-	case engine.KeyArrowUp: return controllers.ForwardAlt, true
-	case engine.KeyArrowDown: return controllers.BackwardAlt, true
-	case engine.KeyLeft: return controllers.LeftAlt, true
-	case engine.KeyRight: return controllers.RightAlt, true
-	case engine.KeyShiftLeft: return controllers.RunLeft, true
-	case engine.KeyShiftRight: return controllers.RunRight, true
-	}
-	return 0, false
+func (game *Game) failed(event engine.LevelFailed) {
+	game.label.SetText(event.Diagnostic)
 }
 </code></pre>
-<p>WASD/arrows walk, Shift runs, and Q/E turn. Click to capture mouse look; Escape releases it. Touch the lower-left side to walk and lower-right to look. The minimal starter supplies gestures without drawing stick overlays. Route UI hit tests before accepting new scene gestures when adding menus.</p>
-<p>Read <code>packages/controllers/docs/presets-v1.md</code> in the generated project for the complete contract, including picking and pointer targets. Extend the game with <a href="textures.html">textures</a>, <a href="prefabs.html">prefabs</a>, <a href="lighting.html">lighting</a> and <a href="interactions.html">interactions</a>, then <a href="share.html">share a build</a>.</p>
-<p>The interaction guide uses E by default. Use F for interactions here, or remap this starter&#39;s Q/E controls before wiring the interaction hook.</p>
+<p>WASD/arrows walk, Shift runs, and Q/E turn. Click to capture mouse look; Escape releases it. Touch the lower-left side to walk and lower-right to look. The package draws the sticks on first touch and clears held controls on focus loss or modal input capture. It moves the player before your <code>OnUpdate</code> hook, using the last host-accepted pose and preserving falling momentum.</p>
+<p>The game owns the camera; destroying it also closes its controller. Level release and cartridge shutdown clean up the controller&#39;s body and touch display. Keep the returned controller when you need <code>SetEnabled</code>, <code>Teleport</code> or <code>Close</code>; only one local first-person controller can be attached at a time.</p>
+<p>Start with the default options, then tune speed, sensitivity or <code>Touch</code> appearance. Custom <code>BeforeMove</code> and <code>Move</code> callbacks can add authored traversal or swimming. <a href="../hangar/">Hangar</a> uses the shared capsule motor for stairs; <a href="../terrain/">Terrain</a> adds swimming without another input adapter. The installed <code>.karty/packages/controllers-3d/</code> README and component documentation contain the complete contract.</p>
+<p>Extend the game with <a href="textures.html">textures</a>, <a href="prefabs.html">prefabs</a>, <a href="lighting.html">lighting</a> and <a href="interactions.html">interactions</a>, then <a href="share.html">share a build</a>.</p>
+<p>The interaction guide uses E by default. Use F for interactions here, or set <code>options.TurnKeys = false</code> before wiring the interaction hook.</p>
 </div>
         
       </main>
@@ -1425,7 +1356,7 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

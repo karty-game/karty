@@ -65,7 +65,7 @@
     }
     return WebAssembly.instantiate(await response.arrayBuffer(), imports);
   });
-  const hostSource = {url:"../runtime/0.0.17/c673a56a1ca22f99edaa347cca7ea9362099a4705aef7033329197790851c4cd.wasm",sha256:"c673a56a1ca22f99edaa347cca7ea9362099a4705aef7033329197790851c4cd"};
+  const hostSource = {url:"../runtime/0.0.18/a786d206ba21b61ca71e3702888042268122590cb4d523e708299d8d935c59a2.wasm",sha256:"a786d206ba21b61ca71e3702888042268122590cb4d523e708299d8d935c59a2"};
   const readHostBytes = async (response) => {
     // Startup downloads have a fixed bound, independent of server headers.
     const maxBytes = 128 * 1024 * 1024;
@@ -522,7 +522,7 @@
       state("loading-cartridge");
       status("Loading game cartridge…");
       go = new Go();
-      return loadClientWasm("game.kart?v=369b47907364f58a", imports);
+      return loadClientWasm("game.kart?v=4c482362f7d441b3", imports);
     })
     .then((result) => {
       client = result.instance;

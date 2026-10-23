@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1195,6 +1197,8 @@ pre code {
             
             <li><a href="share.html" aria-current="false">Build and share</a></li>
             
+            <li><a href="packages.html" aria-current="false">Write a package</a></li>
+            
           </ul>
           
         </div>
@@ -1239,6 +1243,8 @@ pre code {
               
               <li><a href="share.html" aria-current="false">Build and share</a></li>
               
+              <li><a href="packages.html" aria-current="false">Write a package</a></li>
+              
             </ul>
              
           </div>
@@ -1281,7 +1287,7 @@ if err != nil {
     game.status = err.Error()
 }
 </code></pre>
-<p>Propose movement from <code>camera.Settings()</code>, which the SDK keeps synchronized automatically with the accepted pose. Do not accumulate a separate guessed player position.</p>
+<p>Propose movement from <code>camera.Settings()</code>, which the engine keeps synchronized automatically with the accepted pose. Do not accumulate a separate guessed player position.</p>
 <p>The position check defines a one-metre trigger around <code>(6, 6)</code>. Call this method from your existing <code>OnKeyDown</code> handler to finish when the player presses E there. Keep the movement handler in that hook too.</p>
 <pre><code class="language-go">func (game *Game) onKeyDown(key engine.Key) {
     if key == engine.KeyE &amp;&amp; game.nearGoal &amp;&amp; !game.won {
@@ -1303,7 +1309,7 @@ if err != nil {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

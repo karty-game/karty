@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1195,6 +1197,8 @@ pre code {
             
             <li><a href="share.html" aria-current="false">Build and share</a></li>
             
+            <li><a href="packages.html" aria-current="false">Write a package</a></li>
+            
           </ul>
           
         </div>
@@ -1224,6 +1228,8 @@ pre code {
               <li><a href="media.html" aria-current="page">Sound and video</a></li>
               
               <li><a href="share.html" aria-current="false">Build and share</a></li>
+              
+              <li><a href="packages.html" aria-current="false">Write a package</a></li>
               
             </ul>
              
@@ -1324,7 +1330,7 @@ func (game *Game) stopMedia() {
     })
 }
 </code></pre>
-<p>Call <code>game.updateAudioReceiver()</code> after camera creation in <code>OnLevelReady</code>, and from your existing <code>OnUpdate</code> after movement and turning. Set it again when replacing the camera. The receiver follows the camera&#39;s world position; its output rectangle on screen does not change where the player hears from.</p>
+<p>Call <code>game.updateAudioReceiver()</code> after camera creation in the level&#39;s ready callback, and from your existing <code>OnUpdate</code> after movement and turning. Set it again when replacing the camera. The receiver follows the camera&#39;s world position; its output rectangle on screen does not change where the player hears from.</p>
 <p><code>Right</code> is the world direction of the right speaker. A yaw of zero faces positive Y, so the right direction is <code>(1, 0)</code>. The host does not derive this vector from camera yaw: update it as the player turns, or panning will keep the old direction. Camera pitch does not change this horizontal listener basis. For a 2D game, use the player entity as receiver and <code>(1, 0)</code> when positive X should always sound to the right. <code>ClearAudioListener()</code> silences spatial playback until another receiver is set.</p>
 <h2 id="play-a-positioned-one-shot">Play a positioned one-shot</h2>
 <p>Pass the existing door entity or resolved <code>engine.EntityRef</code> when the door opens. It must be a live audio entity:</p>
@@ -1337,7 +1343,7 @@ func (game *Game) stopMedia() {
 <p>Call this once per opening, rather than every update. The voice follows the door until the clip ends. <code>NearDistance</code> is the range with no distance reduction; volume fades between near and far, and reaches silence at <code>FarDistance</code>. Use the same units as the entity positions: metres for the world guides, canvas coordinates for 2D entities. Set volume explicitly; zero is silent. Use finite values, volume in <code>[0, 4]</code>, a nonnegative near distance, and a far distance greater than near.</p>
 <p><code>PlaySoundFrom</code> uses XY distance. Z height, walls and doors do not obstruct this one-shot API. Use an emitter with <code>Loop: false</code> when a short effect needs XYZ distance or collision obstruction.</p>
 <h2 id="place-a-looping-sound-in-the-world">Place a looping sound in the world</h2>
-<p>Check <code>.karty/docs/audio-emitters.md</code> for emitter support in your project&#39;s selected SDK and matching host. Create this emitter once from <code>OnLevelReady</code>, using <code>event.Handle</code> for the mounted level:</p>
+<p>Create this emitter once from the level&#39;s ready callback, using <code>event.Handle</code> for the mounted level. See <code>.karty/docs/audio-emitters.md</code> for the complete options:</p>
 <pre><code class="language-go">func (game *Game) startReactorSound(level engine.LevelHandle) *engine.SoundEmitter {
     return game.NewSoundEmitter(level, assets.SoundReactorHum,
         engine.NewVec3(6, 6, 1.5), engine.SoundEmitterOptions{
@@ -1375,7 +1381,7 @@ func (game *Game) stopMedia() {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

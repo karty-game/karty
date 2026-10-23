@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#111827" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" />
-    <meta name="description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+    <meta name="description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
     
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Karty" />
 <meta property="og:title" content="Packages / Karty" />
-<meta property="og:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta property="og:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta property="og:url" content="https://karty-game.github.io/karty/main/design/packages.html" />
 <meta property="og:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta property="og:image:type" content="image/png" />
@@ -22,7 +22,7 @@
 />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Packages / Karty" />
-<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta name="twitter:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta
   name="twitter:image:alt"
@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1127,6 +1128,7 @@ pre code {
           <a href="index.html"  aria-current="page" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1158,11 +1160,19 @@ pre code {
             
             <li><a href="architecture.html" aria-current="false">Architecture</a></li>
             
-            <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+            <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
             
             <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
             
             <li><a href="packages.html" aria-current="page">Packages</a></li>
+            
+            <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+            
+            <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+            
+            <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+            
+            <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
             
             <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
             
@@ -1176,6 +1186,8 @@ pre code {
             <li><a href="#one-package-can-supply-code-and-content">One package can supply code and content</a></li>
             
             <li><a href="#link-while-developing-and-archive-to-share">Link while developing and archive to share</a></li>
+            
+            <li><a href="#pin-a-release-archive-over-https">Pin a release archive over HTTPS</a></li>
             
             <li><a href="#player-controller-presets">Player controller presets</a></li>
             
@@ -1204,11 +1216,19 @@ pre code {
               
               <li><a href="architecture.html" aria-current="false">Architecture</a></li>
               
-              <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+              <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
               
               <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
               
               <li><a href="packages.html" aria-current="page">Packages</a></li>
+              
+              <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+              
+              <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+              
+              <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+              
+              <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
               
               <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
               
@@ -1222,6 +1242,8 @@ pre code {
               <li><a href="#one-package-can-supply-code-and-content">One package can supply code and content</a></li>
               
               <li><a href="#link-while-developing-and-archive-to-share">Link while developing and archive to share</a></li>
+              
+              <li><a href="#pin-a-release-archive-over-https">Pin a release archive over HTTPS</a></li>
               
               <li><a href="#player-controller-presets">Player controller presets</a></li>
               
@@ -1256,10 +1278,11 @@ pre code {
         </div>
         
         <div class="guide-body"><h1 id="packages">Packages</h1>
-<p>A package lets several games share a controller, a set of crates, a material palette or a HUD. It carries source code and original assets so each game can build them with its own selected SDK.</p>
+<p>A package lets several games share a controller, a set of crates, a material palette or a HUD. It carries source code and original assets so each game can build them with the rest of its source.</p>
+<p>To create a repository, publish a release and request a catalog listing, follow <a href="../guide/packages.html">Write and publish a package</a>.</p>
 <h2 id="one-package-can-supply-code-and-content">One package can supply code and content</h2>
-<p><code>karty-package.toml</code> gives the package its name, version and exports. A package can contain Go behavior, static solid prefabs, PNG world materials, or KartUI components, layouts, images, fonts and theme defaults. It can combine these exports or provide just the parts a game needs.</p>
-<p>A Go module supplies code imports and Go dependencies. A Karty package adds content exports and their build integration. Code packages still use their ordinary Go module paths; resource-only and UI-only packages need no Go module. An SDK bundle serves a different purpose: it supplies the game&#39;s engine API, templates, tools metadata and reference.</p>
+<p><code>karty-package.toml</code> gives the package its name, version and exports. A package can contain Go behavior, static solid prefabs, PNG world materials, transparent PNG sprites and decals, or KartUI components, layouts, images, fonts and theme defaults. It can combine these exports or provide just the parts a game needs. Use a sprite texture export in <code>actor.sprite.texture</code>; <code>facing: fixed</code> places a decal on a surface, with actor rotation controlling its orientation. The <code>fps-kit</code> package includes a complete placeholder decal set.</p>
+<p>A Go module supplies code imports and Go dependencies. A Karty package adds content exports and their build integration. Code packages still use their ordinary Go module paths; resource-only and UI-only packages need no Go module.</p>
 <h2 id="link-while-developing-and-archive-to-share">Link while developing and archive to share</h2>
 <p>Link a working folder when you want package edits to reach a game&#39;s next build or development preview. The game keeps a path to that folder, so another machine needs the folder too.</p>
 <p>From the game project, link an existing package folder:</p>
@@ -1267,7 +1290,7 @@ pre code {
 karty dev
 </code></pre>
 <p>The folder must contain <code>karty-package.toml</code>. Its manifest name is the package identity; the folder name does not choose the import name.</p>
-<p>Use a <code>.kpkg</code> archive for a fixed dependency. The project records its checksum and keeps a copy under <code>packages/</code>. Commit that archive with the project so another checkout can restore the same package. Updating it is an explicit replacement; a build does not silently select a newer version.</p>
+<p>Use a <code>.kpkg</code> archive for a fixed dependency. Importing a local archive records its checksum and keeps a copy under <code>packages/</code>. Commit that archive with the project so another checkout can restore the same package. Updating it is an explicit replacement; a build does not silently select a newer version.</p>
 <p>Export the package from its source folder, then import the archive into a game:</p>
 <pre><code class="language-sh"># Export an existing package; its manifest supplies the version.
 karty package export --output ../warehouse-kit-0.1.0.kpkg ../warehouse-kit
@@ -1281,43 +1304,55 @@ karty package import ../warehouse-kit-0.1.0.kpkg
 <p>To switch a linked package to an archive, or select a newer archive with the same manifest name, make the replacement explicit:</p>
 <pre><code class="language-sh">karty package import --replace ../warehouse-kit-0.2.0.kpkg
 </code></pre>
+<h2 id="pin-a-release-archive-over-https">Pin a release archive over HTTPS</h2>
+<p>A package declaration can point to a versioned HTTPS <code>.kpkg</code> release URL with its publisher-provided SHA-256 checksum. The first restore downloads a bounded archive, verifies its checksum and validates its contents. Later restores check and reuse the cached archive. Keep the URL and checksum in <code>karty.toml</code>; updates require changing that pin explicitly.</p>
+<p>Import a published package by its catalog name, or select an exact version:</p>
+<pre><code class="language-sh">karty package import fps-kit
+karty package import fps-kit@0.0.1
+</code></pre>
+<p>The first form chooses the latest stable version when imported. The second requires that exact published version. These examples show command syntax; the chosen package and version must be available in the catalog. Both forms record the resolved archive URL and SHA-256 in <code>karty.toml</code>. Restore and builds reuse that fixed pin without consulting the catalog; a verified cached archive also supports restoration offline.</p>
+<p>Use <code>karty package upgrade fps-kit</code> to update an installed package to its latest stable catalog release. Upgrade requires an existing archive dependency and always resolves the catalog name, even if a local folder has the same name. It preserves linked development folders; explicitly replace a link with <code>karty package import --replace fps-kit@0.0.1</code> when you want a published archive. Use that same exact-version import to select a specific release.</p>
+<p>For imports, an existing local folder named <code>fps-kit</code> takes priority over the catalog; use <code>./fps-kit</code> to explicitly select a local path. Local folders and archives remain supported. You can also configure URL dependencies directly in <code>karty.toml</code>.</p>
+<p>The CLI uses the official <a href="https://karty-game.github.io/karty-packages/master.json">package catalog</a>, which can list packages from different repositories. Import checks the archive checksum, package name and version, complete contents and project compatibility before changing authored project files. See the <a href="named-package-imports-v1.html">named package imports v1 decision</a> for resolution and compatibility rules.</p>
+<p>The FPS starter declares the published <a href="https://karty-game.github.io/karty-packages/packages/fps-kit.html">FPS Kit</a> through this mechanism. Its template carries the dependency pin, and restored package docs appear under <code>.karty/packages/fps-kit/</code>. See the <a href="remote-package-archives-v1.html">remote package archives v1 decision</a> for declaration syntax, HTTPS rules and cache validation.</p>
 <h2 id="player-controller-presets">Player controller presets</h2>
-<p>The reusable <code>controllers</code> package bundles first-person, top-down 2D and isometric input and camera behavior in one install. Choose a preset, customize its options, route your game hooks to it and apply its results through your SDK bindings. There is no separate camera or input package to assemble.</p>
-<p>Hangar, Terrain and Crate Room share first-person movement and look calculations. Willowbrook uses top-down movement and camera following; Vigil uses the isometric movement basis, following camera, ground picking and zoom. Each game retains its collision rules, navigation, artwork and gameplay.</p>
-<p>The module path is <code>github.com/karty-game/controllers</code>. Version 0.1.0 is local source, supplied through a linked package or exported archive; a public Go module tag is not assumed. Its package README contains setup and adapter examples. This adds no engine API or SDK requirement beyond the consuming game&#39;s existing APIs.</p>
-<p>SDK 0.0.17&#39;s <code>2d</code>, <code>fps</code> and <code>isometric</code> starters include the same package source under <code>packages/controllers/</code>. Their <code>karty.toml</code> links that folder, so a generated project builds without a published controller module. Keep the folder in Git. Blank and UI starters add no player controls. See the <a href="../guide/2d.html">2D</a>, <a href="../guide/fps.html">first-person</a> and <a href="../guide/isometric.html">isometric</a> guides for complete SDK adapters.</p>
+<p>Choose the published controller package matching your game:</p>
+<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Package</th><th scope="col">Go module</th><th scope="col">Usage</th></tr></thead><tbody><tr><td><code>controllers-3d</code></td><td><code>github.com/karty-game/controllers-3d</code></td><td>FPS movement and controls</td></tr><tr><td><code>controllers-topdown</code></td><td><code>github.com/karty-game/controllers-topdown</code></td><td>Willowbrook, 2D starter</td></tr><tr><td><code>controllers-isometric</code></td><td><code>github.com/karty-game/controllers-isometric</code></td><td>Vigil, isometric starter</td></tr></tbody></table></div>
+<p>For example, run <code>karty package import controllers-topdown@0.0.1</code> from an existing game. Customize the preset options, route game hooks to it and apply its results through your game&#39;s engine bindings. The Go package name remains <code>controllers</code> within each separate module.</p>
+<p>Hangar, Terrain, Crate Room and Effect Lab use the <code>controllers-3d</code> package&#39;s first-person component and generated adapter. Willowbrook uses top-down movement and camera following; Vigil uses the isometric movement basis, following camera, ground picking and zoom. Each game retains its collision rules, navigation, artwork and gameplay.</p>
+<p>Package source and release tooling live in <a href="https://github.com/karty-game/karty-packages"><code>karty-packages</code></a>, independently of CLI releases. Imports pin checked archives and stage their Go modules under <code>.karty/packages/</code>; a separate public Go module tag is not needed. Package READMEs contain setup and adapter examples.</p>
+<p>The <code>2d</code> and <code>isometric</code> starters pin their matching controller release in <code>karty.toml</code>. The FPS starter pins <code>controllers-3d</code> for its player and FPS Kit for its level content. Keep the declarations in Git. Blank and UI starters add no player controls. See the <a href="../guide/2d.html">2D</a>, <a href="../guide/fps.html">first-person</a> and <a href="../guide/isometric.html">isometric</a> guides for complete game adapters.</p>
 <h2 id="the-game-owns-composition">The game owns composition</h2>
 <p>Suppose <code>warehouse-kit</code> exports a <code>crate-stack</code> prefab and a <code>wood</code> material. The game places <code>warehouse-kit.crate-stack</code> in its world and can override that instance&#39;s material. Other instances keep the package&#39;s default.</p>
 <p>The same boundary applies to UI: a shared HUD component receives the game&#39;s state and callbacks, while the game chooses where it appears and how long it lives. Shared Go behavior should accept a small interface from its consumer, so it can work across games with different generated bindings.</p>
 <h2 id="packages-use-the-ordinary-build-pipeline">Packages use the ordinary build pipeline</h2>
-<p>The CLI resolves exports before compiling the game. Imported images go through asset processing, prefabs go through world compilation, and KartUI sources compile with the game&#39;s SDK. Generated files stay in <code>.karty/</code>; package authors distribute sources rather than a game&#39;s generated bindings.</p>
-<p>The current package workflow uses local folders and archives. A remote registry, automatic updates and transitive resource dependencies are outside its current scope. Particle, audio and video exports are also not supported yet.</p>
+<p>The CLI resolves exports before compiling the game. Imported images go through asset processing, prefabs go through world compilation, and KartUI sources compile with the game&#39;s engine bindings. Generated files stay in <code>.karty/</code>; package authors distribute sources rather than a game&#39;s generated bindings.</p>
+<p>An explicitly selected build processor can also return Go adapters for the game&#39;s engine bindings. These compile under <code>.karty/processed/code/&lt;package.processor&gt;/</code>; the package owns their source and templates. This lets a controller provide typed camera/body integration without adding gameplay policy to the engine. See <a href="package-generated-code-v1.html">package-generated Go adapters v1</a>.</p>
+<p>Only selected package textures enter a world&#39;s asset build. Transparent decals use the <code>sprite</code> profile and retain their alpha through the ordinary bounded, checksum-verified package and image pipeline. They use existing fixed actor sprites and add no package format, world schema or wire format changes.</p>
+<p>The package workflow supports local folders, local archives, named catalog imports and checksum-pinned HTTPS archives. Automatic updates and transitive resource dependencies remain outside its current scope. Particle, audio and video exports are also not supported yet.</p>
+<p>Environment texture exports may include a <code>[textures.materialize]</code> table to retain a material&#39;s generation preset and overrides in every consuming level. For example, a metal bumper can export <code>preset = &#34;metal&#34;</code> together with its PNG and prefab. Settings are validated for all exports and staged only for selected textures; sprites and decals cannot declare them. See the <a href="package-materials-v1.html">package material generation v1 decision</a> for the fields, compatibility and build rules.</p>
 <p>Follow <a href="../guide/share.html#share-reusable-code-prefabs-and-ui">Build and share</a> to import or export one. Read <a href="asset-pipeline.html">Asset pipeline</a> to see where its content goes during a build.</p>
 <h2 id="dialogue-package-v1">Dialogue package v1</h2>
-<p>The candidate <code>dialogue</code> 0.1.0 package combines the Yarn compiler, portable Go story runtime, presentation model and visual novel UI in one install and one archive. Last Train demonstrates this integration. Its optional <code>savegame</code> package supplies generic profile/run storage independently of dialogue.</p>
+<p>The published <code>dialogue</code> 0.0.1 package combines the Yarn compiler, portable Go story runtime, presentation model and visual novel UI in one install and one archive. Last Train demonstrates this integration. Its optional <code>savegame</code> package supplies generic profile/run storage independently of dialogue.</p>
 <p>Game code imports <code>github.com/karty-game/dialogue</code>. <code>Load</code> reads official compiled Yarn programs and their string table; <code>NewStory(program)</code> creates a story runner, while <code>New()</code> creates presentation state. The package supplies <code>NovelFrame</code>, <code>NovelDialogue</code>, choices and history to the game&#39;s generated UI. Games own artwork, fonts, scenes and custom commands, and may use their own UI.</p>
-<p>The game explicitly selects <code>dialogue.compile</code> and its <code>.yarn</code> input paths in <code>[[build.processors]]</code>. Builds require .NET SDK 9.0.203 and Yarn Spinner 3.2.1&#39;s locked compiler dependencies; the shipped game uses a pure Go runtime. Initial Yarn feature limits are documented in the package&#39;s compatibility reference.</p>
-<p>This replaces the unreleased separate <code>yarn</code> and <code>novel-ui</code> packages. Migration removes those package entries and the Yarn Go dependency, uses <code>NewStory</code>, and changes processor selection/resource reads from <code>yarn.compile</code> to <code>dialogue.compile</code>. UI identities move from <code>novel-ui.*</code> to <code>dialogue.*</code>; generated component type names remain unchanged. No engine, SDK or wire change is required. The <a href="https://github.com/karty-game/karty/blob/main/packages/dialogue/docs/binary-runtime-v2.md">binary runtime v2 decision</a> replaces the candidate&#39;s CSV tables and run snapshots. Rebuild the game and start a new run; lifetime preferences and ending unlocks retain their format.</p>
-<p>The same candidate includes an optional <code>dialogue.Stage</code> controller for authored entrances, framing, short reactions and ambient motion. It exposes bounded, viewport-relative snapshots to a game&#39;s renderer and needs no engine change. Games save authored composition alongside the story; animation phases remain transient, and reduced motion belongs with lifetime preferences. Last Train demonstrates sprite-based desktop staging and responsive portrait UI. Continuous environmental motion and gesture movement currently use the desktop renderer; the narrow-screen UI supports expressions, group composition and entrances.</p>
+<p>The game explicitly selects <code>dialogue.compile</code> and its <code>.yarn</code> input paths in <code>[[build.processors]]</code>. Authoring requires the .NET tools and Yarn Spinner compiler described in the package&#39;s setup instructions; the shipped game uses a pure Go runtime. Initial Yarn feature limits are documented in the package&#39;s compatibility reference.</p>
+<p>The <a href="https://github.com/karty-game/karty-packages/blob/main/packages/dialogue/docs/binary-runtime-v2.md">binary runtime contract</a> describes compiled dialogue resources, string tables and saved runs. Follow the package&#39;s migration instructions when updating an existing story project.</p>
+<p>The package includes an optional <code>dialogue.Stage</code> controller for authored entrances, framing, short reactions and ambient motion. It exposes bounded, viewport-relative snapshots to a game&#39;s renderer and needs no engine change. Games save authored composition alongside the story; animation phases remain transient, and reduced motion belongs with lifetime preferences. Last Train demonstrates sprite-based desktop staging and responsive portrait UI. Continuous environmental motion and gesture movement currently use the desktop renderer; the narrow-screen UI supports expressions, group composition and entrances.</p>
 <h2 id="tiled-package-v1">Tiled package v1</h2>
-<p>The local <code>tiled</code> 0.1.0 candidate shares a build-time Tiled JSON parser, PNG importer, bounded binary map codec and 2D sprite view. It is not a published package release. Read the <a href="https://github.com/karty-game/karty/blob/main/packages/tiled/README.md">package reference</a> and its two independent consumers: <a href="https://github.com/karty-game/karty/blob/main/samples/willowbrook/README.md">Willowbrook</a> uses TinyGo; <a href="https://github.com/karty-game/karty/blob/main/testdata/tiled-room/README.md">Tiled room</a> uses Go.</p>
-<p>From either sample&#39;s project directory, link the working package:</p>
-<pre><code class="language-sh">karty package import ../../packages/tiled
+<p>The published <code>tiled</code> 0.0.1 package shares a build-time Tiled JSON parser, PNG importer, bounded binary map codec and 2D sprite view. Read the <a href="https://github.com/karty-game/karty-packages/blob/main/packages/tiled/README.md">package reference</a> and its two independent consumers: <a href="https://github.com/karty-game/karty/blob/main/samples/willowbrook/README.md">Willowbrook</a> uses TinyGo; <a href="https://github.com/karty-game/karty/blob/main/testdata/tiled-room/README.md">Tiled room</a> uses Go.</p>
+<p>The samples already pin this release. From another game&#39;s directory, import it:</p>
+<pre><code class="language-sh">karty package import tiled@0.0.1
 karty package restore
 </code></pre>
-<p>For a fixed dependency, export from the repository root, then replace the link from the consuming game:</p>
-<pre><code class="language-sh"># Repository root; choose a new output file.
-karty package export --output /tmp/tiled-0.1.0.kpkg packages/tiled
-
-# Game project; import copies and checksums the archive.
-karty package import --replace /tmp/tiled-0.1.0.kpkg
+<p>To edit the package itself, clone the packages repository and explicitly switch the consuming game to its working folder:</p>
+<pre><code class="language-sh">karty package import --replace /path/to/karty-packages/packages/tiled
 </code></pre>
-<p>Both consumers call the shared image importer from their own author generator, which writes ordinary level texture inputs. From the repository root, run <code>mise run author-willowbrook</code> followed by <code>mise run build-willowbrook-web</code>, or <code>mise run author-tiled-room</code> followed by <code>mise run build-tiled-room-web</code>. Use the SDK and matching public host selected by those samples.</p>
-<p>Game code imports <code>github.com/karty-game/tiled</code> and its <code>karty2d</code> subpackage. The game supplies a small create/update/destroy SpriteRenderer2D backend using its own generated bindings and mounted textures. The shared view handles bounded residency, authored animation and optional wind; the game owns its camera, input, collision rules, actors and HUD. Static sprites stay in world coordinates while the existing SDK Camera2D follows the player. No engine API or wire change is needed to use this package.</p>
+<p>Both consumers call the shared image importer from their own author generator, which writes ordinary level texture inputs. From the repository root, run <code>mise run author-willowbrook</code> followed by <code>mise run build-willowbrook-web</code>, or <code>mise run author-tiled-room</code> followed by <code>mise run build-tiled-room-web</code>. Follow each sample&#39;s setup instructions before building.</p>
+<p>Game code imports <code>github.com/karty-game/tiled</code> and its <code>karty2d</code> subpackage. The game supplies a small create/update/destroy SpriteRenderer2D backend using its own generated bindings and mounted textures. The shared view handles bounded residency, authored animation and optional wind; the game owns its camera, input, collision rules, actors and HUD. Static sprites stay in world coordinates while the game&#39;s <code>Camera2D</code> follows the player.</p>
 <p>The supported subset is finite orthogonal <code>right-down</code> JSON maps with image collections or atlases, group offsets/opacity, tile flips/rotation and timed tile animations. Infinite maps, encoded/compressed tile data, image layers and external object templates are rejected. The package reference lists the exact geometry limits and input/allocation bounds. Importing this code package does not automatically register PNGs as level textures; that remains the consuming game&#39;s explicit authoring step.</p>
 <h3 id="runtime-format-boundary">Runtime format boundary</h3>
 <p>Editable Tiled JSON and Yarn source remain build inputs. Games explicitly select <code>tiled.compile</code> or <code>dialogue.compile</code>; their generated resources are binary. Dialogue string tables and run saves are binary too. The CLI checks the actual staged cartridge dependency closure before compilation, rejecting JSON, CSV, XML, gob and known YAML/TOML decoders.</p>
-<p>See the <a href="https://github.com/karty-game/karty/blob/main/packages/tiled/docs/binary-map-v1.md">compiled Tiled map contract</a> and <a href="https://github.com/karty-game/karty/blob/main/packages/dialogue/docs/binary-runtime-v2.md">dialogue/save compatibility</a>.</p>
+<p>See the <a href="https://github.com/karty-game/karty-packages/blob/main/packages/tiled/docs/binary-map-v1.md">compiled Tiled map contract</a> and <a href="https://github.com/karty-game/karty-packages/blob/main/packages/dialogue/docs/binary-runtime-v2.md">dialogue/save compatibility</a>.</p>
 <p>Processors may declare <a href="processor-textures-v1.md">generated level textures</a>. The CLI stages these under <code>.karty/</code> and packages them without writing generated artwork into project source directories.</p>
 </div>
         
@@ -1330,7 +1365,7 @@ karty package import --replace /tmp/tiled-0.1.0.kpkg
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

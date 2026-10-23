@@ -57,16 +57,36 @@ references too. Entity IDs are runtime identities and do not belong in saves.
 Level operations are asynchronous. A `RequestID` identifies an operation;
 a `LevelHandle` identifies mounted content.
 
-| Call or hook                     | Contract                                                             |
-| -------------------------------- | -------------------------------------------------------------------- |
-| `RequestLevel(name)`             | Returns the request ID for a declared level such as `levels.room`    |
-| `OnLevelReady(LevelReady)`       | Supplies the request ID and mounted handle after content preparation |
-| `ReleaseLevel(handle)`           | Returns the release operation's request ID                           |
-| `OnLevelReleased(LevelReleased)` | Confirms release                                                     |
-| `OnLevelFailed(LevelFailed)`     | Supplies the failed request ID and diagnostic                        |
-| `OnLevelCancelled`               | Confirms cancellation                                                |
+| Call or hook                     | Contract                                                      |
+| -------------------------------- | ------------------------------------------------------------- |
+| `LoadLevel(name, onReady)`       | Loads a typed level reference and calls its ready callback    |
+| `RequestLevel(name)`             | Low-level string request; ready results use the global hook   |
+| `OnLevelReady(LevelReady)`       | Receives ready results from requests without a local callback |
+| `ReleaseLevel(handle)`           | Returns the release operation's request ID                    |
+| `OnLevelReleased(LevelReleased)` | Confirms release                                              |
+| `OnLevelFailed(LevelFailed)`     | Supplies the failed request ID and diagnostic                 |
+| `OnLevelCancelled`               | Confirms cancellation                                         |
 
-Match an event's `RequestID` to the pending operation before changing state.
+Use a generated level reference and a request-local success callback:
+
+```go
+func loadRoom(game *engine.Game, onReady func(engine.LevelReady)) engine.RequestID {
+    return game.LoadLevel(assets.LevelRoom, onReady)
+}
+```
+
+The CLI generates `.karty/assets/levels.go` from `[level].name` in each
+`levels/*/level.toml`; `levels.room` becomes `assets.LevelRoom`, while
+`art.opening` becomes `assets.LevelArtOpening`. Identifier collisions fail the
+build with both names. Source folder names do not change the logical reference.
+
+Karty delivers success once to the registered callback; `OnLevelFailed` and
+`OnLevelCancelled` remain global hooks. Keep a returned request ID when you
+need cancellation or failure routing. Dynamic names can use an explicit
+`engine.LevelName(name)` conversion, or the existing `RequestLevel(name)` API.
+
+For global failure and release hooks, match the event's `RequestID` to the
+pending operation before changing state.
 Create cameras and resolve level textures after readiness.
 
 Release removes the level's cameras, actors, effects and resources. Discard
@@ -81,8 +101,10 @@ Admission bounds and cancellation semantics are in
 
 Use one `World` and `Body` API for ordinary 2D sprites and flat 3D actors.
 Rendering does not choose the physics mode. `WorldPlanar` keeps bodies on XY;
-`WorldSpatial` provides gravity and vertical motion for box bodies. Spatial
-character following is not supported yet. All coordinates here use metres.
+`WorldSpatial` provides gravity and vertical motion for rigid boxes and upright
+`CapsuleCollider` characters. The shared character motor handles slopes and
+ordinary steps; the `controllers-3d` package supplies first-person input and mobile controls.
+Automatic navigation remains planar. All coordinates here use metres.
 
 ```go
 func character(game *engine.Game, level engine.LevelHandle, entity engine.EntityRef) (*engine.Body, error) {
@@ -119,4 +141,4 @@ and `HitMiss`; entity hits carry a lifetime-checked `EntityRef`. `OverlapBox`
 returns `HitsWorld` and a borrowed entity-reference slice through
 `OnOverlapResult`. Copy borrowed results to retain them after the update.
 `ApplyRayImpulse` and `Explode` are separate force-producing operations.
-See the project's pinned `.karty/docs/api.md` for limits and exact signatures.
+See your project's `.karty/docs/api.md` for limits and exact signatures.

@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#111827" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" />
-    <meta name="description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+    <meta name="description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
     
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Karty" />
 <meta property="og:title" content="Architecture / Karty" />
-<meta property="og:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta property="og:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta property="og:url" content="https://karty-game.github.io/karty/main/design/architecture.html" />
 <meta property="og:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta property="og:image:type" content="image/png" />
@@ -22,7 +22,7 @@
 />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Architecture / Karty" />
-<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, SDK versions, toolchains, asset pipeline and reusable packages." />
+<meta name="twitter:description" content="Understand Karty: why it exists, its architecture, development workflow, asset pipeline and reusable packages." />
 <meta name="twitter:image" content="https://karty-game.github.io/karty/main/guide/assets/banner.png" />
 <meta
   name="twitter:image:alt"
@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1127,6 +1128,7 @@ pre code {
           <a href="index.html"  aria-current="page" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1158,11 +1160,19 @@ pre code {
             
             <li><a href="architecture.html" aria-current="page">Architecture</a></li>
             
-            <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+            <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
             
             <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
             
             <li><a href="packages.html" aria-current="false">Packages</a></li>
+            
+            <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+            
+            <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+            
+            <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+            
+            <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
             
             <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
             
@@ -1198,11 +1208,19 @@ pre code {
               
               <li><a href="architecture.html" aria-current="page">Architecture</a></li>
               
-              <li><a href="sdk-and-toolchain.html" aria-current="false">SDK versions and toolchains</a></li>
+              <li><a href="workflow.html" aria-current="false">Build and preview</a></li>
               
               <li><a href="asset-pipeline.html" aria-current="false">Asset pipeline</a></li>
               
               <li><a href="packages.html" aria-current="false">Packages</a></li>
+              
+              <li><a href="package-materials-v1.html" aria-current="false">Package materials</a></li>
+              
+              <li><a href="remote-package-archives-v1.html" aria-current="false">Remote package archives</a></li>
+              
+              <li><a href="named-package-imports-v1.html" aria-current="false">Named package imports</a></li>
+              
+              <li><a href="package-generated-code-v1.html" aria-current="false">Package Go adapters</a></li>
               
               <li><a href="processor-textures-v1.html" aria-current="false">Processor textures</a></li>
               
@@ -1248,17 +1266,17 @@ pre code {
 <figure><img src="assets/design-architecture.svg" alt="The client sends commands to the host and receives events. The host mounts levels and owns their runtime resources." loading="lazy"><figcaption>The client sends commands to the host and receives events. The host mounts levels and owns their runtime resources.</figcaption></figure>
 <h2 id="the-client-contains-the-game-rules">The client contains the game rules</h2>
 <p>The client is your game&#39;s Go program. It decides what happens when a player presses a button, which level to load, how the score changes and when to show a menu. Here, client means game code on both desktop and web; it does not imply a network connection or multiplayer server.</p>
-<p>The CLI compiles that code to WebAssembly and packages it in <code>game.kart</code>, the cartridge. The selected SDK supplies the generated API your code calls. Your game requests actions through that API and handles updates and events from the host.</p>
+<p>The CLI compiles that code to WebAssembly and packages it in <code>game.kart</code>, the cartridge. Karty generates the game API your code calls. Your game requests actions through that API and handles updates and events from the host.</p>
 <h2 id="the-host-provides-the-engine">The host provides the engine</h2>
 <p>The host runs the cartridge and provides input, entities, collision and physics, rendering, UI presentation and media playback. It validates commands before applying them and owns the runtime resources they create.</p>
 <p>For example, your client proposes a character movement. The host resolves it against the world and returns the accepted transform. Your next movement starts from that accepted position. Game rules remain in your code; the host keeps the world and its presented state consistent.</p>
-<p>Native releases include a platform host executable. Web releases use a WebAssembly host and browser support files. The game&#39;s SDK pin selects compatible bindings and hosts, so a game developer does not need the engine source. Read <a href="sdk-and-toolchain.html">SDK versions and toolchains</a> for what that pin selects and how to prepare the build tools.</p>
+<p>Native releases include a platform host executable. Web releases use a WebAssembly host and browser support files. Karty prepares the matching game bindings and runtime files automatically. Read <a href="workflow.html">Build and preview</a> to create a project and package it for players.</p>
 <h2 id="a-level-groups-content-and-its-lifetime">A level groups content and its lifetime</h2>
 <p>A level starts with <code>level.toml</code> and its declared sources: a world, textures, actors and other level content. Building turns those sources into a versioned level file and any required sidecars.</p>
 <p>Your client chooses when to load, mount and release a level. Mounting makes its content available to the running game. Cameras, actors and other level-owned resources depend on that mounted level; releasing it also releases its dependents. A level is content managed by the host, rather than another running program.</p>
 <h2 id="from-an-edit-to-a-running-game">From an edit to a running game</h2>
 <p>The CLI resolves packages, processes assets, compiles the client and levels, and stages the result with a compatible host. <code>karty dev</code> repeats that work as you edit, then publishes a compatible resource update or reloads the preview.</p>
-<p>The <a href="asset-pipeline.html">asset pipeline</a> explains those build steps. The <a href="../guide/interactions.html">interaction guide</a> shows how game code connects to authored content. Your project&#39;s <code>.karty/docs/</code> defines the exact lifecycle and API available in its selected SDK.</p>
+<p>The <a href="asset-pipeline.html">asset pipeline</a> explains those build steps. The <a href="../guide/interactions.html">interaction guide</a> shows how game code connects to authored content. Your project&#39;s <code>.karty/docs/</code> defines the exact lifecycle and game API.</p>
 </div>
         
       </main>
@@ -1270,7 +1288,7 @@ pre code {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

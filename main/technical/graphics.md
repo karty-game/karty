@@ -42,7 +42,7 @@ blend mode allows soft transparency.
 origins consistent during animation. Destroy unused sprites, and discard level
 texture references when their level is released.
 
-[Image setup](../guide/2d.html) · [Willowbrook animation](https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/tiled.go) · [Vigil world sprites](https://github.com/karty-game/karty/blob/main/samples/vigil/src/main.go)
+[Image setup](../guide/2d.html) · [Willowbrook animation](https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/tiled.go) · [Vigil world sprites](https://github.com/karty-game/karty/blob/main/samples/vigil/src/gameplay.go)
 
 ## Particles
 

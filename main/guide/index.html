@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1191,6 +1193,8 @@ pre code {
             
             <li><a href="share.html" aria-current="false">Build and share</a></li>
             
+            <li><a href="packages.html" aria-current="false">Write a package</a></li>
+            
           </ul>
           
         </div>
@@ -1220,6 +1224,8 @@ pre code {
               <li><a href="media.html" aria-current="false">Sound and video</a></li>
               
               <li><a href="share.html" aria-current="false">Build and share</a></li>
+              
+              <li><a href="packages.html" aria-current="false">Write a package</a></li>
               
             </ul>
              
@@ -1273,8 +1279,8 @@ pre code {
 cd my-game
 karty dev
 </code></pre>
-<p>Open the address printed by <code>karty dev</code>. The first setup downloads the SDK and build tools. Later builds reuse them.</p>
-<p>Your project pins an exact SDK. Keep <code>karty.toml</code>, Go source, and source assets in Git. The CLI recreates <code>.karty/</code> and <code>dist/</code>. Use <code>.karty/docs/</code> for the API reference that matches your project.</p>
+<p>Open the address printed by <code>karty dev</code>. The first setup downloads the tools your game needs. Later builds reuse them.</p>
+<p>Keep <code>karty.toml</code>, Go source, and source assets in Git. The CLI recreates <code>.karty/</code> and <code>dist/</code>. Use <code>.karty/docs/</code> for the API reference that matches your project.</p>
 <h2 id="choose-your-game">Choose your game</h2>
 <p>Choose the <a href="2d.html">2D game</a>, <a href="fps.html">first-person game</a>, or <a href="isometric.html">isometric game</a> guide.</p>
 <p>The 2D path covers sprites, vector shapes, and text on a flat canvas. <a href="ui.html">Menus and layouts</a> and <a href="media.html">sound and video</a> work with every game path.</p>
@@ -1347,7 +1353,7 @@ karty dev
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1193,6 +1195,8 @@ pre code {
             
             <li><a href="share.html" aria-current="false">Build and share</a></li>
             
+            <li><a href="packages.html" aria-current="false">Write a package</a></li>
+            
           </ul>
           
         </div>
@@ -1222,6 +1226,8 @@ pre code {
               <li><a href="media.html" aria-current="false">Sound and video</a></li>
               
               <li><a href="share.html" aria-current="false">Build and share</a></li>
+              
+              <li><a href="packages.html" aria-current="false">Write a package</a></li>
               
             </ul>
              
@@ -1260,10 +1266,10 @@ pre code {
         
         <div class="guide-body"><h1 id="draw-a-2d-game">Draw a 2D game</h1>
 <p>Use sprites for image artwork, vectors for shapes, and text for instructions and scores. This example draws all three and lets you collect a circle with keyboard movement.</p>
-<p>Start with the SDK 0.0.17 <code>2d</code> starter, which includes controllers 0.1.0:</p>
-<pre><code class="language-sh">karty new --yes --sdk 0.0.17 --template 2d my-game
+<p>Start with the <code>2d</code> starter, which includes the <code>controllers-topdown</code> plugin:</p>
+<pre><code class="language-sh">karty new --yes --template 2d my-game
 </code></pre>
-<p>Keep <code>packages/controllers/</code> in Git. For an existing project, import the package using the <a href="../design/packages.html">reusable packages guide</a> first.</p>
+<p>Keep the package&#39;s archive URL and checksum in <code>karty.toml</code>. The first build restores its source under ignored <code>.karty/packages/controllers-topdown/</code>. For an existing project, run <code>karty package import controllers-topdown@0.0.1</code> first; see <a href="../design/packages.html">reusable packages</a>.</p>
 <h2 id="add-a-sprite">Add a sprite</h2>
 <p>Create a project from the <a href="index.html">guide home</a>. Download <a href="assets/player.png">player.png</a> and save it as <code>assets/textures/player.png</code>. The CLI imports that image and generates <code>assets.TexturePlayer</code> on the next build. Use the generated ID when creating the sprite.</p>
 <h2 id="draw-and-play">Draw and play</h2>
@@ -1271,7 +1277,7 @@ pre code {
 <pre><code class="language-go">package main
 
 import (
-    &#34;github.com/karty-game/controllers&#34;
+    &#34;github.com/karty-game/controllers-topdown&#34;
     &#34;example.com/my-game/.karty/assets&#34;
     &#34;example.com/my-game/.karty/engine&#34;
 )
@@ -1382,7 +1388,7 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

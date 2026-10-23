@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1261,13 +1263,20 @@ pre code {
 <p><a href="transforms.html#transform-2d">Transform 2D</a> · <a href="transforms.html#transform-3d">Transform 3D</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/media-lab/src/main.go">Media lab source</a></p>
 <h2 id="levels-and-resources">Levels and resources</h2>
 <p>Level operations are asynchronous. A <code>RequestID</code> identifies an operation; a <code>LevelHandle</code> identifies mounted content.</p>
-<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Call or hook</th><th scope="col">Contract</th></tr></thead><tbody><tr><td><code>RequestLevel(name)</code></td><td>Returns the request ID for a declared level such as <code>levels.room</code></td></tr><tr><td><code>OnLevelReady(LevelReady)</code></td><td>Supplies the request ID and mounted handle after content preparation</td></tr><tr><td><code>ReleaseLevel(handle)</code></td><td>Returns the release operation&#39;s request ID</td></tr><tr><td><code>OnLevelReleased(LevelReleased)</code></td><td>Confirms release</td></tr><tr><td><code>OnLevelFailed(LevelFailed)</code></td><td>Supplies the failed request ID and diagnostic</td></tr><tr><td><code>OnLevelCancelled</code></td><td>Confirms cancellation</td></tr></tbody></table></div>
-<p>Match an event&#39;s <code>RequestID</code> to the pending operation before changing state. Create cameras and resolve level textures after readiness.</p>
+<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Call or hook</th><th scope="col">Contract</th></tr></thead><tbody><tr><td><code>LoadLevel(name, onReady)</code></td><td>Loads a typed level reference and calls its ready callback</td></tr><tr><td><code>RequestLevel(name)</code></td><td>Low-level string request; ready results use the global hook</td></tr><tr><td><code>OnLevelReady(LevelReady)</code></td><td>Receives ready results from requests without a local callback</td></tr><tr><td><code>ReleaseLevel(handle)</code></td><td>Returns the release operation&#39;s request ID</td></tr><tr><td><code>OnLevelReleased(LevelReleased)</code></td><td>Confirms release</td></tr><tr><td><code>OnLevelFailed(LevelFailed)</code></td><td>Supplies the failed request ID and diagnostic</td></tr><tr><td><code>OnLevelCancelled</code></td><td>Confirms cancellation</td></tr></tbody></table></div>
+<p>Use a generated level reference and a request-local success callback:</p>
+<pre><code class="language-go">func loadRoom(game *engine.Game, onReady func(engine.LevelReady)) engine.RequestID {
+    return game.LoadLevel(assets.LevelRoom, onReady)
+}
+</code></pre>
+<p>The CLI generates <code>.karty/assets/levels.go</code> from <code>[level].name</code> in each <code>levels/*/level.toml</code>; <code>levels.room</code> becomes <code>assets.LevelRoom</code>, while <code>art.opening</code> becomes <code>assets.LevelArtOpening</code>. Identifier collisions fail the build with both names. Source folder names do not change the logical reference.</p>
+<p>Karty delivers success once to the registered callback; <code>OnLevelFailed</code> and <code>OnLevelCancelled</code> remain global hooks. Keep a returned request ID when you need cancellation or failure routing. Dynamic names can use an explicit <code>engine.LevelName(name)</code> conversion, or the existing <code>RequestLevel(name)</code> API.</p>
+<p>For global failure and release hooks, match the event&#39;s <code>RequestID</code> to the pending operation before changing state. Create cameras and resolve level textures after readiness.</p>
 <p>Release removes the level&#39;s cameras, actors, effects and resources. Discard their references when release completes. Project-level menu UI can outlive a level.</p>
 <p>Admission bounds and cancellation semantics are in <code>.karty/docs/level-lifecycle.md</code>.</p>
 <p><a href="../guide/levels.html">Room setup</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/ui-demo/src/main.go">UI demo loading states</a></p>
 <h2 id="world-bodies-and-queries">World bodies and queries</h2>
-<p>Use one <code>World</code> and <code>Body</code> API for ordinary 2D sprites and flat 3D actors. Rendering does not choose the physics mode. <code>WorldPlanar</code> keeps bodies on XY; <code>WorldSpatial</code> provides gravity and vertical motion for box bodies. Spatial character following is not supported yet. All coordinates here use metres.</p>
+<p>Use one <code>World</code> and <code>Body</code> API for ordinary 2D sprites and flat 3D actors. Rendering does not choose the physics mode. <code>WorldPlanar</code> keeps bodies on XY; <code>WorldSpatial</code> provides gravity and vertical motion for rigid boxes and upright <code>CapsuleCollider</code> characters. The shared character motor handles slopes and ordinary steps; the <code>controllers-3d</code> package supplies first-person input and mobile controls. Automatic navigation remains planar. All coordinates here use metres.</p>
 <pre><code class="language-go">func character(game *engine.Game, level engine.LevelHandle, entity engine.EntityRef) (*engine.Body, error) {
     world := game.World(level)
     if err := world.Configure(engine.WorldSettings{
@@ -1289,7 +1298,7 @@ func route(world engine.World, player *engine.Body) (engine.RequestID, error) {
 }
 </code></pre>
 <p>Use <code>BoxCollider</code> or <code>EllipseCollider</code> in <code>BodySettings</code>; presets provide useful defaults. <code>body.Move(direction, speed)</code> controls a planar character. <code>body.SetHorizontalVelocity</code> controls a spatial box while preserving falling velocity. <code>body.Teleport</code> changes a physical origin deliberately; <code>body.Detach</code> returns pose control to the entity. <code>World.Navigate</code> starts planar following; <code>World.FindPath</code> returns route data and also accepts an independent <code>NavigationAgent</code> without requiring a body.</p>
-<p>Raycasts are read-only. <code>OnRaycastResult</code> distinguishes <code>HitWorld</code>, <code>HitEntity</code> and <code>HitMiss</code>; entity hits carry a lifetime-checked <code>EntityRef</code>. <code>OverlapBox</code> returns <code>HitsWorld</code> and a borrowed entity-reference slice through <code>OnOverlapResult</code>. Copy borrowed results to retain them after the update. <code>ApplyRayImpulse</code> and <code>Explode</code> are separate force-producing operations. See the project&#39;s pinned <code>.karty/docs/api.md</code> for limits and exact signatures.</p>
+<p>Raycasts are read-only. <code>OnRaycastResult</code> distinguishes <code>HitWorld</code>, <code>HitEntity</code> and <code>HitMiss</code>; entity hits carry a lifetime-checked <code>EntityRef</code>. <code>OverlapBox</code> returns <code>HitsWorld</code> and a borrowed entity-reference slice through <code>OnOverlapResult</code>. Copy borrowed results to retain them after the update. <code>ApplyRayImpulse</code> and <code>Explode</code> are separate force-producing operations. See your project&#39;s <code>.karty/docs/api.md</code> for limits and exact signatures.</p>
 </div>
         
       </main>
@@ -1301,7 +1310,7 @@ func route(world engine.World, player *engine.Body) (engine.RequestID, error) {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

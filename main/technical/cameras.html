@@ -1000,6 +1000,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1129,6 +1130,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1176,6 +1178,8 @@ pre code {
             
             <li><a href="#camera-3d">Camera 3D</a></li>
             
+            <li><a href="#first-person-player">First-person player</a></li>
+            
           </ol>
             
         </div>
@@ -1209,6 +1213,8 @@ pre code {
               
               <li><a href="#camera-3d">Camera 3D</a></li>
               
+              <li><a href="#first-person-player">First-person player</a></li>
+              
             </ol>
             
           </div>
@@ -1234,7 +1240,7 @@ pre code {
         <div class="guide-body"><h1 id="cameras">Cameras</h1>
 <p>Use a 2D camera for canvas layers or a 3D camera for a mounted world.</p>
 <h2 id="camera-2d">Camera 2D</h2>
-<p><code>Camera2DSettings</code> pans and zooms an inclusive range of drawing layers. Layers outside that range stay fixed for HUDs and menus. This API requires SDK 0.0.13.</p>
+<p><code>Camera2DSettings</code> pans and zooms an inclusive range of drawing layers. Layers outside that range stay fixed for HUDs and menus.</p>
 <pre><code class="language-go">func showWorld(game *engine.Game) engine.Camera2DSettings {
     camera := engine.Camera2DSettings{
         Position: engine.NewVec2(400, 300),
@@ -1249,10 +1255,10 @@ pre code {
 <p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Method</th><th scope="col">Effect</th></tr></thead><tbody><tr><td><code>game.SetCamera2D(settings)</code></td><td>Replaces the active 2D camera settings</td></tr><tr><td><code>game.ClearCamera2D()</code></td><td>Restores ordinary canvas presentation</td></tr><tr><td><code>settings.ScreenToWorld(point, width, height)</code></td><td>Converts a logical pointer position to world coordinates</td></tr><tr><td><code>settings.WorldToScreen(point, width, height)</code></td><td>Converts a world point to logical canvas coordinates</td></tr></tbody></table></div>
 <p>Conversions must use the settings sent to the host and the project&#39;s authored width and height. Browser CSS dimensions do not belong here.</p>
 <p>Zoom must be finite and within <code>1/64</code> to <code>64</code>. The minimum layer cannot exceed the maximum. There is one active ordinary 2D camera.</p>
-<p><a href="cameras.html#camera-3d">Camera 3D</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/main.go">Willowbrook camera and picking</a></p>
+<p><a href="cameras.html#camera-3d">Camera 3D</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/camera.go">Willowbrook camera</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/game_input.go">Pointer picking</a></p>
 <p>Exact bounds are in <code>.karty/docs/cameras.md</code>.</p>
 <h2 id="camera-3d">Camera 3D</h2>
-<p><code>Camera3D</code> projects a mounted world into a 2D output rectangle. Create it after <code>OnLevelReady</code>, using that event&#39;s handle.</p>
+<p><code>Camera3D</code> projects a mounted world into a 2D output rectangle. Create it inside a level&#39;s ready callback, using that event&#39;s handle.</p>
 <pre><code class="language-go">func roomCamera(game *engine.Game, level engine.LevelHandle) *engine.Camera3D {
     return game.NewCamera3D(level, engine.Camera3DSettings{
         Projection: engine.CameraProjectionPerspective,
@@ -1267,7 +1273,21 @@ pre code {
 <p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Setting</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>Projection</code></td><td><code>CameraProjectionPerspective</code> or <code>CameraProjectionIsometric</code></td></tr><tr><td><code>Position</code>, <code>Yaw</code>, <code>Pitch</code></td><td>World viewpoint, with angles in radians</td></tr><tr><td><code>FOVY</code></td><td>Vertical perspective field of view in radians</td></tr><tr><td><code>OrthoHeight</code></td><td>Visible vertical world span in isometric projection</td></tr><tr><td><code>Near</code>, <code>Far</code></td><td>Positive clipping distances, with far greater than near</td></tr><tr><td><code>ViewportWidth</code>, <code>ViewportHeight</code></td><td>Render dimensions</td></tr><tr><td><code>Output</code></td><td>Full rendering or a diagnostic view such as depth or normals</td></tr></tbody></table></div>
 <p>Use <code>camera.Ref().SetPose(pose)</code> to propose a free camera&#39;s world pose and <code>camera.SetSettings(settings)</code> to change projection and other camera settings. An attached body controls position; use its movement methods or <code>Body.Teleport</code> for positional changes. The entity&#39;s 2D transform places the rendered output on the canvas. Use a lower drawing layer to put it behind HUD elements.</p>
 <p>Use accepted poses for movement, as described in <a href="transforms.html#transform-3d">Transform 3D</a>. <code>Destroy</code> removes the camera; level release also removes it. Camera count and viewport bounds are in <code>.karty/docs/cameras.md</code>.</p>
-<p><a href="https://github.com/karty-game/karty/blob/main/samples/hangar/src/main.go">Hangar camera setup</a> · <a href="../guide/isometric.html">Isometric guide</a></p>
+<p><a href="https://github.com/karty-game/karty/blob/main/samples/hangar/src/tour.go">Hangar camera setup</a> · <a href="../guide/isometric.html">Isometric guide</a></p>
+<h2 id="first-person-player">First-person player</h2>
+<p>The <code>controllers-3d</code> package supplies the first-person controller. Its <code>controllers-3d.sdk</code> build processor generates a typed adapter for your project. After creating a camera in a ready level, attach the controller:</p>
+<pre><code class="language-go">// Import the package-generated adapter as fpscontroller from
+// &#34;YOURMODULE/.karty/processed/code/controllers-3d.sdk/controller&#34;.
+func attachPlayer(game *engine.Game, camera *engine.Camera3D) (*fpscontroller.FirstPersonController, error) {
+    options := fpscontroller.DefaultFirstPersonOptions()
+    options.Speed = 4 // metres per second
+    return fpscontroller.AttachFirstPerson(*game, camera, options)
+}
+</code></pre>
+<p>It owns keyboard and pointer input, mouse capture, visible touch sticks and a physics body with gravity and collision. It moves before the game&#39;s <code>OnUpdate</code>; keep ordinary hooks for interactions and other game actions.</p>
+<p>The game owns the camera. The controller cleans up its body and display when closed, when the camera is destroyed, when its level is released, or at cartridge shutdown. Only one local controller can be attached at a time. <code>SetEnabled(false)</code> releases held controls; <code>Teleport</code> clears input and momentum while retaining the camera and body. <code>FirstPersonFree</code> mode omits the body for an inspection camera. <code>BeforeMove</code> and <code>Move</code> extend movement for authored rules.</p>
+<p><a href="../guide/fps.html">First-person guide</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/hangar/src/main.go">Hangar traversal</a></p>
+<p>Exact options and lifecycle rules are in the installed package&#39;s README and component documentation under <code>.karty/packages/controllers-3d/</code>.</p>
 </div>
         
       </main>
@@ -1279,7 +1299,7 @@ pre code {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

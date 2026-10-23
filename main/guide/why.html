@@ -1003,6 +1003,7 @@ pre code {
 }
 @media (max-width: 360px) {
   .header-inner {
+    padding-inline: 0.75rem;
     flex-wrap: wrap;
     row-gap: 0.65rem;
   }
@@ -1132,6 +1133,7 @@ pre code {
           <a href="../design/" 
             >Design</a
           >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
           <a class="github" href="https://github.com/karty-game/karty"
             >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -1200,6 +1202,8 @@ pre code {
             
             <li><a href="share.html" aria-current="false">Build and share</a></li>
             
+            <li><a href="packages.html" aria-current="false">Write a package</a></li>
+            
           </ul>
           
         </div>
@@ -1229,6 +1233,8 @@ pre code {
               <li><a href="media.html" aria-current="false">Sound and video</a></li>
               
               <li><a href="share.html" aria-current="false">Build and share</a></li>
+              
+              <li><a href="packages.html" aria-current="false">Write a package</a></li>
               
             </ul>
              
@@ -1279,58 +1285,58 @@ pre code {
 <p>Karty is aimed at small games and prototypes, including retro first-person games, isometric adventures and 2D games. For worlds, I want to work with floor plans, heights, materials and reusable objects. That should be enough to make a space worth exploring without first learning a full 3D modeling tool.</p>
 <h2 id="development">Development</h2>
 <ul>
-<li>**See changes immediately.** <code>karty dev</code> watches your level files and updates</li>
+<li><strong>See changes immediately.</strong> <code>karty dev</code> watches your level files and updates</li>
 </ul>
 <p>the preview as you work.</p>
 <ul>
-<li>**Iterate quickly.** Target code recompilation in 2–3 seconds.</li>
+<li><strong>Iterate quickly.</strong> Target code recompilation in 2–3 seconds.</li>
 </ul>
 <h2 id="visual">Visual</h2>
 <ul>
-<li>**Good lighting.** Bake bounced light with Karty&#39;s built-in light baker,</li>
+<li><strong>Good lighting.</strong> Bake bounced light with Karty&#39;s built-in light baker,</li>
 </ul>
 <p>without extra tools.</p>
 <ul>
-<li>**Give the scene personality.** Use built-in post-processing effects for</li>
+<li><strong>Give the scene personality.</strong> Use built-in post-processing effects for</li>
 </ul>
 <p>atmosphere, storytelling and gameplay highlights.</p>
 <ul>
-<li>**Fire, smoke and more.** A flexible GPU particle system draws thousands of</li>
+<li><strong>Fire, smoke and more.</strong> A flexible GPU particle system draws thousands of</li>
 </ul>
 <p>sprites.</p>
 <h2 id="performance">Performance</h2>
 <ul>
-<li>**Run on modest hardware.** Target 720p at 60 FPS in WebGL on a five-year-old</li>
+<li><strong>Run on modest hardware.</strong> Target 720p at 60 FPS in WebGL on a five-year-old</li>
 </ul>
 <p>smartphone.</p>
 <ul>
-<li>**Start playing your game quickly.** Keep downloads small and aim for startup within</li>
+<li><strong>Start playing your game quickly.</strong> Keep downloads small and aim for startup within</li>
 </ul>
 <p>a few seconds.</p>
 <ul>
-<li>**Play offline.** Prefetch and cache assets in the background, ready to play</li>
+<li><strong>Play offline.</strong> Prefetch and cache assets in the background, ready to play</li>
 </ul>
 <p>without internet once the download is complete.</p>
 <h2 id="assets">Assets</h2>
 <ul>
-<li>**Skip image preparation.** Let the <a href="../design/asset-pipeline.html">asset pipeline</a></li>
+<li><strong>Skip image preparation.</strong> Let the <a href="../design/asset-pipeline.html">asset pipeline</a></li>
 </ul>
 <p>resize textures, pack atlases and handle compression.</p>
 <ul>
-<li>**One texture is enough.** Generate normal, height and ambient occlusion maps</li>
+<li><strong>One texture is enough.</strong> Generate normal, height and ambient occlusion maps</li>
 </ul>
 <p>from a single albedo image.</p>
 <ul>
-<li>**Build large maps.** Automatic chunking and background streaming let your</li>
+<li><strong>Build large maps.</strong> Automatic chunking and background streaming let your</li>
 </ul>
 <p>world grow.</p>
 <h2 id="flexibility">Flexibility</h2>
 <ul>
-<li>**UI with less code.** KartUI provides a dedicated language and reusable</li>
+<li><strong>UI with less code.</strong> KartUI provides a dedicated language and reusable</li>
 </ul>
 <p>components for game interfaces.</p>
 <ul>
-<li>**Bring other tools.** <a href="../design/packages.html">Packages</a> let the community share</li>
+<li><strong>Bring other tools.</strong> <a href="../design/packages.html">Packages</a> let the community share</li>
 </ul>
 <p>reusable integrations, code and components.</p>
 <p>Continue with <a href="../design/architecture.html">Architecture</a>, or <a href="../guide/index.html">make your first game</a>.</p>
@@ -1345,7 +1351,7 @@ pre code {
           <span>Karty</span>
         </span>
         <p>Go, KartUI, and one CLI for browser and desktop games.</p>
-        <p>Your project's pinned SDK reference lives in <code>.karty/docs/</code>.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
       </div>
       <div class="footer-links">
         

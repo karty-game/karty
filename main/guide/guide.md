@@ -15,12 +15,9 @@ karty dev
 The terminal wizard offers `blank`, `2d`, `fps`, `isometric`, and `ui`, plus optional
 Git initialization and GitHub Actions. Use `--yes --template 2d` for scripts.
 Use `--no-template` for just the base folders and an empty entry point.
-Current starters use SDK 0.0.17, which the CLI installs when needed.
-
-The SDK 0.0.17 2D, first-person and isometric starters use one reusable
-controllers package with different presets. They include its source under
-`packages/controllers/` so generated projects work without a published module.
-Keep that folder in Git. Blank and UI projects add controls only when needed.
+The 2D, first-person and isometric starters include their controller plugins.
+The [first-person starter](fps.html) provides walking, physics and touch controls.
+Blank and UI projects add controls only when needed.
 
 Open the address printed by the preview. Change a color or a movement speed in
 `src/main.go`, save, and try it again. The first setup downloads tools; later
@@ -35,8 +32,19 @@ flowchart TD
 ```
 
 Keep `karty.toml`, your Go source, and source assets in Git. The CLI recreates
-`.karty/` and `dist/`. Your project pins an exact SDK; use its `.karty/docs/`
+`.karty/` and `dist/`. Use your project's `.karty/docs/`
 reference for API names and supported features.
+
+New projects also include the [Karty game development agent skill](https://github.com/karty-game/karty/tree/main/skills/karty-game)
+in `.agents/skills/karty-game/`. Agents that support project skills can discover
+it there; invoke `$karty-game` when your agent supports named skills. It explains
+asset and level organization, Go and KartUI capabilities, commands and validation.
+Keep this guidance with your game's source if your team uses it. It is copied
+from the CLI at creation and is not overwritten by builds or updates;
+the game's generated `.karty/docs/` remains authoritative for its API.
+For an existing game, copy the repository's `skills/karty-game/` directory into
+its `.agents/skills/` directory after reviewing any existing guidance. Review
+future skill updates deliberately; there is no automatic skill update command.
 
 Make one small game rule work before adding more art: collect an item, reach a
 goal, or restart after losing. For a 3D game, choose the first-person or isometric starter, then extend its
@@ -84,43 +92,44 @@ the world before processing assets.
 
 Replace `src/main.go` with this room viewer. Change the import if your project
 has a different name. The camera starts at `(2, 2, 1.7)`; the text shows loading
-errors above the scene.
+errors above the scene. The CLI generates `assets.LevelRoom` from the manifest's logical
+name; the callback supplied to `LoadLevel` receives only that load's ready result.
 
 ```go
 package main
 
-import "example.com/my-game/.karty/engine"
+import (
+	"example.com/my-game/.karty/assets"
+	"example.com/my-game/.karty/engine"
+)
 
 type Game struct {
-    engine.Game
-    request engine.RequestID
-    camera *engine.Camera3D
-    label *engine.Text2D
+	engine.Game
+	camera *engine.Camera3D
+	label  *engine.Text2D
 }
 
 //go:wasmexport karty_register
 func main() {
-    game := &Game{}
-    engine.Run(engine.Hooks{
-        OnStart: func() {
-            game.label = game.NewText2D("Loading room...", engine.NewVec2(24, 24))
-            game.request = game.RequestLevel("levels.room")
-        },
-        OnLevelReady: func(event engine.LevelReady) {
-            if event.RequestID != game.request { return }
-            game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
-                Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
-                Position: engine.NewVec3(2, 2, 1.7), VerticalFOV: 1.05,
-                NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
-                ViewportWidth: 960, ViewportHeight: 540,
-            })
-            game.camera.SetLayer(-1)
-            game.label.SetText("")
-        },
-        OnLevelFailed: func(event engine.LevelFailed) {
-            if event.RequestID == game.request { game.label.SetText(event.Diagnostic) }
-        },
-    })
+	game := &Game{}
+	engine.Run(engine.Hooks{
+		OnStart: func() {
+			game.label = game.NewText2D("Loading room...", engine.NewVec2(24, 24))
+			game.LoadLevel(assets.LevelRoom, func(event engine.LevelReady) {
+				game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
+					Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
+					Position: engine.NewVec3(2, 2, 1.7), VerticalFOV: 1.05,
+					NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
+					ViewportWidth: 960, ViewportHeight: 540,
+				})
+				game.camera.SetLayer(-1)
+				game.label.SetText("")
+			})
+		},
+		OnLevelFailed: func(event engine.LevelFailed) {
+			game.label.SetText(event.Diagnostic)
+		},
+	})
 }
 ```
 
@@ -155,8 +164,8 @@ room's `wall_uv`, `floor_uv`, or `ceiling_uv` to change only those surfaces.
 World anchoring keeps repeats aligned when you place prefabs.
 
 Materialize generates height, normal, and ambient occlusion maps for world
-surfaces. SDKs with material reflectance also generate metallic and smoothness
-maps. Add a preset immediately after the texture entry in `level.toml`:
+surfaces, along with metallic and smoothness maps. Add a preset immediately
+after the texture entry in `level.toml`:
 
 ```toml
 [textures.materialize]
@@ -197,7 +206,7 @@ Start with their defaults. Use `normal_strength`, `height_contrast`,
 `metallic_scale`, or `ao_depth_scale` only when the result needs adjustment.
 The separate `textures.material_strengths` settings control how strongly the
 game displays those maps. Your generated `.karty/docs/assets.md` lists the
-overrides and limits for your SDK.
+overrides and limits for your project.
 
 Check the result at player height. A material that looks good close up may
 repeat too obviously across a large wall. [The Hangar](../hangar/) shows wall
@@ -238,7 +247,7 @@ also contain rooms and sprites. Light positions remain global; placing a
 prefab does not place or move lights for it.
 
 Keep static objects static. Visual animation does not move collision or
-gameplay query positions. For a door or moving platform, check the pinned SDK's
+gameplay query positions. For a door or moving platform, check the engine's
 supported behavior before designing the interaction.
 
 ![The Hangar combines static machinery, repeating materials, and room lights.](assets/hangar.jpg)
@@ -323,7 +332,7 @@ if err != nil {
 }
 ```
 
-Propose movement from `camera.Settings()`, which the SDK keeps synchronized automatically
+Propose movement from `camera.Settings()`, which the engine keeps synchronized automatically
 with the accepted pose. Do not accumulate a separate guessed player position.
 
 The position check defines a one-metre trigger around `(6, 6)`. Call this method
@@ -438,7 +447,7 @@ func (game *Game) updateAudioReceiver() {
 }
 ```
 
-Call `game.updateAudioReceiver()` after camera creation in `OnLevelReady`, and
+Call `game.updateAudioReceiver()` after camera creation in the level's ready callback, and
 from your existing `OnUpdate` after movement and turning. Set it again when
 replacing the camera. The receiver follows the camera's world position; its
 output rectangle on screen does not change where the player hears from.
@@ -478,9 +487,8 @@ distance or collision obstruction.
 
 ### Place a looping sound in the world
 
-Check `.karty/docs/audio-emitters.md` for emitter support in your project's
-selected SDK and matching host. Create this
-emitter once from `OnLevelReady`, using `event.Handle` for the mounted level:
+Create this emitter once from the level's ready callback, using `event.Handle`
+for the mounted level. See `.karty/docs/audio-emitters.md` for the complete options:
 
 ```go
 func (game *Game) startReactorSound(level engine.LevelHandle) *engine.SoundEmitter {
@@ -647,14 +655,14 @@ deck](../ui-demo/) shows menus, loading, inventory, gameplay, and pause screens.
 Use `--target web` for browsers and `--target native` for desktop games.
 The supported game runtimes are:
 
-| Game platform       | `--platform`    | Build on this machine             |
-| ------------------- | --------------- | --------------------------------- |
-| Browser             | Omit this flag  | Any supported development machine |
-| Linux x64           | `linux-amd64`   | Yes                               |
-| Linux ARM64         | `linux-arm64`   | Yes                               |
-| macOS Apple silicon | `darwin-arm64`  | Yes                               |
-| Windows x64         | `windows-amd64` | Yes                               |
-| Windows ARM64       | `windows-arm64` | No native TinyGo toolchain        |
+| Game platform       | `--platform`    |
+| ------------------- | --------------- |
+| Browser             | Omit this flag  |
+| Linux x64           | `linux-amd64`   |
+| Linux ARM64         | `linux-arm64`   |
+| macOS Apple silicon | `darwin-arm64`  |
+| Windows x64         | `windows-amd64` |
+| Windows ARM64       | `windows-arm64` |
 
 Every supported development machine can package any listed game platform.
 The CLI compiles one WASM cartridge and downloads the destination's
@@ -698,12 +706,35 @@ Explicit platforms use separate folders, such as
 `dist/native/windows-arm64/`. On the destination Windows machine, open that
 folder and run `.\karty-host.exe --cartridge game.kart`.
 
-Share the whole selected folder, including its `content/` files.
-Include `RUNTIME_LICENSE.md` and `SDK_LICENSE.md`
-from your project's selected [SDK release](https://github.com/karty-game/karty-sdk/releases), plus notices required by your own assets and dependencies.
+Keep a `LICENSES/` folder in your project containing Karty's runtime and library
+notices from the [release downloads](https://github.com/karty-game/karty-sdk/releases/latest),
+plus notices required by your own assets and dependencies. Commit this folder
+with your source. Copy it into each distribution before sharing:
+
+```sh
+cp -R LICENSES dist/web/
+cp -R LICENSES dist/native/
+```
+
+For a named native platform, use its output folder instead, such as
+`cp -R LICENSES dist/native/windows-arm64/`.
+Share the whole selected folder, including its `content/` and `LICENSES/` files.
 Browser and desktop use the same source. Test each platform you ship.
 
 ### Share reusable code, prefabs and UI
+
+To publish your own package, follow [Write and publish a package](packages.html).
+
+Install published code and assets from the
+[Plugins catalog](https://karty-game.github.io/karty-packages/) by name:
+
+```sh
+karty package import fps-kit@0.0.1
+```
+
+Omit the version to select the latest stable release. Commit the resolved
+archive URL and SHA-256 in `karty.toml`; future builds restore that same pin.
+Use `karty package import --replace fps-kit` for an explicit update.
 
 For a package folder containing `karty-package.toml`, export a local archive:
 
@@ -721,10 +752,10 @@ Commit the referenced archive and updated `karty.toml`/`go.mod`; the CLI restore
 its checked contents under ignored `.karty/packages/`. To edit the package live,
 use `karty package import --replace ../placeholder-kit` instead.
 `karty dev` watches that working folder, including outside the game. The current
-local-package CLI supports Go behavior, static/nested prefabs, PNG world
+package CLI supports Go behavior, static/nested prefabs, PNG world
 materials and KartUI components/layouts with images, fonts and theme defaults;
 use a CLI build containing that feature. UI exports compile against the consuming
-game's SDK and keep normal typed props/callbacks. The game owns state and lifecycle.
+game and keep normal typed props/callbacks. The game owns state and lifecycle.
 
 ### Build in CI
 
@@ -733,8 +764,8 @@ when your dependencies create it.
 The runner recreates `.karty/` and `dist/`; do not commit those folders.
 
 Save this as `.github/workflows/game.yml` in your game project. It builds a browser game and a Windows ARM64 distribution on Linux,
-then uploads each folder for review. It pins a public CLI source revision
-so the workflow and CLI behavior stay reproducible.
+then uploads each folder for review. Include the `LICENSES/` folder described above
+so the artifacts contain the required notices. The workflow installs the latest CLI.
 No private engine checkout or credentials are needed.
 
 ```yaml
@@ -754,28 +785,22 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: "1.27.1"
+          go-version: "1.27.3"
           cache: false
-      - name: Install the pinned public CLI
+      - name: Install Karty
         run: |
-          go install github.com/karty-game/karty/cmd/karty@3bb2953071e02795e59cf96b8acd362cd21edbdf
+          go install github.com/karty-game/karty/cmd/karty@latest
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-      - name: Install SDK and software material generation
+      - name: Prepare material generation
         run: |
-          SDK_VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("karty.toml", "rb"))["sdk"]["version"])')
-          echo "SDK_VERSION=$SDK_VERSION" >> "$GITHUB_ENV"
-          karty sdk install "$SDK_VERSION"
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
       - name: Build distributions
         run: |
           karty build --target web
           karty build --target native --platform windows-arm64
-          for notice in RUNTIME_LICENSE.md SDK_LICENSE.md; do
-            curl -fsSL "https://github.com/karty-game/karty-sdk/releases/download/sdk-v$SDK_VERSION/$notice" -o "$RUNNER_TEMP/$notice"
-            cp "$RUNNER_TEMP/$notice" dist/web/
-            cp "$RUNNER_TEMP/$notice" dist/native/windows-arm64/
-          done
+          cp -R LICENSES dist/web/
+          cp -R LICENSES dist/native/windows-arm64/
       - uses: actions/upload-artifact@v7.0.0
         with:
           name: game-web
@@ -802,20 +827,135 @@ Choose a sample to extend:
 - [Orbital flight deck](../ui-demo/): menus and reusable KartUI components.
 - [Media lab](../media-lab/): sound, music, and video.
 
+## Write and publish a package
+
+Keep your package in its own public GitHub repository. The catalog links to your releases.
+
+```mermaid
+flowchart TD
+Repo[Create repository and exports] --> Test[Test in a game]
+Test --> Release[Publish a package release]
+Release --> Issue[Open a catalog request]
+Issue --> Catalog[Maintainers review and add it]
+Catalog --> Install[Install by package name]
+```
+
+### Create the repository
+
+Example: `your-name/community-props`, with the package at the repository root:
+
+```text
+community-props/
+  karty-package.toml
+  README.md
+  LICENSE
+  textures/crate.png
+  screenshots/props.png
+```
+
+- `README.md`: purpose, install command, usage example and screenshot.
+- `LICENSE`: terms for the code and assets; include any third-party notices.
+- `textures/crate.png`: an original PNG texture, exported by the manifest below.
+- `screenshots/props.png`: a preview for the catalog.
+
+Create `karty-package.toml`:
+
+```toml
+format_version = 1
+name = "community-props"
+version = "0.1.0"
+
+[[textures]]
+name = "crate"
+source = "textures/crate.png"
+profile = "environment"
+```
+
+Use a unique package name and a full `major.minor.patch` version. Source paths are
+relative to the package root. This exports `community-props.crate` to games.
+
+Packages can also export Go code (`go.mod`), prefabs (`prefabs`), UI (`[ui]`) and
+build processors (`[[processors]]`). See [package exports](../design/packages.html).
+
+### Test in a game
+
+From a game project beside the package repository:
+
+```sh
+karty package import ../community-props
+karty dev
+```
+
+Use the exported texture in a level and check the result.
+
+### Publish a release
+
+From the package repository root:
+
+```sh
+mkdir -p dist
+karty package export --output dist/community-props-0.1.0.kpkg .
+```
+
+Keep `dist/` out of Git. Commit and push the sources, then create a published
+GitHub release with:
+
+| Field            | Value                                                                 |
+| ---------------- | --------------------------------------------------------------------- |
+| Tag              | `community-props-v0.1.0`                                              |
+| Attached archive | `community-props-0.1.0.kpkg`                                          |
+| Checksum         | GitHub's SHA-256 asset digest, or `community-props-0.1.0.kpkg.sha256` |
+
+A checksum file contains `<sha256>  community-props-0.1.0.kpkg` on one line;
+export prints the archive's SHA-256. The manifest, tag and archive versions must
+match. Use a stable release; drafts and prereleases are excluded from the catalog.
+Publish a new version for changes; keep existing releases unchanged.
+
+### Request a catalog listing
+
+[Open an issue in karty-packages](https://github.com/karty-game/karty-packages/issues/new)
+titled `Add package: community-props`. Include the release link, license and this
+catalog entry, replacing `your-name`:
+
+```json
+{
+  "name": "community-props",
+  "repository": "your-name/community-props",
+  "description": "Prototype crates and materials",
+  "tags": ["3d", "prototyping"],
+  "source": ".",
+  "ref": "main",
+  "readme": "README.md",
+  "preview": "screenshots/props.png"
+}
+```
+
+Maintainers review the request and, if approved, add it to `catalog.json`.
+Your sources and releases stay in your repository. After the catalog is published:
+
+```sh
+karty package import community-props
+```
+
+Later stable releases are discovered during catalog refreshes. Existing users
+update explicitly with `karty package upgrade community-props`.
+
 ## Draw a 2D game
 
 Use sprites for image artwork, vectors for shapes, and text for instructions
 and scores. This example draws all three and lets you collect a circle with
 keyboard movement.
 
-Start with the SDK 0.0.17 `2d` starter, which includes controllers 0.1.0:
+Start with the `2d` starter, which includes the `controllers-topdown` plugin:
 
 ```sh
-karty new --yes --sdk 0.0.17 --template 2d my-game
+karty new --yes --template 2d my-game
 ```
 
-Keep `packages/controllers/` in Git. For an existing project, import the package
-using the [reusable packages guide](../design/packages.html) first.
+Keep the package's archive URL and checksum in `karty.toml`. The first build
+restores its source under ignored `.karty/packages/controllers-topdown/`.
+For an existing project, run `karty package import controllers-topdown@0.0.1`
+first; see [reusable packages](../design/packages.html).
 
 ### Add a sprite
 
@@ -833,7 +973,7 @@ scene. Change the imports if your project has a different name.
 package main
 
 import (
-    "github.com/karty-game/controllers"
+    "github.com/karty-game/controllers-topdown"
     "example.com/my-game/.karty/assets"
     "example.com/my-game/.karty/engine"
 )
@@ -957,187 +1097,135 @@ Its components work with both 2D and 3D games.
 
 ## Make a first-person game
 
-The preset combines walking, running, mouse look and two independent touch sticks. The game maps SDK events and applies motion to the last host-accepted camera pose. This flat-room starter keeps eye height fixed; gravity, stairs and jumping belong to your game.
-
-Create the SDK 0.0.17 starter:
+Create a camera and attach the `controllers-3d` package's first-person component. It supplies
+walking, running, mouse look, two visible touch sticks, a physics body, gravity
+and collision. Keep game hooks for your own interactions and objectives.
 
 ```sh
-karty new --yes --sdk 0.0.17 --template fps my-game
+karty new --yes --template fps my-game
 cd my-game
 karty dev
 ```
 
-The starter includes controllers 0.1.0 in `packages/controllers/` and declares
-that folder in `karty.toml`. Keep it in Git. If extending an existing project,
-import the package as described in [reusable packages](../design/packages.html).
-Use the room and material files from [one room](levels.html); the isometric
-starter also supplies its `player` solid prefab in `world.yaml`.
+The starter references an independently released
+[FPS Kit](https://karty-game.github.io/karty-packages/packages/fps-kit.html)
+archive by HTTPS URL and SHA-256 in `karty.toml`. Its first build downloads and
+verifies the package under `.karty/packages/fps-kit`; later builds can reuse the
+verified cache offline. A four-metre corridor, two
+metres wide, connects two eight-metre rooms. They use the kit’s 256px grid,
+brick and concrete materials.
+Three crates have static collision; two are spawned with dynamic box bodies
+so you can push them. Keep the pinned package declaration in Git. Material
+normal/height/AO maps are generated during the ordinary build.
+Room numbers, a floor arrow and a tagged goal star demonstrate the package's
+transparent decals for temporary goals and points of interest.
+The starter also includes `controllers-3d` for player movement and mobile controls.
+The CLI reads `[level].name` from
+`levels/*/level.toml` to generate typed references such as `assets.LevelRoom`.
+The callback passed to `LoadLevel` receives that request's ready result;
+loading errors still arrive through `OnLevelFailed`.
 
-![The Hangar sample uses the first-person preset to explore industrial rooms.](assets/hangar.jpg)
+![The Hangar sample uses the controller package to explore industrial rooms.](assets/hangar.jpg)
 
-### Connect the first-person preset
+### Make the camera playable
 
-The complete `src/main.go` below is the starter's SDK adapter. Change its module
-imports if your project has a different name. Keep the viewport and project
-resolution at 960 by 540. Constructors validate their options; `Reset` clears
-held controls when focus changes.
+The complete `src/main.go` below attaches the controller after the room is
+ready. Change its module import if your project has a different name. Keep the
+viewport and project resolution at 960 by 540.
 
 ```go
 package main
 
 import (
-	"github.com/karty-game/controllers"
-
+	"example.com/my-game/.karty/assets"
 	"example.com/my-game/.karty/engine"
+	fpscontroller "example.com/my-game/.karty/processed/code/controllers-3d.sdk/controller"
 )
 
 type Game struct {
 	engine.Game
-	request                        engine.RequestID
-	camera                         *engine.Camera3D
-	label                          *engine.Text2D
-	controller *controllers.FirstPerson
-	fpsReady bool
+	label *engine.Text2D
 }
 
 //go:wasmexport karty_register
 func main() {
-	options := controllers.DefaultFirstPersonOptions()
-	options.Width, options.Height = 960, 540
-	options.Speed, options.KeyYawSpeed = 2.4, 1.5
-	controller, err := controllers.NewFirstPerson(options)
-	if err != nil { panic(err) }
-	game := &Game{controller: controller}
+	game := &Game{}
 	engine.Run(engine.Hooks{
-		OnUpdate:     func(engine.Frame) { game.updateFPS() },
-		OnKeyDown:    func(key engine.Key) { game.keyFPS(key, true) },
-		OnKeyUp:      func(key engine.Key) { game.keyFPS(key, false) },
-		OnInputReset: game.resetFPS,
-		OnPointer: game.pointerFPS,
-
-		OnStart: func() {
-			game.label = game.NewText2D("Loading room...", engine.NewVec2(24, 24))
-			game.request = game.RequestLevel("levels.room")
-		},
-		OnLevelReady: func(event engine.LevelReady) {
-			if event.RequestID != game.request {
-				return
-			}
-			game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
-				Projection: engine.CameraProjectionPerspective,
-				Output:     engine.CameraOutputFull,
-				Position:   engine.NewVec3(2, 2, 1.7),
-				Yaw:        0, Pitch: 0, VerticalFOV: 1.05,
-				NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
-				ViewportWidth: 960, ViewportHeight: 540,
-			})
-			game.camera.SetLayer(-1)
-
-			game.fpsReady = true
-
-			game.label.SetText("WASD: walk | Q/E: turn | click: mouse look | touch: dual sticks")
-		},
-		OnLevelFailed: func(event engine.LevelFailed) {
-			if event.RequestID == game.request {
-				game.label.SetText(event.Diagnostic)
-			}
-		},
+		OnStart: game.start, OnLevelFailed: game.failed,
 	})
 }
 
+func (game *Game) start() {
+	game.label = game.NewText2D("Loading room...", engine.NewVec2(24, 24))
+	game.LoadLevel(assets.LevelRoom, game.ready)
+}
 
-func (game *Game) keyFPS(key engine.Key, down bool) {
-	if key == engine.KeyEscape && down { game.resetFPS(); return }
-	if control, ok := movementKey(key); ok { game.controller.Key(control, down); return }
-	switch key {
-	case engine.KeyQ: game.controller.Key(controllers.LookLeft, down)
-	case engine.KeyE: game.controller.Key(controllers.LookRight, down)
+// The mounted room supplies the world that will resolve player collisions.
+func (game *Game) ready(event engine.LevelReady) {
+	camera := game.NewCamera3D(event.Handle, engine.Camera3DSettings{
+		Projection:  engine.CameraProjectionPerspective,
+		Output:      engine.CameraOutputFull,
+		Position:    engine.NewVec3(2, 2, 1.7),
+		VerticalFOV: 1.05, NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
+		ViewportWidth: 960, ViewportHeight: 540,
+	})
+	camera.SetLayer(-1)
+	options := fpscontroller.DefaultFirstPersonOptions()
+	options.Speed = 2.4 // metres per second
+	if _, err := fpscontroller.AttachFirstPerson(game.Game, camera, options); err != nil {
+		game.label.SetText("Could not create player: " + err.Error())
+		return
 	}
+	game.label.SetText("WASD / arrows: walk | Shift: run | click: mouse look | touch: move and look")
 }
 
-func (game *Game) resetFPS() {
-	game.controller.Reset()
-	game.SetCursorCaptured(false)
-}
-
-func (game *Game) pointerFPS(pointer engine.PointerInput) {
-	if game.camera == nil || !game.fpsReady { return }
-	if pointer.Kind != engine.PointerMouse && pointer.Kind != engine.PointerTouch { return }
-	var phase controllers.PointerPhase
-	switch pointer.Phase {
-	case engine.PointerDown: phase = controllers.PointerDown
-	case engine.PointerMove: phase = controllers.PointerMove
-	case engine.PointerUp: phase = controllers.PointerUp
-	case engine.PointerCancel: phase = controllers.PointerCancel
-	default: return
-	}
-	result := game.controller.Pointer(controllers.Pointer{
-		Phase: phase, Touch: pointer.Kind == engine.PointerTouch, ID: pointer.ID,
-		X: pointer.X, Y: pointer.Y, DeltaX: pointer.DeltaX, DeltaY: pointer.DeltaY,
-		Primary: pointer.Buttons&1 != 0, Captured: pointer.Captured,
-	}, pointer.X >= 0 && pointer.X <= 960 && pointer.Y >= 0 && pointer.Y <= 540)
-	if result.Capture { game.SetCursorCaptured(true) }
-	if result.Release { game.SetCursorCaptured(false) }
-}
-
-func (game *Game) updateFPS() {
-	if game.camera == nil || !game.fpsReady { return }
-	// Settings contains the last host-accepted pose automatically.
-	settings := game.camera.Settings()
-	motion := game.controller.Step(settings.Yaw, settings.Pitch)
-	if motion.X == 0 && motion.Y == 0 && motion.Yaw == settings.Yaw && motion.Pitch == settings.Pitch { return }
-	settings.Yaw, settings.Pitch = motion.Yaw, motion.Pitch
-	settings.Position.X += motion.X
-	settings.Position.Y += motion.Y
-	game.camera.SetSettings(settings)
-}
-
-func movementKey(key engine.Key) (controllers.Control, bool) {
-	switch key {
-	case engine.KeyW: return controllers.Forward, true
-	case engine.KeyS: return controllers.Backward, true
-	case engine.KeyA: return controllers.Left, true
-	case engine.KeyD: return controllers.Right, true
-	case engine.KeyArrowUp: return controllers.ForwardAlt, true
-	case engine.KeyArrowDown: return controllers.BackwardAlt, true
-	case engine.KeyLeft: return controllers.LeftAlt, true
-	case engine.KeyRight: return controllers.RightAlt, true
-	case engine.KeyShiftLeft: return controllers.RunLeft, true
-	case engine.KeyShiftRight: return controllers.RunRight, true
-	}
-	return 0, false
+func (game *Game) failed(event engine.LevelFailed) {
+	game.label.SetText(event.Diagnostic)
 }
 ```
 
 WASD/arrows walk, Shift runs, and Q/E turn. Click to capture mouse look;
 Escape releases it. Touch the lower-left side to walk and lower-right to look.
-The minimal starter supplies gestures without drawing stick overlays. Route UI
-hit tests before accepting new scene gestures when adding menus.
+The package draws the sticks on first touch and clears held controls on focus loss
+or modal input capture. It moves the player before your `OnUpdate` hook, using
+the last host-accepted pose and preserving falling momentum.
 
-Read `packages/controllers/docs/presets-v1.md` in the generated project for
-the complete contract, including picking and pointer targets. Extend the game
-with [textures](textures.html), [prefabs](prefabs.html),
+The game owns the camera; destroying it also closes its controller. Level
+release and cartridge shutdown clean up the controller's body and touch display.
+Keep the returned controller when you need `SetEnabled`, `Teleport` or `Close`;
+only one local first-person controller can be attached at a time.
+
+Start with the default options, then tune speed, sensitivity or `Touch`
+appearance. Custom `BeforeMove` and `Move` callbacks can add authored traversal
+or swimming. [Hangar](../hangar/) uses the shared capsule motor for stairs;
+[Terrain](../terrain/) adds swimming without another input adapter.
+The installed `.karty/packages/controllers-3d/` README and component documentation
+contain the complete contract.
+
+Extend the game with [textures](textures.html), [prefabs](prefabs.html),
 [lighting](lighting.html) and [interactions](interactions.html), then
 [share a build](share.html).
 
 The interaction guide uses E by default. Use F for interactions here, or
-remap this starter's Q/E controls before wiring the interaction hook.
+set `options.TurnKeys = false` before wiring the interaction hook.
 
 ## Make an isometric game
 
 The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.
 
-Create the SDK 0.0.17 starter:
+Create an isometric game:
 
 ```sh
-karty new --yes --sdk 0.0.17 --template isometric my-game
+karty new --yes --template isometric my-game
 cd my-game
 karty dev
 ```
 
-The starter includes controllers 0.1.0 in `packages/controllers/` and declares
-that folder in `karty.toml`. Keep it in Git. If extending an existing project,
-import the package as described in [reusable packages](../design/packages.html).
+The starter pins the `controllers-isometric` plugin's archive and checksum
+in `karty.toml`. The first build restores its source under ignored
+`.karty/packages/controllers-isometric/`; keep the declaration in Git.
+For an existing project, run `karty package import controllers-isometric@0.0.1`;
+see [reusable packages](../design/packages.html).
 Use the room and material files from [one room](levels.html); the isometric
 starter also supplies its `player` solid prefab in `world.yaml`.
 
@@ -1145,7 +1233,7 @@ starter also supplies its `player` solid prefab in `world.yaml`.
 
 ### Connect the isometric preset
 
-The complete `src/main.go` below is the starter's SDK adapter. Change its module
+The complete `src/main.go` below connects the controller to your game. Change its module
 imports if your project has a different name. Keep the viewport and project
 resolution at 960 by 540. Constructors validate their options; `Reset` clears
 held controls when focus changes.
@@ -1154,7 +1242,7 @@ held controls when focus changes.
 package main
 
 import (
-	"github.com/karty-game/controllers"
+	"github.com/karty-game/controllers-isometric"
 
 	"example.com/my-game/.karty/engine"
 )
@@ -1293,12 +1381,12 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 ```
 
 `Step` proposes movement from the accepted player position. Apply your game
-constraints; the SDK refreshes the accepted pose automatically before the next
+constraints; the engine refreshes the accepted pose automatically before the next
 update. `WatchPose` adds an optional notification. `Follow` takes that
 accepted position. The fixed diagonal camera keeps
 its angle as the player moves; `ZoomBy` clamps the visible world height.
 
-Read `packages/controllers/docs/presets-v1.md` in the generated project for
+Read `.karty/packages/controllers-isometric/docs/presets-v1.md` after restore for
 the complete contract, including picking and pointer targets. Extend the game
 with [textures](textures.html), [prefabs](prefabs.html),
 [lighting](lighting.html) and [interactions](interactions.html), then

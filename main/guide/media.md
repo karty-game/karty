@@ -88,7 +88,7 @@ func (game *Game) updateAudioReceiver() {
 }
 ```
 
-Call `game.updateAudioReceiver()` after camera creation in `OnLevelReady`, and
+Call `game.updateAudioReceiver()` after camera creation in the level's ready callback, and
 from your existing `OnUpdate` after movement and turning. Set it again when
 replacing the camera. The receiver follows the camera's world position; its
 output rectangle on screen does not change where the player hears from.
@@ -128,9 +128,8 @@ distance or collision obstruction.
 
 ## Place a looping sound in the world
 
-Check `.karty/docs/audio-emitters.md` for emitter support in your project's
-selected SDK and matching host. Create this
-emitter once from `OnLevelReady`, using `event.Handle` for the mounted level:
+Create this emitter once from the level's ready callback, using `event.Handle`
+for the mounted level. See `.karty/docs/audio-emitters.md` for the complete options:
 
 ```go
 func (game *Game) startReactorSound(level engine.LevelHandle) *engine.SoundEmitter {
