@@ -1,0 +1,1314 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111827" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" />
+    <meta name="description" content="Karty code and API topics: lifecycle, entities, levels, input, 2D and 3D transforms and cameras, sprites, audio and particles." />
+    
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Karty" />
+<meta property="og:title" content="Cameras / Karty" />
+<meta property="og:description" content="Karty code and API topics: lifecycle, entities, levels, input, 2D and 3D transforms and cameras, sprites, audio and particles." />
+<meta property="og:url" content="https://karty-game.github.io/karty/pr/20/technical/cameras.html" />
+<meta property="og:image" content="https://karty-game.github.io/karty/pr/20/guide/assets/banner.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="640" />
+<meta property="og:image:height" content="320" />
+<meta
+  property="og:image:alt"
+  content="Orange Candy Buddy controller beside the Karty wordmark on a midnight-blue banner reading Retro looks, modern tools."
+/>
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Cameras / Karty" />
+<meta name="twitter:description" content="Karty code and API topics: lifecycle, entities, levels, input, 2D and 3D transforms and cameras, sprites, audio and particles." />
+<meta name="twitter:image" content="https://karty-game.github.io/karty/pr/20/guide/assets/banner.png" />
+<meta
+  name="twitter:image:alt"
+  content="Orange Candy Buddy controller beside the Karty wordmark on a midnight-blue banner reading Retro looks, modern tools."
+/>
+
+    <title>Cameras / Karty</title>
+    
+    <style>
+      :root {
+  color-scheme: dark;
+  --canvas: #111827;
+  --surface: #192438;
+  --surface-raised: #23314a;
+  --ink: #fff4e7;
+  --body: #cfd8e8;
+  --muted: #a3b2c9;
+  --line: #30405a;
+  --accent: #ffad48;
+  --accent-ink: #321d2d;
+  --focus: #ffcf7c;
+  --radius: 10px;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+body {
+  margin: 0;
+  isolation: isolate;
+  background: var(--canvas);
+  color: var(--body);
+  font-size: 16px;
+  line-height: 1.75;
+}
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 540px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 82% 0, #37537e55, transparent 60%);
+}
+a {
+  color: var(--accent);
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+a:hover {
+  color: var(--focus);
+}
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 5px;
+  border-radius: 3px;
+}
+::selection {
+  background: #4c4457;
+  color: white;
+}
+h1,
+h2,
+h3 {
+  color: var(--ink);
+  font-weight: 650;
+}
+h1 {
+  margin: 0 0 1.25rem;
+  font-size: clamp(2.7rem, 5.2vw, 4.2rem);
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.035em;
+  line-height: 1.3;
+}
+h3 {
+  font-size: 1.12rem;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+p {
+  margin: 1rem 0;
+}
+img {
+  max-width: 100%;
+}
+.skip {
+  position: fixed;
+  top: -6rem;
+  left: 1rem;
+  z-index: 20;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 650;
+}
+.skip:focus {
+  top: 1rem;
+}
+.site-header {
+  border-bottom: 1px solid var(--line);
+  background: #111827e8;
+}
+.header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.05rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.055em;
+}
+.brand:hover {
+  color: var(--ink);
+}
+.brand img {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.site-nav a {
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 550;
+  text-decoration: none;
+}
+.site-nav a:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.site-nav a[aria-current="page"] {
+  background: #3b302d;
+  color: var(--accent);
+}
+.site-nav .github {
+  margin-left: 0.65rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.external-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--accent);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "";
+  height: 6px;
+  width: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 42px;
+  padding: 0.6rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.86rem;
+  font-weight: 650;
+  text-decoration: none;
+  line-height: 1.4;
+}
+.button:hover {
+  background: var(--focus);
+  color: var(--accent-ink);
+}
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 550;
+  text-decoration: none;
+}
+.text-link:hover {
+  text-decoration: underline;
+}
+code {
+  padding: 0.14em 0.35em;
+  border: 1px solid #3b4d6c;
+  border-radius: 5px;
+  background: #20304a;
+  color: #e7dec9;
+  font:
+    0.85em/1.7 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  overflow-wrap: anywhere;
+}
+pre {
+  margin: 1.5rem 0;
+  padding: 1.2rem 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #0b1220;
+  box-shadow: inset 0 1px #ffffff04;
+  overflow-x: auto;
+  tab-size: 4;
+}
+.guide-body code.command-flag {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.8rem;
+  line-height: 1.75;
+  overflow-wrap: normal;
+}
+.site-footer {
+  width: calc(100% - 4rem);
+  max-width: 1216px;
+  margin: 0 auto;
+  border-top: 1px solid var(--line);
+  padding: 2rem 0 2.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.site-footer p {
+  margin: 0.5rem 0 0;
+}
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+.footer-brand img {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem 1.5rem;
+}
+.footer-links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.footer-links a:hover {
+  color: var(--accent);
+}
+
+/* Guide: a quiet reading column beside a compact, persistent chapter list. */
+.guide-layout {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 216px minmax(0, 1fr);
+  gap: 4rem;
+  padding: 3.25rem 2rem 5rem;
+}
+.guide-nav {
+  position: sticky;
+  top: 2rem;
+  align-self: start;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.technical-page .desktop-toc {
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.guide-nav p {
+  margin: 1.8rem 0.75rem 0.6rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 650;
+}
+.guide-nav p:first-child {
+  margin-top: 1.6rem;
+}
+.guide-nav ul,
+.guide-nav ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.guide-nav li {
+  margin: 0.12rem 0;
+}
+.guide-nav a {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.guide-nav a:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.guide-nav a[aria-current="page"] {
+  background: #352c2e;
+  border-color: #79543b;
+  color: var(--accent);
+  font-weight: 600;
+}
+.guide-nav .nav-home {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+.nav-home svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.guide-nav .on-page {
+  border-left: 1px solid var(--line);
+  margin-left: 0.8rem;
+}
+.guide-nav .on-page a {
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  font-size: 0.77rem;
+}
+.mobile-toc {
+  display: none;
+}
+.guide-main {
+  min-width: 0;
+  max-width: 900px;
+}
+.page-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.4rem;
+}
+.page-tools .text-link {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+.page-tools .text-link:hover {
+  color: var(--accent);
+}
+.guide-body h1 {
+  max-width: 16ch;
+}
+.guide-body h1 + p {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--body);
+  font-size: 1.08rem;
+}
+.guide-body p,
+.guide-body > ul {
+  max-width: 72ch;
+}
+.guide-body h2 {
+  border-top: 1px solid var(--line);
+  padding-top: 2.1rem;
+  margin: 3rem 0 1rem;
+  font-size: 1.65rem;
+}
+.guide-body h3 {
+  margin: 1.8rem 0 0.8rem;
+}
+.guide-body ul {
+  padding-left: 1.4rem;
+}
+.guide-body li {
+  margin: 0.65rem 0;
+}
+.guide-body li::marker {
+  color: var(--accent);
+}
+.guide-body figure {
+  margin: 2rem 0;
+}
+.guide-body figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.design-page .guide-body img[src$=".svg"],
+.technical-page .guide-body img[src$=".svg"] {
+  max-width: 32rem;
+  margin-inline: auto;
+}
+.guide-body figcaption {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.65;
+}
+.table-wrap {
+  max-width: 100%;
+  margin: 1.8rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.table-wrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.table-hint {
+  display: none;
+}
+.table-wrap table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.table-wrap th,
+.table-wrap td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+.table-wrap th {
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-weight: 600;
+}
+.table-wrap tr:last-child td {
+  border-bottom: 0;
+}
+.guide-body .journey {
+  max-width: 400px;
+  margin: 2rem auto;
+}
+.journey svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.journey rect {
+  fill: var(--surface-raised);
+  stroke: var(--line);
+}
+.journey text {
+  fill: var(--ink);
+}
+.journey path {
+  stroke: var(--accent);
+}
+.paths {
+  margin-top: 2.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.path {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+.path:hover {
+  border-color: #b06c3d;
+  background: #24324b;
+  color: var(--ink);
+}
+.path img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-bottom: 1px solid var(--line);
+}
+.path-details {
+  flex: 1;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+}
+.path h2 {
+  margin: 0 0 0.6rem;
+  padding: 0;
+  border: 0;
+  font-size: 1.1rem;
+  letter-spacing: -0.025em;
+}
+.path p {
+  margin: 0 0 1.2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.path .card-cta {
+  margin-top: auto;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.card-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+.card-cta svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* Samples use the same cards, palette, navigation and spacing as the guide. */
+.gallery-main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3.5rem 2rem 5rem;
+}
+.gallery-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 4rem;
+  align-items: center;
+  padding-bottom: 3rem;
+}
+.gallery-hero .eyebrow {
+  margin: 0 0 1.5rem;
+}
+.gallery-hero h1 {
+  max-width: 11ch;
+}
+.gallery-lead {
+  max-width: 48ch;
+  color: var(--body);
+  font-size: 1.05rem;
+}
+.starter-card {
+  padding: 1.5rem;
+  border: 1px solid #79543b;
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, #263652, var(--surface));
+}
+.starter-card .eyebrow {
+  margin: 0 0 0.9rem;
+  font-size: 0.63rem;
+}
+.starter-card h2 {
+  font-size: 1.35rem;
+}
+.starter-card p {
+  margin: 0.65rem 0 1rem;
+  font-size: 0.8rem;
+  color: #b4c3db;
+}
+.starter-card pre {
+  margin: 1rem 0 1.2rem;
+  padding: 0.85rem 1rem;
+  background: #101c30;
+  border-color: #79543b;
+}
+.starter-card pre code {
+  font-size: 0.75rem;
+}
+.starter-card .text-link {
+  font-size: 0.8rem;
+}
+.sample-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.sample-section-header h2 {
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+.sample-count {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+.samples {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.samples > li {
+  min-width: 0;
+}
+.sample-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transition: border-color 160ms ease;
+}
+.sample-card:hover {
+  border-color: #536b91;
+}
+.preview {
+  display: block;
+  overflow: hidden;
+  background: #090f1c;
+  border-bottom: 1px solid var(--line);
+}
+.preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.sample-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+}
+.sample-details h2 {
+  font-size: 1.3rem;
+}
+.sample-details p {
+  margin: 0.7rem 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+.sample-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-top: auto;
+}
+.sample-actions .text-link {
+  color: var(--body);
+  font-size: 0.78rem;
+}
+.sample-actions .text-link:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 1050px) {
+  .guide-layout {
+    gap: 2.5rem;
+    grid-template-columns: 192px minmax(0, 1fr);
+  }
+  .paths {
+    grid-template-columns: 1fr;
+  }
+  .path {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+  .path img {
+    height: 100%;
+    aspect-ratio: auto;
+    border-bottom: 0;
+    border-right: 1px solid var(--line);
+  }
+  .path-details {
+    padding: 1rem;
+  }
+  .path p {
+    margin-bottom: 0.7rem;
+  }
+  .gallery-hero {
+    gap: 2rem;
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  .site-footer {
+    margin-right: 2rem;
+    margin-left: 2rem;
+  }
+}
+@media (max-width: 800px) {
+  .guide-body .table-hint {
+    display: block;
+    margin-bottom: -1rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .technical-page .table-hint {
+    display: none;
+  }
+  .technical-page .table-wrap table {
+    min-width: 0;
+  }
+  .technical-page .table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .technical-page .table-wrap tbody,
+  .technical-page .table-wrap tr,
+  .technical-page .table-wrap td {
+    display: block;
+  }
+  .technical-page .table-wrap tr + tr {
+    border-top: 1px solid var(--line);
+  }
+  .technical-page .table-wrap td {
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .technical-page .table-wrap td + td {
+    padding-top: 0;
+  }
+  .header-inner {
+    padding: 0.85rem 1.25rem;
+    gap: 1rem;
+  }
+  .site-nav a {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  .site-nav .github {
+    margin-left: 0.2rem;
+    padding-left: 0.7rem;
+  }
+  .guide-layout {
+    display: block;
+    padding: 1.5rem 1.25rem 3rem;
+  }
+  .guide-nav {
+    position: static;
+    margin: 0 0 2rem;
+  }
+  .desktop-toc {
+    display: none;
+  }
+  .mobile-toc {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+  }
+  .mobile-toc summary {
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 0.84rem;
+    font-weight: 550;
+  }
+  .mobile-toc[open] summary {
+    border-bottom: 1px solid var(--line);
+  }
+  .mobile-toc .mobile-links {
+    padding: 0.25rem 0.5rem 0.8rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 0.5rem;
+  }
+  .mobile-links .nav-home,
+  .mobile-links > p,
+  .mobile-links .on-page {
+    grid-column: 1 / -1;
+  }
+  .technical-page .mobile-links > ul {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mobile-links > p {
+    margin: 1rem 0.75rem 0.3rem;
+  }
+  .page-tools {
+    margin-bottom: 1.25rem;
+  }
+  .guide-body h1 {
+    font-size: clamp(2.5rem, 8vw, 3.6rem);
+  }
+  .gallery-main {
+    padding: 2.5rem 1.25rem 3rem;
+  }
+  .gallery-hero {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+  }
+  .gallery-hero h1 {
+    max-width: 16ch;
+  }
+  .starter-card {
+    padding: 1.25rem;
+  }
+  .starter-card pre {
+    max-width: 28rem;
+  }
+  .samples {
+    gap: 1rem;
+  }
+  .sample-details {
+    padding: 1.1rem;
+  }
+  .sample-details h2 {
+    font-size: 1.1rem;
+  }
+  .site-footer {
+    width: calc(100% - 2.5rem);
+    margin-right: 1.25rem;
+    margin-left: 1.25rem;
+    padding-top: 1.5rem;
+  }
+}
+@media (max-width: 560px) {
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+  .brand {
+    font-size: 1.15rem;
+    gap: 0.45rem;
+  }
+  .brand img {
+    width: 36px;
+    height: 36px;
+  }
+  .site-nav {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.1rem;
+  }
+  .site-nav a {
+    padding-inline: 0.35rem;
+    font-size: 0.75rem;
+  }
+  .site-nav .github {
+    margin-left: 0;
+    padding-left: 0.35rem;
+  }
+  .github .external-icon {
+    display: none;
+  }
+  .samples {
+    grid-template-columns: 1fr;
+  }
+  .sample-details {
+    padding: 1.25rem;
+  }
+  .sample-details h2 {
+    font-size: 1.25rem;
+  }
+  .page-tools {
+    align-items: flex-start;
+  }
+  .page-tools .eyebrow {
+    max-width: 12rem;
+    font-size: 0.6rem;
+  }
+  .page-tools .text-link {
+    font-size: 0.7rem;
+  }
+  .path {
+    display: flex;
+  }
+  .path img {
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-bottom: 1px solid var(--line);
+    border-right: 0;
+  }
+  .path-details {
+    padding: 1.25rem;
+  }
+  .path h2 {
+    font-size: 1.25rem;
+  }
+  .path p {
+    font-size: 0.88rem;
+  }
+  .site-footer {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .footer-links {
+    justify-content: flex-start;
+  }
+  pre {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+}
+@media (max-width: 360px) {
+  .header-inner {
+    padding-inline: 0.75rem;
+    flex-wrap: wrap;
+    row-gap: 0.65rem;
+  }
+  .site-nav {
+    flex-wrap: nowrap;
+  }
+  .site-nav a {
+    flex: 1;
+    padding-inline: 0.15rem;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+  .site-nav .github {
+    padding-left: 0.15rem;
+    justify-content: center;
+  }
+  .gallery-hero h1 {
+    font-size: 2.25rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .path,
+  .sample-card {
+    transition: none;
+  }
+}
+@media print {
+  :root {
+    color-scheme: light;
+    --canvas: white;
+    --ink: #23314a;
+    --body: #23314a;
+    --muted: #66545e;
+    --line: #ded4d8;
+    --surface: #faf6f2;
+    --surface-raised: #faf6f2;
+    --accent: #96501e;
+  }
+  body {
+    font-size: 11pt;
+  }
+  body::before,
+  .site-header,
+  .guide-nav,
+  .site-footer,
+  .page-tools,
+  .starter-card {
+    display: none;
+  }
+  .guide-layout,
+  .gallery-main {
+    display: block;
+    padding: 0;
+  }
+  .guide-main {
+    max-width: none;
+  }
+  h1 {
+    font-size: 28pt;
+  }
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+  figure,
+  .path,
+  .sample-card {
+    break-inside: avoid;
+  }
+  a {
+    color: inherit;
+  }
+  code {
+    background: #faf6f2;
+    border-color: #ded4d8;
+    color: #23314a;
+  }
+  pre {
+    white-space: pre-wrap;
+    overflow: visible;
+    box-shadow: none;
+    background: #faf6f2;
+  }
+  pre code {
+    color: #23314a;
+  }
+  .paths {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .path {
+    display: flex;
+  }
+  .path img {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+    </style>
+  </head>
+  <body class="guide-page technical-page">
+    <a class="skip" href="#guide">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="../" aria-label="Karty samples">
+          <img src="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" alt="" width="44" height="44" />
+          <span>Karty</span>
+        </a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <a href="../">Samples</a>
+          <a
+            href="../guide/"
+            
+            >Guides</a
+          >
+          <a
+            href="index.html"
+            
+            aria-current="page"
+            
+            >API</a
+          >
+          <a href="../design/" 
+            >Design</a
+          >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
+          <a class="github" href="https://github.com/karty-game/karty"
+            >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M6 3H3v10h10v-3M8 3h5v5M13 3 7 9"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg
+          ></a>
+        </nav>
+      </div>
+    </header>
+    <div class="guide-layout">
+      
+      <nav
+        class="guide-nav"
+        aria-label="API topics"
+      >
+        <div class="desktop-toc">
+            
+<a class="nav-home" href="index.html" aria-current="false"
+  >API overview</a
+>
+<ul aria-label="API pages">
+  
+  <li><a href="runtime.html" aria-current="false">Runtime</a></li>
+  
+  <li><a href="input.html" aria-current="false">Input</a></li>
+  
+  <li><a href="transforms.html" aria-current="false">Transforms</a></li>
+  
+  <li><a href="cameras.html" aria-current="page">Cameras</a></li>
+  
+  <li><a href="graphics.html" aria-current="false">Sprites and particles</a></li>
+  
+  <li><a href="audio.html" aria-current="false">Audio</a></li>
+  
+</ul>
+  
+          <p>On this page</p>
+          <ol class="on-page">
+            
+            <li><a href="#camera-2d">Camera 2D</a></li>
+            
+            <li><a href="#camera-3d">Camera 3D</a></li>
+            
+            <li><a href="#first-person-player">First-person player</a></li>
+            
+          </ol>
+            
+        </div>
+        <details class="mobile-toc">
+          <summary>Browse API topics</summary>
+          <div class="mobile-links">
+              
+<a class="nav-home" href="index.html" aria-current="false"
+  >API overview</a
+>
+<ul aria-label="API pages">
+  
+  <li><a href="runtime.html" aria-current="false">Runtime</a></li>
+  
+  <li><a href="input.html" aria-current="false">Input</a></li>
+  
+  <li><a href="transforms.html" aria-current="false">Transforms</a></li>
+  
+  <li><a href="cameras.html" aria-current="page">Cameras</a></li>
+  
+  <li><a href="graphics.html" aria-current="false">Sprites and particles</a></li>
+  
+  <li><a href="audio.html" aria-current="false">Audio</a></li>
+  
+</ul>
+    
+            <p>On this page</p>
+            <ol class="on-page">
+              
+              <li><a href="#camera-2d">Camera 2D</a></li>
+              
+              <li><a href="#camera-3d">Camera 3D</a></li>
+              
+              <li><a href="#first-person-player">First-person player</a></li>
+              
+            </ol>
+            
+          </div>
+        </details>
+      </nav>
+      <main class="guide-main" id="guide">
+        <div class="page-tools">
+          <span class="eyebrow"
+            >API reference</span
+          >
+          <a class="text-link" href="cameras.md" download
+            >Download Markdown<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M8 2v8m-3-3 3 3 3-3M3 11v3h10v-3"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg
+          ></a>
+        </div>
+        
+        <div class="guide-body"><h1 id="cameras">Cameras</h1>
+<p>Use a 2D camera for canvas layers or a 3D camera for a mounted world.</p>
+<h2 id="camera-2d">Camera 2D</h2>
+<p><code>Camera2DSettings</code> pans and zooms an inclusive range of drawing layers. Layers outside that range stay fixed for HUDs and menus.</p>
+<pre><code class="language-go">func showWorld(game *engine.Game) engine.Camera2DSettings {
+    camera := engine.Camera2DSettings{
+        Position: engine.NewVec2(400, 300),
+        Zoom: 2,
+        WorldMinLayer: 0, WorldMaxLayer: 100,
+    }
+    game.SetCamera2D(camera)
+    return camera
+}
+</code></pre>
+<p>At 960 by 540, world point <code>(400, 300)</code> appears at screen centre <code>(480, 270)</code>. Zoom two doubles displayed distances. A HUD on layer 1000 stays fixed.</p>
+<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Method</th><th scope="col">Effect</th></tr></thead><tbody><tr><td><code>game.SetCamera2D(settings)</code></td><td>Replaces the active 2D camera settings</td></tr><tr><td><code>game.ClearCamera2D()</code></td><td>Restores ordinary canvas presentation</td></tr><tr><td><code>settings.ScreenToWorld(point, width, height)</code></td><td>Converts a logical pointer position to world coordinates</td></tr><tr><td><code>settings.WorldToScreen(point, width, height)</code></td><td>Converts a world point to logical canvas coordinates</td></tr></tbody></table></div>
+<p>Conversions must use the settings sent to the host and the project&#39;s authored width and height. Browser CSS dimensions do not belong here.</p>
+<p>Zoom must be finite and within <code>1/64</code> to <code>64</code>. The minimum layer cannot exceed the maximum. There is one active ordinary 2D camera.</p>
+<p><a href="cameras.html#camera-3d">Camera 3D</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/camera.go">Willowbrook camera</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/willowbrook/src/game_input.go">Pointer picking</a></p>
+<p>Exact bounds are in <code>.karty/docs/cameras.md</code>.</p>
+<h2 id="camera-3d">Camera 3D</h2>
+<p><code>Camera3D</code> projects a mounted world into a 2D output rectangle. Create it inside a level&#39;s ready callback, using that event&#39;s handle.</p>
+<pre><code class="language-go">func roomCamera(game *engine.Game, level engine.LevelHandle) *engine.Camera3D {
+    return game.NewCamera3D(level, engine.Camera3DSettings{
+        Projection: engine.CameraProjectionPerspective,
+        Output: engine.CameraOutputFull,
+        Position: engine.NewVec3(2, 2, 1.7),
+        VerticalFOV: 1.05, OrthoHeight: 12,
+        NearClip: 0.05, FarClip: 100,
+        ViewportWidth: 960, ViewportHeight: 540,
+    })
+}
+</code></pre>
+<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Setting</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><code>Projection</code></td><td><code>CameraProjectionPerspective</code> or <code>CameraProjectionIsometric</code></td></tr><tr><td><code>Position</code>, <code>Yaw</code>, <code>Pitch</code></td><td>World viewpoint, with angles in radians</td></tr><tr><td><code>FOVY</code></td><td>Vertical perspective field of view in radians</td></tr><tr><td><code>OrthoHeight</code></td><td>Visible vertical world span in isometric projection</td></tr><tr><td><code>Near</code>, <code>Far</code></td><td>Positive clipping distances, with far greater than near</td></tr><tr><td><code>ViewportWidth</code>, <code>ViewportHeight</code></td><td>Render dimensions</td></tr><tr><td><code>Output</code></td><td>Full rendering or a diagnostic view such as depth or normals</td></tr></tbody></table></div>
+<p>Use <code>camera.Ref().SetPose(pose)</code> to propose a free camera&#39;s world pose and <code>camera.SetSettings(settings)</code> to change projection and other camera settings. An attached body controls position; use its movement methods or <code>Body.Teleport</code> for positional changes. The entity&#39;s 2D transform places the rendered output on the canvas. Use a lower drawing layer to put it behind HUD elements.</p>
+<p>Use accepted poses for movement, as described in <a href="transforms.html#transform-3d">Transform 3D</a>. <code>Destroy</code> removes the camera; level release also removes it. Camera count and viewport bounds are in <code>.karty/docs/cameras.md</code>.</p>
+<p><a href="https://github.com/karty-game/karty/blob/main/samples/hangar/src/tour.go">Hangar camera setup</a> · <a href="../guide/isometric.html">Isometric guide</a></p>
+<h2 id="first-person-player">First-person player</h2>
+<p>The <code>controllers-3d</code> package supplies the first-person controller. Its <code>controllers-3d.sdk</code> build processor generates a typed adapter for your project. After creating a camera in a ready level, attach the controller:</p>
+<pre><code class="language-go">// Import the package-generated adapter as fpscontroller from
+// &#34;YOURMODULE/.karty/processed/code/controllers-3d.sdk/controller&#34;.
+func attachPlayer(game *engine.Game, camera *engine.Camera3D) (*fpscontroller.FirstPersonController, error) {
+    options := fpscontroller.DefaultFirstPersonOptions()
+    options.Speed = 4 // metres per second
+    return fpscontroller.AttachFirstPerson(*game, camera, options)
+}
+</code></pre>
+<p>It owns keyboard and pointer input, mouse capture, visible touch sticks and a physics body with gravity and collision. It moves before the game&#39;s <code>OnUpdate</code>; keep ordinary hooks for interactions and other game actions.</p>
+<p>The game owns the camera. The controller cleans up its body and display when closed, when the camera is destroyed, when its level is released, or at cartridge shutdown. Only one local controller can be attached at a time. <code>SetEnabled(false)</code> releases held controls; <code>Teleport</code> clears input and momentum while retaining the camera and body. <code>FirstPersonFree</code> mode omits the body for an inspection camera. <code>BeforeMove</code> and <code>Move</code> extend movement for authored rules.</p>
+<p><a href="../guide/fps.html">First-person guide</a> · <a href="https://github.com/karty-game/karty/blob/main/samples/hangar/src/main.go">Hangar traversal</a></p>
+<p>Exact options and lifecycle rules are in the installed package&#39;s README and component documentation under <code>.karty/packages/controllers-3d/</code>.</p>
+</div>
+        
+      </main>
+    </div>
+    <footer class="site-footer">
+      <div>
+        <span class="footer-brand">
+          <img src="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" alt="" width="32" height="32" />
+          <span>Karty</span>
+        </span>
+        <p>Go, KartUI, and one CLI for browser and desktop games.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
+      </div>
+      <div class="footer-links">
+        
+        <a href="../guide/">Start a game</a>
+        
+        <a href="../">Explore samples</a>
+      </div>
+    </footer>
+  </body>
+</html>
+
+

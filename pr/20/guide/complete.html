@@ -1,0 +1,2205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111827" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" />
+    <meta name="description" content="Choose a 2D, first-person, or isometric Karty game guide. Learn the CLI, levels, materials, lighting, interactions, media, UI, and sharing." />
+    
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Karty" />
+<meta property="og:title" content="Make a game with Karty / Karty" />
+<meta property="og:description" content="Choose a 2D, first-person, or isometric Karty game guide. Learn the CLI, levels, materials, lighting, interactions, media, UI, and sharing." />
+<meta property="og:url" content="https://karty-game.github.io/karty/pr/20/guide/complete.html" />
+<meta property="og:image" content="https://karty-game.github.io/karty/pr/20/guide/assets/banner.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="640" />
+<meta property="og:image:height" content="320" />
+<meta
+  property="og:image:alt"
+  content="Orange Candy Buddy controller beside the Karty wordmark on a midnight-blue banner reading Retro looks, modern tools."
+/>
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Make a game with Karty / Karty" />
+<meta name="twitter:description" content="Choose a 2D, first-person, or isometric Karty game guide. Learn the CLI, levels, materials, lighting, interactions, media, UI, and sharing." />
+<meta name="twitter:image" content="https://karty-game.github.io/karty/pr/20/guide/assets/banner.png" />
+<meta
+  name="twitter:image:alt"
+  content="Orange Candy Buddy controller beside the Karty wordmark on a midnight-blue banner reading Retro looks, modern tools."
+/>
+
+    <title>Make a game with Karty / Karty</title>
+    
+    <style>
+      :root {
+  color-scheme: dark;
+  --canvas: #111827;
+  --surface: #192438;
+  --surface-raised: #23314a;
+  --ink: #fff4e7;
+  --body: #cfd8e8;
+  --muted: #a3b2c9;
+  --line: #30405a;
+  --accent: #ffad48;
+  --accent-ink: #321d2d;
+  --focus: #ffcf7c;
+  --radius: 10px;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+body {
+  margin: 0;
+  isolation: isolate;
+  background: var(--canvas);
+  color: var(--body);
+  font-size: 16px;
+  line-height: 1.75;
+}
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 540px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 82% 0, #37537e55, transparent 60%);
+}
+a {
+  color: var(--accent);
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+a:hover {
+  color: var(--focus);
+}
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 5px;
+  border-radius: 3px;
+}
+::selection {
+  background: #4c4457;
+  color: white;
+}
+h1,
+h2,
+h3 {
+  color: var(--ink);
+  font-weight: 650;
+}
+h1 {
+  margin: 0 0 1.25rem;
+  font-size: clamp(2.7rem, 5.2vw, 4.2rem);
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.035em;
+  line-height: 1.3;
+}
+h3 {
+  font-size: 1.12rem;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+p {
+  margin: 1rem 0;
+}
+img {
+  max-width: 100%;
+}
+.skip {
+  position: fixed;
+  top: -6rem;
+  left: 1rem;
+  z-index: 20;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 650;
+}
+.skip:focus {
+  top: 1rem;
+}
+.site-header {
+  border-bottom: 1px solid var(--line);
+  background: #111827e8;
+}
+.header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.05rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.055em;
+}
+.brand:hover {
+  color: var(--ink);
+}
+.brand img {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.site-nav a {
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 550;
+  text-decoration: none;
+}
+.site-nav a:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.site-nav a[aria-current="page"] {
+  background: #3b302d;
+  color: var(--accent);
+}
+.site-nav .github {
+  margin-left: 0.65rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.external-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--accent);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "";
+  height: 6px;
+  width: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 42px;
+  padding: 0.6rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.86rem;
+  font-weight: 650;
+  text-decoration: none;
+  line-height: 1.4;
+}
+.button:hover {
+  background: var(--focus);
+  color: var(--accent-ink);
+}
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 550;
+  text-decoration: none;
+}
+.text-link:hover {
+  text-decoration: underline;
+}
+code {
+  padding: 0.14em 0.35em;
+  border: 1px solid #3b4d6c;
+  border-radius: 5px;
+  background: #20304a;
+  color: #e7dec9;
+  font:
+    0.85em/1.7 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  overflow-wrap: anywhere;
+}
+pre {
+  margin: 1.5rem 0;
+  padding: 1.2rem 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #0b1220;
+  box-shadow: inset 0 1px #ffffff04;
+  overflow-x: auto;
+  tab-size: 4;
+}
+.guide-body code.command-flag {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.8rem;
+  line-height: 1.75;
+  overflow-wrap: normal;
+}
+.site-footer {
+  width: calc(100% - 4rem);
+  max-width: 1216px;
+  margin: 0 auto;
+  border-top: 1px solid var(--line);
+  padding: 2rem 0 2.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.site-footer p {
+  margin: 0.5rem 0 0;
+}
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+.footer-brand img {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem 1.5rem;
+}
+.footer-links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.footer-links a:hover {
+  color: var(--accent);
+}
+
+/* Guide: a quiet reading column beside a compact, persistent chapter list. */
+.guide-layout {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 216px minmax(0, 1fr);
+  gap: 4rem;
+  padding: 3.25rem 2rem 5rem;
+}
+.guide-nav {
+  position: sticky;
+  top: 2rem;
+  align-self: start;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.technical-page .desktop-toc {
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.guide-nav p {
+  margin: 1.8rem 0.75rem 0.6rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 650;
+}
+.guide-nav p:first-child {
+  margin-top: 1.6rem;
+}
+.guide-nav ul,
+.guide-nav ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.guide-nav li {
+  margin: 0.12rem 0;
+}
+.guide-nav a {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.guide-nav a:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.guide-nav a[aria-current="page"] {
+  background: #352c2e;
+  border-color: #79543b;
+  color: var(--accent);
+  font-weight: 600;
+}
+.guide-nav .nav-home {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+.nav-home svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.guide-nav .on-page {
+  border-left: 1px solid var(--line);
+  margin-left: 0.8rem;
+}
+.guide-nav .on-page a {
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  font-size: 0.77rem;
+}
+.mobile-toc {
+  display: none;
+}
+.guide-main {
+  min-width: 0;
+  max-width: 900px;
+}
+.page-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.4rem;
+}
+.page-tools .text-link {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+.page-tools .text-link:hover {
+  color: var(--accent);
+}
+.guide-body h1 {
+  max-width: 16ch;
+}
+.guide-body h1 + p {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--body);
+  font-size: 1.08rem;
+}
+.guide-body p,
+.guide-body > ul {
+  max-width: 72ch;
+}
+.guide-body h2 {
+  border-top: 1px solid var(--line);
+  padding-top: 2.1rem;
+  margin: 3rem 0 1rem;
+  font-size: 1.65rem;
+}
+.guide-body h3 {
+  margin: 1.8rem 0 0.8rem;
+}
+.guide-body ul {
+  padding-left: 1.4rem;
+}
+.guide-body li {
+  margin: 0.65rem 0;
+}
+.guide-body li::marker {
+  color: var(--accent);
+}
+.guide-body figure {
+  margin: 2rem 0;
+}
+.guide-body figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.design-page .guide-body img[src$=".svg"],
+.technical-page .guide-body img[src$=".svg"] {
+  max-width: 32rem;
+  margin-inline: auto;
+}
+.guide-body figcaption {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.65;
+}
+.table-wrap {
+  max-width: 100%;
+  margin: 1.8rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.table-wrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.table-hint {
+  display: none;
+}
+.table-wrap table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.table-wrap th,
+.table-wrap td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+.table-wrap th {
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-weight: 600;
+}
+.table-wrap tr:last-child td {
+  border-bottom: 0;
+}
+.guide-body .journey {
+  max-width: 400px;
+  margin: 2rem auto;
+}
+.journey svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.journey rect {
+  fill: var(--surface-raised);
+  stroke: var(--line);
+}
+.journey text {
+  fill: var(--ink);
+}
+.journey path {
+  stroke: var(--accent);
+}
+.paths {
+  margin-top: 2.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.path {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+.path:hover {
+  border-color: #b06c3d;
+  background: #24324b;
+  color: var(--ink);
+}
+.path img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-bottom: 1px solid var(--line);
+}
+.path-details {
+  flex: 1;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+}
+.path h2 {
+  margin: 0 0 0.6rem;
+  padding: 0;
+  border: 0;
+  font-size: 1.1rem;
+  letter-spacing: -0.025em;
+}
+.path p {
+  margin: 0 0 1.2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.path .card-cta {
+  margin-top: auto;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.card-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+.card-cta svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* Samples use the same cards, palette, navigation and spacing as the guide. */
+.gallery-main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3.5rem 2rem 5rem;
+}
+.gallery-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 4rem;
+  align-items: center;
+  padding-bottom: 3rem;
+}
+.gallery-hero .eyebrow {
+  margin: 0 0 1.5rem;
+}
+.gallery-hero h1 {
+  max-width: 11ch;
+}
+.gallery-lead {
+  max-width: 48ch;
+  color: var(--body);
+  font-size: 1.05rem;
+}
+.starter-card {
+  padding: 1.5rem;
+  border: 1px solid #79543b;
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, #263652, var(--surface));
+}
+.starter-card .eyebrow {
+  margin: 0 0 0.9rem;
+  font-size: 0.63rem;
+}
+.starter-card h2 {
+  font-size: 1.35rem;
+}
+.starter-card p {
+  margin: 0.65rem 0 1rem;
+  font-size: 0.8rem;
+  color: #b4c3db;
+}
+.starter-card pre {
+  margin: 1rem 0 1.2rem;
+  padding: 0.85rem 1rem;
+  background: #101c30;
+  border-color: #79543b;
+}
+.starter-card pre code {
+  font-size: 0.75rem;
+}
+.starter-card .text-link {
+  font-size: 0.8rem;
+}
+.sample-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.sample-section-header h2 {
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+.sample-count {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+.samples {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.samples > li {
+  min-width: 0;
+}
+.sample-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transition: border-color 160ms ease;
+}
+.sample-card:hover {
+  border-color: #536b91;
+}
+.preview {
+  display: block;
+  overflow: hidden;
+  background: #090f1c;
+  border-bottom: 1px solid var(--line);
+}
+.preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.sample-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+}
+.sample-details h2 {
+  font-size: 1.3rem;
+}
+.sample-details p {
+  margin: 0.7rem 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+.sample-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-top: auto;
+}
+.sample-actions .text-link {
+  color: var(--body);
+  font-size: 0.78rem;
+}
+.sample-actions .text-link:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 1050px) {
+  .guide-layout {
+    gap: 2.5rem;
+    grid-template-columns: 192px minmax(0, 1fr);
+  }
+  .paths {
+    grid-template-columns: 1fr;
+  }
+  .path {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+  .path img {
+    height: 100%;
+    aspect-ratio: auto;
+    border-bottom: 0;
+    border-right: 1px solid var(--line);
+  }
+  .path-details {
+    padding: 1rem;
+  }
+  .path p {
+    margin-bottom: 0.7rem;
+  }
+  .gallery-hero {
+    gap: 2rem;
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  .site-footer {
+    margin-right: 2rem;
+    margin-left: 2rem;
+  }
+}
+@media (max-width: 800px) {
+  .guide-body .table-hint {
+    display: block;
+    margin-bottom: -1rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .technical-page .table-hint {
+    display: none;
+  }
+  .technical-page .table-wrap table {
+    min-width: 0;
+  }
+  .technical-page .table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .technical-page .table-wrap tbody,
+  .technical-page .table-wrap tr,
+  .technical-page .table-wrap td {
+    display: block;
+  }
+  .technical-page .table-wrap tr + tr {
+    border-top: 1px solid var(--line);
+  }
+  .technical-page .table-wrap td {
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .technical-page .table-wrap td + td {
+    padding-top: 0;
+  }
+  .header-inner {
+    padding: 0.85rem 1.25rem;
+    gap: 1rem;
+  }
+  .site-nav a {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  .site-nav .github {
+    margin-left: 0.2rem;
+    padding-left: 0.7rem;
+  }
+  .guide-layout {
+    display: block;
+    padding: 1.5rem 1.25rem 3rem;
+  }
+  .guide-nav {
+    position: static;
+    margin: 0 0 2rem;
+  }
+  .desktop-toc {
+    display: none;
+  }
+  .mobile-toc {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+  }
+  .mobile-toc summary {
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 0.84rem;
+    font-weight: 550;
+  }
+  .mobile-toc[open] summary {
+    border-bottom: 1px solid var(--line);
+  }
+  .mobile-toc .mobile-links {
+    padding: 0.25rem 0.5rem 0.8rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 0.5rem;
+  }
+  .mobile-links .nav-home,
+  .mobile-links > p,
+  .mobile-links .on-page {
+    grid-column: 1 / -1;
+  }
+  .technical-page .mobile-links > ul {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mobile-links > p {
+    margin: 1rem 0.75rem 0.3rem;
+  }
+  .page-tools {
+    margin-bottom: 1.25rem;
+  }
+  .guide-body h1 {
+    font-size: clamp(2.5rem, 8vw, 3.6rem);
+  }
+  .gallery-main {
+    padding: 2.5rem 1.25rem 3rem;
+  }
+  .gallery-hero {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+  }
+  .gallery-hero h1 {
+    max-width: 16ch;
+  }
+  .starter-card {
+    padding: 1.25rem;
+  }
+  .starter-card pre {
+    max-width: 28rem;
+  }
+  .samples {
+    gap: 1rem;
+  }
+  .sample-details {
+    padding: 1.1rem;
+  }
+  .sample-details h2 {
+    font-size: 1.1rem;
+  }
+  .site-footer {
+    width: calc(100% - 2.5rem);
+    margin-right: 1.25rem;
+    margin-left: 1.25rem;
+    padding-top: 1.5rem;
+  }
+}
+@media (max-width: 560px) {
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+  .brand {
+    font-size: 1.15rem;
+    gap: 0.45rem;
+  }
+  .brand img {
+    width: 36px;
+    height: 36px;
+  }
+  .site-nav {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.1rem;
+  }
+  .site-nav a {
+    padding-inline: 0.35rem;
+    font-size: 0.75rem;
+  }
+  .site-nav .github {
+    margin-left: 0;
+    padding-left: 0.35rem;
+  }
+  .github .external-icon {
+    display: none;
+  }
+  .samples {
+    grid-template-columns: 1fr;
+  }
+  .sample-details {
+    padding: 1.25rem;
+  }
+  .sample-details h2 {
+    font-size: 1.25rem;
+  }
+  .page-tools {
+    align-items: flex-start;
+  }
+  .page-tools .eyebrow {
+    max-width: 12rem;
+    font-size: 0.6rem;
+  }
+  .page-tools .text-link {
+    font-size: 0.7rem;
+  }
+  .path {
+    display: flex;
+  }
+  .path img {
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-bottom: 1px solid var(--line);
+    border-right: 0;
+  }
+  .path-details {
+    padding: 1.25rem;
+  }
+  .path h2 {
+    font-size: 1.25rem;
+  }
+  .path p {
+    font-size: 0.88rem;
+  }
+  .site-footer {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .footer-links {
+    justify-content: flex-start;
+  }
+  pre {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+}
+@media (max-width: 360px) {
+  .header-inner {
+    padding-inline: 0.75rem;
+    flex-wrap: wrap;
+    row-gap: 0.65rem;
+  }
+  .site-nav {
+    flex-wrap: nowrap;
+  }
+  .site-nav a {
+    flex: 1;
+    padding-inline: 0.15rem;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+  .site-nav .github {
+    padding-left: 0.15rem;
+    justify-content: center;
+  }
+  .gallery-hero h1 {
+    font-size: 2.25rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .path,
+  .sample-card {
+    transition: none;
+  }
+}
+@media print {
+  :root {
+    color-scheme: light;
+    --canvas: white;
+    --ink: #23314a;
+    --body: #23314a;
+    --muted: #66545e;
+    --line: #ded4d8;
+    --surface: #faf6f2;
+    --surface-raised: #faf6f2;
+    --accent: #96501e;
+  }
+  body {
+    font-size: 11pt;
+  }
+  body::before,
+  .site-header,
+  .guide-nav,
+  .site-footer,
+  .page-tools,
+  .starter-card {
+    display: none;
+  }
+  .guide-layout,
+  .gallery-main {
+    display: block;
+    padding: 0;
+  }
+  .guide-main {
+    max-width: none;
+  }
+  h1 {
+    font-size: 28pt;
+  }
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+  figure,
+  .path,
+  .sample-card {
+    break-inside: avoid;
+  }
+  a {
+    color: inherit;
+  }
+  code {
+    background: #faf6f2;
+    border-color: #ded4d8;
+    color: #23314a;
+  }
+  pre {
+    white-space: pre-wrap;
+    overflow: visible;
+    box-shadow: none;
+    background: #faf6f2;
+  }
+  pre code {
+    color: #23314a;
+  }
+  .paths {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .path {
+    display: flex;
+  }
+  .path img {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+    </style>
+  </head>
+  <body class="guide-page">
+    <a class="skip" href="#guide">Skip to content</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="../" aria-label="Karty samples">
+          <img src="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" alt="" width="44" height="44" />
+          <span>Karty</span>
+        </a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <a href="../">Samples</a>
+          <a
+            href="index.html"
+            
+            aria-current="page"
+            
+            >Guides</a
+          >
+          <a
+            href="../technical/"
+            
+            >API</a
+          >
+          <a href="../design/" 
+            >Design</a
+          >
+          <a href="https://karty-game.github.io/karty-packages/">Plugins</a>
+          <a class="github" href="https://github.com/karty-game/karty"
+            >GitHub<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M6 3H3v10h10v-3M8 3h5v5M13 3 7 9"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg
+          ></a>
+        </nav>
+      </div>
+    </header>
+    <div class="guide-layout">
+      
+      <nav
+        class="guide-nav"
+        aria-label="Guide chapters"
+      >
+        <div class="desktop-toc">
+          
+          <a class="nav-home" href="index.html" aria-current="false"
+            ><svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M2 2.5h5l1 1 1-1h5v11H9l-1 1-1-1H2zM8 3.5v10"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linejoin="round"
+              /></svg
+            >Getting Started</a
+          >
+          <p>Choose your game</p>
+          <ul>
+            
+            <li><a href="2d.html" aria-current="false">2D game</a></li>
+            
+            <li><a href="fps.html" aria-current="false">3D first person</a></li>
+            
+            <li><a href="isometric.html" aria-current="false">3D isometric</a></li>
+            
+          </ul>
+           
+          <p>On this page</p>
+          <ol class="on-page">
+            
+            <li><a href="#start-with-a-playable-game">Start with a playable game</a></li>
+            
+            <li><a href="#build-one-room">Build one room</a></li>
+            
+            <li><a href="#give-surfaces-a-material">Give surfaces a material</a></li>
+            
+            <li><a href="#reuse-a-static-object">Reuse a static object</a></li>
+            
+            <li><a href="#light-the-scene-then-bake">Light the scene, then bake</a></li>
+            
+            <li><a href="#turn-movement-into-an-interaction">Turn movement into an interaction</a></li>
+            
+            <li><a href="#add-sound-and-video">Add sound and video</a></li>
+            
+            <li><a href="#make-menus-and-a-pause-screen">Make menus and a pause screen</a></li>
+            
+            <li><a href="#build-and-share">Build and share</a></li>
+            
+            <li><a href="#write-and-publish-a-package">Write and publish a package</a></li>
+            
+            <li><a href="#draw-a-2d-game">Draw a 2D game</a></li>
+            
+            <li><a href="#make-a-first-person-game">Make a first-person game</a></li>
+            
+            <li><a href="#make-an-isometric-game">Make an isometric game</a></li>
+            
+          </ol>
+           
+          <p>3D topics</p>
+          <ul aria-label="3D topics">
+            
+            <li><a href="levels.html" aria-current="false">One room</a></li>
+            
+            <li><a href="textures.html" aria-current="false">Textures</a></li>
+            
+            <li><a href="prefabs.html" aria-current="false">Prefabs</a></li>
+            
+            <li><a href="lighting.html" aria-current="false">Lighting</a></li>
+            
+            <li><a href="interactions.html" aria-current="false">Interactions</a></li>
+            
+          </ul>
+           
+          <p>For every game</p>
+          <ul aria-label="Shared topics">
+            
+            <li><a href="ui.html" aria-current="false">Menus and layouts</a></li>
+            
+            <li><a href="media.html" aria-current="false">Sound and video</a></li>
+            
+            <li><a href="share.html" aria-current="false">Build and share</a></li>
+            
+            <li><a href="packages.html" aria-current="false">Write a package</a></li>
+            
+          </ul>
+          
+        </div>
+        <details class="mobile-toc">
+          <summary>Browse the guides</summary>
+          <div class="mobile-links">
+            
+            <a class="nav-home" href="index.html" aria-current="false"
+              >Getting Started</a
+            >
+            <p>Choose your game</p>
+            <ul>
+              
+              <li><a href="2d.html" aria-current="false">2D game</a></li>
+              
+              <li><a href="fps.html" aria-current="false">3D first person</a></li>
+              
+              <li><a href="isometric.html" aria-current="false">3D isometric</a></li>
+              
+            </ul>
+             
+            <ul aria-label="3D topics">
+              
+              <li><a href="levels.html" aria-current="false">One room</a></li>
+              
+              <li><a href="textures.html" aria-current="false">Textures</a></li>
+              
+              <li><a href="prefabs.html" aria-current="false">Prefabs</a></li>
+              
+              <li><a href="lighting.html" aria-current="false">Lighting</a></li>
+              
+              <li><a href="interactions.html" aria-current="false">Interactions</a></li>
+              
+            </ul>
+             
+            <p>For every game</p>
+            <ul aria-label="Shared topics">
+              
+              <li><a href="ui.html" aria-current="false">Menus and layouts</a></li>
+              
+              <li><a href="media.html" aria-current="false">Sound and video</a></li>
+              
+              <li><a href="share.html" aria-current="false">Build and share</a></li>
+              
+              <li><a href="packages.html" aria-current="false">Write a package</a></li>
+              
+            </ul>
+             
+            <p>On this page</p>
+            <ol class="on-page">
+              
+              <li><a href="#start-with-a-playable-game">Start with a playable game</a></li>
+              
+              <li><a href="#build-one-room">Build one room</a></li>
+              
+              <li><a href="#give-surfaces-a-material">Give surfaces a material</a></li>
+              
+              <li><a href="#reuse-a-static-object">Reuse a static object</a></li>
+              
+              <li><a href="#light-the-scene-then-bake">Light the scene, then bake</a></li>
+              
+              <li><a href="#turn-movement-into-an-interaction">Turn movement into an interaction</a></li>
+              
+              <li><a href="#add-sound-and-video">Add sound and video</a></li>
+              
+              <li><a href="#make-menus-and-a-pause-screen">Make menus and a pause screen</a></li>
+              
+              <li><a href="#build-and-share">Build and share</a></li>
+              
+              <li><a href="#write-and-publish-a-package">Write and publish a package</a></li>
+              
+              <li><a href="#draw-a-2d-game">Draw a 2D game</a></li>
+              
+              <li><a href="#make-a-first-person-game">Make a first-person game</a></li>
+              
+              <li><a href="#make-an-isometric-game">Make an isometric game</a></li>
+              
+            </ol>
+            
+          </div>
+        </details>
+      </nav>
+      <main class="guide-main" id="guide">
+        <div class="page-tools">
+          <span class="eyebrow"
+            >Getting Started</span
+          >
+          <a class="text-link" href="guide.md" download
+            >Download Markdown<svg class="external-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M8 2v8m-3-3 3 3 3-3M3 11v3h10v-3"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg
+          ></a>
+        </div>
+        
+        <div class="guide-body"><h1 id="make-a-game-with-karty">Make a game with Karty</h1>
+<p>Create a project, choose a 2D or 3D scene, and add an interaction you can play.</p>
+<h2 id="start-with-a-playable-game">Start with a playable game</h2>
+<p>Install the <a href="https://github.com/karty-game/karty/releases/latest">Karty CLI</a>, then run:</p>
+<pre><code class="language-sh">karty new my-game
+cd my-game
+karty dev
+</code></pre>
+<p>The terminal wizard offers <code>blank</code>, <code>2d</code>, <code>fps</code>, <code>isometric</code>, and <code>ui</code>, plus optional Git initialization and GitHub Actions. Use <code class="command-flag">--yes --template 2d</code> for scripts. Use <code class="command-flag">--no-template</code> for just the base folders and an empty entry point. The 2D, first-person and isometric starters include their controller plugins. The <a href="fps.html">first-person starter</a> provides walking, physics and touch controls. Blank and UI projects add controls only when needed.</p>
+<p>Open the address printed by the preview. Change a color or a movement speed in <code>src/main.go</code>, save, and try it again. The first setup downloads tools; later builds reuse them.</p>
+<figure class="journey"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" role="img" aria-label="Create with karty new → Preview with karty dev → Build a 2D or 3D scene → Build with karty build → Share the output folder"><rect x="20" y="12" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="37" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Create with karty new</text><path d="M200 56V72M195 67L200 72L205 67" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="76" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="101" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Preview with karty dev</text><path d="M200 120V136M195 131L200 136L205 131" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="140" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="165" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Build a 2D or 3D scene</text><path d="M200 184V200M195 195L200 200L205 195" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="204" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="229" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Build with karty build</text><path d="M200 248V264M195 259L200 264L205 259" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="268" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="293" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Share the output folder</text></svg></figure>
+<p>Keep <code>karty.toml</code>, your Go source, and source assets in Git. The CLI recreates <code>.karty/</code> and <code>dist/</code>. Use your project&#39;s <code>.karty/docs/</code> reference for API names and supported features.</p>
+<p>New projects also include the <a href="https://github.com/karty-game/karty/tree/main/skills/karty-game">Karty game development agent skill</a> in <code>.agents/skills/karty-game/</code>. Agents that support project skills can discover it there; invoke <code>$karty-game</code> when your agent supports named skills. It explains asset and level organization, Go and KartUI capabilities, commands and validation. Keep this guidance with your game&#39;s source if your team uses it. It is copied from the CLI at creation and is not overwritten by builds or updates; the game&#39;s generated <code>.karty/docs/</code> remains authoritative for its API. For an existing game, copy the repository&#39;s <code>skills/karty-game/</code> directory into its <code>.agents/skills/</code> directory after reviewing any existing guidance. Review future skill updates deliberately; there is no automatic skill update command.</p>
+<p>Make one small game rule work before adding more art: collect an item, reach a goal, or restart after losing. For a 3D game, choose the first-person or isometric starter, then extend its room using the matching guide path. <a href="../hangar/">Hangar</a> shows first-person exploration and connected rooms in a larger world.</p>
+<h2 id="build-one-room">Build one room</h2>
+<p>A level has a manifest, world geometry, and its own textures. Create <code>levels/room/</code>, add a tileable <code>surface.png</code>, and save this as <code>level.toml</code>:</p>
+<pre><code class="language-toml">[level]
+name = &#34;levels.room&#34;
+kind = &#34;world&#34;
+
+[world]
+source = &#34;world.yaml&#34;
+
+[[textures]]
+name = &#34;surface&#34;
+source = &#34;surface.png&#34;
+profile = &#34;environment&#34;
+</code></pre>
+<p>Save this as <code>world.yaml</code>. X/Y describe the floor plan; Z is height. These coordinates make an eight-metre square room with a three-metre ceiling.</p>
+<pre><code class="language-yaml">version: 19
+rooms:
+  - id: room
+    rect: {width: 8, depth: 8, material: surface}
+    floor: {c: 0}
+    ceiling: {c: 3}
+    floor_material: surface
+    ceiling_material: surface
+</code></pre>
+<p>The build expands <code>rect</code> into four counterclockwise edges named <code>south</code>, <code>east</code>, <code>north</code> and <code>west</code>. Use those names for connections. For an irregular room or individual wall settings, use an explicit <code>boundary</code> instead of <code>rect</code>. Run <code>karty schema</code> for editor suggestions, or <code>karty schema --check</code> to check the world before processing assets.</p>
+<p>Replace <code>src/main.go</code> with this room viewer. Change the import if your project has a different name. The camera starts at <code>(2, 2, 1.7)</code>; the text shows loading errors above the scene. The CLI generates <code>assets.LevelRoom</code> from the manifest&#39;s logical name; the callback supplied to <code>LoadLevel</code> receives only that load&#39;s ready result.</p>
+<pre><code class="language-go">package main
+
+import (
+	&#34;example.com/my-game/.karty/assets&#34;
+	&#34;example.com/my-game/.karty/engine&#34;
+)
+
+type Game struct {
+	engine.Game
+	camera *engine.Camera3D
+	label  *engine.Text2D
+}
+
+//go:wasmexport karty_register
+func main() {
+	game := &amp;Game{}
+	engine.Run(engine.Hooks{
+		OnStart: func() {
+			game.label = game.NewText2D(&#34;Loading room...&#34;, engine.NewVec2(24, 24))
+			game.LoadLevel(assets.LevelRoom, func(event engine.LevelReady) {
+				game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
+					Projection: engine.CameraProjectionPerspective, Output: engine.CameraOutputFull,
+					Position: engine.NewVec3(2, 2, 1.7), VerticalFOV: 1.05,
+					NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
+					ViewportWidth: 960, ViewportHeight: 540,
+				})
+				game.camera.SetLayer(-1)
+				game.label.SetText(&#34;&#34;)
+			})
+		},
+		OnLevelFailed: func(event engine.LevelFailed) {
+			game.label.SetText(event.Diagnostic)
+		},
+	})
+}
+</code></pre>
+<p>Run <code>karty dev</code> to view the room. Match the viewport to your <code>karty.toml</code> resolution if you change it. This camera stays still. Add <a href="fps.html">first-person controls</a> to walk around, or an <a href="isometric.html">isometric camera</a> to view the room from above.</p>
+<figure><img src="assets/hangar.jpg" alt="Hangar connects industrial rooms with open passages." loading="lazy"><figcaption>Hangar connects industrial rooms with open passages.</figcaption></figure>
+<p>Add a second room only after you can explore the first. A connection names an edge in each room and opens a portal between them; see Hangar for complete connections, including a non-Euclidean portal loop.</p>
+<h2 id="give-surfaces-a-material">Give surfaces a material</h2>
+<p>Use a small tileable image first. The texture&#39;s <code>name</code> is the material name used by floors, ceilings, and boundary edges. Texture paths are relative to <code>level.toml</code>.</p>
+<p>Add this at the top level of <code>world.yaml</code> to repeat the image every two metres:</p>
+<pre><code class="language-yaml">uv:
+  mode: triplanar
+  anchor: world
+  scale: {x: 2, y: 2}
+</code></pre>
+<p>Scale is metres per repeat: a larger value makes the pattern larger. Set a room&#39;s <code>wall_uv</code>, <code>floor_uv</code>, or <code>ceiling_uv</code> to change only those surfaces. World anchoring keeps repeats aligned when you place prefabs.</p>
+<p>Use <code>mode: planar</code> for a flat surface that needs one texture projection, including a sloped floor or ceiling. For example, <code>floor_uv: {mode: planar}</code> keeps the inherited scale, offset and rotation while projecting in world XY. Solids support the same choice through <code>top_uv</code> and <code>bottom_uv</code>. This avoids blended triplanar sampling on slopes, but changes the pattern and normal-map response: compare the result before replacing an intentional triplanar blend. The compiler preserves explicit triplanar mapping.</p>
+<p>Materialize generates height, normal, and ambient occlusion maps for world surfaces, along with metallic and smoothness maps. Add a preset immediately after the texture entry in <code>level.toml</code>:</p>
+<pre><code class="language-toml">[textures.materialize]
+preset = &#34;concrete&#34;
+</code></pre>
+<p>Run <code>karty build --target web</code> to generate and cache the maps. The CLI makes world textures seamless automatically. These controls apply to world surfaces; sprite textures keep their original image processing.</p>
+<h3 id="choose-a-preset">Choose a preset</h3>
+<p>Use these exact lowercase names:</p>
+<ul>
+<li><code>default</code> balances surface detail. This is the default when no preset is set.</li>
+<li><code>auto</code> chooses a preset by analysing the source image.</li>
+<li><code>skin</code> produces smooth, non-metallic skin.</li>
+<li><code>floor</code> emphasises height and ambient occlusion for ground surfaces.</li>
+<li><code>metal</code> strengthens metallic detail and sharp edges.</li>
+<li><code>fabric</code> produces soft, matte cloth.</li>
+<li><code>wood</code> preserves moderate grain detail.</li>
+<li><code>stone</code> produces rough rock with deep ambient occlusion.</li>
+<li><code>concrete</code> produces rough concrete.</li>
+<li><code>leather</code> produces pebbled leather with some smoothness.</li>
+<li><code>marble</code> produces polished, veined stone.</li>
+<li><code>sand</code> produces fine, rough grain.</li>
+<li><code>foliage</code> suits leaves and grass with little metallic detail.</li>
+<li><code>plaster</code> keeps surfaces flat with soft normals.</li>
+<li><code>asphalt</code> produces rough surfaces with dense edge detail.</li>
+<li><code>brick</code> emphasises sharp edges and rough surfaces.</li>
+<li><code>ice</code> produces smooth surfaces with subtle detail.</li>
+<li><code>snow</code> produces soft, diffuse surfaces.</li>
+<li><code>lava</code> produces partly metallic, molten surface detail.</li>
+<li><code>water</code> produces smooth water surface detail.</li>
+</ul>
+<p>Presets change generated maps. They do not add liquid motion or light emission. Start with their defaults. Use <code>normal_strength</code>, <code>height_contrast</code>, <code>metallic_scale</code>, or <code>ao_depth_scale</code> only when the result needs adjustment. The separate <code>textures.material_strengths</code> settings control how strongly the game displays those maps. Your generated <code>.karty/docs/assets.md</code> lists the overrides and limits for your project.</p>
+<p>Check the result at player height. A material that looks good close up may repeat too obviously across a large wall. <a href="../hangar/">The Hangar</a> shows wall bands, secondary weathering, and small sprite decals.</p>
+<h2 id="reuse-a-static-object">Reuse a static object</h2>
+<p>A prefab groups geometry so you can place it more than once. Add this at the top level of the room&#39;s world file:</p>
+<pre><code class="language-yaml">prefabs:
+  - id: crate
+    solids:
+      - id: body
+        footprint: [{x: 0, y: 0}, {x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: 1}]
+        bottom: {c: 0}
+        top: {c: 1}
+        side_material: surface
+        top_material: surface
+        bottom_material: surface
+        collision: true
+instances:
+  - id: crate-a
+    prefab: crate
+    transform:
+      translation: {x: 4, y: 4, z: 0}
+      yaw_degrees: 20
+</code></pre>
+<p>Solid footprints must be convex and counterclockwise. Split an L-shaped object into several solids. Use room geometry for passages and platforms: a solid&#39;s collision blocks movement, but does not make its top walkable.</p>
+<p>An instance can translate, rotate, uniformly scale, or substitute materials. Its expanded object keeps a stable name such as <code>crate-a/body</code>. Prefabs can also contain rooms and sprites. Light positions remain global; placing a prefab does not place or move lights for it.</p>
+<p>Keep static objects static. Visual animation does not move collision or gameplay query positions. For a door or moving platform, check the engine&#39;s supported behavior before designing the interaction.</p>
+<figure><img src="assets/hangar.jpg" alt="The Hangar combines static machinery, repeating materials, and room lights." loading="lazy"><figcaption>The Hangar combines static machinery, repeating materials, and room lights.</figcaption></figure>
+<h2 id="light-the-scene-then-bake">Light the scene, then bake</h2>
+<p>Add a warm lamp at the top level of <code>world.yaml</code>:</p>
+<pre><code class="language-yaml">lighting:
+  version: 1
+  ambient: {x: 0.05, y: 0.05, z: 0.06}
+  lights:
+    - id: room-lamp
+      position: {x: 4, y: 4, z: 2.5}
+      color: {x: 1, y: 0.75, z: 0.45}
+      radius: 6
+</code></pre>
+<p>Start with one lamp and low ambient light. Keep its radius near the space it needs to illuminate. Add lights where they help players read an entrance, obstacle, or goal.</p>
+<p>Bake steady lights so they do not need live lighting each frame. Add this to <code>level.toml</code>:</p>
+<pre><code class="language-toml">[lightmap]
+enabled = true
+offline = true
+density = 4
+page_size = 512
+bake_samples = 16
+bake_bounces = 1
+</code></pre>
+<p>For this room, run <code>karty render bake</code>, then <code>karty dev</code>. Rebake after changing geometry, textures, UVs, or baked lights. Restart an existing preview after baking. Begin at low density; increase it only when shadow detail needs it.</p>
+<p>Eligible steady sources bake automatically. Moving lights and lights linked to a changing emission pulse stay live. Keep the live set small; the current live authored point-light table holds at most 50. A glowing material does not light its surroundings by itself; add a light for that effect.</p>
+<figure><img src="assets/live-light.svg" alt="Illustration of a moving lamp and the light patch that follows it." loading="lazy"><figcaption>Illustration of a moving lamp and the light patch that follows it.</figcaption></figure>
+<p>Larger levels can opt into chunks. For chunked levels, <code>karty build</code> produces missing bakes; <code>karty dev</code> previews with a matching bake or live lighting. See <a href="../hangar/">Hangar</a> for a larger level with baked lighting after the single-room version works.</p>
+<h2 id="turn-movement-into-an-interaction">Turn movement into an interaction</h2>
+<p>Use typed hooks for startup, frames, input, and level results. Match each level result to the request that created it. Handle <code>OnLevelFailed</code> with a message the player can read.</p>
+<p>These snippets extend a controller with a loaded <code>camera</code>. Add these fields to your <code>Game</code>:</p>
+<pre><code class="language-go">status string
+nearGoal, won bool
+</code></pre>
+<p>After creating the camera, check its starting position and subscribe to later accepted poses. Registration alone does not call the callback.</p>
+<pre><code class="language-go">updateGoal := func(position engine.Vec3) {
+    dx, dy := position.X-6, position.Y-6
+    game.nearGoal = dx*dx+dy*dy &lt; 1
+}
+updateGoal(game.camera.Settings().Position)
+_, err := game.WatchPose(game.camera.Ref(), func(pose engine.Transform3D) {
+    // The host has applied collision and portal movement.
+    updateGoal(pose.Position)
+})
+if err != nil {
+    game.status = err.Error()
+}
+</code></pre>
+<p>Propose movement from <code>camera.Settings()</code>, which the engine keeps synchronized automatically with the accepted pose. Do not accumulate a separate guessed player position.</p>
+<p>The position check defines a one-metre trigger around <code>(6, 6)</code>. Call this method from your existing <code>OnKeyDown</code> handler to finish when the player presses E there. Keep the movement handler in that hook too.</p>
+<pre><code class="language-go">func (game *Game) onKeyDown(key engine.Key) {
+    if key == engine.KeyE &amp;&amp; game.nearGoal &amp;&amp; !game.won {
+        game.won = true
+        game.status = &#34;You made it!&#34;
+    }
+}
+</code></pre>
+<p>Draw <code>status</code> in your HUD; invalidate it when the value changes if using KartUI. Reset <code>won</code> when starting again. Reset held controls in <code>OnInputReset</code> so losing focus does not leave the player moving.</p>
+<p>Tags identify actors; they do not automatically create proximity events. Query actors after the level is ready, and keep trigger checks in your game. For longer scripted interactions, use typed actions and <code>StartAuthoredSequence</code>; start with a direct Go handler first.</p>
+<h2 id="add-sound-and-video">Add sound and video</h2>
+<p>Put a short WAV effect in <code>assets/sounds/</code>. The CLI converts it to QOA and generates a typed sound ID. Declare music and video in <code>karty.toml</code>:</p>
+<pre><code class="language-toml">[[assets.sound]]
+name = &#34;ui.click&#34;
+source = &#34;assets/sounds/click.wav&#34;
+
+[[assets.sound]]
+name = &#34;door.open&#34;
+source = &#34;assets/sounds/door/open.wav&#34;
+
+[assets.sound.transform]
+channels = &#34;mono&#34;
+
+[[assets.sound]]
+name = &#34;reactor.hum&#34;
+source = &#34;assets/sounds/reactor/hum.wav&#34;
+
+[assets.sound.transform]
+channels = &#34;mono&#34;
+
+[[assets.sound]]
+name = &#34;crate.scrape&#34;
+source = &#34;assets/sounds/crate/scrape.wav&#34;
+
+[assets.sound.transform]
+channels = &#34;mono&#34;
+
+[[assets.music]]
+name = &#34;theme&#34;
+source = &#34;assets/music/theme.wav&#34;
+profile = &#34;music&#34;
+
+[[assets.video]]
+name = &#34;intro&#34;
+source = &#34;assets/videos/intro.mpg&#34;
+</code></pre>
+<p>Add the generated assets import, then call these methods from a player button or input handler:</p>
+<pre><code class="language-go">func (game *Game) startMedia() {
+    game.PlaySound(assets.SoundUiClick)
+    game.PlayMusic(assets.MusicTheme, engine.StreamOptions{Loop: true, CrossfadeMS: 500})
+    game.PlayVideo(assets.VideoIntro, 300, 130, 360, 180)
+}
+
+func (game *Game) stopMedia() {
+    game.StopMusic(500)
+    game.StopVideo()
+}
+</code></pre>
+<p>For <code>my-game</code>, the assets import is <code>example.com/my-game/.karty/assets</code>. Use the generated names in <code>.karty/assets/</code>. Play the click once per action, and start music once when entering a screen or level.</p>
+<h3 id="choose-how-a-sound-reaches-the-player">Choose how a sound reaches the player</h3>
+<p>Use <code>PlaySound</code> for centered interface feedback. Use <code>PlaySoundFrom</code> for a short effect that follows an object, such as a door opening. For a humming reactor or a moving crate&#39;s scraping loop, use a sound emitter. Music and environment streams provide a soundtrack or broad ambience; they have no source position.</p>
+<p>Spatial playback changes volume with distance and pans between the left and right speakers. Use mono WAV clips so the host can place them in the stereo field. The <code>channels = &#34;mono&#34;</code> transforms above downmix stereo recordings during the build. Keep emitter loops short: they use decoded sound assets, rather than streaming music. Sound assets are limited to 30 seconds and 6 MiB of decoded PCM per clip.</p>
+<h3 id="set-the-listener-and-update-its-direction">Set the listener and update its direction</h3>
+<p>For a world game, make the camera the audio receiver. Add <code>math</code> to your imports and this method to the room viewer:</p>
+<pre><code class="language-go">func (game *Game) updateAudioReceiver() {
+    if game.camera == nil { return }
+    yaw := float64(game.camera.Settings().Yaw)
+    game.SetAudioListener(game.camera.Ref(), engine.AudioListenerOptions{
+        Right: engine.NewVec2(float32(math.Cos(yaw)), -float32(math.Sin(yaw))),
+    })
+}
+</code></pre>
+<p>Call <code>game.updateAudioReceiver()</code> after camera creation in the level&#39;s ready callback, and from your existing <code>OnUpdate</code> after movement and turning. Set it again when replacing the camera. The receiver follows the camera&#39;s world position; its output rectangle on screen does not change where the player hears from.</p>
+<p><code>Right</code> is the world direction of the right speaker. A yaw of zero faces positive Y, so the right direction is <code>(1, 0)</code>. The host does not derive this vector from camera yaw: update it as the player turns, or panning will keep the old direction. Camera pitch does not change this horizontal listener basis. For a 2D game, use the player entity as receiver and <code>(1, 0)</code> when positive X should always sound to the right. <code>ClearAudioListener()</code> silences spatial playback until another receiver is set.</p>
+<h3 id="play-a-positioned-one-shot">Play a positioned one-shot</h3>
+<p>Pass the existing door entity or resolved <code>engine.EntityRef</code> when the door opens. It must be a live audio entity:</p>
+<pre><code class="language-go">func (game *Game) playDoorSound(door engine.EntityRef) {
+    game.PlaySoundFrom(assets.SoundDoorOpen, door, engine.SpatialSoundOptions{
+        Volume: 0.8, NearDistance: 1, FarDistance: 12,
+    })
+}
+</code></pre>
+<p>Call this once per opening, rather than every update. The voice follows the door until the clip ends. <code>NearDistance</code> is the range with no distance reduction; volume fades between near and far, and reaches silence at <code>FarDistance</code>. Use the same units as the entity positions: metres for the world guides, canvas coordinates for 2D entities. Set volume explicitly; zero is silent. Use finite values, volume in <code>[0, 4]</code>, a nonnegative near distance, and a far distance greater than near.</p>
+<p><code>PlaySoundFrom</code> uses XY distance. Z height, walls and doors do not obstruct this one-shot API. Use an emitter with <code>Loop: false</code> when a short effect needs XYZ distance or collision obstruction.</p>
+<h3 id="place-a-looping-sound-in-the-world">Place a looping sound in the world</h3>
+<p>Create this emitter once from the level&#39;s ready callback, using <code>event.Handle</code> for the mounted level. See <code>.karty/docs/audio-emitters.md</code> for the complete options:</p>
+<pre><code class="language-go">func (game *Game) startReactorSound(level engine.LevelHandle) *engine.SoundEmitter {
+    return game.NewSoundEmitter(level, assets.SoundReactorHum,
+        engine.NewVec3(6, 6, 1.5), engine.SoundEmitterOptions{
+            Volume: 0.6, NearDistance: 2, FarDistance: 16,
+            Loop: true, Occlusion: true,
+        })
+}
+</code></pre>
+<p>Keep the returned handle in <code>Game</code> so you can call <code>SetPosition</code>, <code>SetOptions</code> or <code>Stop</code>. Create it once; creating it every frame starts overlapping voices. Emitters measure XYZ distance, so a source on another floor becomes quieter. They also provide a gentle volume reduction behind the listener. The receiver and emitter must belong to the same mounted level to be audible.</p>
+<p><code>Occlusion: true</code> makes loaded collision geometry muffle the direct path to the listener. Walls and doors need collision to block sound; non-collidable props do not. Place the source outside solid geometry. Sound does not travel around corners, and there is no room reverb or acoustic portal transformation.</p>
+<p>For a moving object, attach the sound at creation. Pass a live crate entity or a resolved <code>engine.EntityRef</code> belonging to the same mounted level:</p>
+<pre><code class="language-go">func (game *Game) startCrateSound(level engine.LevelHandle, crate engine.EntityRef) *engine.SoundEmitter {
+    return game.NewAttachedSoundEmitter(level, assets.SoundCrateScrape, crate,
+        engine.NewVec3(0, 0, 0.3), engine.SoundEmitterOptions{
+            Volume: 0.5, NearDistance: 0.5, FarDistance: 9,
+            Loop: true, Occlusion: true,
+        })
+}
+</code></pre>
+<p>The offset uses world axes and follows the source; it does not rotate with the crate. Start the scraping loop when movement begins and stop it when movement ends. Setters preserve playback rather than restarting the clip. <code>SetOptions</code> replaces the options: include the original <code>Loop</code> value, because loop mode cannot change after creation. A stopped handle cannot restart; create a new one.</p>
+<p>Level unloading or source destruction stops an emitter. <code>Stop()</code> is also safe to call repeatedly or on a nil handle. Invalid creation arguments return nil; a non-nil handle does not guarantee admission when the host voice budget is full. There are at most 16 persistent emitters within the shared 32-voice sound budget. Keep handles and sound IDs out of save data. The <a href="../hangar/">Hangar sample</a> uses reactor hums and attached crate scraping loops.</p>
+<h3 id="check-playback-and-package-media">Check playback and package media</h3>
+<p>Browser audio needs player input before it can play. Video sources must already be MPEG-1 in an <code>.mpg</code> container, optionally with MP2 audio. The CLI does not convert MP4. One video plays at a time; pause, seeking, and video looping are not supported. The four position values set its top-left and display size.</p>
+<p>Keep the built <code>content/</code> folder when sharing music or video. Use <a href="../media-lab/">Media lab</a> to check playback and overlapping effects.</p>
+<p>For a spatial check, click the preview, walk toward and away from a source, then turn with the source beside you. Check that distance changes volume and turning changes the stereo balance. Test an occluded emitter behind a collidable wall. If it is silent, check the receiver, generated sound ID, mounted level, explicit volume and far distance, then look for voice-admission errors in host diagnostics.</p>
+<figure><img src="assets/media-lab.jpg" alt="Media lab shows video above three sound controls." loading="lazy"><figcaption>Media lab shows video above three sound controls.</figcaption></figure>
+<h2 id="make-menus-and-a-pause-screen">Make menus and a pause screen</h2>
+<p>Use KartUI for menus, HUDs, and overlays in 2D, first-person, or isometric games.</p>
+<p>Keep screen state in Go and screen structure in <code>.kui</code> files. The CLI discovers components under <code>ui/</code>, shared layouts under <code>ui/layouts/</code>, and a theme at <code>ui/theme.toml</code>.</p>
+<p>Save this shared frame as <code>ui/layouts/screen-frame.kui</code>:</p>
+<pre><code class="language-kui">&lt;template&gt;
+  &lt;panel modal=&#34;true&#34; class=&#34;screen&#34;&gt;
+    &lt;panel class=&#34;card&#34;&gt;&lt;slot/&gt;&lt;/panel&gt;
+  &lt;/panel&gt;
+&lt;/template&gt;
+
+&lt;style&gt;
+.screen
+  height: 100%
+  flex-grow: 1
+  align: center
+  justify: center
+  background: theme.colors.surface
+.card
+  padding: 24
+  gap: 12
+  max-width: 420
+  flex-grow: 1
+&lt;/style&gt;
+</code></pre>
+<p>Save the menu as <code>ui/views/menu.kui</code>. The filename gives it the generated name <code>ui.Menu</code>:</p>
+<pre><code class="language-kui">&lt;template&gt;
+  &lt;ScreenFrame&gt;
+    &lt;label&gt;My game&lt;/label&gt;
+    &lt;button onClick={ onPlay }&gt;Play&lt;/button&gt;
+  &lt;/ScreenFrame&gt;
+&lt;/template&gt;
+
+&lt;script setup lang=&#34;go&#34;&gt;
+func setup(onPlay func()) {}
+&lt;/script&gt;
+</code></pre>
+<p>Save a second screen as <code>ui/views/pause.kui</code>:</p>
+<pre><code class="language-kui">&lt;template&gt;
+  &lt;ScreenFrame&gt;
+    &lt;label&gt;Paused&lt;/label&gt;
+    &lt;button onClick={ onResume }&gt;Resume&lt;/button&gt;
+  &lt;/ScreenFrame&gt;
+&lt;/template&gt;
+
+&lt;script setup lang=&#34;go&#34;&gt;
+func setup(onResume func()) {}
+&lt;/script&gt;
+</code></pre>
+<p>Add a <code>screen *engine.UI</code> field and the import <code>example.com/my-game/.karty/ui</code>. Open one screen at a time:</p>
+<pre><code class="language-go">func (game *Game) showMenu() {
+    if game.screen != nil { game.screen.Close() }
+    game.screen = ui.Menu(func() {
+        game.screen.Close()
+        game.screen = nil
+        // Start or resume your game here.
+    })
+}
+</code></pre>
+<p>Call <code>game.showMenu()</code> from <code>OnStart</code>. Open <code>ui.Pause</code> the same way from your existing input hook, for example when <code>OnKeyDown</code> receives <code>engine.KeyEscape</code>. Set a <code>playing</code> flag to false when pausing and skip game movement in <code>OnUpdate</code> until Resume sets it true. A modal panel captures input; your Go code decides whether the game simulation pauses.</p>
+<p>Layouts share structure and styles. Component callbacks change game state. Packages can also export <code>.kui</code> components/layouts, images, fonts and theme defaults through <code>karty-package.toml</code>. Import a folder or <code>.kpkg</code> with <code>karty package import</code>; compose its exported components with the same typed props and callbacks. The consuming game retains its own root, state and theme overrides. Use prefixed component/props names to avoid shared Go-scope collisions. Call <code>Invalidate()</code> after changing data used by dynamic UI bindings. Test your layout at a narrow viewport before adding more screens. <a href="../ui-demo/">Orbital flight deck</a> shows menus, loading, inventory, gameplay, and pause screens.</p>
+<figure><img src="assets/ui-demo.jpg" alt="Orbital flight deck uses a left menu over its game artwork." loading="lazy"><figcaption>Orbital flight deck uses a left menu over its game artwork.</figcaption></figure>
+<h2 id="build-and-share">Build and share</h2>
+<p>Use <code class="command-flag">--target web</code> for browsers and <code class="command-flag">--target native</code> for desktop games. The supported game runtimes are:</p>
+<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Game platform</th><th scope="col"><code class="command-flag">--platform</code></th></tr></thead><tbody><tr><td>Browser</td><td>Omit this flag</td></tr><tr><td>Linux x64</td><td><code>linux-amd64</code></td></tr><tr><td>Linux ARM64</td><td><code>linux-arm64</code></td></tr><tr><td>macOS Apple silicon</td><td><code>darwin-arm64</code></td></tr><tr><td>Windows x64</td><td><code>windows-amd64</code></td></tr><tr><td>Windows ARM64</td><td><code>windows-arm64</code></td></tr></tbody></table></div>
+<p>Every supported development machine can package any listed game platform. The CLI compiles one WASM cartridge and downloads the destination&#39;s checksum-verified host. Players need neither the CLI nor TinyGo.</p>
+<h3 id="publish-a-browser-game">Publish a browser game</h3>
+<p>From your project&#39;s folder:</p>
+<pre><code class="language-sh">karty build --target web
+karty serve dist/web --addr 127.0.0.1:8080
+</code></pre>
+<p>Open <code>http://127.0.0.1:8080/</code> and test the built game. Upload the whole <code>dist/web/</code> directory to a static host, including <code>content/</code> when present. Use HTTP hosting; opening <code>index.html</code> directly is not the preview workflow.</p>
+<h3 id="build-and-run-a-native-game">Build and run a native game</h3>
+<p>Build for your current machine, then launch it on Linux or macOS:</p>
+<pre><code class="language-sh">karty build --target native
+cd dist/native
+./karty-host --cartridge game.kart
+</code></pre>
+<p>On Windows, run <code>.\karty-host.exe --cartridge game.kart</code> in PowerShell from <code>dist/native/</code>. The build summary prints the command for your machine.</p>
+<p>To package another platform, run these from the project root:</p>
+<pre><code class="language-sh">karty build --target native --platform windows-arm64
+karty build --target native --platform linux-arm64
+karty build --target native --platform darwin-arm64
+</code></pre>
+<p>Explicit platforms use separate folders, such as <code>dist/native/windows-arm64/</code>. On the destination Windows machine, open that folder and run <code>.\karty-host.exe --cartridge game.kart</code>.</p>
+<p>Keep a <code>LICENSES/</code> folder in your project containing Karty&#39;s runtime and library notices from the <a href="https://github.com/karty-game/karty-sdk/releases/latest">release downloads</a>, plus notices required by your own assets and dependencies. Commit this folder with your source. Copy it into each distribution before sharing:</p>
+<pre><code class="language-sh">cp -R LICENSES dist/web/
+cp -R LICENSES dist/native/
+</code></pre>
+<p>For a named native platform, use its output folder instead, such as <code>cp -R LICENSES dist/native/windows-arm64/</code>. Share the whole selected folder, including its <code>content/</code> and <code>LICENSES/</code> files. Browser and desktop use the same source. Test each platform you ship.</p>
+<h3 id="share-reusable-code-prefabs-and-ui">Share reusable code, prefabs and UI</h3>
+<p>To publish your own package, follow <a href="packages.html">Write and publish a package</a>.</p>
+<p>Install published code and assets from the <a href="https://karty-game.github.io/karty-packages/">Plugins catalog</a> by name:</p>
+<pre><code class="language-sh">karty package import fps-kit@0.0.1
+</code></pre>
+<p>Omit the version to select the latest stable release. Commit the resolved archive URL and SHA-256 in <code>karty.toml</code>; future builds restore that same pin. Use <code>karty package import --replace fps-kit</code> for an explicit update.</p>
+<p>For a package folder containing <code>karty-package.toml</code>, export a local archive:</p>
+<pre><code class="language-sh">karty package export --output placeholder-kit-0.1.0.kpkg ../placeholder-kit
+</code></pre>
+<p>From a consuming game, import the archive using the name in its package manifest:</p>
+<pre><code class="language-sh">karty package import placeholder-kit-0.1.0.kpkg
+</code></pre>
+<p>Commit the referenced archive and updated <code>karty.toml</code>/<code>go.mod</code>; the CLI restores its checked contents under ignored <code>.karty/packages/</code>. To edit the package live, use <code>karty package import --replace ../placeholder-kit</code> instead. <code>karty dev</code> watches that working folder, including outside the game. The current package CLI supports Go behavior, static/nested prefabs, PNG world materials and KartUI components/layouts with images, fonts and theme defaults; use a CLI build containing that feature. UI exports compile against the consuming game and keep normal typed props/callbacks. The game owns state and lifecycle.</p>
+<h3 id="build-in-ci">Build in CI</h3>
+<p>Commit <code>karty.toml</code>, <code>go.mod</code>, source code, and source assets. Include <code>go.sum</code> when your dependencies create it. The runner recreates <code>.karty/</code> and <code>dist/</code>; do not commit those folders.</p>
+<p>Save this as <code>.github/workflows/game.yml</code> in your game project. It builds a browser game and a Windows ARM64 distribution on Linux, then uploads each folder for review. Include the <code>LICENSES/</code> folder described above so the artifacts contain the required notices. The workflow installs the latest CLI. No private engine checkout or credentials are needed.</p>
+<pre><code class="language-yaml">name: Build game
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    env:
+      GOEXPERIMENT: simd
+      GOWORK: &#34;off&#34;
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: &#34;1.27.3&#34;
+          cache: false
+      - name: Install Karty
+        run: |
+          go install github.com/karty-game/karty/cmd/karty@latest
+          echo &#34;$(go env GOPATH)/bin&#34; &gt;&gt; &#34;$GITHUB_PATH&#34;
+      - name: Prepare material generation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
+      - name: Build distributions
+        run: |
+          karty build --target web
+          karty build --target native --platform windows-arm64
+          cp -R LICENSES dist/web/
+          cp -R LICENSES dist/native/windows-arm64/
+      - uses: actions/upload-artifact@v7.0.0
+        with:
+          name: game-web
+          path: dist/web/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7.0.0
+        with:
+          name: game-windows-arm64
+          path: dist/native/windows-arm64/
+          if-no-files-found: error
+</code></pre>
+<p>Change the native <code class="command-flag">--platform</code>, artifact name, and artifact path together. For Linux or macOS artifacts, upload a tar archive of the folder to <a href="https://github.com/actions/upload-artifact/tree/v7.0.0#permission-loss">preserve the host&#39;s executable permission</a>. For offline lighting, add <code>karty render bake</code> before the builds. Material generation uses Mesa software OpenGL when the runner has no GPU; the libraries above provide its EGL backend. Packaging a game in CI does not test its graphics, input, or sound on the destination platform.</p>
+<p>Choose a sample to extend:</p>
+<ul>
+<li><a href="../hangar/">The Hangar</a>: a portal loop, detailed materials, baked lights, and a torch.</li>
+<li><a href="../ui-demo/">Orbital flight deck</a>: menus and reusable KartUI components.</li>
+<li><a href="../media-lab/">Media lab</a>: sound, music, and video.</li>
+</ul>
+<h2 id="write-and-publish-a-package">Write and publish a package</h2>
+<p>Keep your package in its own public GitHub repository. The catalog links to your releases.</p>
+<figure class="journey"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 384" role="img" aria-label="Create repository and exports → Test in a game → Publish a package release → Open a catalog request → Maintainers review and add it → Install by package name"><rect x="20" y="12" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="37" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Create repository and exports</text><path d="M200 56V72M195 67L200 72L205 67" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="76" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="101" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Test in a game</text><path d="M200 120V136M195 131L200 136L205 131" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="140" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="165" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Publish a package release</text><path d="M200 184V200M195 195L200 200L205 195" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="204" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="229" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Open a catalog request</text><path d="M200 248V264M195 259L200 264L205 259" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="268" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="293" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Maintainers review and add it</text><path d="M200 312V328M195 323L200 328L205 323" fill="none" stroke="#9d3d19" stroke-width="2"/><rect x="20" y="332" width="360" height="40" rx="8" fill="#f1f1e9" stroke="#deded1"/><text x="200" y="357" text-anchor="middle" fill="#243331" font-family="system-ui,sans-serif" font-size="15">Install by package name</text></svg></figure>
+<h3 id="create-the-repository">Create the repository</h3>
+<p>Example: <code>your-name/community-props</code>, with the package at the repository root:</p>
+<pre><code class="language-text">community-props/
+  karty-package.toml
+  README.md
+  LICENSE
+  textures/crate.png
+  screenshots/props.png
+</code></pre>
+<ul>
+<li><code>README.md</code>: purpose, install command, usage example and screenshot.</li>
+<li><code>LICENSE</code>: terms for the code and assets; include any third-party notices.</li>
+<li><code>textures/crate.png</code>: an original PNG texture, exported by the manifest below.</li>
+<li><code>screenshots/props.png</code>: a preview for the catalog.</li>
+</ul>
+<p>Create <code>karty-package.toml</code>:</p>
+<pre><code class="language-toml">format_version = 1
+name = &#34;community-props&#34;
+version = &#34;0.1.0&#34;
+
+[[textures]]
+name = &#34;crate&#34;
+source = &#34;textures/crate.png&#34;
+profile = &#34;environment&#34;
+</code></pre>
+<p>Use a unique package name and a full <code>major.minor.patch</code> version. Source paths are relative to the package root. This exports <code>community-props.crate</code> to games.</p>
+<p>Packages can also export Go code (<code>go.mod</code>), prefabs (<code>prefabs</code>), UI (<code>[ui]</code>) and build processors (<code>[[processors]]</code>). See <a href="../design/packages.html">package exports</a>.</p>
+<h3 id="test-in-a-game">Test in a game</h3>
+<p>From a game project beside the package repository:</p>
+<pre><code class="language-sh">karty package import ../community-props
+karty dev
+</code></pre>
+<p>Use the exported texture in a level and check the result.</p>
+<h3 id="publish-a-release">Publish a release</h3>
+<p>From the package repository root:</p>
+<pre><code class="language-sh">mkdir -p dist
+karty package export --output dist/community-props-0.1.0.kpkg .
+</code></pre>
+<p>Keep <code>dist/</code> out of Git. Commit and push the sources, then create a published GitHub release with:</p>
+<p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody><tr><td>Tag</td><td><code>community-props-v0.1.0</code></td></tr><tr><td>Attached archive</td><td><code>community-props-0.1.0.kpkg</code></td></tr><tr><td>Checksum</td><td>GitHub&#39;s SHA-256 asset digest, or <code>community-props-0.1.0.kpkg.sha256</code></td></tr></tbody></table></div>
+<p>A checksum file contains <code>&lt;sha256&gt;  community-props-0.1.0.kpkg</code> on one line; export prints the archive&#39;s SHA-256. The manifest, tag and archive versions must match. Use a stable release; drafts and prereleases are excluded from the catalog. Publish a new version for changes; keep existing releases unchanged.</p>
+<h3 id="request-a-catalog-listing">Request a catalog listing</h3>
+<p><a href="https://github.com/karty-game/karty-packages/issues/new">Open an issue in karty-packages</a> titled <code>Add package: community-props</code>. Include the release link, license and this catalog entry, replacing <code>your-name</code>:</p>
+<pre><code class="language-json">{
+  &#34;name&#34;: &#34;community-props&#34;,
+  &#34;repository&#34;: &#34;your-name/community-props&#34;,
+  &#34;description&#34;: &#34;Prototype crates and materials&#34;,
+  &#34;tags&#34;: [&#34;3d&#34;, &#34;prototyping&#34;],
+  &#34;source&#34;: &#34;.&#34;,
+  &#34;ref&#34;: &#34;main&#34;,
+  &#34;readme&#34;: &#34;README.md&#34;,
+  &#34;preview&#34;: &#34;screenshots/props.png&#34;
+}
+</code></pre>
+<p>Maintainers review the request and, if approved, add it to <code>catalog.json</code>. Your sources and releases stay in your repository. After the catalog is published:</p>
+<pre><code class="language-sh">karty package import community-props
+</code></pre>
+<p>Later stable releases are discovered during catalog refreshes. Existing users update explicitly with <code>karty package upgrade community-props</code>.</p>
+<h2 id="draw-a-2d-game">Draw a 2D game</h2>
+<p>Use sprites for image artwork, vectors for shapes, and text for instructions and scores. This example draws all three and lets you collect a circle with keyboard movement.</p>
+<p>Start with the <code>2d</code> starter, which includes the <code>controllers-topdown</code> plugin:</p>
+<pre><code class="language-sh">karty new --yes --template 2d my-game
+</code></pre>
+<p>Keep the package&#39;s archive URL and checksum in <code>karty.toml</code>. The first build restores its source under ignored <code>.karty/packages/controllers-topdown/</code>. For an existing project, run <code>karty package import controllers-topdown@0.0.1</code> first; see <a href="../design/packages.html">reusable packages</a>.</p>
+<h3 id="add-a-sprite">Add a sprite</h3>
+<p>Create a project from the <a href="index.html">guide home</a>. Download <a href="assets/player.png">player.png</a> and save it as <code>assets/textures/player.png</code>. The CLI imports that image and generates <code>assets.TexturePlayer</code> on the next build. Use the generated ID when creating the sprite.</p>
+<h3 id="draw-and-play">Draw and play</h3>
+<p>Keep the project resolution at 960 by 540. Replace <code>src/main.go</code> with this scene. Change the imports if your project has a different name.</p>
+<pre><code class="language-go">package main
+
+import (
+    &#34;github.com/karty-game/controllers-topdown&#34;
+    &#34;example.com/my-game/.karty/assets&#34;
+    &#34;example.com/my-game/.karty/engine&#34;
+)
+
+const speed = 180 // logical pixels per second
+
+type Game struct {
+    engine.Game
+    player *engine.Sprite2D
+    goal *engine.Shape2D
+    label *engine.Text2D
+    controller *controllers.Planar
+    won bool
+}
+
+//go:wasmexport karty_register
+func main() {
+    options := controllers.DefaultTopDown2DOptions()
+    options.Speed, options.RunSpeed = speed, speed
+    controller, err := controllers.NewTopDown2D(options)
+    if err != nil { panic(err) }
+    game := &amp;Game{controller: controller}
+    engine.Run(engine.Hooks{
+        OnStart: game.start,
+        OnUpdate: game.update,
+        OnKeyDown: func(key engine.Key) { game.key(key, true) },
+        OnKeyUp: func(key engine.Key) { game.key(key, false) },
+        OnInputReset: game.controller.Reset,
+    })
+}
+
+func (game *Game) start() {
+    // Draw the background behind the sprite, goal, and text.
+    background := game.NewShape2D(engine.Rectangle(960, 540), engine.NewVec2(0, 0))
+    background.SetFill(engine.RGBA(12, 21, 35, 255))
+    background.SetLayer(-1)
+    game.player = game.NewSprite2D(assets.TexturePlayer, engine.NewVec2(160, 280))
+    game.goal = game.NewShape2D(engine.Circle(18), engine.NewVec2(760, 350))
+    game.goal.SetFill(engine.RGBA(255, 200, 99, 255))
+    game.label = game.NewText2D(&#34;WASD / arrows: collect the gold circle&#34;, engine.NewVec2(32, 24))
+    game.label.SetFontSize(20)
+    game.label.SetLayer(1)
+}
+
+func (game *Game) key(key engine.Key, down bool) {
+    if key == engine.KeyR &amp;&amp; down {
+        game.controller.Reset()
+        game.won = false
+        game.player.Translate(160-game.player.Position().X, 280-game.player.Position().Y)
+        game.goal.SetAlpha(1)
+        game.label.SetText(&#34;WASD / arrows: collect the gold circle&#34;)
+    }
+    if control, ok := movementKey(key); ok { game.controller.Key(control, down) }
+}
+
+func (game *Game) update(engine.Frame) {
+    if game.won { return }
+    delta := game.controller.Step(controllers.Vec2{X: float64(game.player.Position().X), Y: float64(game.player.Position().Y)})
+    dx, dy := float32(delta.X), float32(delta.Y)
+    if dx != 0 || dy != 0 {
+        x := min(max(game.player.Position().X+dx, 16), 944)
+        y := min(max(game.player.Position().Y+dy, 80), 524)
+        game.player.Translate(x-game.player.Position().X, y-game.player.Position().Y)
+    }
+    // Our game collects the goal within 32 pixels of its centre.
+    dx = game.player.Position().X - game.goal.Position().X
+    dy = game.player.Position().Y - game.goal.Position().Y
+    if dx*dx + dy*dy &lt; 32*32 {
+        game.won = true
+        game.goal.SetAlpha(0)
+        game.label.SetText(&#34;Collected! Press R to restart&#34;)
+    }
+}
+func movementKey(key engine.Key) (controllers.Control, bool) {
+	switch key {
+	case engine.KeyW: return controllers.Forward, true
+	case engine.KeyS: return controllers.Backward, true
+	case engine.KeyA: return controllers.Left, true
+	case engine.KeyD: return controllers.Right, true
+	case engine.KeyArrowUp: return controllers.ForwardAlt, true
+	case engine.KeyArrowDown: return controllers.BackwardAlt, true
+	case engine.KeyLeft: return controllers.LeftAlt, true
+	case engine.KeyRight: return controllers.RightAlt, true
+	case engine.KeyShiftLeft: return controllers.RunLeft, true
+	case engine.KeyShiftRight: return controllers.RunRight, true
+	}
+	return 0, false
+}
+
+</code></pre>
+<p>Run <code>karty dev</code>. Move with WASD or the arrow keys, reach the circle, then press R to try again. <code>OnInputReset</code> clears held keys when the game loses focus. The preset normalizes diagonal input and converts <code>speed = 180</code> pixels per second into three pixels per fixed 60 Hz update. Camera following, pointer targets and zoom are available on the same preset when your game needs them.</p>
+<h3 id="change-the-drawing">Change the drawing</h3>
+<p>Positions use canvas pixels. The upper left is <code>(0, 0)</code>; X grows right and Y grows down. Sprite and circle positions mark their centres. Rectangle and text positions mark their upper-left corners.</p>
+<p><code>NewSprite2D</code> draws the imported image. <code>NewShape2D</code> draws the rectangle and circle without image files. <code>NewText2D</code> draws the instruction, and <code>SetText</code> changes it when the goal is collected. Higher layers draw above lower ones.</p>
+<p>Try another PNG, change the circle&#39;s radius or color, or move the goal. Use setters such as <code>Translate</code>, <code>SetFill</code>, and <code>SetText</code> to update existing entities instead of creating them again each frame.</p>
+<figure><img src="assets/2d-scene.jpg" alt="A 2D sprite, vector goal, and text drawn by the example." loading="lazy"><figcaption>A 2D sprite, vector goal, and text drawn by the example.</figcaption></figure>
+<h3 id="add-feedback-and-share">Add feedback and share</h3>
+<p><a href="media.html">Sound and video</a> add effects or music. <a href="share.html">Build and share</a> packages your game for the browser or desktop.</p>
+<p><a href="ui.html">KartUI</a> is optional when you need menus or reusable screen layouts. Its components work with both 2D and 3D games.</p>
+<h2 id="make-a-first-person-game">Make a first-person game</h2>
+<p>Create a camera and attach the <code>controllers-3d</code> package&#39;s first-person component. It supplies walking, running, mouse look, two visible touch sticks, a physics body, gravity and collision. Keep game hooks for your own interactions and objectives.</p>
+<pre><code class="language-sh">karty new --yes --template fps my-game
+cd my-game
+karty dev
+</code></pre>
+<p>The starter references an independently released <a href="https://karty-game.github.io/karty-packages/packages/fps-kit.html">FPS Kit</a> archive by HTTPS URL and SHA-256 in <code>karty.toml</code>. Its first build downloads and verifies the package under <code>.karty/packages/fps-kit</code>; later builds can reuse the verified cache offline. A four-metre corridor, two metres wide, connects two eight-metre rooms. They use the kit’s 256px grid, brick and concrete materials. Three crates have static collision; two are spawned with dynamic box bodies so you can push them. Keep the pinned package declaration in Git. Material normal/height/AO maps are generated during the ordinary build. Room numbers, a floor arrow and a tagged goal star demonstrate the package&#39;s transparent decals for temporary goals and points of interest. The starter also includes <code>controllers-3d</code> for player movement and mobile controls. The CLI reads <code>[level].name</code> from <code>levels/*/level.toml</code> to generate typed references such as <code>assets.LevelRoom</code>. The callback passed to <code>LoadLevel</code> receives that request&#39;s ready result; loading errors still arrive through <code>OnLevelFailed</code>.</p>
+<figure><img src="assets/hangar.jpg" alt="The Hangar sample uses the controller package to explore industrial rooms." loading="lazy"><figcaption>The Hangar sample uses the controller package to explore industrial rooms.</figcaption></figure>
+<h3 id="make-the-camera-playable">Make the camera playable</h3>
+<p>The complete <code>src/main.go</code> below attaches the controller after the room is ready. Change its module import if your project has a different name. Keep the viewport and project resolution at 960 by 540.</p>
+<pre><code class="language-go">package main
+
+import (
+	&#34;example.com/my-game/.karty/assets&#34;
+	&#34;example.com/my-game/.karty/engine&#34;
+	fpscontroller &#34;example.com/my-game/.karty/processed/code/controllers-3d.sdk/controller&#34;
+)
+
+type Game struct {
+	engine.Game
+	label *engine.Text2D
+}
+
+//go:wasmexport karty_register
+func main() {
+	game := &amp;Game{}
+	engine.Run(engine.Hooks{
+		OnStart: game.start, OnLevelFailed: game.failed,
+	})
+}
+
+func (game *Game) start() {
+	game.label = game.NewText2D(&#34;Loading room...&#34;, engine.NewVec2(24, 24))
+	game.LoadLevel(assets.LevelRoom, game.ready)
+}
+
+// The mounted room supplies the world that will resolve player collisions.
+func (game *Game) ready(event engine.LevelReady) {
+	camera := game.NewCamera3D(event.Handle, engine.Camera3DSettings{
+		Projection:  engine.CameraProjectionPerspective,
+		Output:      engine.CameraOutputFull,
+		Position:    engine.NewVec3(2, 2, 1.7),
+		VerticalFOV: 1.05, NearClip: 0.05, FarClip: 100, OrthoHeight: 10,
+		ViewportWidth: 960, ViewportHeight: 540,
+	})
+	camera.SetLayer(-1)
+	options := fpscontroller.DefaultFirstPersonOptions()
+	options.Speed = 2.4 // metres per second
+	if _, err := fpscontroller.AttachFirstPerson(game.Game, camera, options); err != nil {
+		game.label.SetText(&#34;Could not create player: &#34; + err.Error())
+		return
+	}
+	game.label.SetText(&#34;WASD / arrows: walk | Shift: run | click: mouse look | touch: move and look&#34;)
+}
+
+func (game *Game) failed(event engine.LevelFailed) {
+	game.label.SetText(event.Diagnostic)
+}
+</code></pre>
+<p>WASD/arrows walk, Shift runs, and Q/E turn. Click to capture mouse look; Escape releases it. Touch the lower-left side to walk and lower-right to look. The package draws the sticks on first touch and clears held controls on focus loss or modal input capture. It moves the player before your <code>OnUpdate</code> hook, using the last host-accepted pose and preserving falling momentum.</p>
+<p>The game owns the camera; destroying it also closes its controller. Level release and cartridge shutdown clean up the controller&#39;s body and touch display. Keep the returned controller when you need <code>SetEnabled</code>, <code>Teleport</code> or <code>Close</code>; only one local first-person controller can be attached at a time.</p>
+<p>Start with the default options, then tune speed, sensitivity or <code>Touch</code> appearance. Custom <code>BeforeMove</code> and <code>Move</code> callbacks can add authored traversal or swimming. <a href="../hangar/">Hangar</a> uses the shared capsule motor for stairs; <a href="../terrain/">Terrain</a> adds swimming without another input adapter. The installed <code>.karty/packages/controllers-3d/</code> README and component documentation contain the complete contract.</p>
+<p>Extend the game with <a href="textures.html">textures</a>, <a href="prefabs.html">prefabs</a>, <a href="lighting.html">lighting</a> and <a href="interactions.html">interactions</a>, then <a href="share.html">share a build</a>.</p>
+<p>The interaction guide uses E by default. Use F for interactions here, or set <code>options.TurnKeys = false</code> before wiring the interaction hook.</p>
+<h2 id="make-an-isometric-game">Make an isometric game</h2>
+<p>The preset combines camera-relative player movement, following and zoom. The game owns its player entity and movement bounds. This example uses a visible solid marker in an empty eight-metre room; add navigation or physics when introducing obstacles. Q/E zoom the view.</p>
+<p>Create an isometric game:</p>
+<pre><code class="language-sh">karty new --yes --template isometric my-game
+cd my-game
+karty dev
+</code></pre>
+<p>The starter pins the <code>controllers-isometric</code> plugin&#39;s archive and checksum in <code>karty.toml</code>. The first build restores its source under ignored <code>.karty/packages/controllers-isometric/</code>; keep the declaration in Git. For an existing project, run <code>karty package import controllers-isometric@0.0.1</code>; see <a href="../design/packages.html">reusable packages</a>. Use the room and material files from <a href="levels.html">one room</a>; the isometric starter also supplies its <code>player</code> solid prefab in <code>world.yaml</code>.</p>
+<figure><img src="assets/isometric.jpg" alt="A diagonal isometric view over connected rooms." loading="lazy"><figcaption>A diagonal isometric view over connected rooms.</figcaption></figure>
+<h3 id="connect-the-isometric-preset">Connect the isometric preset</h3>
+<p>The complete <code>src/main.go</code> below connects the controller to your game. Change its module imports if your project has a different name. Keep the viewport and project resolution at 960 by 540. Constructors validate their options; <code>Reset</code> clears held controls when focus changes.</p>
+<pre><code class="language-go">package main
+
+import (
+	&#34;github.com/karty-game/controllers-isometric&#34;
+
+	&#34;example.com/my-game/.karty/engine&#34;
+)
+
+type Game struct {
+	engine.Game
+	request    engine.RequestID
+	camera     *engine.Camera3D
+	label      *engine.Text2D
+	controller *controllers.Planar
+	player     *engine.Solid3D
+	focus      controllers.Vec2
+	isoReady   bool
+}
+
+//go:wasmexport karty_register
+func main() {
+	controller, err := controllers.NewIsometric(controllers.DefaultIsometricOptions())
+	if err != nil {
+		panic(err)
+	}
+	game := &amp;Game{controller: controller, focus: controllers.Vec2{X: 4, Y: 4}}
+	engine.Run(engine.Hooks{
+		OnUpdate:     func(engine.Frame) { game.updateIsometric() },
+		OnKeyDown:    func(key engine.Key) { game.keyIsometric(key, true) },
+		OnKeyUp:      func(key engine.Key) { game.keyIsometric(key, false) },
+		OnInputReset: game.resetIsometric,
+
+		OnStart: func() {
+			game.label = game.NewText2D(&#34;Loading room...&#34;, engine.NewVec2(24, 24))
+			game.request = game.RequestLevel(&#34;levels.room&#34;)
+		},
+		OnLevelReady: func(event engine.LevelReady) {
+			if event.RequestID != game.request {
+				return
+			}
+			options := game.controller.Options()
+			position := game.controller.CameraPosition(game.focus)
+			game.camera = game.NewCamera3D(event.Handle, engine.Camera3DSettings{
+				Projection: engine.CameraProjectionIsometric,
+				Output:     engine.CameraOutputFull,
+				Position:   engine.NewVec3(float32(position.X), float32(position.Y), float32(position.Z)),
+				Yaw:        float32(options.Yaw), Pitch: float32(options.Pitch),
+				VerticalFOV: 1.05, OrthoHeight: float32(options.Zoom),
+				NearClip: 0.05, FarClip: 100,
+				ViewportWidth: 960, ViewportHeight: 540,
+			})
+			game.camera.SetLayer(-1)
+
+			game.player = game.NewSolid3D(event.Handle, engine.NewTransform3D(engine.NewVec3(4, 4, 0)), engine.SolidRenderer{Prefab: &#34;player&#34;})
+
+			game.isoReady = true
+
+			game.label.SetText(&#34;WASD / arrows: move | Shift: run | Q/E: zoom&#34;)
+		},
+		OnLevelFailed: func(event engine.LevelFailed) {
+			if event.RequestID == game.request {
+				game.label.SetText(event.Diagnostic)
+			}
+		},
+	})
+}
+
+func (game *Game) keyIsometric(key engine.Key, down bool) {
+	if control, ok := movementKey(key); ok {
+		game.controller.Key(control, down)
+		return
+	}
+	if !down || game.camera == nil {
+		return
+	}
+	factor := 1.0
+	if key == engine.KeyQ {
+		factor = 1.1
+	}
+	if key == engine.KeyE {
+		factor = 1 / 1.1
+	}
+	if factor != 1 {
+		settings := game.camera.Settings()
+		settings.OrthoHeight = float32(game.controller.ZoomBy(factor))
+		game.camera.SetSettings(settings)
+	}
+}
+
+func (game *Game) resetIsometric() { game.controller.Reset() }
+
+func (game *Game) updateIsometric() {
+	if game.camera == nil || !game.isoReady {
+		return
+	}
+	// Follow only the host-accepted actor position, never an unaccepted proposal.
+	pose := game.player.Transform()
+	accepted := controllers.Vec2{X: float64(pose.Position.X), Y: float64(pose.Position.Y)}
+	delta := game.controller.Step(accepted)
+	// This starter owns an empty 8m room; replace its bounds with navigation
+	// or a physics body when adding obstacles, stairs or uneven terrain.
+	x := max(.3, min(7.7, accepted.X+delta.X))
+	y := max(.3, min(7.7, accepted.Y+delta.Y))
+	if x != accepted.X || y != accepted.Y {
+		pose.Position.X, pose.Position.Y = float32(x), float32(y)
+		if err := game.player.Ref().SetPose(pose); err != nil { panic(err) }
+	}
+	game.focus = game.controller.Follow(game.focus, accepted, false)
+	position := game.controller.CameraPosition(game.focus)
+	settings := game.camera.Settings()
+	settings.Position = engine.NewVec3(float32(position.X), float32(position.Y), float32(position.Z))
+	game.camera.SetSettings(settings)
+}
+
+func movementKey(key engine.Key) (controllers.Control, bool) {
+	switch key {
+	case engine.KeyW:
+		return controllers.Forward, true
+	case engine.KeyS:
+		return controllers.Backward, true
+	case engine.KeyA:
+		return controllers.Left, true
+	case engine.KeyD:
+		return controllers.Right, true
+	case engine.KeyArrowUp:
+		return controllers.ForwardAlt, true
+	case engine.KeyArrowDown:
+		return controllers.BackwardAlt, true
+	case engine.KeyLeft:
+		return controllers.LeftAlt, true
+	case engine.KeyRight:
+		return controllers.RightAlt, true
+	case engine.KeyShiftLeft:
+		return controllers.RunLeft, true
+	case engine.KeyShiftRight:
+		return controllers.RunRight, true
+	}
+	return 0, false
+}
+</code></pre>
+<p><code>Step</code> proposes movement from the accepted player position. Apply your game constraints; the engine refreshes the accepted pose automatically before the next update. <code>WatchPose</code> adds an optional notification. <code>Follow</code> takes that accepted position. The fixed diagonal camera keeps its angle as the player moves; <code>ZoomBy</code> clamps the visible world height.</p>
+<p>Read <code>.karty/packages/controllers-isometric/docs/presets-v1.md</code> after restore for the complete contract, including picking and pointer targets. Extend the game with <a href="textures.html">textures</a>, <a href="prefabs.html">prefabs</a>, <a href="lighting.html">lighting</a> and <a href="interactions.html">interactions</a>, then <a href="share.html">share a build</a>.</p>
+<p>The interaction guide uses E by default. Use F for interactions here, or remap this starter&#39;s Q/E controls before wiring the interaction hook.</p>
+</div>
+        
+      </main>
+    </div>
+    <footer class="site-footer">
+      <div>
+        <span class="footer-brand">
+          <img src="data:image/svg&#43;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI&#43;CiAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTEyIDE2IDE2KSI&#43;CiAgICA8cGF0aCBkPSJNMTYgN1Y1YzAtMy03IDEtNy0ycy0zLTItNC0xIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNmN2MiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgICA8cmVjdCB4PSIyIiB5PSI5IiB3aWR0aD0iMjgiIGhlaWdodD0iMTkiIHJ4PSI4IiBmaWxsPSIjYmM2MTJkIiAvPgogICAgPHJlY3QgeD0iMiIgeT0iNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE5IiByeD0iOCIgZmlsbD0iI2ZmYWQ0OCIgLz4KICAgIDxwYXRoIGQ9Ik05IDhoMTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmY2Y3YyIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgMS41KSIgZmlsbD0iI2JjNjEyZCIgLz4KICAgIDxwYXRoIGQ9Ik04IDExaDN2M2gzdjNoLTN2M0g4di0zSDV2LTNoM1oiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIxOSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cmVjdCB4PSIyNSIgeT0iMTEiIHdpZHRoPSIyLjUiIGhlaWdodD0iNCIgcng9IjEuMjUiIGZpbGw9IiM1MDI4NGEiIC8&#43;CiAgICA8cGF0aCBkPSJNMjAgMThxMy4zIDQgNiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiOTQ5NjEiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtbGluZWNhcD0icm91bmQiIC8&#43;CiAgPC9nPgo8L3N2Zz4K" alt="" width="32" height="32" />
+          <span>Karty</span>
+        </span>
+        <p>Go, KartUI, and one CLI for browser and desktop games.</p>
+        <p>Your project's API reference lives in <code>.karty/docs/</code>.</p>
+      </div>
+      <div class="footer-links">
+        
+        <a href="complete.html">Read all guides</a>
+        <a href="guide.md" download>All guides as Markdown</a>
+        
+        <a href="../">Explore samples</a>
+      </div>
+    </footer>
+  </body>
+</html>
+
+
