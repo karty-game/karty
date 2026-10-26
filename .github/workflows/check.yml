@@ -105,7 +105,7 @@ jobs:
         run: mise run check-web-delivery
       - name: Upload browser delivery report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: web-delivery-results
           path: dist/validation/web-delivery/results.json
