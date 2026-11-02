@@ -10,7 +10,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/google/jsonschema-go v0.4.3
-	github.com/karty-game/karty-sdk v0.0.18
+	github.com/karty-game/karty-sdk v0.0.20
 	github.com/karty-game/karty-ui v0.0.10
 	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/file v1.2.1
@@ -19,7 +19,7 @@ require (
 	github.com/muesli/termenv v0.16.0
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/urfave/cli/v3 v3.14.0
-	go.yaml.in/yaml/v3 v3.0.5
+	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/image v0.47.0
 	golang.org/x/mod v0.42.0
 	golang.org/x/sys v0.49.0
