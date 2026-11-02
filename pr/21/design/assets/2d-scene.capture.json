@@ -1,0 +1,125 @@
+{
+  "capturedAt": "2026-10-12T04:04:34.606Z",
+  "sourceDirectory": "/tmp/karty-guide-2d-scene-1kOqBX",
+  "sourceClaim": "The first complete Go block in internal/guide/tracks/2d.md was copied without edits into this temporary project and built with the current CLI and cached public SDK 0.0.11. No sample or generated binding source was edited.",
+  "sourceFiles": [
+    {
+      "file": "/tmp/karty-guide-2d-scene-1kOqBX/src/main.go",
+      "sha256": "5f08d268e010f1949b7c39d001e7be43f542aa4990fb8374e9c8ee4e604d3071"
+    },
+    {
+      "file": "/tmp/karty-guide-2d-scene-1kOqBX/go.mod",
+      "sha256": "2e9a899dd008803bf78472c9c65716ec7191fbd5e74a9e3e03fd662bbc807e0a"
+    },
+    {
+      "file": "/tmp/karty-guide-2d-scene-1kOqBX/karty.toml",
+      "sha256": "04d1e3da51664c1c7745d251b7a610917bc1f19c6e524cc4bc332ee1431d55f1"
+    },
+    {
+      "file": "/tmp/karty-guide-2d-scene-1kOqBX/assets/textures/player.png",
+      "sha256": "2482826ff13e8238d66b788656f296d4335db4c5de06f06acfcb870c72b55b92"
+    }
+  ],
+  "guide": {
+    "file": "internal/guide/tracks/2d.md",
+    "sha256": "e04433e3e8f90abd58f6408fe54be61bc4812aff57be88669ec134a36ab2567e"
+  },
+  "sprite": {
+    "file": "internal/guide/assets/player.png",
+    "sha256": "2482826ff13e8238d66b788656f296d4335db4c5de06f06acfcb870c72b55b92",
+    "width": 32,
+    "height": 32,
+    "bytes": 122,
+    "source": "/root/.karty/sdks/0.0.11/sdk.zip:templates/game/0.0.2/assets/textures/player.png.base64",
+    "transformation": "Base64 decoding only; original PNG bytes preserved"
+  },
+  "sdk": {
+    "version": "0.0.11",
+    "file": "/root/.karty/sdks/0.0.11/sdk.zip",
+    "sha256": "970c07059f6becff41d6dcc0b3c87aadf0418677c1ec75b12e9cc6b11575b720"
+  },
+  "cli": {
+    "file": "/home/kef/projects/karty-cli/dist/karty",
+    "sha256": "a43b95a20fff136b309c3caeb664c16b62b7766575eba80dd8c1c5b65d255b31"
+  },
+  "build": {
+    "command": "mise exec -- bash /tmp/karty-guide-2d-build.sh",
+    "invocationDirectory": "/home/kef/projects/karty-cli",
+    "workingDirectory": "/tmp/karty-guide-2d-scene-1kOqBX",
+    "effectiveCommand": "GOCACHE=/tmp/karty-engine-go-cache /home/kef/projects/karty-cli/dist/karty build --target web",
+    "outcome": "Passed in 2.685s",
+    "cache": "/tmp/karty-engine-go-cache",
+    "tools": "Existing real /root/.karty/tools directories",
+    "sandbox": "Required-access escalation reused the warmed /root/.cache/tinygo cache after a sandboxed run failed with a read-only filesystem error there.",
+    "preparationCorrection": "An initial build invoked mise outside the repository with go 1.27 in go.mod and tried a read-only toolchain download. The final build uses the repository mise configuration and the SDK template go 1.27.0 directive."
+  },
+  "host": {
+    "file": "/tmp/karty-guide-2d-scene-1kOqBX/dist/web/karty-host.wasm",
+    "sha256": "9f3033c34a7b919d629ab65b6d14ee20c484b7953cdbfe18b5afc5710d72c36c",
+    "modifiedAt": "2026-10-12T04:03:55.067Z"
+  },
+  "cartridge": {
+    "file": "/tmp/karty-guide-2d-scene-1kOqBX/dist/web/game.kart",
+    "sha256": "5cb97bed541c9426d0b44dfe2739f6ab9ca13db1a31606a871d79f91a871ac91",
+    "modifiedAt": "2026-10-12T04:03:55.033Z"
+  },
+  "image": {
+    "file": "internal/guide/assets/2d-scene.jpg",
+    "width": 960,
+    "height": 540,
+    "sha256": "30601e07164e0b20ec2f7c643dc073b02dc43e206591b8f114753b160a151721"
+  },
+  "capture": {
+    "method": "Playwright JPEG screenshot of the actual running 2D guide scene",
+    "command": "mise exec -- node /tmp/karty-guide-2d-capture.mjs",
+    "browser": "153.0.8010.12",
+    "backend": "Headless Chromium with ANGLE SwiftShader software graphics",
+    "serverBinding": "127.0.0.1 on an ephemeral port",
+    "steps": [
+      "Wait for running state and 15 host updates",
+      "Hold ArrowRight through 12 host updates and compare scene pixels",
+      "Press R across 4 updates to restart",
+      "Wait 15 further updates and capture JPEG"
+    ],
+    "keyReleaseWait": "4 host updates after each key release",
+    "screenshotStyle": "#karty-debug-widget, #karty-renderer-debug, #fullscreen { visibility: hidden !important; }",
+    "screenshotStylePurpose": "Hide browser-only DOM debug widgets and fullscreen controls; game canvas pixels were unchanged",
+    "finalFrame": 116
+  },
+  "verification": {
+    "actualWasmExecution": true,
+    "browserGraphics": true,
+    "arrowRightChangedPixels": true,
+    "beforePixelsSha256": "37638cd069fa57a9cbe1896ae775c00de07c947e608b150c47d870de3e232045",
+    "movedPixelsSha256": "84abf01156af6d7ba98ccb0df03265c0d72e283207c069c2c015bdda6f6f2bb9",
+    "kartUIPanels": false,
+    "pageErrors": []
+  },
+  "requests": [
+    {
+      "path": "/",
+      "status": 200
+    },
+    {
+      "path": "/wasm_exec.js",
+      "status": 200
+    },
+    {
+      "path": "/karty.js",
+      "status": 200
+    },
+    {
+      "path": "/game.kart",
+      "status": 200
+    },
+    {
+      "path": "/karty-host.wasm",
+      "status": 200
+    }
+  ],
+  "limits": [
+    "This capture verifies one desktop-sized browser scene",
+    "No native graphics, physical device, audio, or video check",
+    "Keyboard movement and restart were exercised; the win rule and every input path were not separately validated"
+  ]
+}
