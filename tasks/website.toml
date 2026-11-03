@@ -51,6 +51,15 @@ depends = ["build"]
 # Last Train selects the official C# Yarn compiler; resolve its exact SDK before baking.
 run = "mise exec dotnet@9.0.203 -- go run ./website/cmd/samples build"
 
+[build-sample-ci]
+description = "Build one CI sample after baking its offline lightmaps"
+depends = ["build"]
+run = 'mise exec dotnet@9.0.203 -- go run ./website/cmd/samples build-one "$SAMPLE_NAME"'
+
+[assemble-sample-builds]
+description = "Assemble and validate the gallery from parallel CI sample artifacts"
+run = 'go run ./website/cmd/samples assemble-built "$SAMPLE_ARTIFACTS"'
+
 [compact-samples]
 description = "Stage existing sample builds with one verified runtime and enforce the total website budget"
 run = "go run ./website/cmd/samples compact"

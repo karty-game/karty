@@ -130,6 +130,130 @@ func buildSamples(root string) error {
 	return validateSamples(os.DirFS(site))
 }
 
+func buildOneSample(root, name string) error {
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return err
+	}
+
+	names, err := sampleNames(root)
+	if err != nil {
+		return err
+	}
+
+	if !slices.Contains(names, name) {
+		return fmt.Errorf("unknown sample %q: %w", name, os.ErrInvalid)
+	}
+
+	sample := filepath.Join(root, "samples", name)
+
+	version, err := sampleVersion(sample)
+	if err != nil {
+		return fmt.Errorf("sample %s SDK: %w", name, err)
+	}
+
+	cli := filepath.Join(root, "dist", "karty")
+	if err = runCLI(root, cli, "sdk", "install", version); err != nil {
+		return fmt.Errorf("install sample SDK %s: %w", version, err)
+	}
+
+	manifest, err := sdk.Resolve(version)
+	if err != nil {
+		return err
+	}
+
+	compiler, err := testtoolchain.Go(context.Background(), manifest)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(os.Stdout, "Building sample %s (SDK %s, Go %s)\n", name, version, compiler)
+
+	return buildSample(sample, cli, compiler)
+}
+
+func assembleBuiltSamples(root, artifactRoot string) error {
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return err
+	}
+
+	artifactRoot, err = filepath.Abs(artifactRoot)
+	if err != nil {
+		return err
+	}
+
+	names, err := sampleNames(root)
+	if err != nil {
+		return err
+	}
+
+	cards, err := sampleCards(root, names)
+	if err != nil {
+		return err
+	}
+
+	versions := make([]string, 0, len(names))
+	for _, name := range names {
+		version, versionErr := sampleVersion(filepath.Join(root, "samples", name))
+		if versionErr != nil {
+			return fmt.Errorf("sample %s SDK: %w", name, versionErr)
+		}
+
+		versions = append(versions, version)
+	}
+
+	notices, err := prepareSampleNotices(slices.Sorted(slices.Values(slices.Compact(versions))), downloadNotice)
+	if err != nil {
+		return err
+	}
+
+	site := filepath.Join(root, "dist", "samples-site")
+	if err = os.RemoveAll(site); err != nil {
+		return err
+	}
+
+	if err = os.MkdirAll(site, 0o755); err != nil {
+		return err
+	}
+
+	for _, name := range names {
+		version, err := sampleVersion(filepath.Join(root, "samples", name))
+		if err != nil {
+			return fmt.Errorf("sample %s SDK: %w", name, err)
+		}
+
+		source := filepath.Join(artifactRoot, "sample-"+name)
+
+		target := filepath.Join(site, name)
+		if err = copyCompleteSampleWeb(source, target, name); err != nil {
+			return fmt.Errorf("sample %s artifact: %w", name, err)
+		}
+
+		if err = shareSampleRuntime(site, name, version); err != nil {
+			return err
+		}
+
+		if err = copySamplePreview(filepath.Join(root, "samples", name), target); err != nil {
+			return err
+		}
+
+		if err = writeSampleNotices(target, notices[version]); err != nil {
+			return err
+		}
+	}
+
+	if err = generator.GenerateSiteDocs(site); err != nil {
+		return err
+	}
+
+	if err = writeGallery(site, cards); err != nil {
+		return err
+	}
+
+	return validateSamples(os.DirFS(site))
+}
+
 func buildPublishedSamples(root, site, cli string, names []string) error {
 	compilers := map[string]string{}
 	versions := map[string]string{}

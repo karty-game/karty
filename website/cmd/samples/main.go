@@ -31,6 +31,14 @@ func run(args []string) error {
 		return buildSamples(".")
 	}
 
+	if len(args) == 2 && args[0] == "build-one" {
+		return buildOneSample(".", args[1])
+	}
+
+	if len(args) == 2 && args[0] == "assemble-built" {
+		return assembleBuiltSamples(".", args[1])
+	}
+
 	if len(args) == 6 && args[0] == "assemble" {
 		var openPRs []int
 		if err := json.Unmarshal([]byte(args[5]), &openPRs); err != nil {
@@ -45,7 +53,7 @@ func run(args []string) error {
 	}
 
 	return fmt.Errorf(
-		"usage: karty-samples compact [--notices DIRECTORY] | preview | build | assemble STATE SOURCE DESTINATION REMOVE OPEN_PRS_JSON: %w",
+		"usage: karty-samples compact [--notices DIRECTORY] | preview | build | build-one SAMPLE | assemble-built ARTIFACTS | assemble STATE SOURCE DESTINATION REMOVE OPEN_PRS_JSON: %w",
 		os.ErrInvalid,
 	)
 }

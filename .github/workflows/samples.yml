@@ -10,9 +10,25 @@ concurrency:
   group: samples-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  build:
+  sample:
+    name: Build ${{ matrix.sample }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        sample:
+          - hangar
+          - crate-room
+          - terrain
+          - vigil
+          - willowbrook
+          - last-train
+          - effect-lab
+          - ui-demo
+          - media-lab
+          - particle-lab
     env:
       GOWORK: "off"
       GOCACHE: ${{ github.workspace }}/tmp/ci/go-build
@@ -25,7 +41,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: jdx/mise-action@v4
-      - name: Cache Go compilation and verified sample SDK tools
+      - name: Cache Go compilation and this sample's SDK tools
         id: tools-cache
         uses: actions/cache/restore@v6
         with:
@@ -36,32 +52,69 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-sample-tools-${{ hashFiles('mise.toml', 'go.sum', 'samples/**/karty.toml') }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-sample-tools-${{ hashFiles('mise.toml', 'go.sum', 'samples/**/karty.toml') }}-
-      - name: Restore sample lightmap bakes
+      - name: Restore this sample's lightmap bakes
         id: bake-cache
         uses: actions/cache/restore@v6
         with:
-          path: samples/*/.karty/bakes
-          key: ${{ runner.os }}-sample-bakes-v1-${{ github.sha }}
+          path: samples/${{ matrix.sample }}/.karty/bakes
+          key: ${{ runner.os }}-sample-bakes-v1-${{ matrix.sample }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-sample-bakes-v1-
+            ${{ runner.os }}-sample-bakes-v1-${{ matrix.sample }}-
       - name: Install headless software graphics dependencies
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
-      - name: Bake offline lightmaps and build sample web previews
+      - name: Bake and build sample web preview
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PAGES_BASE_URL: ${{ vars.PAGES_BASE_URL }}
+          SAMPLE_NAME: ${{ matrix.sample }}
         run: |
           base="${PAGES_BASE_URL:-https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/}"
           destination=main
           if [ -n "$PR_NUMBER" ]; then destination="pr/$PR_NUMBER"; fi
           export KARTY_SITE_URL="${base%/}/$destination/"
-          mise run build-samples
-      - name: Save sample lightmap bakes
+          mise run build-sample-ci
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sample-${{ matrix.sample }}
+          path: samples/${{ matrix.sample }}/dist/web
+          if-no-files-found: error
+          retention-days: 7
+      - name: Save this sample's lightmap bakes
         if: ${{ !cancelled() && steps.bake-cache.outputs.cache-primary-key != '' && steps.bake-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         with:
-          path: samples/*/.karty/bakes
+          path: samples/${{ matrix.sample }}/.karty/bakes
           key: ${{ steps.bake-cache.outputs.cache-primary-key }}
+      - name: Save Go compilation and this sample's SDK tools
+        if: ${{ !cancelled() && steps.tools-cache.outputs.cache-primary-key != '' && steps.tools-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+            ${{ env.GOMODCACHE }}
+            ${{ env.KARTY_HOME }}
+          key: ${{ steps.tools-cache.outputs.cache-primary-key }}
+
+  assemble:
+    name: Assemble and validate sample gallery
+    needs: sample
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOWORK: "off"
+      SAMPLE_ARTIFACTS: ${{ github.workspace }}/dist/sample-artifacts
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@v4
+      - name: Download sample builds
+        uses: actions/download-artifact@v8
+        with:
+          pattern: sample-*
+          path: dist/sample-artifacts
+      - name: Assemble and validate gallery
+        run: mise run assemble-sample-builds
       - uses: actions/upload-artifact@v7
         with:
           name: sample-site
@@ -77,12 +130,3 @@ jobs:
           destination=main
           if [ -n "$PR_NUMBER" ]; then destination="pr/$PR_NUMBER"; fi
           printf '[Sample preview](%s/%s/) — available after **Publish samples** succeeds.\n' "${base%/}" "$destination" >> "$GITHUB_STEP_SUMMARY"
-      - name: Save Go compilation and verified sample SDK tools
-        if: ${{ !cancelled() && steps.tools-cache.outputs.cache-primary-key != '' && steps.tools-cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v6
-        with:
-          path: |
-            ${{ env.GOCACHE }}
-            ${{ env.GOMODCACHE }}
-            ${{ env.KARTY_HOME }}
-          key: ${{ steps.tools-cache.outputs.cache-primary-key }}
