@@ -2,7 +2,6 @@ package levelbuild
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"os"
 	"os/exec"
@@ -46,18 +45,18 @@ func TestParticleCapabilityAndPackagedWASM(t *testing.T) {
 	manifest = withoutRuntimeCapabilities(currentWorldSDK(manifest), asset.CapabilityWorldParticlesV1)
 	root := lightingLevelFixture(t, "version: 10\n"+lightingRoomYAML+levelParticleYAML)
 
-	if artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
+	if artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
 		t.Fatalf("SDK gate lost: %v", err)
 	}
 
 	manifest.Assets.Capabilities.Runtime = append(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldParticlesV1)
 
-	first, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
+	first, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	second, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
+	second, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest)
 	if err != nil {
 		t.Fatal(err)
 	}

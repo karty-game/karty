@@ -57,7 +57,7 @@ func TestCurrentGPUVegetationOmissionPreservesAuthoredSource(t *testing.T) {
 
 	selected = withoutRuntimeCapabilities(currentWorldSDK(selected), asset.Capability(worldvegetation.Feature))
 
-	artifacts, err := BuildAllWithOptions(t.Context(), root, 4, "", selected, Options{})
+	artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", selected)
 	if err != nil || len(artifacts) != 1 {
 		t.Fatal("WebGPU V1 omission requires no vegetation runtime capability", err)
 	}
@@ -73,9 +73,9 @@ func TestCurrentGPUVegetationOmissionPreservesAuthoredSource(t *testing.T) {
 		t.Fatal("WebGPU V1 packaged procedural vegetation")
 	}
 
-	second, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
+	second, err := buildAllWithFixtureMaterials(t, root, 4, "", selected)
 	if err != nil || len(second) != 1 || !bytes.Equal(artifacts[0].Bytes, second[0].Bytes) {
-		t.Fatal("current profile changed between build entrypoints", err)
+		t.Fatal("warm current profile changed prepared output", err)
 	}
 
 	current, err := os.ReadFile(path)

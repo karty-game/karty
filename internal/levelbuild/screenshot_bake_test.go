@@ -31,7 +31,10 @@ func TestScreenshotQuickBakeRepairAndReuse(t *testing.T) {
 	build := func() {
 		t.Helper()
 
-		artifact, err := BuildNamedForScreenshot(t.Context(), root, "lighting", 4, "", selected)
+		assets := fixtureAssetBuild(t, root, selected)
+		assets.screenshot = true
+
+		artifact, err := buildNamed(t.Context(), root, "lighting", 4, "", assets)
 		if err != nil || !slices.Contains(artifact.Features, worldlightmap.PrebakeFeature) {
 			t.Fatal("screenshot did not package a bake", err)
 		}
@@ -99,7 +102,7 @@ func TestScreenshotQuickBakeRepairAndReuse(t *testing.T) {
 		t.Fatal("corrupt bake was not repaired")
 	}
 	// The screenshot-only override never enables offline lighting in normal builds.
-	artifact, err := BuildNamedWithAssets(t.Context(), root, "lighting", 4, "", selected)
+	artifact, err := buildNamed(t.Context(), root, "lighting", 4, "", fixtureAssetBuild(t, root, selected))
 	if !errors.Is(err, ErrManifest) || len(artifact.Bytes) != 0 {
 		t.Fatal("normal build accepted screenshot-only offline settings", err)
 	}

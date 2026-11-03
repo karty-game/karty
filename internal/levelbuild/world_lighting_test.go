@@ -56,19 +56,19 @@ func TestWorldLightingCapabilityGateAndPackagedWASM(t *testing.T) {
 
 	root := lightingLevelFixture(t, "version: 4\n"+lightingRoomYAML+levelLightingYAML(50))
 
-	if artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
+	if artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
 		t.Fatalf("SDK without lighting capability accepted lighting: %+v, %v", artifacts, err)
 	}
 	// The optional lighting capability is sufficient on its own. Materialize
 	// generation and atlas capability are independent of static lighting.
 	manifest.Assets.Capabilities.Runtime = append(slices.Clone(manifest.Assets.Capabilities.Runtime), asset.CapabilityWorldLightingV1)
 
-	first, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
+	first, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	second, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
+	second, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,7 @@ func TestWorldLightingEmptyAndRejectedBatches(t *testing.T) {
 			t.Parallel()
 			root := lightingLevelFixture(t, "version: 4\n"+lightingRoomYAML+test.lighting)
 
-			artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
+			artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest)
 			if name != "ambient only" {
 				if err == nil || artifacts != nil || test.want != nil && !errors.Is(err, test.want) {
 					t.Fatalf("malformed lighting produced artifact: %+v, %v", artifacts, err)
@@ -212,7 +212,7 @@ func TestAbsentLightingPackagingAcrossSourceVersions(t *testing.T) {
 	for version := 1; version <= 4; version++ {
 		root := lightingLevelFixture(t, fmt.Sprintf("version: %d\n%s", version, lightingRoomYAML))
 
-		legacy, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
+		legacy, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest)
 		if err != nil || len(legacy) != 1 {
 			t.Fatalf("unlit build v%d failed: %+v, %v", version, legacy, err)
 		}
@@ -224,7 +224,7 @@ func TestAbsentLightingPackagingAcrossSourceVersions(t *testing.T) {
 		candidate := manifest
 		candidate.Assets.Capabilities.Runtime = append(slices.Clone(manifest.Assets.Capabilities.Runtime), asset.CapabilityWorldLightingV1)
 
-		unlit, err := BuildAllWithAssets(context.Background(), root, 4, "", candidate)
+		unlit, err := buildAllWithFixtureMaterials(t, root, 4, "", candidate)
 		if err != nil || len(unlit) != 1 || !bytes.Equal(unlit[0].Bytes, original.Bytes) ||
 			!reflect.DeepEqual(unlit[0].Features, original.Features) || slices.Contains(legacy[0].Features, world.FeatureLighting) {
 			t.Fatalf("absent lighting changed packaging v%d: %+v, %v", version, unlit, err)

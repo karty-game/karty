@@ -87,7 +87,7 @@ rooms:
 	}
 
 	for _, name := range []string{"gallery", "levels.gallery"} {
-		artifact, err := levelbuild.BuildNamedWithAssets(t.Context(), root, name, 4, "", selected)
+		artifact, err := levelbuild.BuildNamedWithFixtureMaterials(t, root, name, 4, "", selected)
 		if err != nil || artifact.Name != "levels.gallery" {
 			t.Fatal("selected world did not build", name, err)
 		}

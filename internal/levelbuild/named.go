@@ -21,7 +21,7 @@ func BuildNamedWithAssets(
 	themeSource string,
 	selected sdk.Manifest,
 ) (Artifact, error) {
-	return buildNamed(ctx, root, name, uiSchema, themeSource, selected, false, false)
+	return buildNamed(ctx, root, name, uiSchema, themeSource, &assetBuild{projectRoot: root, manifest: selected})
 }
 
 // BuildNamedForScreenshot reuses a valid bake or creates a four-sample,
@@ -33,7 +33,7 @@ func BuildNamedForScreenshot(
 	themeSource string,
 	selected sdk.Manifest,
 ) (Artifact, error) {
-	return buildNamed(ctx, root, name, uiSchema, themeSource, selected, true, false)
+	return buildNamed(ctx, root, name, uiSchema, themeSource, &assetBuild{projectRoot: root, manifest: selected, screenshot: true})
 }
 
 func buildNamed(
@@ -41,9 +41,7 @@ func buildNamed(
 	root, name string,
 	uiSchema uint32,
 	themeSource string,
-	selected sdk.Manifest,
-	screenshot bool,
-	reflections bool,
+	assets *assetBuild,
 ) (Artifact, error) {
 	entries, err := os.ReadDir(filepath.Join(root, "levels"))
 	if err != nil {
@@ -111,7 +109,7 @@ func buildNamed(
 		directory,
 		uiSchema,
 		theme,
-		&assetBuild{projectRoot: root, manifest: selected, screenshot: screenshot, reflectionCapture: reflections},
+		assets,
 	)
 }
 
@@ -123,5 +121,5 @@ func BuildNamedForReflections(
 	theme string,
 	selected sdk.Manifest,
 ) (Artifact, error) {
-	return buildNamed(ctx, root, name, uiSchema, theme, selected, false, true)
+	return buildNamed(ctx, root, name, uiSchema, theme, &assetBuild{projectRoot: root, manifest: selected, reflectionCapture: true})
 }

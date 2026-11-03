@@ -2,7 +2,6 @@ package levelbuild
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"slices"
 	"strings"
@@ -35,23 +34,23 @@ func TestEnvironmentCapabilityAndPackagedWASM(t *testing.T) {
 	)
 
 	root := lightingLevelFixture(t, input)
-	if artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
+	if artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
 		t.Fatalf("SDK gate lost: %v %+v", err, artifacts)
 	}
 
 	manifest.Assets.Capabilities.Runtime = append(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldEnvironmentV1)
-	if artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
+	if artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
 		t.Fatalf("backdrop SDK gate lost: %v %+v", err, artifacts)
 	}
 
 	manifest.Assets.Capabilities.Runtime = append(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldEnvironmentBackdropV1)
 
-	first, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
+	first, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	second, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
+	second, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest)
 	if err != nil {
 		t.Fatal(err)
 	}

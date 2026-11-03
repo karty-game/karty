@@ -124,11 +124,11 @@ rooms:
 		t.Fatal(err)
 	}
 
-	first, err := levelbuild.BuildAllWithAssets(t.Context(), root, 2, "", worldFixtureSDK(t))
+	first, err := levelbuild.BuildAllWithFixtureMaterials(t, root, 2, "", worldFixtureSDK(t))
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := levelbuild.BuildAllWithAssets(t.Context(), root, 2, "", worldFixtureSDK(t))
+	second, err := levelbuild.BuildAllWithFixtureMaterials(t, root, 2, "", worldFixtureSDK(t))
 	if err != nil {
 		t.Fatal(err)
 	}

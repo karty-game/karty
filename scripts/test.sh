@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# GPU-ready packaging uses the CPU encoder; downloads stay outside test timers.
+KARTY_KTX=$(go run ./cmd/karty-test-sdk --ktx-path)
+export KARTY_KTX
+
 level_package=$(go list ./internal/levelbuild)
 # Only project sources belong to the suite. Local investigations and generated
 # output can contain Go packages of their own.

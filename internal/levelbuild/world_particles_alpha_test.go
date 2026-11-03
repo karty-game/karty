@@ -1,7 +1,6 @@
 package levelbuild
 
 import (
-	"context"
 	"errors"
 	"slices"
 	"strings"
@@ -46,9 +45,7 @@ func testParticlesRequireExactSDKCapability(t *testing.T, blend string) {
 		candidate := selected
 
 		candidate.Assets.Capabilities.Runtime = append(slices.Clone(selected.Assets.Capabilities.Runtime), runtime...)
-		if artifacts, err := BuildAllWithAssets(
-			context.Background(),
-			root,
+		if artifacts, err := buildAllWithFixtureMaterials(t, root,
 			4,
 			"",
 			candidate,
@@ -60,7 +57,7 @@ func testParticlesRequireExactSDKCapability(t *testing.T, blend string) {
 
 	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldParticlesV2)
 
-	artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", selected)
+	artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", selected)
 	if err != nil {
 		t.Fatal(err)
 	}

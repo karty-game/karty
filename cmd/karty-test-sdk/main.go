@@ -12,10 +12,12 @@ import (
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/testtoolchain"
+	"github.com/karty-game/karty/internal/toolchain"
 )
 
 func main() {
 	goPath := flag.Bool("go-path", false, "prepare and print the selected SDK's exact Go compiler path")
+	ktxPath := flag.Bool("ktx-path", false, "prepare and print the selected SDK's CPU texture encoder path")
 
 	flag.Parse()
 
@@ -26,6 +28,16 @@ func main() {
 
 	if *goPath {
 		path, err := prepareGo()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+
+		fmt.Fprintln(os.Stdout, path)
+	}
+
+	if *ktxPath {
+		path, err := prepareKTX()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -45,6 +57,18 @@ func prepareGo() (string, error) {
 	}
 
 	return testtoolchain.Go(ctx, manifest)
+}
+
+func prepareKTX() (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	manifest, err := sdk.ResolveContext(ctx, release.SDKVersion())
+	if err != nil {
+		return "", err
+	}
+
+	return toolchain.EnsureKTX(ctx, manifest, os.Getenv("KARTY_KTX"))
 }
 
 func prepare() error {

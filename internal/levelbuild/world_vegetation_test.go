@@ -2,7 +2,6 @@ package levelbuild
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -86,12 +85,12 @@ func testOmittedVegetationWASM(t *testing.T, sourceVersion, version uint16, geom
 
 	root := lightingLevelFixture(t, fmt.Sprintf("version: %d\n", sourceVersion)+rooms+presets)
 
-	first, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
+	first, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	second, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
+	second, err := buildAllWithFixtureMaterials(t, root, 4, "", manifest)
 	if err != nil {
 		t.Fatal(err)
 	}

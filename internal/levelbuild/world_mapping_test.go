@@ -31,13 +31,13 @@ func TestMaterialMappingCapabilityGateAndPackagedWASM(t *testing.T) {
 
 	root := lightingLevelFixture(t, "version: 5\n"+lightingRoomYAML)
 
-	if _, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); !errors.Is(err, ErrManifest) {
+	if _, err := buildAllWithFixtureMaterials(t, root, 4, "", selected); !errors.Is(err, ErrManifest) {
 		t.Fatalf("SDK without mapping capability accepted source v5 mapping: %v", err)
 	}
 	// Projection controls work independently of atlas generation and lighting.
 	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialMappingV1)
 
-	first, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
+	first, err := buildAllWithFixtureMaterials(t, root, 4, "", selected)
 	if err != nil || len(first) != 1 {
 		t.Fatalf("mapping-only build: %v", err)
 	}
@@ -52,7 +52,7 @@ func TestMaterialMappingCapabilityGateAndPackagedWASM(t *testing.T) {
 	}
 	slices.Sort(wanted)
 
-	second, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
+	second, err := buildAllWithFixtureMaterials(t, root, 4, "", selected)
 	if err != nil || len(second) != 1 || !bytes.Equal(first[0].Bytes, second[0].Bytes) ||
 		!slices.Equal(first[0].Features, wanted) {
 		t.Fatalf("mapping feature/deterministic packaging changed: %+v %v", first, err)
@@ -89,7 +89,7 @@ func TestMaterialMappingGateAbsentRemainsLegacy(t *testing.T) {
 	for version := 1; version <= 4; version++ {
 		root := lightingLevelFixture(t, "version: "+strconv.Itoa(version)+"\n"+lightingRoomYAML)
 
-		legacy, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
+		legacy, err := buildAllWithFixtureMaterials(t, root, 4, "", selected)
 		if err != nil || len(legacy) != 1 || slices.Contains(legacy[0].Features, world.FeatureMaterialMapping) {
 			t.Fatalf("legacy source v%d packaging changed: %v", version, err)
 		}

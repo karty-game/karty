@@ -39,18 +39,18 @@ func TestStaticSolidsCapabilityPackagingAndWASM(t *testing.T) {
 
 	root := lightingLevelFixture(t, "version: 6\n"+lightingRoomYAML+levelSolidYAML)
 
-	if _, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); !errors.Is(err, ErrManifest) {
+	if _, err := buildAllWithFixtureMaterials(t, root, 4, "", selected); !errors.Is(err, ErrManifest) {
 		t.Fatalf("undeclared solids accepted: %v", err)
 	}
 
 	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldStaticSolidsV1)
 
-	first, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
+	first, err := buildAllWithFixtureMaterials(t, root, 4, "", selected)
 	if err != nil || len(first) != 1 {
 		t.Fatalf("solids build: %v", err)
 	}
 
-	second, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
+	second, err := buildAllWithFixtureMaterials(t, root, 4, "", selected)
 	if err != nil || !bytes.Equal(first[0].Bytes, second[0].Bytes) || !slices.Contains(first[0].Features, world.FeatureStaticSolids) {
 		t.Fatalf("noncanonical build: %v", err)
 	}

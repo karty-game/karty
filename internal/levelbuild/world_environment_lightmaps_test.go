@@ -27,7 +27,7 @@ func TestCurrentGPUProfileRejectsEnvironmentVariantLighting(t *testing.T) {
 	selected := directLightmapSDK(t)
 	selected.Assets.Capabilities.Runtime = append(selected.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsEnvironmentVariantsV1)
 
-	artifacts, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
+	artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", selected)
 	if !errors.Is(err, ErrManifest) || len(artifacts) != 0 {
 		t.Fatal("unsupported environment-variant publication accepted", err)
 	}

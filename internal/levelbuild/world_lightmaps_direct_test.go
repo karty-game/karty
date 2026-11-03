@@ -48,7 +48,7 @@ func TestDirectLightmapInvalidAuthoring(t *testing.T) {
 			root := lightingLevelFixture(t, "version: 4\n"+lightingRoomYAML+directLightmapYAML)
 			enableFixtureLightmap(t, root, "enabled = true\n"+settings+"\n")
 
-			if artifacts, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); err == nil || artifacts != nil {
+			if artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", selected); err == nil || artifacts != nil {
 				t.Fatal("malformed complete direct selection produced artifacts")
 			}
 		})
@@ -59,7 +59,7 @@ func TestDirectLightmapInvalidAuthoring(t *testing.T) {
 			strings.Replace(directLightmapYAML, "x: 1.5, y: 1, z: 2", "x: 1.5, y: 1, z: 20", 1))
 		enableFixtureLightmap(t, root, "enabled = true\nlights = [\"red\", \"blue\"]\n")
 
-		if artifacts, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); err == nil || artifacts != nil {
+		if artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", selected); err == nil || artifacts != nil {
 			t.Fatal("outside final emitter produced artifacts")
 		}
 	})

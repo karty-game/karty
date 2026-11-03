@@ -25,7 +25,7 @@ func TestDevelopmentBakeRefreshesAndReusesAuthoredLighting(t *testing.T) {
 			t.Fatalf("development bake reports=%+v, want reused=%v: %v", reports, reused, err)
 		}
 
-		artifacts, err := BuildAllWithAssets(t.Context(), root, 4, "", directLightmapSDK(t))
+		artifacts, err := buildAllWithFixtureMaterials(t, root, 4, "", directLightmapSDK(t))
 		if err != nil || len(artifacts) != 1 || !slices.Contains(artifacts[0].Features, worldlightmap.PrebakeFeature) {
 			t.Fatalf("development bake was not packaged: %v", err)
 		}
