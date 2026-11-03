@@ -1187,6 +1187,8 @@ pre code {
             
             <li><a href="#builds-prepare-runtime-content">Builds prepare runtime content</a></li>
             
+            <li><a href="#characters-keep-their-source-glbs">Characters keep their source GLBs</a></li>
+            
             <li><a href="#materialize-turns-colour-into-surface-detail">Materialize turns colour into surface detail</a></li>
             
             <li><a href="#generated-files-have-separate-homes">Generated files have separate homes</a></li>
@@ -1239,6 +1241,8 @@ pre code {
               
               <li><a href="#builds-prepare-runtime-content">Builds prepare runtime content</a></li>
               
+              <li><a href="#characters-keep-their-source-glbs">Characters keep their source GLBs</a></li>
+              
               <li><a href="#materialize-turns-colour-into-surface-detail">Materialize turns colour into surface detail</a></li>
               
               <li><a href="#generated-files-have-separate-homes">Generated files have separate homes</a></li>
@@ -1279,10 +1283,20 @@ pre code {
 <p>Karty provides processing profiles and prepares the required tools automatically. The CLI applies those profiles and authored overrides, validates the result, and caches it for later builds. Changing an input or processing recipe selects a new cached result.</p>
 <p>Images become runtime textures. Audio is converted for effects or streaming. World sources become compiled geometry and resource descriptions. Material generation and offline light baking prepare work that would otherwise happen while the game runs. KartUI compiles authored components into the game&#39;s UI bindings and packaged presentation data.</p>
 <p>Each asset follows the processing it needs. An interface image, a world material and a music track do not all use the same recipe.</p>
+<h2 id="characters-keep-their-source-glbs">Characters keep their source GLBs</h2>
+<p>A world level can declare a skinned character model and a shared animation bank in <code>level.toml</code>:</p>
+<pre><code class="language-toml">[[characters]]
+id = &#34;guard&#34;
+model = &#34;@fps-lowpoly-character/models/guard.glb&#34;
+animations = &#34;@fps-lowpoly-character/animations/shared.glb&#34;
+</code></pre>
+<p>Package references use the packages already declared in <code>karty.toml</code>. Local paths are relative to the level directory. Model IDs are the names game code uses to select a model; clip names come from the animation GLB. Several models can share the same animation source without duplicating the bank in the level.</p>
+<p>The CLI decodes embedded Meshopt data, binds animation tracks by node name, removes unreferenced joints, and combines opaque albedo materials into a padded QOI atlas. It applies texture transforms, wrapping and linear base colour factors during the build. The host receives the bounded <code>world/characters@1</code> resource; it does not decode GLB or Meshopt while loading a game.</p>
+<p>The current importer accepts one skinned triangle mesh per GLB, four influences per vertex, at most 64 referenced joints and STEP or LINEAR animation. Images must be embedded PNG, JPEG or WebP. Morph targets, matrix nodes, external files, transparent or extended materials and cubic interpolation produce build errors. Export transforms as TRS and bake unsupported material effects into the albedo before importing. The packaged atlas is limited to 2048 by 2048 pixels, and a level can declare at most eight models.</p>
 <h2 id="materialize-turns-colour-into-surface-detail">Materialize turns colour into surface detail</h2>
 <p>A colour image tells the renderer what a wall looks like, but it does not describe which way its small ridges face or how shiny its surface is. Without that information, a painted brick pattern can still look flat when a light moves across it.</p>
 <p>Materialize estimates those properties from your image. Karty uses it during world material builds so you can start with one texture and a preset, rather than authoring every map separately.</p>
-<figure><img src="assets/design-materialize.svg" alt="The Hangar&#39;s 128-pixel brick source beside five real Materialize outputs using the brick preset. These are diagnostic map views, not final game lighting." loading="lazy"><figcaption>The Hangar&#39;s 128-pixel brick source beside five real Materialize outputs using the brick preset. These are diagnostic map views, not final game lighting.</figcaption></figure>
+<figure><img src="../assets/design-materialize.svg" alt="The Hangar&#39;s 128-pixel brick source beside five real Materialize outputs using the brick preset. These are diagnostic map views, not final game lighting." loading="lazy"><figcaption>The Hangar&#39;s 128-pixel brick source beside five real Materialize outputs using the brick preset. These are diagnostic map views, not final game lighting.</figcaption></figure>
 <p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Map</th><th scope="col">What the host uses it for</th></tr></thead><tbody><tr><td>Source colour, also called albedo</td><td>The painted colour of the surface</td></tr><tr><td>Normal</td><td>Changes the local lighting direction so ridges and recesses catch light differently</td></tr><tr><td>Height</td><td>Adds bounded, view-dependent relief to the texture</td></tr><tr><td>Ambient occlusion, or AO</td><td>Dims ambient light in estimated small crevices</td></tr><tr><td>Metallic</td><td>Controls the material&#39;s metallic reflectance</td></tr><tr><td>Smoothness</td><td>Controls how concentrated the reflected highlights appear</td></tr></tbody></table></div>
 <p>These maps change shading; they do not add geometry, change the wall&#39;s silhouette or create collision.</p>
 <h3 id="choose-a-material-preset">Choose a material preset</h3>

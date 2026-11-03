@@ -194,4 +194,4 @@ changes the stereo balance. Test an occluded emitter behind a collidable wall.
 If it is silent, check the receiver, generated sound ID, mounted level, explicit
 volume and far distance, then look for voice-admission errors in host diagnostics.
 
-![Media lab shows video above three sound controls.](assets/media-lab.jpg)
+![Media lab shows video above three sound controls.](../assets/media-lab.jpg)

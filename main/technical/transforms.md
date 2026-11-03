@@ -1,6 +1,6 @@
 # Transforms
 
-![Canvas X points right and Y points down. World X/Y form the floor plan and Z points up.](assets/technical-coordinates.svg)
+![Canvas X points right and Y points down. World X/Y form the floor plan and Z points up.](../assets/technical-coordinates.svg)
 
 ## Transform 2D
 

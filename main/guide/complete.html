@@ -1406,7 +1406,7 @@ func main() {
 }
 </code></pre>
 <p>Run <code>karty dev</code> to view the room. Match the viewport to your <code>karty.toml</code> resolution if you change it. This camera stays still. Add <a href="fps.html">first-person controls</a> to walk around, or an <a href="isometric.html">isometric camera</a> to view the room from above.</p>
-<figure><img src="assets/hangar.jpg" alt="Hangar connects industrial rooms with open passages." loading="lazy"><figcaption>Hangar connects industrial rooms with open passages.</figcaption></figure>
+<figure><img src="../assets/hangar.jpg" alt="Hangar connects industrial rooms with open passages." loading="lazy"><figcaption>Hangar connects industrial rooms with open passages.</figcaption></figure>
 <p>Add a second room only after you can explore the first. A connection names an edge in each room and opens a portal between them; see Hangar for complete connections, including a non-Euclidean portal loop.</p>
 <h2 id="give-surfaces-a-material">Give surfaces a material</h2>
 <p>Use a small tileable image first. The texture&#39;s <code>name</code> is the material name used by floors, ceilings, and boundary edges. Texture paths are relative to <code>level.toml</code>.</p>
@@ -1472,7 +1472,7 @@ instances:
 <p>Solid footprints must be convex and counterclockwise. Split an L-shaped object into several solids. Use room geometry for passages and platforms: a solid&#39;s collision blocks movement, but does not make its top walkable.</p>
 <p>An instance can translate, rotate, uniformly scale, or substitute materials. Its expanded object keeps a stable name such as <code>crate-a/body</code>. Prefabs can also contain rooms and sprites. Light positions remain global; placing a prefab does not place or move lights for it.</p>
 <p>Keep static objects static. Visual animation does not move collision or gameplay query positions. For a door or moving platform, check the engine&#39;s supported behavior before designing the interaction.</p>
-<figure><img src="assets/hangar.jpg" alt="The Hangar combines static machinery, repeating materials, and room lights." loading="lazy"><figcaption>The Hangar combines static machinery, repeating materials, and room lights.</figcaption></figure>
+<figure><img src="../assets/hangar.jpg" alt="The Hangar combines static machinery, repeating materials, and room lights." loading="lazy"><figcaption>The Hangar combines static machinery, repeating materials, and room lights.</figcaption></figure>
 <h2 id="light-the-scene-then-bake">Light the scene, then bake</h2>
 <p>Add a warm lamp at the top level of <code>world.yaml</code>:</p>
 <pre><code class="language-yaml">lighting:
@@ -1494,10 +1494,37 @@ page_size = 512
 bake_samples = 16
 bake_bounces = 1
 </code></pre>
-<p>For this room, run <code>karty render bake</code>, then <code>karty dev</code>. Rebake after changing geometry, textures, UVs, or baked lights. Restart an existing preview after baking. Begin at low density; increase it only when shadow detail needs it.</p>
+<p>For this room, run <code>karty build</code>, then <code>karty dev</code>. Rebake after changing geometry, textures, UVs, or baked lights. Restart an existing preview after baking. Begin at low density; increase it only when shadow detail needs it.</p>
 <p>Eligible steady sources bake automatically. Moving lights and lights linked to a changing emission pulse stay live. Keep the live set small; the current live authored point-light table holds at most 50. A glowing material does not light its surroundings by itself; add a light for that effect.</p>
-<figure><img src="assets/live-light.svg" alt="Illustration of a moving lamp and the light patch that follows it." loading="lazy"><figcaption>Illustration of a moving lamp and the light patch that follows it.</figcaption></figure>
-<p>Larger levels can opt into chunks. For chunked levels, <code>karty build</code> produces missing bakes; <code>karty dev</code> previews with a matching bake or live lighting. See <a href="../hangar/">Hangar</a> for a larger level with baked lighting after the single-room version works.</p>
+<figure><img src="../assets/live-light.svg" alt="Illustration of a moving lamp and the light patch that follows it." loading="lazy"><figcaption>Illustration of a moving lamp and the light patch that follows it.</figcaption></figure>
+<p>The current WebGPU profile prepares render cells automatically, including for a single room. Each cell owns final GPU buffers and a local three-layer RNM KTX2; material textures remain shared. <code>karty build</code> produces missing bakes, and <code>karty dev</code> consumes matching completed bakes without tracing rays. Historical profiles retain their declared bake and preview policy. See <a href="../hangar/">Hangar</a> for a larger level with baked lighting after the single-room version works.</p>
+<p>Render cells carry explicit sector and portal-space ownership. Portal traversal controls streaming and lookahead; nearby coordinates across a transformed portal are not treated as neighbors. <code>[chunks.gpu] cell_size</code> defaults to 16 metres. Indoor chunks keep authored rooms whole; <code>cell_size</code> bounds their catalog coordinates rather than cutting rooms. Build-only <code>room_groups</code> join stairs, recesses and access rooms into one loading area. Hangar defines nine such areas and uses a shared <code>liquid_edge_step = 0.5</code> for displaced liquid boundaries. Groups must fit the authored page limit at unchanged density; capacity failures are reported at build time.</p>
+<p>Fixed lighting combines sun, sky and eligible steady lamps in one static bake. For a chunked level, add <code>fixed = true</code> to the enabled offline <code>[lightmap]</code> recipe above and set <code>enabled = true</code> in <code>[chunks]</code>.</p>
+<p>Run <code>karty build</code> to produce each chunk&#39;s surface lighting, directional diffuse probes and compiled static-light records together with its geometry. Only the resident chunks keep their lighting data loaded. Moving objects use those probes and a bounded selection of direct lights; changing emitters stay live. Compiled terrain can join this mode: its geometry and baked directional surface coefficients are partitioned into the same chunk resources. Fixed bakes use the same processed albedo inputs as the world material atlas, including texture profile filters and size limits. Only static surface albedos count toward the bake&#39;s 16 Mi-pixel budget; sprite, foliage and normal-only textures do not. Albedos from other chunks remain available during baking so their surfaces can contribute bounced light. Terrain crops must preserve the source&#39;s exact floating-point lattice. A nonrepresentable crop fails with a diagnostic; use exactly representable origins and cell sizes, or adjust chunk boundaries. Chunk boundaries must also align with terrain cells so each chunk owns its cells completely. Chunk mesh budgets include the retained terrain geometry and compiled meshes. The fixed scalar lighting artifact has a 2 MiB limit, so dense terrain may need smaller chunks. Static lighting has one authored configuration: changing the sun, sky or lamps requires a rebake. Fixed lighting cannot be combined with imported prebakes, explicit lamp selections, ray-distance cutoffs or environment variant recipes.</p>
+<p>Large fixed-lit surfaces can opt into spatial render chunks:</p>
+<pre><code class="language-toml">[chunks.spatial]
+tile_size = 32
+# Optional larger loading units preserve the original geometry cells:
+load_tile_size = 128
+background_tile_size = 256
+density = 2
+background_density = 0.125
+detail_bounds = [-96, -96, 96, 96]
+solids = [&#34;ocean&#34;, &#34;seabed&#34;]
+# Optional coarse interior water geometry, with matching shared boundary samples:
+liquid_edge_step = 2
+background_liquid_subdivisions = 1
+geometry_detail_bounds = [-96, -96, 96, 96]
+</code></pre>
+<p>Named solids and other faces wider than <code>tile_size</code> are clipped into render children before lightmap packing. Primary surfaces retain <code>[lightmap].density</code>; <code>[chunks.spatial].density</code> sets the detailed spatial receivers&#39; density and defaults to that same value. The authored detail rectangle should include the playable area and the shadows and color variation that need detail. Beyond it, larger tiles use <code>background_density</code>. This is an explicit distant quality setting, not a test that the lighting is uniform. The entire source surface remains covered, including beyond the initial camera&#39;s view. The background tile size must be a power-of-two multiple of the detailed size.</p>
+<p>Optional <code>load_tile_size</code> combines adjacent compatible children into larger loading units. It must be a power-of-two multiple of <code>tile_size</code>, at most 4096 metres. Primary ownership, source bindings, texel density and geometric detail remain unchanged: each unit retains the original clipped geometry cells inside one shared mesh and atlas. Existing page, span and byte budgets can prevent a merge. The setting applies to all selected surfaces, including landscape faces.</p>
+<p>A child whose complete bake is exactly uniform within every chart can carry nine directional RNM coefficients per chart and omit the receiver image. This checks all baked samples, including shadows and bounced color. Any variation keeps the detailed lightmap; the builder does not infer uniform open water from a few corner samples.</p>
+<p>Animated water requires a fixed <code>liquid_edge_step</code> along every tile boundary. It must divide both tile sizes and align with the clipped outer bounds. This keeps the same displaced edge geometry on both sides of a boundary. Optional <code>background_liquid_subdivisions</code> limits interior geometry outside <code>geometry_detail_bounds</code>, while preserving those shared edge samples and the material&#39;s animated wave normals. These settings affect geometric detail; lightmap density remains independent.</p>
+<p>Each child carries its own geometry and baked lighting and streams through frustum visibility and the normal residency budget. Large water surfaces retain their original fluid identity, world texture coordinates and animation clock. Primary chunks retain a separately compiled collision resource, so evicting a render tile never changes physical ownership. Spatial builds allow a combined decoded geometry budget up to 16 MiB per primary chunk, including its render, collision and terrain resources; each encoded entry retains its 8 MiB limit. Terrain replacements omit their invisible floor charts before packing; terrain geometry and directional surface coefficients stay with their primary chunks. Use smaller primary sector groups when terrain needs finer streaming granularity.</p>
+<p>Changing the partition, either density, geometry, terrain or materials requires a new bake. Spatial previews require a matching completed <code>karty build</code>; a missing bake does not substitute live lighting for the fixed spatial solution.</p>
+<h3 id="bake-static-reflections">Bake static reflections</h3>
+<p>For fixed chunk levels, run <code>karty render reflections &lt;level&gt;</code> after baking lighting. A matching native host captures static cubemaps from automatic indoor space centers. The command uses the selected native host without running the game client. WebGPU hosts also support <a href="software-capture.html">software capture</a> for CI and CLI tooling.</p>
+<p>Captures are cached under <code>.karty/bakes/&lt;level&gt;/</code>. Builds automatically embed captures matching the complete current level inputs. Re-run the command after changing geometry, materials or baked lighting. Streaming chunks then load saved images without capturing the room again. Reflective materials, glass and liquids share stable receiver assignments and box projection. Moving objects remain outside these static images.</p>
 <h2 id="turn-movement-into-an-interaction">Turn movement into an interaction</h2>
 <p>Use typed hooks for startup, frames, input, and level results. Match each level result to the request that created it. Handle <code>OnLevelFailed</code> with a message the player can read.</p>
 <p>These snippets extend a controller with a loaded <code>camera</code>. Add these fields to your <code>Game</code>:</p>
@@ -1630,7 +1657,7 @@ func (game *Game) stopMedia() {
 <p>Browser audio needs player input before it can play. Video sources must already be MPEG-1 in an <code>.mpg</code> container, optionally with MP2 audio. The CLI does not convert MP4. One video plays at a time; pause, seeking, and video looping are not supported. The four position values set its top-left and display size.</p>
 <p>Keep the built <code>content/</code> folder when sharing music or video. Use <a href="../media-lab/">Media lab</a> to check playback and overlapping effects.</p>
 <p>For a spatial check, click the preview, walk toward and away from a source, then turn with the source beside you. Check that distance changes volume and turning changes the stereo balance. Test an occluded emitter behind a collidable wall. If it is silent, check the receiver, generated sound ID, mounted level, explicit volume and far distance, then look for voice-admission errors in host diagnostics.</p>
-<figure><img src="assets/media-lab.jpg" alt="Media lab shows video above three sound controls." loading="lazy"><figcaption>Media lab shows video above three sound controls.</figcaption></figure>
+<figure><img src="../assets/media-lab.jpg" alt="Media lab shows video above three sound controls." loading="lazy"><figcaption>Media lab shows video above three sound controls.</figcaption></figure>
 <h2 id="make-menus-and-a-pause-screen">Make menus and a pause screen</h2>
 <p>Use KartUI for menus, HUDs, and overlays in 2D, first-person, or isometric games.</p>
 <p>Keep screen state in Go and screen structure in <code>.kui</code> files. The CLI discovers components under <code>ui/</code>, shared layouts under <code>ui/layouts/</code>, and a theme at <code>ui/theme.toml</code>.</p>
@@ -1691,7 +1718,7 @@ func setup(onResume func()) {}
 </code></pre>
 <p>Call <code>game.showMenu()</code> from <code>OnStart</code>. Open <code>ui.Pause</code> the same way from your existing input hook, for example when <code>OnKeyDown</code> receives <code>engine.KeyEscape</code>. Set a <code>playing</code> flag to false when pausing and skip game movement in <code>OnUpdate</code> until Resume sets it true. A modal panel captures input; your Go code decides whether the game simulation pauses.</p>
 <p>Layouts share structure and styles. Component callbacks change game state. Packages can also export <code>.kui</code> components/layouts, images, fonts and theme defaults through <code>karty-package.toml</code>. Import a folder or <code>.kpkg</code> with <code>karty package import</code>; compose its exported components with the same typed props and callbacks. The consuming game retains its own root, state and theme overrides. Use prefixed component/props names to avoid shared Go-scope collisions. Call <code>Invalidate()</code> after changing data used by dynamic UI bindings. Test your layout at a narrow viewport before adding more screens. <a href="../ui-demo/">Orbital flight deck</a> shows menus, loading, inventory, gameplay, and pause screens.</p>
-<figure><img src="assets/ui-demo.jpg" alt="Orbital flight deck uses a left menu over its game artwork." loading="lazy"><figcaption>Orbital flight deck uses a left menu over its game artwork.</figcaption></figure>
+<figure><img src="../assets/ui-demo.jpg" alt="Orbital flight deck uses a left menu over its game artwork." loading="lazy"><figcaption>Orbital flight deck uses a left menu over its game artwork.</figcaption></figure>
 <h2 id="build-and-share">Build and share</h2>
 <p>Use <code class="command-flag">--target web</code> for browsers and <code class="command-flag">--target native</code> for desktop games. The supported game runtimes are:</p>
 <p class="table-hint">Scroll to see all columns.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable table"><table><thead><tr><th scope="col">Game platform</th><th scope="col"><code class="command-flag">--platform</code></th></tr></thead><tbody><tr><td>Browser</td><td>Omit this flag</td></tr><tr><td>Linux x64</td><td><code>linux-amd64</code></td></tr><tr><td>Linux ARM64</td><td><code>linux-arm64</code></td></tr><tr><td>macOS Apple silicon</td><td><code>darwin-arm64</code></td></tr><tr><td>Windows x64</td><td><code>windows-amd64</code></td></tr><tr><td>Windows ARM64</td><td><code>windows-arm64</code></td></tr></tbody></table></div>
@@ -1702,6 +1729,13 @@ func setup(onResume func()) {}
 karty serve dist/web --addr 127.0.0.1:8080
 </code></pre>
 <p>Open <code>http://127.0.0.1:8080/</code> and test the built game. Upload the whole <code>dist/web/</code> directory to a static host, including <code>content/</code> when present. Use HTTP hosting; opening <code>index.html</code> directly is not the preview workflow.</p>
+<p>For a slow or failed browser startup, add <code>?diagnostics=1</code> to the game URL (or <code>&amp;diagnostics=1</code> when it already has a query). After loading, inspect the report in the browser&#39;s developer console:</p>
+<pre><code class="language-js">const startup = kartyStartupDiagnostics();
+console.table(startup.stages);
+console.table(startup.events);
+console.log(startup.firstFailure, startup.terminal);
+</code></pre>
+<p>Stage times use milliseconds: <code>count</code>, <code>totalMS</code>, and <code>maximumMS</code> aggregate repeated host stages, including shader preparation. Heartbeat <code>gapMS</code> records how long the main thread went between startup timer callbacks; it can help identify stalls, but does not measure device frame rate. The heartbeat stops when the game first presents or startup fails. The report keeps at most 64 stage names, 128 recent events and eight terminal events. It preserves the first failure when the runtime subsequently exits. Reports stay in memory in that page; Karty does not upload them. Omit the query parameter to leave the diagnostic stage observer and heartbeat disabled.</p>
 <h3 id="build-and-run-a-native-game">Build and run a native game</h3>
 <p>Build for your current machine, then launch it on Linux or macOS:</p>
 <pre><code class="language-sh">karty build --target native
@@ -1854,7 +1888,7 @@ karty package export --output dist/community-props-0.1.0.kpkg .
 </code></pre>
 <p>Keep the package&#39;s archive URL and checksum in <code>karty.toml</code>. The first build restores its source under ignored <code>.karty/packages/controllers-topdown/</code>. For an existing project, run <code>karty package import controllers-topdown@0.0.1</code> first; see <a href="../design/packages.html">reusable packages</a>.</p>
 <h3 id="add-a-sprite">Add a sprite</h3>
-<p>Create a project from the <a href="index.html">guide home</a>. Download <a href="assets/player.png">player.png</a> and save it as <code>assets/textures/player.png</code>. The CLI imports that image and generates <code>assets.TexturePlayer</code> on the next build. Use the generated ID when creating the sprite.</p>
+<p>Create a project from the <a href="index.html">guide home</a>. Download <a href="../assets/player.png">player.png</a> and save it as <code>assets/textures/player.png</code>. The CLI imports that image and generates <code>assets.TexturePlayer</code> on the next build. Use the generated ID when creating the sprite.</p>
 <h3 id="draw-and-play">Draw and play</h3>
 <p>Keep the project resolution at 960 by 540. Replace <code>src/main.go</code> with this scene. Change the imports if your project has a different name.</p>
 <pre><code class="language-go">package main
@@ -1956,7 +1990,7 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 <p>Positions use canvas pixels. The upper left is <code>(0, 0)</code>; X grows right and Y grows down. Sprite and circle positions mark their centres. Rectangle and text positions mark their upper-left corners.</p>
 <p><code>NewSprite2D</code> draws the imported image. <code>NewShape2D</code> draws the rectangle and circle without image files. <code>NewText2D</code> draws the instruction, and <code>SetText</code> changes it when the goal is collected. Higher layers draw above lower ones.</p>
 <p>Try another PNG, change the circle&#39;s radius or color, or move the goal. Use setters such as <code>Translate</code>, <code>SetFill</code>, and <code>SetText</code> to update existing entities instead of creating them again each frame.</p>
-<figure><img src="assets/2d-scene.jpg" alt="A 2D sprite, vector goal, and text drawn by the example." loading="lazy"><figcaption>A 2D sprite, vector goal, and text drawn by the example.</figcaption></figure>
+<figure><img src="../assets/2d-scene.jpg" alt="A 2D sprite, vector goal, and text drawn by the example." loading="lazy"><figcaption>A 2D sprite, vector goal, and text drawn by the example.</figcaption></figure>
 <h3 id="add-feedback-and-share">Add feedback and share</h3>
 <p><a href="media.html">Sound and video</a> add effects or music. <a href="share.html">Build and share</a> packages your game for the browser or desktop.</p>
 <p><a href="ui.html">KartUI</a> is optional when you need menus or reusable screen layouts. Its components work with both 2D and 3D games.</p>
@@ -1967,7 +2001,7 @@ cd my-game
 karty dev
 </code></pre>
 <p>The starter references an independently released <a href="https://karty-game.github.io/karty-packages/packages/fps-kit.html">FPS Kit</a> archive by HTTPS URL and SHA-256 in <code>karty.toml</code>. Its first build downloads and verifies the package under <code>.karty/packages/fps-kit</code>; later builds can reuse the verified cache offline. A four-metre corridor, two metres wide, connects two eight-metre rooms. They use the kit’s 256px grid, brick and concrete materials. Three crates have static collision; two are spawned with dynamic box bodies so you can push them. Keep the pinned package declaration in Git. Material normal/height/AO maps are generated during the ordinary build. Room numbers, a floor arrow and a tagged goal star demonstrate the package&#39;s transparent decals for temporary goals and points of interest. The starter also includes <code>controllers-3d</code> for player movement and mobile controls. The CLI reads <code>[level].name</code> from <code>levels/*/level.toml</code> to generate typed references such as <code>assets.LevelRoom</code>. The callback passed to <code>LoadLevel</code> receives that request&#39;s ready result; loading errors still arrive through <code>OnLevelFailed</code>.</p>
-<figure><img src="assets/hangar.jpg" alt="The Hangar sample uses the controller package to explore industrial rooms." loading="lazy"><figcaption>The Hangar sample uses the controller package to explore industrial rooms.</figcaption></figure>
+<figure><img src="../assets/hangar.jpg" alt="The Hangar sample uses the controller package to explore industrial rooms." loading="lazy"><figcaption>The Hangar sample uses the controller package to explore industrial rooms.</figcaption></figure>
 <h3 id="make-the-camera-playable">Make the camera playable</h3>
 <p>The complete <code>src/main.go</code> below attaches the controller after the room is ready. Change its module import if your project has a different name. Keep the viewport and project resolution at 960 by 540.</p>
 <pre><code class="language-go">package main
@@ -2032,7 +2066,7 @@ cd my-game
 karty dev
 </code></pre>
 <p>The starter pins the <code>controllers-isometric</code> plugin&#39;s archive and checksum in <code>karty.toml</code>. The first build restores its source under ignored <code>.karty/packages/controllers-isometric/</code>; keep the declaration in Git. For an existing project, run <code>karty package import controllers-isometric@0.0.1</code>; see <a href="../design/packages.html">reusable packages</a>. Use the room and material files from <a href="levels.html">one room</a>; the isometric starter also supplies its <code>player</code> solid prefab in <code>world.yaml</code>.</p>
-<figure><img src="assets/isometric.jpg" alt="A diagonal isometric view over connected rooms." loading="lazy"><figcaption>A diagonal isometric view over connected rooms.</figcaption></figure>
+<figure><img src="../assets/isometric.jpg" alt="A diagonal isometric view over connected rooms." loading="lazy"><figcaption>A diagonal isometric view over connected rooms.</figcaption></figure>
 <h3 id="connect-the-isometric-preset">Connect the isometric preset</h3>
 <p>The complete <code>src/main.go</code> below connects the controller to your game. Change its module imports if your project has a different name. Keep the viewport and project resolution at 960 by 540. Constructors validate their options; <code>Reset</code> clears held controls when focus changes.</p>
 <pre><code class="language-go">package main

@@ -85,7 +85,7 @@ resolution if you change it. This camera stays still. Add [first-person
 controls](fps.html) to walk around, or an [isometric camera](isometric.html) to
 view the room from above.
 
-![Hangar connects industrial rooms with open passages.](assets/hangar.jpg)
+![Hangar connects industrial rooms with open passages.](../assets/hangar.jpg)
 
 Add a second room only after you can explore the first. A connection names an
 edge in each room and opens a portal between them; see Hangar

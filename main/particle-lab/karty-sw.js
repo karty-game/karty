@@ -192,7 +192,7 @@ function validateManifest(raw, release) {
       typeof file.url !== "string" ||
       !hexPattern.test(file.sha256) ||
       !Number.isSafeInteger(file.size) ||
-      file.size < 0 ||
+      file.size <= 0 ||
       file.size > 134217728 ||
       !["startup", "background"].includes(file.role) ||
       typeof file.type !== "string" ||
@@ -205,18 +205,17 @@ function validateManifest(raw, release) {
       url.username ||
       url.password ||
       url.hash ||
-      (url.search && !(file.size === 0 && file.type === "application/wasm" && file.role === "startup")) ||
+      url.search ||
+      url.origin !== scopeURL.origin ||
       seen.has(url.href)
     )
       throw new Error("Invalid game release URL.");
-    // Sibling/CDN runtime files are permitted; all other files stay in this game.
+    // Shared complete bundles remain on this origin; background assets stay in this game.
     if (!url.href.startsWith(scopeURL.href) && file.role !== "startup")
       throw new Error("Background file escapes this game.");
     seen.add(url.href);
     total += file.size;
-    const unknownSize = file.size === 0 && file.type === "application/wasm" && file.role === "startup";
-    if (file.size === 0 && !unknownSize) throw new Error("Invalid empty game release file.");
-    return { ...file, absoluteURL: url.href, unknownSize };
+    return { ...file, absoluteURL: url.href };
   });
   if (total > 68719476736 || !files.some((file) => file.role === "startup"))
     throw new Error("Invalid game release size.");
@@ -259,8 +258,7 @@ function findFile(manifest, url) {
   }
   const exact = manifest.files.find((file) => file.absoluteURL === url.href);
   if (exact) return exact;
-  // The launcher adds v= for local files; configured CDN query strings remain
-  // part of the immutable source URL and must match exactly.
+  // The current bundle launcher adds v= cache identities for local files.
   const local = new URL(url);
   local.searchParams.delete("v");
   return manifest.files.find((file) => !new URL(file.absoluteURL).search && file.absoluteURL === local.href);
@@ -363,7 +361,7 @@ async function downloadUnshared(file, signal, uncached = false, allowUncached = 
       file.absoluteURL,
       {
         cache: "no-store",
-        redirect: file.unknownSize ? "follow" : "error",
+        redirect: "error",
         credentials: "same-origin",
         priority: "low",
       },
@@ -392,14 +390,13 @@ async function downloadUnshared(file, signal, uncached = false, allowUncached = 
           const { done, value } = await reader.read();
           touch();
           if (done) {
-            if ((!file.unknownSize && size !== file.size) || hash.digest() !== file.sha256)
+            if (size !== file.size || hash.digest() !== file.sha256)
               throw new Error("Integrity check failed for " + file.url + ".");
             controller.close();
             return;
           }
           size += value.byteLength;
-          if (size > (file.unknownSize ? 134217728 : file.size))
-            throw new Error("Decoded size exceeds release bounds for " + file.url + ".");
+          if (size > file.size) throw new Error("Decoded size exceeds release bounds for " + file.url + ".");
           hash.update(value);
           controller.enqueue(value);
         } catch (error) {
@@ -416,10 +413,9 @@ async function downloadUnshared(file, signal, uncached = false, allowUncached = 
   );
   try {
     const headers = { "Content-Type": file.type };
-    if (!file.unknownSize) headers["Content-Length"] = String(file.size);
+    headers["Content-Length"] = String(file.size);
     if (cache && !uncached && !cachingUnavailable) {
       await cache.put(contentKey(file.sha256), new Response(stream, { headers }));
-      if (file.unknownSize) await metadataWrite("size/" + file.sha256, { size });
     } else {
       const drain = stream.getReader();
       while (!(await drain.read()).done) {
@@ -448,8 +444,7 @@ async function progress(release, extra = {}) {
     totalBytes = 0,
     totalBytesKnown = true;
   for (const file of manifest.files) {
-    const size = file.unknownSize ? (await metadataRead("size/" + file.sha256))?.size : file.size;
-    if (size === undefined) totalBytesKnown = false;
+    const size = file.size;
     totalBytes += size || 0;
     if (present.has(contentKey(file.sha256))) {
       downloadedBytes += size || 0;
@@ -682,10 +677,9 @@ async function prefetch(release) {
       await download(file, current.controller.signal);
       present.add(contentKey(file.sha256));
       const count = multiplicity.get(file.sha256);
-      const size = file.unknownSize ? (await metadataRead("size/" + file.sha256))?.size || 0 : file.size;
+      const size = file.size;
       running.downloadedFiles += count;
       running.downloadedBytes += count * size;
-      if (file.unknownSize) running.totalBytes += count * size;
       // Readiness is published only after the durable completion commit below.
       running.offlineReady = false;
       await broadcast({ ...running });
@@ -865,7 +859,7 @@ self.addEventListener("fetch", (event) => {
     try {
       const response = await requestFetch(
         routedRequest,
-        { cache: "no-store", redirect: file.unknownSize ? "follow" : "error" },
+        { cache: "no-store", redirect: "error" },
         active.controller.signal,
       );
       if (!response.body) {
@@ -881,14 +875,13 @@ self.addEventListener("fetch", (event) => {
             try {
               const { done, value } = await reader.read();
               if (done) {
-                if ((!file.unknownSize && size !== file.size) || hash.digest() !== file.sha256)
+                if (size !== file.size || hash.digest() !== file.sha256)
                   throw new Error("Integrity check failed for " + file.url + ".");
                 finish();
                 controller.close();
               } else {
                 size += value.byteLength;
-                if (size > (file.unknownSize ? 134217728 : file.size))
-                  throw new Error("Decoded size exceeds release bounds for " + file.url + ".");
+                if (size > file.size) throw new Error("Decoded size exceeds release bounds for " + file.url + ".");
                 hash.update(value);
                 controller.enqueue(value);
               }
@@ -909,7 +902,7 @@ self.addEventListener("fetch", (event) => {
       headers.delete("Content-Encoding");
       headers.delete("Content-Length");
       headers.set("Content-Type", file.type);
-      if (!file.unknownSize) headers.set("Content-Length", String(file.size));
+      headers.set("Content-Length", String(file.size));
       return new Response(body, { status: response.status, statusText: response.statusText, headers });
     } catch (error) {
       finish();

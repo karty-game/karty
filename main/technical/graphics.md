@@ -52,7 +52,7 @@ define particle behavior; emitters place and schedule a preset.
 ### Preset and placement
 
 This `world.yaml` section requires `world/particles@2`. `spark` is a declared
-sprite texture, such as this [particle mask](assets/particle-spark.png).
+sprite texture, such as this [particle mask](../assets/particle-spark.png).
 
 ```yaml
 particles:

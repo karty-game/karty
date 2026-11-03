@@ -91,4 +91,4 @@ Call `Invalidate()` after changing data used by dynamic UI bindings. Test your
 layout at a narrow viewport before adding more screens. [Orbital flight
 deck](../ui-demo/) shows menus, loading, inventory, gameplay, and pause screens.
 
-![Orbital flight deck uses a left menu over its game artwork.](assets/ui-demo.jpg)
+![Orbital flight deck uses a left menu over its game artwork.](../assets/ui-demo.jpg)

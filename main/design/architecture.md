@@ -4,7 +4,7 @@ A Karty game has three main parts: a client containing your game code, levels
 containing authored content, and a host that runs and presents the game.
 The CLI builds the files that bring them together.
 
-![The client sends commands to the host and receives events. The host mounts levels and owns their runtime resources.](assets/design-architecture.svg)
+![The client sends commands to the host and receives events. The host mounts levels and owns their runtime resources.](../assets/design-architecture.svg)
 
 ## The client contains the game rules
 

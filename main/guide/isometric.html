@@ -1289,7 +1289,7 @@ cd my-game
 karty dev
 </code></pre>
 <p>The starter pins the <code>controllers-isometric</code> plugin&#39;s archive and checksum in <code>karty.toml</code>. The first build restores its source under ignored <code>.karty/packages/controllers-isometric/</code>; keep the declaration in Git. For an existing project, run <code>karty package import controllers-isometric@0.0.1</code>; see <a href="../design/packages.html">reusable packages</a>. Use the room and material files from <a href="levels.html">one room</a>; the isometric starter also supplies its <code>player</code> solid prefab in <code>world.yaml</code>.</p>
-<figure><img src="assets/isometric.jpg" alt="A diagonal isometric view over connected rooms." loading="lazy"><figcaption>A diagonal isometric view over connected rooms.</figcaption></figure>
+<figure><img src="../assets/isometric.jpg" alt="A diagonal isometric view over connected rooms." loading="lazy"><figcaption>A diagonal isometric view over connected rooms.</figcaption></figure>
 <h2 id="connect-the-isometric-preset">Connect the isometric preset</h2>
 <p>The complete <code>src/main.go</code> below connects the controller to your game. Change its module imports if your project has a different name. Keep the viewport and project resolution at 960 by 540. Constructors validate their options; <code>Reset</code> clears held controls when focus changes.</p>
 <pre><code class="language-go">package main

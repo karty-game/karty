@@ -28,7 +28,7 @@ The CLI reads `[level].name` from
 The callback passed to `LoadLevel` receives that request's ready result;
 loading errors still arrive through `OnLevelFailed`.
 
-![The Hangar sample uses the controller package to explore industrial rooms.](assets/hangar.jpg)
+![The Hangar sample uses the controller package to explore industrial rooms.](../assets/hangar.jpg)
 
 ## Make the camera playable
 

@@ -1298,7 +1298,7 @@ func setup(onResume func()) {}
 </code></pre>
 <p>Call <code>game.showMenu()</code> from <code>OnStart</code>. Open <code>ui.Pause</code> the same way from your existing input hook, for example when <code>OnKeyDown</code> receives <code>engine.KeyEscape</code>. Set a <code>playing</code> flag to false when pausing and skip game movement in <code>OnUpdate</code> until Resume sets it true. A modal panel captures input; your Go code decides whether the game simulation pauses.</p>
 <p>Layouts share structure and styles. Component callbacks change game state. Packages can also export <code>.kui</code> components/layouts, images, fonts and theme defaults through <code>karty-package.toml</code>. Import a folder or <code>.kpkg</code> with <code>karty package import</code>; compose its exported components with the same typed props and callbacks. The consuming game retains its own root, state and theme overrides. Use prefixed component/props names to avoid shared Go-scope collisions. Call <code>Invalidate()</code> after changing data used by dynamic UI bindings. Test your layout at a narrow viewport before adding more screens. <a href="../ui-demo/">Orbital flight deck</a> shows menus, loading, inventory, gameplay, and pause screens.</p>
-<figure><img src="assets/ui-demo.jpg" alt="Orbital flight deck uses a left menu over its game artwork." loading="lazy"><figcaption>Orbital flight deck uses a left menu over its game artwork.</figcaption></figure>
+<figure><img src="../assets/ui-demo.jpg" alt="Orbital flight deck uses a left menu over its game artwork." loading="lazy"><figcaption>Orbital flight deck uses a left menu over its game artwork.</figcaption></figure>
 </div>
         
       </main>

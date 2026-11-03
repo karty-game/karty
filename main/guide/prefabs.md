@@ -36,4 +36,4 @@ Keep static objects static. Visual animation does not move collision or
 gameplay query positions. For a door or moving platform, check the engine's
 supported behavior before designing the interaction.
 
-![The Hangar combines static machinery, repeating materials, and room lights.](assets/hangar.jpg)
+![The Hangar combines static machinery, repeating materials, and room lights.](../assets/hangar.jpg)

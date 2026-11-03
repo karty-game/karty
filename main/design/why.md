@@ -3,7 +3,7 @@
 I started Karty to make the engine and framework I wanted to use myself:
 write game rules in Go, build a room from simple shapes, and try it quickly.
 
-![Concept illustration of a room taking shape from outlines, reusable crates and material swatches. This is artwork, not an editor screenshot.](assets/design-room.png)
+![Concept illustration of a room taking shape from outlines, reusable crates and material swatches. This is artwork, not an editor screenshot.](../assets/design-room.png)
 
 ## Make a room and try it
 

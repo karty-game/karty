@@ -18,7 +18,7 @@ see [reusable packages](../design/packages.html).
 Use the room and material files from [one room](levels.html); the isometric
 starter also supplies its `player` solid prefab in `world.yaml`.
 
-![A diagonal isometric view over connected rooms.](assets/isometric.jpg)
+![A diagonal isometric view over connected rooms.](../assets/isometric.jpg)
 
 ## Connect the isometric preset
 

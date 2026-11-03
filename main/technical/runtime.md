@@ -95,23 +95,42 @@ their references when release completes. Project-level menu UI can outlive a lev
 Admission bounds and cancellation semantics are in
 `.karty/docs/level-lifecycle.md`.
 
-When the installed runtime supports prepared chunk streams, the CLI packages
-final render batches, material surface slots and liquid rest geometry at build
-time. The builder checks geometry and lightmap coverage before publishing the
-chunk checksum; the shipped file contains prepared streams without a duplicate
-semantic mesh. The host checks file identity and bounded stream structure, then
-uploads it without proving geometry again, rebuilding faces or tessellating
-liquid after download. Waves still animate in the vertex shader.
-The builder keeps output compatible with the installed runtime. Shader compilation
-and GPU uploads still need a live graphics device; the complete encoded chunk
-budget includes the prepared streams.
+With `world/gpu-chunks@2`, the CLI emits final cell-local vertex, index, address
+and material record buffers together with a three-layer lossless RNM KTX2.
+Channel packing, mip generation, normal fields, tangent generation and geometry
+conversion happen in the build. The host verifies the immutable KLD, decodes its
+required compression and uploads the prepared resources. Existing cells retain
+their GPU handles while other cells load; no scene merging or RNM assembly is
+part of this profile. Shader compilation and upload still require a live GPU.
+
+Static geometry uses the 96-byte `karty.webgpu-cell@2` vertex layout. Its catalog
+and payload use wire version 2 and `karty.world-gpu-chunks@2` metadata. The entry
+names stay unchanged; matching metadata, payload and host versions are required.
+The build preserves full float32 precision for all retained static attributes;
+loading does not expand static vertices into the animated vertex layout.
+
+Render cells partition coordinates only inside an explicit portal space. Their
+sector references drive portal traversal and lookahead; grid neighbors never
+imply topological adjacency. Shared material arrays remain root resources.
+Historical prepared-stream formats retain their original versioned contracts.
 
 A render chunk downloads as one immutable file. With baked lighting enabled, its
 geometry, lighting layout and completed default lightmap travel together. Its
 checksum covers all of these resources; the host publishes the chunk after the
 complete unit is validated and uploaded.
 Shared material atlases belong to the root level, which is ready before its chunks.
-For time-of-day or weather lightmaps, the initial chunk embeds its default image.
+Physical ownership prefers to keep enclosed spaces together, using convex-decomposition
+identity and broad, level openings. Doorways and height changes are preferred
+chunk boundaries. Geometry and lightmap limits still take precedence, so a large
+space may span several chunks. Explicit chunk areas remain hard grouping
+boundaries. Complete neighboring spaces may share a chunk when the combined
+limits fit. `[chunks] max_span` defaults to 48 metres per horizontal axis; set it
+to 32 for a tighter cap. It also constrains final compaction. A single oversized
+sector needs source subdivision or spatial render chunks. Spatial tile sizes must fit this configurable level limit; outdoor levels
+can raise it explicitly. Cropped terrain is checked before baking too. This policy does not change
+reflection-probe ownership.
+
+Historical time-of-day or weather lightmap profiles embed the initial default image.
 Other baked conditions are optional image modules loaded when selected. A
 replacement becomes active after its complete image is validated and uploaded.
 

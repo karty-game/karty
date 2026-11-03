@@ -1263,7 +1263,7 @@ pre code {
         
         <div class="guide-body"><h1 id="architecture">Architecture</h1>
 <p>A Karty game has three main parts: a client containing your game code, levels containing authored content, and a host that runs and presents the game. The CLI builds the files that bring them together.</p>
-<figure><img src="assets/design-architecture.svg" alt="The client sends commands to the host and receives events. The host mounts levels and owns their runtime resources." loading="lazy"><figcaption>The client sends commands to the host and receives events. The host mounts levels and owns their runtime resources.</figcaption></figure>
+<figure><img src="../assets/design-architecture.svg" alt="The client sends commands to the host and receives events. The host mounts levels and owns their runtime resources." loading="lazy"><figcaption>The client sends commands to the host and receives events. The host mounts levels and owns their runtime resources.</figcaption></figure>
 <h2 id="the-client-contains-the-game-rules">The client contains the game rules</h2>
 <p>The client is your game&#39;s Go program. It decides what happens when a player presses a button, which level to load, how the score changes and when to show a menu. Here, client means game code on both desktop and web; it does not imply a network connection or multiplayer server.</p>
 <p>The CLI compiles that code to WebAssembly and packages it in <code>game.kart</code>, the cartridge. Karty generates the game API your code calls. Your game requests actions through that API and handles updates and events from the host.</p>

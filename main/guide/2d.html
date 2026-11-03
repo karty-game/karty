@@ -1271,7 +1271,7 @@ pre code {
 </code></pre>
 <p>Keep the package&#39;s archive URL and checksum in <code>karty.toml</code>. The first build restores its source under ignored <code>.karty/packages/controllers-topdown/</code>. For an existing project, run <code>karty package import controllers-topdown@0.0.1</code> first; see <a href="../design/packages.html">reusable packages</a>.</p>
 <h2 id="add-a-sprite">Add a sprite</h2>
-<p>Create a project from the <a href="index.html">guide home</a>. Download <a href="assets/player.png">player.png</a> and save it as <code>assets/textures/player.png</code>. The CLI imports that image and generates <code>assets.TexturePlayer</code> on the next build. Use the generated ID when creating the sprite.</p>
+<p>Create a project from the <a href="index.html">guide home</a>. Download <a href="../assets/player.png">player.png</a> and save it as <code>assets/textures/player.png</code>. The CLI imports that image and generates <code>assets.TexturePlayer</code> on the next build. Use the generated ID when creating the sprite.</p>
 <h2 id="draw-and-play">Draw and play</h2>
 <p>Keep the project resolution at 960 by 540. Replace <code>src/main.go</code> with this scene. Change the imports if your project has a different name.</p>
 <pre><code class="language-go">package main
@@ -1373,7 +1373,7 @@ func movementKey(key engine.Key) (controllers.Control, bool) {
 <p>Positions use canvas pixels. The upper left is <code>(0, 0)</code>; X grows right and Y grows down. Sprite and circle positions mark their centres. Rectangle and text positions mark their upper-left corners.</p>
 <p><code>NewSprite2D</code> draws the imported image. <code>NewShape2D</code> draws the rectangle and circle without image files. <code>NewText2D</code> draws the instruction, and <code>SetText</code> changes it when the goal is collected. Higher layers draw above lower ones.</p>
 <p>Try another PNG, change the circle&#39;s radius or color, or move the goal. Use setters such as <code>Translate</code>, <code>SetFill</code>, and <code>SetText</code> to update existing entities instead of creating them again each frame.</p>
-<figure><img src="assets/2d-scene.jpg" alt="A 2D sprite, vector goal, and text drawn by the example." loading="lazy"><figcaption>A 2D sprite, vector goal, and text drawn by the example.</figcaption></figure>
+<figure><img src="../assets/2d-scene.jpg" alt="A 2D sprite, vector goal, and text drawn by the example." loading="lazy"><figcaption>A 2D sprite, vector goal, and text drawn by the example.</figcaption></figure>
 <h2 id="add-feedback-and-share">Add feedback and share</h2>
 <p><a href="media.html">Sound and video</a> add effects or music. <a href="share.html">Build and share</a> packages your game for the browser or desktop.</p>
 <p><a href="ui.html">KartUI</a> is optional when you need menus or reusable screen layouts. Its components work with both 2D and 3D games.</p>

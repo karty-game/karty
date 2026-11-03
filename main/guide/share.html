@@ -1274,6 +1274,13 @@ pre code {
 karty serve dist/web --addr 127.0.0.1:8080
 </code></pre>
 <p>Open <code>http://127.0.0.1:8080/</code> and test the built game. Upload the whole <code>dist/web/</code> directory to a static host, including <code>content/</code> when present. Use HTTP hosting; opening <code>index.html</code> directly is not the preview workflow.</p>
+<p>For a slow or failed browser startup, add <code>?diagnostics=1</code> to the game URL (or <code>&amp;diagnostics=1</code> when it already has a query). After loading, inspect the report in the browser&#39;s developer console:</p>
+<pre><code class="language-js">const startup = kartyStartupDiagnostics();
+console.table(startup.stages);
+console.table(startup.events);
+console.log(startup.firstFailure, startup.terminal);
+</code></pre>
+<p>Stage times use milliseconds: <code>count</code>, <code>totalMS</code>, and <code>maximumMS</code> aggregate repeated host stages, including shader preparation. Heartbeat <code>gapMS</code> records how long the main thread went between startup timer callbacks; it can help identify stalls, but does not measure device frame rate. The heartbeat stops when the game first presents or startup fails. The report keeps at most 64 stage names, 128 recent events and eight terminal events. It preserves the first failure when the runtime subsequently exits. Reports stay in memory in that page; Karty does not upload them. Omit the query parameter to leave the diagnostic stage observer and heartbeat disabled.</p>
 <h2 id="build-and-run-a-native-game">Build and run a native game</h2>
 <p>Build for your current machine, then launch it on Linux or macOS:</p>
 <pre><code class="language-sh">karty build --target native
