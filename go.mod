@@ -18,9 +18,10 @@ require (
 	github.com/mattn/go-isatty v0.0.24
 	github.com/muesli/termenv v0.16.0
 	github.com/pelletier/go-toml/v2 v2.4.3
-	github.com/urfave/cli/v3 v3.14.0
+	github.com/tetratelabs/wazero v1.12.0
 	github.com/ulikunitz/xz v0.5.17
-	go.yaml.in/yaml/v3 v3.0.5
+	github.com/urfave/cli/v3 v3.14.0
+	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/image v0.47.0
 	golang.org/x/mod v0.42.0
 	golang.org/x/sys v0.49.0
@@ -49,7 +50,6 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/tetratelabs/wazero v1.12.0
 	github.com/xo/terminfo v1.2.0 // indirect
 	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
 	golang.org/x/text v0.43.0 // indirect
