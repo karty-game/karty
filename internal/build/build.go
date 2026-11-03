@@ -10,7 +10,6 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"html"
 	"io"
 	"os"
 	"path/filepath"
@@ -28,7 +27,6 @@ import (
 	"github.com/karty-game/karty-ui/schema"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/assetusage"
-	"github.com/karty-game/karty/internal/brand"
 	"github.com/karty-game/karty/internal/contextio"
 	"github.com/karty-game/karty/internal/levelbuild"
 	"github.com/karty-game/karty/internal/packages"
@@ -50,7 +48,6 @@ const (
 	performanceSectionName                = "karty.performance.v1"
 	errUnsupportedTarget      staticError = "unsupported build target"
 	errHostNotFile            staticError = "host artifact is not a file"
-	errWebHostRequired        staticError = "web target requires the SDK-pinned public host; install the selected SDK or pass --host /path/to/karty-host.wasm"
 	errRegistrationCollision  staticError = "legacy registration file conflicts with the user-owned karty_register export; remove or rename it before building"
 	errSoundIdentifier        staticError = "sound names produce the same generated Go identifier"
 	errCachedAssetChanged     staticError = "cached processor output changed after validation"
@@ -60,23 +57,20 @@ const (
 
 // Options configures build tool overrides.
 type Options struct {
-	Compiler       string
-	Go             string
-	TinyGo         string
-	WasmTools      string
-	Host           string
-	Target         string
-	CDN            string
-	BundledRuntime bool
-	Platform       string
-	Development    bool
+	Compiler    string
+	Go          string
+	TinyGo      string
+	WasmTools   string
+	Host        string
+	Target      string
+	Platform    string
+	Development bool
 	// DevelopmentBakes refreshes offline lighting for the live development server.
 	// Ordinary --development builds retain their mesh-only, cache-consuming policy.
 	DevelopmentBakes bool
 	Progress         func(string)
 	Summary          func(Summary)
-	rendererDebug    bool
-	cdnHost          *cdnHost
+	hostBundle       *hostBundle
 }
 
 func (options Options) progress(label string) {
@@ -102,18 +96,6 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	if options.DevelopmentBakes && !options.Development {
 		return fmt.Errorf("development baking requires development mode: %w", os.ErrInvalid)
 	}
-	if options.BundledRuntime && options.CDN != "" {
-		return fmt.Errorf("--bundled-runtime cannot be combined with --cdn: %w", os.ErrInvalid)
-	}
-	if options.CDN != "" {
-		if options.Target != "web" {
-			return fmt.Errorf("--cdn requires --target web: %w", os.ErrInvalid)
-		}
-
-		if err := validateCDNURL(options.CDN); err != nil {
-			return err
-		}
-	}
 
 	if options.Platform != "" {
 		if options.Target == "web" {
@@ -127,6 +109,11 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 		if options.Target == "" {
 			options.Target = "native"
 		}
+	}
+	if bundle, err := readHostBundle(ctx, options.Host, options.Target, options.Platform); err != nil {
+		return err
+	} else if bundle != nil {
+		options.hostBundle = bundle
 	}
 
 	options.progress("Reading project")
@@ -146,16 +133,7 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	if config.Project.Compiler != "go" && config.Project.Compiler != "tinygo" {
 		return fmt.Errorf("compiler must be go or tinygo: %w", os.ErrInvalid)
 	}
-	if options.Target == "web" && options.CDN == "" && options.Host == "" && os.Getenv("KARTY_HOST_WEB") == "" && !options.BundledRuntime {
-		options.CDN = config.Project.Web.RuntimeURL
-		if options.CDN != "" {
-			if err := validateCDNURL(options.CDN); err != nil {
-				return err
-			}
-		}
-	}
 
-	options.rendererDebug = config.Project.Debug.Renderer
 	packageSet, err := packages.Restore(ctx, directory)
 	if err != nil {
 		return err
@@ -193,12 +171,10 @@ func RunWithOptions(ctx context.Context, directory string, options Options) erro
 	if err != nil {
 		return err
 	}
-	if options.CDN != "" {
-		options.cdnHost, err = resolveCDNHost(ctx, manifest, options.CDN, options.Host)
-		if err != nil {
-			return err
-		}
+	if err := resolveManagedHost(ctx, manifest, &options); err != nil {
+		return err
 	}
+
 	if manifest.Assets.TextureProfiles[project.DefaultTextureProfile].Processor == asset.ProcessorCopyPNGv1 {
 		config.Assets.Textures = slices.DeleteFunc(config.Assets.Textures, func(texture project.Texture) bool {
 			return texture.Inferred && strings.ToLower(filepath.Ext(texture.Source)) != ".png"
@@ -605,100 +581,27 @@ func stageRequestedTarget(
 		return nil
 	}
 
-	if options.cdnHost != nil {
-		runtime, err := toolchain.EnsureHost(ctx, options.cdnHost.Manifest, "web-runtime")
-		if err != nil {
-			return fmt.Errorf("resolve SDK web runtime: %w", err)
-		}
-
-		return stageTargetWithCDN(ctx,
-			distributionDirectory, rawDirectory, artifact, levels, "", "web", runtime, "",
-			gameTitle, options.rendererDebug, options.cdnHost,
-		)
-	}
-
-	localHost := options.Host != ""
-
-	hostTarget := options.Target
-	if options.Platform != "" {
-		hostTarget = options.Platform
-	}
-
-	if options.Host == "" {
-		var (
-			host string
-			err  error
-		)
-		if options.Target == "web" {
-			host, localHost, err = resolveWebHost(ctx, manifest)
-		} else {
-			host, err = toolchain.EnsureHost(ctx, manifest, hostTarget)
-		}
-
-		if err != nil {
-			return err
-		}
-
-		options.Host = host
-	}
-
-	var webRuntime string
-
-	if options.Target == "web" {
+	bundle := options.hostBundle
+	if bundle == nil {
 		var err error
 
-		webRuntime, err = resolveWebRuntime(ctx, manifest, options.Host, localHost)
+		bundle, err = readHostBundle(ctx, options.Host, options.Target, options.Platform)
 		if err != nil {
 			return err
 		}
 	}
 
-	return stageTarget(ctx,
-		distributionDirectory, rawDirectory, artifact, levels,
-		options.Host, options.Target, webRuntime, options.Platform, gameTitle, options.rendererDebug,
-	)
-}
-
-func resolveWebRuntime(ctx context.Context, manifest sdk.Manifest, host string, local bool) (string, error) {
-	if local {
-		path := filepath.Join(filepath.Dir(host), "wasm_exec.js")
-		if _, err := inspectHostArtifact(path); err != nil {
-			return "", fmt.Errorf("local web host requires matching wasm_exec.js alongside it: %w", err)
-		}
-
-		return path, nil
+	if bundle == nil {
+		return fmt.Errorf("a verified %s host is required: %w", sdk.HostBundleFormat, os.ErrInvalid)
 	}
 
-	path, err := toolchain.EnsureHost(ctx, manifest, "web-runtime")
-	if err != nil {
-		return "", fmt.Errorf("resolve SDK web runtime: %w", err)
-	}
-
-	return path, nil
-}
-
-func resolveWebHost(ctx context.Context, manifest sdk.Manifest) (string, bool, error) {
-	host, err := findWebHostArtifact()
-	if err == nil {
-		return host, true, nil
-	}
-
-	host, err = toolchain.EnsureHost(ctx, manifest, "web")
-	if err != nil {
-		return "", false, fmt.Errorf("web target: %w", errWebHostRequired)
-	}
-
-	return host, false, nil
-}
-
-//nolint:wsl_v5,nlreturn // The bounded host search is intentionally sequential.
-func findWebHostArtifact() (string, error) {
-	if environment := os.Getenv("KARTY_HOST_WEB"); environment != "" {
-		if mode, err := inspectHostArtifact(environment); err == nil && mode.IsRegular() {
-			return environment, nil
+	if options.Target == "web" {
+		if err := toolchain.ValidateWebHostSDK(manifest, bundle); err != nil {
+			return err
 		}
 	}
-	return "", errWebHostRequired
+
+	return stageHostBundle(ctx, bundle, distributionDirectory, rawDirectory, artifact, levels, options.Target, options.Platform, gameTitle)
 }
 
 func removeLegacyRootOutput(distributionDirectory string) error {
@@ -751,8 +654,17 @@ func includeLevelAssets(report *assetpipeline.Report, levels []levelbuild.Artifa
 			report.Summary.LevelTextureCount++
 			report.Summary.LevelSourceBytes += texture.SourceBytes
 			report.Summary.LevelOutputBytes += texture.OutputBytes
+
 			report.Summary.EstimatedDecodedLevelBytes += texture.EstimatedDecodedBytes
-			levelDecodedBytes += texture.EstimatedDecodedBytes
+			if texture.EstimatedDecodedBytes < 0 || texture.EstimatedDecodedBytes > asset.MaxDecodedTextures {
+				return fmt.Errorf("level %q texture %q: %w", builtLevel.Name, texture.Name, assetpipeline.ErrAssetResourceLimits)
+			}
+
+			if texture.Streamed {
+				report.Summary.EstimatedStreamedLevelBytes += texture.EstimatedDecodedBytes
+			} else {
+				levelDecodedBytes += texture.EstimatedDecodedBytes
+			}
 		}
 
 		if report.Summary.EstimatedDecodedBytes+levelDecodedBytes > asset.MaxDecodedTextures {
@@ -1171,131 +1083,6 @@ func resolveCompiler(ctx context.Context, compiler string, manifest sdk.Manifest
 	return "tinygo", path, nil
 }
 
-func stageTarget(ctx context.Context,
-	distributionDirectory, rawDirectory, clientArtifact string,
-	levels []levelbuild.Artifact,
-	hostArtifact, target, webRuntime, platform string,
-	gameTitle string, rendererDebug bool,
-) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
-	return stageTargetWithCDN(ctx, distributionDirectory, rawDirectory, clientArtifact, levels, hostArtifact, target, webRuntime, platform,
-		gameTitle, rendererDebug, nil)
-}
-
-func stageTargetWithCDN(ctx context.Context,
-	distributionDirectory, rawDirectory, clientArtifact string,
-	levels []levelbuild.Artifact,
-	hostArtifact, target, webRuntime, platform string,
-	gameTitle string, rendererDebug bool, cdn *cdnHost,
-) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
-	if target == "" {
-		target = "native"
-	}
-
-	if target != "native" && target != "web" {
-		return fmt.Errorf("%q: %w", target, errUnsupportedTarget)
-	}
-
-	hostMode, err := inspectHostArtifact(hostArtifact)
-	if err != nil {
-		return err
-	}
-
-	if target == "native" && hostArtifact == "" {
-		return errHostNotFile
-	}
-
-	if target == "native" {
-		if err := validateNativeHost(hostArtifact, platform); err != nil {
-			return err
-		}
-
-		hostMode = 0o755
-	}
-
-	targetDirectory := filepath.Join(distributionDirectory, target)
-	if platform != "" {
-		targetDirectory = filepath.Join(targetDirectory, platform)
-	}
-
-	if err := os.MkdirAll(targetDirectory, 0o750); err != nil {
-		return fmt.Errorf("create %s target directory: %w", target, err)
-	}
-
-	if err := stageTargetAssets(ctx, targetDirectory, clientArtifact); err != nil {
-		return err
-	}
-
-	if err := stageLevels(ctx, targetDirectory, levels, rawDirectory); err != nil {
-		return err
-	}
-
-	if err := stageVideoFiles(ctx, targetDirectory, clientArtifact, rawDirectory); err != nil {
-		return err
-	}
-
-	if err := stageAudioStreamFiles(ctx, targetDirectory, clientArtifact, rawDirectory); err != nil {
-		return err
-	}
-
-	if err := stageHostArtifact(ctx, targetDirectory, hostArtifact, target, platform, hostMode); err != nil {
-		return err
-	}
-
-	if err := os.Remove(filepath.Join(targetDirectory, "catalog.json")); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("remove legacy target catalog: %w", err)
-	}
-
-	if target == "web" {
-		return stageWebTarget(ctx, targetDirectory, webRuntime, gameTitle, rendererDebug, cdn)
-	}
-
-	return nil
-}
-
-func stageWebTarget(ctx context.Context, targetDirectory, webRuntime string, gameTitle string, rendererDebug bool, cdn *cdnHost) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
-	if err := os.Remove(filepath.Join(targetDirectory, "wasm_exec.js")); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("remove stale web artifact: %w", err)
-	}
-
-	if cdn != nil {
-		if err := os.Remove(filepath.Join(targetDirectory, "karty-host.wasm")); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("remove bundled host for CDN build: %w", err)
-		}
-	}
-
-	return stageWebShell(ctx, targetDirectory, webRuntime, gameTitle, rendererDebug, cdn)
-}
-
-//nolint:gosec // The caller supplies an explicit host path or a fixed packaged location.
-func inspectHostArtifact(path string) (os.FileMode, error) {
-	if path == "" {
-		return 0, nil
-	}
-
-	info, err := os.Stat(path)
-	if err != nil {
-		return 0, fmt.Errorf("inspect host artifact: %w", err)
-	}
-
-	if !info.Mode().IsRegular() {
-		return 0, fmt.Errorf("%s: %w", path, errHostNotFile)
-	}
-
-	return info.Mode().Perm(), nil
-}
-
 func stageTargetAssets(ctx context.Context, targetDirectory, clientArtifact string) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -1326,27 +1113,6 @@ func validateClientArtifact(ctx context.Context, directory, wasmTools, artifact 
 func removeLegacyClientArtifact(directory string) error {
 	if err := os.Remove(filepath.Join(directory, "client.wasm")); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("remove legacy client artifact: %w", err)
-	}
-
-	return nil
-}
-
-func stageHostArtifact(ctx context.Context, targetDirectory, hostArtifact, target, platform string, mode os.FileMode) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
-	if hostArtifact == "" {
-		return nil
-	}
-
-	name := toolchain.NativeHostName(platform)
-	if target == "web" {
-		name = "karty-host.wasm"
-	}
-
-	if err := copyFile(ctx, hostArtifact, filepath.Join(targetDirectory, name), mode); err != nil {
-		return fmt.Errorf("stage host artifact: %w", err)
 	}
 
 	return nil
@@ -1703,65 +1469,4 @@ func writeAssetReport(ctx context.Context, buildDirectory string, report assetpi
 	}
 
 	return nil
-}
-
-func stageWebShell(ctx context.Context, targetDirectory, wasmExec string, gameTitle string, rendererDebug bool, cdn *cdnHost) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
-	if err := copyFile(ctx, wasmExec, filepath.Join(targetDirectory, "wasm_exec.js"), 0o600); err != nil {
-		return fmt.Errorf("stage wasm_exec.js: %w", err)
-	}
-
-	clientHash, err := fileHash(ctx, filepath.Join(targetDirectory, "game.kart"))
-	if err != nil {
-		return fmt.Errorf("hash staged client: %w", err)
-	}
-
-	hostSource, err := webHostSource(ctx, targetDirectory, cdn)
-	if err != nil {
-		return err
-	}
-
-	launcher := strings.NewReplacer("@@CLIENT_HASH@@", clientHash, "@@HOST_SOURCE@@", hostSource).Replace(webLauncherTemplate)
-	if err := contextio.WriteFile(ctx, filepath.Join(targetDirectory, "karty.js"), []byte(launcher), 0o600); err != nil {
-		return fmt.Errorf("write web launcher: %w", err)
-	}
-
-	launcherHash, err := fileHash(ctx, filepath.Join(targetDirectory, "karty.js"))
-	if err != nil {
-		return fmt.Errorf("hash staged launcher: %w", err)
-	}
-
-	runtimeHash, err := fileHash(ctx, filepath.Join(targetDirectory, "wasm_exec.js"))
-	if err != nil {
-		return fmt.Errorf("hash staged runtime: %w", err)
-	}
-
-	debugScripts, err := stageRendererDebugShell(ctx, targetDirectory, rendererDebug)
-	if err != nil {
-		return err
-	}
-
-	bootstrapHash, statusHash, err := stageWebDelivery(ctx, targetDirectory)
-	if err != nil {
-		return err
-	}
-
-	index := strings.NewReplacer(
-		"@@FAVICON_URL@@", string(brand.FaviconURL()),
-		"@@GAME_TITLE@@", html.EscapeString(gameTitle),
-		"@@RENDERER_DEBUG@@", debugScripts,
-		"@@LAUNCHER_HASH@@", launcherHash,
-		"@@RUNTIME_HASH@@", runtimeHash,
-		"@@WEB_BOOTSTRAP_HASH@@", bootstrapHash,
-		"@@WEB_STATUS_HASH@@", statusHash,
-	).Replace(webIndexTemplate)
-
-	if err := contextio.WriteFile(ctx, filepath.Join(targetDirectory, "index.html"), []byte(index), 0o600); err != nil {
-		return fmt.Errorf("write web shell: %w", err)
-	}
-
-	return stageWebRelease(ctx, targetDirectory, cdn)
 }

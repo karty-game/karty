@@ -75,7 +75,7 @@ func TestDevelopmentCompilerDoesNotChangeFinalBuildSelection(t *testing.T) {
 		if err := build.RunWithOptions(
 			t.Context(),
 			root,
-			build.Options{Development: development, Go: goTool, TinyGo: tinygo, WasmTools: wasmTools},
+			build.WithVerifiedHostFixture(t, build.Options{Development: development, Go: goTool, TinyGo: tinygo, WasmTools: wasmTools}),
 		); err != nil {
 			t.Fatal(err)
 		}

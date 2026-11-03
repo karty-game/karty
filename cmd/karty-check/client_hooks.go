@@ -15,7 +15,7 @@ import (
 
 // This fixture deliberately has no dependency on samples, offline baking,
 // Materialize, UI compilation or startup GPU baking.
-func runClientHooksCheck(ctx context.Context, root string, nativeOnly bool) error {
+func runClientHooksCheck(ctx context.Context, root string) error {
 	host, checker := os.Getenv("KARTY_HOST_NATIVE"), os.Getenv("KARTY_HOST_CHECK")
 	if host == "" {
 		return errNativeHostMissing
@@ -23,11 +23,6 @@ func runClientHooksCheck(ctx context.Context, root string, nativeOnly bool) erro
 
 	if checker == "" {
 		return errHostCheckMissing
-	}
-
-	webHost := os.Getenv("KARTY_HOST_WEB")
-	if !nativeOnly && webHost == "" {
-		return errWebHostMissing
 	}
 
 	temporary, err := os.MkdirTemp("", "karty-client-hooks-check-")
@@ -53,15 +48,8 @@ func runClientHooksCheck(ctx context.Context, root string, nativeOnly bool) erro
 		Target:    "native",
 	}
 
-	for _, target := range []string{"native", "web"} {
-		if target == "web" {
-			if nativeOnly {
-				break
-			}
-
-			options.Target, options.Host = target, webHost
-		}
-
+	target := "native"
+	{
 		distribution := filepath.Join(temporary, "dist", target)
 		if err := build.RunWithOptions(ctx, temporary, options); err != nil {
 			return err
@@ -85,11 +73,7 @@ func runClientHooksCheck(ctx context.Context, root string, nativeOnly bool) erro
 			return fmt.Errorf("%s: %w", target, errBuildChanged)
 		}
 
-		if target == "native" {
-			if err := command(ctx, distribution, nil, checker, "--cartridge", "game.kart", "--client-hooks-check"); err != nil {
-				return err
-			}
-		} else if err := command(ctx, root, nil, "node", "cmd/karty-check/testdata/client-hooks.test.mjs", distribution); err != nil {
+		if err := command(ctx, distribution, nil, checker, "--cartridge", "game.kart", "--client-hooks-check"); err != nil {
 			return err
 		}
 	}

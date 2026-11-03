@@ -58,18 +58,11 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 	for _, platform := range []string{"linux-arm64", "darwin-arm64"} {
 		writeSummaryFixture(t, hostPath, nativeHeader(t, platform))
 
-		if err := stageTarget(t.Context(),
-			filepath.Join(root, "dist"),
-			raw,
-			gamePath,
-			levels,
-			hostPath,
-			"native",
-			"",
-			platform,
-			"test",
-			false,
-		); err != nil {
+		target := filepath.Join(root, "dist", "native", platform)
+		writeSummaryFixture(t, filepath.Join(target, "game.kart"), game)
+		writeSummaryFixture(t, filepath.Join(target, "karty-host"), nativeHeader(t, platform))
+
+		if err := stageLevels(t.Context(), target, levels, raw); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -114,18 +107,11 @@ func TestSummaryCountsStagedTargetAndLogicalChunks(t *testing.T) {
 	defaultHost := nativeHeader(t, runtime.GOOS+"-"+runtime.GOARCH)
 	writeSummaryFixture(t, hostPath, defaultHost)
 
-	if err := stageTarget(t.Context(),
-		filepath.Join(root, "dist"),
-		raw,
-		gamePath,
-		levels,
-		hostPath,
-		"native",
-		"",
-		"",
-		"test",
-		false,
-	); err != nil {
+	target := filepath.Join(root, "dist", "native")
+	writeSummaryFixture(t, filepath.Join(target, "game.kart"), game)
+	writeSummaryFixture(t, filepath.Join(target, "karty-host"), defaultHost)
+
+	if err := stageLevels(t.Context(), target, levels, raw); err != nil {
 		t.Fatal(err)
 	}
 
@@ -208,6 +194,10 @@ func TestSummaryDoesNotCompleteFailedBuild(t *testing.T) {
 
 func writeSummaryFixture(t *testing.T, path string, contents []byte) {
 	t.Helper()
+
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := os.WriteFile(path, contents, 0o600); err != nil {
 		t.Fatal(err)

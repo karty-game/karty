@@ -39,7 +39,7 @@ func beamAngles(camera engine.Camera3DSettings, light engine.LightSettings) (flo
 func TestTorchQuarterSecondAimAndIdle(t *testing.T) {
 	engine.FixtureBegin()
 	game := lightGame(t)
-	if game.tour.torch.Settings().Shadows || game.tour.torch.Settings().Color != engine.NewVec3(3, 2.7, 2.16) || game.tour.torch.Settings().InnerHalfAngle != .25 || game.tour.torch.Settings().OuterHalfAngle != .50 {
+	if game.tour.torch.Settings().Shadows || game.tour.torch.Settings().Color != engine.NewVec3(.9, .86, .76) || game.tour.torch.Settings().Radius != 10 || game.tour.torch.Settings().InnerHalfAngle != .16 || game.tour.torch.Settings().OuterHalfAngle != .48 {
 		t.Fatal("torch tuning changed", game.tour.torch.Settings())
 	}
 	engine.FixtureCameraSettings(game.tour.camera).Yaw, engine.FixtureCameraSettings(game.tour.camera).Pitch = 0, 0

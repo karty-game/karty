@@ -1,0 +1,173 @@
+version = '0.0.19'
+
+[api]
+version = '0.0.14'
+
+[artifacts]
+[artifacts.host]
+[artifacts.host.native]
+[artifacts.host.native.darwin-arm64]
+sha256 = 'ed50d6ea39135edb4e1e41dce7f0bf08147351fd2aefbef242f4e80667b98729'
+url = 'https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.19/karty-host-darwin-arm64'
+
+[artifacts.host.native.linux-amd64]
+sha256 = 'c002f76b9b52de61aa926b86a047ea38387821275a87201c7f4bfd90fb45f8ea'
+url = 'https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.19/karty-host-linux-amd64'
+
+[artifacts.host.native.linux-arm64]
+sha256 = 'ec0ce9ec3cb7c4c679916f4a4bfa636ec37384a6a3765b37f22a7b7663e5686c'
+url = 'https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.19/karty-host-linux-arm64'
+
+[artifacts.host.native.windows-amd64]
+sha256 = '3eaa063e2540bb30f6de496d4f2723001a9e49c02b01e94c17601410384ca9c0'
+url = 'https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.19/karty-host-windows-amd64'
+
+[artifacts.host.native.windows-arm64]
+sha256 = '78d29cc03f23ceec8facf271321f2b6b552556f0698b78bac6e68996ece389ae'
+url = 'https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.19/karty-host-windows-arm64'
+
+[artifacts.host.web]
+sha256 = 'def6cc75ce4499a908f8b9530b281851f4e4f62d8f66c64b49292f4ab0ff32e3'
+url = 'https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.19/karty-host-web.wasm'
+
+[artifacts.host.web-optimized]
+sha256 = 'c23267c111e6aa0e7cae36b2b7181b81b1e259a730997013bde8c1d61f2f1879'
+url = 'https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.19/karty-host-web.optimized.wasm'
+
+[artifacts.host.web-runtime]
+sha256 = '265b9a8216c42dad7f70e1875be3a4e686c71cccb79d0ca74f27530a500c47f1'
+url = 'https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.19/wasm_exec.js'
+
+[artifacts.materialize]
+[artifacts.materialize.darwin-arm64]
+executable = 'bin/materialize-cli'
+format = 'zip'
+sha256 = '1afd52bff3129506e7b3708b244532ba24476af1d231189e908f343cde8d8d6a'
+url = 'https://github.com/karty-game/karty-tools/releases/download/materialize-v2.0.0/materialize-2.0.0-darwin-arm64.zip'
+
+[artifacts.materialize.linux-amd64]
+executable = 'bin/materialize-cli'
+format = 'zip'
+sha256 = '676e0adfdec3945f9ffd47585faaabf7307cce0204d0cfc35eef6eb126ff41e6'
+url = 'https://github.com/karty-game/karty-tools/releases/download/materialize-v2.0.0/materialize-2.0.0-linux-amd64.zip'
+
+[artifacts.materialize.linux-arm64]
+executable = 'bin/materialize-cli'
+format = 'zip'
+sha256 = '09d93b61eca2d7f24139294a2900a86bfef911c8d7cf4535431738d292df7b92'
+url = 'https://github.com/karty-game/karty-tools/releases/download/materialize-v2.0.0/materialize-2.0.0-linux-arm64.zip'
+
+[artifacts.materialize.windows-amd64]
+executable = 'bin/materialize-cli.exe'
+format = 'zip'
+sha256 = '3dc10e0ef85471ca7846205619a511e891d2edfc9999a634a7adcd373d5b0a14'
+url = 'https://github.com/karty-game/karty-tools/releases/download/materialize-v2.0.0/materialize-2.0.0-windows-amd64.zip'
+
+[artifacts.tinygo]
+[artifacts.tinygo.darwin-arm64]
+sha256 = 'f5e0161f212fb69ad4650a4809e3ca66856e184892e80058f0d47abc64151812'
+url = 'https://github.com/tinygo-org/tinygo/releases/download/v0.43.0/tinygo0.43.0.darwin-arm64.tar.gz'
+
+[artifacts.tinygo.linux-amd64]
+sha256 = 'ca9fc6d055e3889462dea4450a2e42a92242d88b5c362a7ec39bdb563413d78a'
+url = 'https://github.com/tinygo-org/tinygo/releases/download/v0.43.0/tinygo0.43.0.linux-amd64.tar.gz'
+
+[artifacts.tinygo.linux-arm64]
+sha256 = 'a2165b9f46aff9a895a0abed54aedffab1e93317a387c6c2e9dd839425527cbd'
+url = 'https://github.com/tinygo-org/tinygo/releases/download/v0.43.0/tinygo0.43.0.linux-arm64.tar.gz'
+
+[artifacts.tinygo.windows-amd64]
+sha256 = '6239718f1a6a6abebc8a3e28aa4e639ef57e90c232dccf3a6aa0433492378c1a'
+url = 'https://github.com/tinygo-org/tinygo/releases/download/v0.43.0/tinygo0.43.0.windows-amd64.zip'
+
+[artifacts.wasm-tools]
+[artifacts.wasm-tools.darwin-arm64]
+sha256 = '801b237643cc0f4ab27ebd1745e7863e23bf194a038bc6ca8ce5618212e43669'
+url = 'https://github.com/bytecodealliance/wasm-tools/releases/download/v1.262.0/wasm-tools-1.262.0-aarch64-macos.tar.gz'
+
+[artifacts.wasm-tools.linux-amd64]
+sha256 = '655b8df67d54c3ef9b52fc237c4e94bbfbb5f5f43825245cb0940a7002a9ed65'
+url = 'https://github.com/bytecodealliance/wasm-tools/releases/download/v1.262.0/wasm-tools-1.262.0-x86_64-linux.tar.gz'
+
+[artifacts.wasm-tools.linux-arm64]
+sha256 = '729dc47a114305ed60873ce6199d403eed1da89c3aa2367eef292da358b1e8d3'
+url = 'https://github.com/bytecodealliance/wasm-tools/releases/download/v1.262.0/wasm-tools-1.262.0-aarch64-linux.tar.gz'
+
+[artifacts.wasm-tools.windows-amd64]
+sha256 = 'a39100cadac426e174e449a80db669f191b6a2e14f27c369553580ca6e9ea7e3'
+url = 'https://github.com/bytecodealliance/wasm-tools/releases/download/v1.262.0/wasm-tools-1.262.0-x86_64-windows.zip'
+
+[assets]
+[assets.capabilities]
+processors = ['qoa@1', 'qoi@1']
+runtime = ['audio-stream/qoa@1', 'sound/qoa@1', 'texture/atlas@1', 'texture/qoi@1', 'video/mpeg1@1', 'world/animations@1', 'world/chunk-ready@1', 'world/chunks@1', 'world/emission@1', 'world/environment-backdrop@1', 'world/environment-skylight@1', 'world/environment@1', 'world/environment@2', 'world/fluids@1', 'world/lighting@1', 'world/lightmaps-environment-variants@1', 'world/lightmaps-prebaked@1', 'world/lightmaps@1', 'world/material-atlas@1', 'world/material-atlas@2', 'world/material-layers@1', 'world/material-mapping@1', 'world/material-reflectance@1', 'world/particles@1', 'world/particles@2', 'world/sky@1', 'world/solid-renderers@1', 'world/static-solids@1', 'world/terrain@1', 'world/vegetation@1', 'world/vegetation@2', 'world/vegetation@3', 'world/vegetation@4', 'world/vegetation@5']
+
+[assets.sound-profiles]
+[assets.sound-profiles.effect]
+processor = 'qoa@1'
+
+[assets.sound-profiles.effect.transform]
+channels = 'preserve'
+sample_rate = 48000
+
+[assets.sound-profiles.environment]
+processor = 'qoa@1'
+
+[assets.sound-profiles.environment.transform]
+channels = 'preserve'
+sample_rate = 48000
+
+[assets.sound-profiles.music]
+processor = 'qoa@1'
+
+[assets.sound-profiles.music.transform]
+channels = 'preserve'
+sample_rate = 48000
+
+[assets.texture-profiles]
+[assets.texture-profiles.environment]
+processor = 'qoi@1'
+
+[assets.texture-profiles.environment.transform]
+bit_depth = 8
+filter = 'smooth-lanczos3'
+max_height = 4096
+max_width = 4096
+
+[assets.texture-profiles.interface]
+processor = 'qoi@1'
+
+[assets.texture-profiles.interface.transform]
+bit_depth = 8
+filter = 'smooth-lanczos3'
+max_height = 4096
+max_width = 4096
+
+[assets.texture-profiles.sprite]
+processor = 'qoi@1'
+
+[assets.texture-profiles.sprite.transform]
+bit_depth = 8
+filter = 'nearest'
+max_height = 4096
+max_width = 4096
+
+[bundle]
+sha256 = '6fc73694e6367f67677c3fc1819c52c6aa30eb560828f390890086f36e3c7081'
+url = 'https://github.com/karty-game/karty-sdk/releases/download/sdk-v0.0.19/sdk-0.0.19.zip'
+
+[docs]
+version = '0.0.16'
+
+[host]
+version = '0.0.19'
+
+[templates]
+game = '0.0.10'
+
+[tools]
+go = '1.27.3'
+materialize = '2.0.0'
+materialize-revision = '3ad39f1308e3b2b62da81f557adc6d32697b616a'
+tinygo = '0.43.0'
+wasm-tools = '1.262.0'

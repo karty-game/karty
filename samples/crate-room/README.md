@@ -44,8 +44,4 @@ triggers. [Audio](src/audio.go) infers contact from sudden speed loss because
 the SDK has no contact events; this is an impact heuristic, including crate
 collisions, rather than a material-specific contact callback.
 
-After building, run `mise run check-crate-room-effects` from the CLI root to
-exercise actual WASM particles, impact limits, listener rotation and stereo
-WebAudio. Its report and blast/smoke captures are in
-`dist/validation/crate-room-effects/`. `mise run check-crate-room-ui` checks
-desktop and touch controls separately.
+Run `mise run check-crate-room-ui` from the CLI root to check desktop and touch controls.

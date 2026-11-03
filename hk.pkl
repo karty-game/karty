@@ -23,9 +23,13 @@ steps {
     profiles = List("!format")
     check = new Command { argv = List("taplo", "lint", "--no-schema", "{{files}}") }
   }
-  ["taplo-format"] = Builtins.taplo_format
+  ["taplo-format"] = (Builtins.taplo_format) {
+    // The detached signature authenticates these exact published bytes.
+    exclude = List("internal/sdk/testdata/published-sdk-0.0.19.toml")
+  }
   ["prettier"] = (Builtins.prettier) {
     glob = List("**/*.{json,jsonc,md,mdx,yaml,yml,js,cjs,mjs,ts,tsx,css,scss,html}")
-    exclude = List("**/*.generated.*", "**/*.world.json")
+    // The upstream decoder source is immutable and checksum-pinned by gen.go.
+    exclude = List("**/*.generated.*", "**/*.world.json", "internal/characterimport/meshopt/upstream.js")
   }
 }

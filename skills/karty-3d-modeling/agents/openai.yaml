@@ -1,0 +1,4 @@
+interface:
+  display_name: "Karty 3D Modeling"
+  short_description: "Build and review reusable Karty 3D asset families"
+  default_prompt: "Use $karty-3d-modeling to build the next asset family from the approved reference art and review it efficiently on the GPU."

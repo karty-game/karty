@@ -134,8 +134,9 @@ func finalizeLevelTextures(
 	features []string,
 	metadata []byte,
 	assets *assetBuild,
+	chartSources ...[]uint32,
 ) ([]level.SourceEntry, []assetpipeline.Texture, []string, []byte, error) {
-	data, err := omitAtlasSourceTextures(data)
+	data, err := omitAtlasSourceTextures(data, chartSources...)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

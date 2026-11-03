@@ -30,7 +30,13 @@ func writeFixture(t *testing.T, path, contents string) {
 		t.Fatal(err)
 	}
 
-	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+	root, err := os.OpenRoot(filepath.Dir(path))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+
+	if err := root.WriteFile(filepath.Base(path), []byte(contents), 0o600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -81,7 +87,7 @@ func TestAssembleIsolatesPreviewsAndRemovesClosedPRs(t *testing.T) {
 func TestAssembleRejectsArtifactsBeforeReplacingPreview(t *testing.T) {
 	t.Parallel()
 
-	for _, invalid := range []string{"symlink", "metadata", "unexpected", "missing", "incomplete", "oversize"} {
+	for _, invalid := range []string{"symlink", "metadata", "unexpected", "missing", "incomplete", "oversize", "aggregate oversize"} {
 		t.Run(invalid, func(t *testing.T) {
 			t.Parallel()
 
@@ -105,6 +111,8 @@ func TestAssembleRejectsArtifactsBeforeReplacingPreview(t *testing.T) {
 				}
 			case "incomplete":
 				writeFixture(t, filepath.Join(source, "new-demo", "fixture.wasm"), "incomplete")
+			case "aggregate oversize":
+				writeOversizedAggregate(t, source)
 			case "oversize":
 				path := filepath.Join(source, "ui-demo", "fixture.wasm")
 				writeFixture(t, path, "")
@@ -122,6 +130,20 @@ func TestAssembleRejectsArtifactsBeforeReplacingPreview(t *testing.T) {
 				t.Fatal("working preview replaced before validation", err)
 			}
 		})
+	}
+}
+
+func writeOversizedAggregate(t *testing.T, source string) {
+	t.Helper()
+
+	for _, name := range []string{"ui-demo", "second-demo"} {
+		writeFixture(t, filepath.Join(source, name, "index.html"), "sample")
+		path := filepath.Join(source, name, "asset.bin")
+		writeFixture(t, path, "")
+
+		if err := os.Truncate(path, maxSampleBytes/2+1); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 

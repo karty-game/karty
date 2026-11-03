@@ -15,37 +15,27 @@ import (
 	"github.com/karty-game/karty/internal/scaffold"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/testfixture"
-	"github.com/karty-game/karty/internal/testtoolchain"
 	"github.com/karty-game/karty/internal/toolchain"
 )
 
-var errCheckMode = errors.New("select exactly one of --web, --browser, --watcher, --allocations, --ui, or --client-hooks")
+var errCheckMode = errors.New("select exactly one of --watcher, --allocations, or --client-hooks")
 
 func main() {
-	web := flag.Bool("web", false, "execute staged browser launcher with TinyGo and Go clients under Node")
-	browser := flag.Bool("browser", false, "execute the Go/Ebiten host and TinyGo client in Chromium")
 	watcher := flag.Bool("watcher", false, "check native development watcher, publication and generated-file exclusions")
 	allocations := flag.Bool("allocations", false, "check actual TinyGo guest allocation counters")
-	checkUI := flag.Bool("ui", false, "scaffold and execute the UI template in native WASM and Chromium")
-	clientHooks := flag.Bool("client-hooks", false, "execute a crafted current SDK hook/action fixture through native WASM and Chromium")
-	nativeOnly := flag.Bool("native-only", false, "with --client-hooks, run deterministic native builds and the WASM lifecycle check")
+	clientHooks := flag.Bool("client-hooks", false, "execute a crafted current SDK hook/action fixture through native WASM")
 
 	flag.Parse()
 
-	if *nativeOnly && !*clientHooks {
-		fmt.Fprintln(os.Stderr, "--native-only requires --client-hooks")
-		os.Exit(1)
-	}
-
 	if *clientHooks {
-		if *web || *browser || *watcher || *allocations || *checkUI {
+		if *watcher || *allocations {
 			fmt.Fprintln(os.Stderr, errCheckMode)
 			os.Exit(1)
 		}
 
 		root, err := os.Getwd()
 		if err == nil {
-			err = runClientHooksCheck(context.Background(), root, *nativeOnly)
+			err = runClientHooksCheck(context.Background(), root)
 		}
 
 		if err != nil {
@@ -56,28 +46,14 @@ func main() {
 		return
 	}
 
-	if *checkUI {
-		if *web || *browser || *watcher || *allocations {
-			fmt.Fprintln(os.Stderr, errCheckMode)
-			os.Exit(1)
-		}
-
-		if err := runUI(context.Background()); err != nil {
-			fmt.Fprintln(os.Stderr, "karty UI check:", err)
-			os.Exit(1)
-		}
-
-		return
-	}
-
-	if err := run(context.Background(), *web, *browser, *watcher, *allocations); err != nil {
+	if err := run(context.Background(), *watcher, *allocations); err != nil {
 		fmt.Fprintln(os.Stderr, "karty-check:", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, web, browser, watcher, allocations bool) error {
-	if err := validateCheckMode(web, browser, watcher, allocations); err != nil {
+func run(ctx context.Context, watcher, allocations bool) error {
+	if err := validateCheckMode(watcher, allocations); err != nil {
 		return err
 	}
 
@@ -93,15 +69,6 @@ func run(ctx context.Context, web, browser, watcher, allocations bool) error {
 	manifest, err := sdk.ResolveContext(ctx, release.SDKVersion())
 	if err != nil {
 		return err
-	}
-
-	var guestGo string
-
-	if web {
-		guestGo, err = testtoolchain.Go(ctx, manifest)
-		if err != nil {
-			return err
-		}
 	}
 
 	if _, err := exec.LookPath("node"); err != nil {
@@ -161,11 +128,7 @@ func run(ctx context.Context, web, browser, watcher, allocations bool) error {
 		return err
 	}
 
-	options := build.Options{Go: guestGo}
-	if web || browser {
-		options.Target = "web"
-		options.Host = os.Getenv("KARTY_HOST_WEB")
-	}
+	options := build.Options{}
 
 	if err := build.RunWithOptions(ctx, project, options); err != nil {
 		return err
@@ -178,14 +141,6 @@ func run(ctx context.Context, web, browser, watcher, allocations bool) error {
 
 	if err := build.CheckClientDependencies(ctx, project, "tinygo", tinygo, "./src"); err != nil {
 		return err
-	}
-
-	if web {
-		return checkWebCompilers(ctx, root, project, options)
-	}
-
-	if browser {
-		return command(ctx, root, nil, "node", "internal/build/testdata/browser.test.mjs", filepath.Join(project, "dist/web"))
 	}
 
 	artifact := filepath.Join(temporary, "alloccheck.kart")
@@ -228,31 +183,4 @@ func validateCheckMode(modes ...bool) error {
 	}
 
 	return nil
-}
-
-func checkWebCompilers(ctx context.Context, root, project string, options build.Options) error {
-	if err := command(
-		ctx,
-		root,
-		nil,
-		"node",
-		"internal/build/testdata/launcher.test.mjs",
-		filepath.Join(project, "dist/web"),
-	); err != nil {
-		return err
-	}
-
-	options.Compiler = "go"
-	if err := build.RunWithOptions(ctx, project, options); err != nil {
-		return err
-	}
-
-	return command(
-		ctx,
-		root,
-		[]string{"KARTY_TEST_COMPILER=go"},
-		"node",
-		"internal/build/testdata/launcher.test.mjs",
-		filepath.Join(project, "dist/web"),
-	)
 }

@@ -10,7 +10,6 @@ import (
 func TestStageForeignPlatformKeepsOtherDistributions(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	host := filepath.Join(root, "download")
 
 	game := filepath.Join(root, "game.kart")
 	if err := os.WriteFile(game, []byte("\x00asm\x01\x00\x00\x00"), 0600); err != nil {
@@ -20,11 +19,8 @@ func TestStageForeignPlatformKeepsOtherDistributions(t *testing.T) {
 	dist := filepath.Join(root, "dist")
 
 	for _, platform := range []string{"linux-arm64", "windows-arm64", "darwin-arm64"} {
-		if err := os.WriteFile(host, nativeHeader(t, platform), 0600); err != nil {
-			t.Fatal(err)
-		}
-
-		if err := stageTarget(t.Context(), dist, root, game, nil, host, "native", "", platform, "platform-test", false); err != nil {
+		bundle := nativeBundleFixture(t, platform)
+		if err := stageHostBundle(t.Context(), bundle, dist, root, game, nil, "native", platform, "platform-test"); err != nil {
 			t.Fatal(err)
 		}
 	}

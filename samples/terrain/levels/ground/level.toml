@@ -8,6 +8,42 @@ source = "world.yaml"
 [terrain]
 source = "terrain.bin"
 
+[chunks]
+enabled = true
+max_sectors = 8
+# Explicit outdoor limit; near/far spatial leaves retain their own density.
+max_span = 2048
+# Includes the cropped terrain vertex, index and heightfield resources.
+max_mesh_bytes = 16777216
+max_encoded_bytes = 16777216
+
+[chunks.spatial]
+# Preserve detailed near-water shadows while keeping the full 2 km backdrop.
+tile_size = 24
+# Share loading and GPU resources without changing the original 24 m geometry.
+load_tile_size = 96
+background_tile_size = 768
+density = 2
+background_density = 0.015625
+detail_bounds = [-96, -96, 96, 96]
+solids = ["cove-ocean", "cove-seabed"]
+# Common boundary vertices keep differently sized animated water tiles joined.
+liquid_edge_step = 2
+background_liquid_subdivisions = 1
+geometry_detail_bounds = [-96, -96, 96, 96]
+
+[lightmap]
+enabled = true
+fixed = true
+offline = true
+# Local structures keep 25 cm lighting samples. Terrain retains vertex RNM.
+density = 4
+page_size = 1024
+bake_samples = 64
+# A second diffuse bounce reaches the bunker and shaded cliff recesses.
+bake_bounces = 2
+bake_denoise = "medium"
+
 # Shared ocean surface: world animation supplies ripples and the fluid volume
 # supplies underwater medium effects. The authored geometric sea level is Z 0.
 [[textures]]

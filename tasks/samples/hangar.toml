@@ -21,7 +21,7 @@ description = "Verify ceiling fixtures remain aligned with their point sources a
 run = "go run scripts/hangar-ceiling-lights.go -check"
 
 [generate-hangar-heroes]
-description = "Regenerate the barrel hoop and reactor cap bevels with isolated bare-metal trim"
+description = "Regenerate reactor/barrel trim and supported loading-machine fittings"
 depends = ["generate-hangar-effects"]
 run = "go run scripts/hangar-hero-assets.go"
 
@@ -47,12 +47,26 @@ description = "Verify Hangar sound loops match their retained recordings and pro
 run = "go run scripts/hangar-sound-assets.go -check"
 
 [build-hangar-native]
-depends = ["build", "generate-hangar-materials", "generate-hangar-ceiling-lights", "generate-hangar-sounds"]
+depends = [
+  "build",
+  "generate-hangar-materials",
+  "generate-hangar-ceiling-lights",
+  "generate-hangar-sounds",
+  "generate-hangar-wayfinding",
+  "generate-hangar-contact",
+]
 dir = "samples/hangar"
 run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
 
 [build-hangar-web]
-depends = ["build", "generate-hangar-materials", "generate-hangar-ceiling-lights", "generate-hangar-sounds"]
+depends = [
+  "build",
+  "generate-hangar-materials",
+  "generate-hangar-ceiling-lights",
+  "generate-hangar-sounds",
+  "generate-hangar-wayfinding",
+  "generate-hangar-contact",
+]
 dir = "samples/hangar"
 run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
 
@@ -153,3 +167,19 @@ run = "mise exec go@1.27.3 tinygo@0.43.0 -- node scripts/check-hangar-fps-alloca
 [check-hangar-loop]
 description = "Compile Hangar and verify its reciprocal non-Euclidean extraction loop"
 run = "go test -timeout=9s ./internal/worldbuild/geometry -run '^TestHangarExtractionLoop$' -count=1 -v"
+
+[generate-hangar-wayfinding]
+description = "Regenerate broad acid flow and readable industrial wayfinding panels"
+run = "go run scripts/hangar-wayfinding-assets.go"
+
+[check-hangar-wayfinding]
+description = "Verify Hangar acid and sign artwork matches its deterministic generator"
+run = "go run scripts/hangar-wayfinding-assets.go -check"
+
+[generate-hangar-contact]
+description = "Regenerate localized soot and equipment-base wear"
+run = "go run scripts/hangar-contact-assets.go"
+
+[check-hangar-contact]
+description = "Verify Hangar floor residue matches its deterministic generator"
+run = "go run scripts/hangar-contact-assets.go -check"

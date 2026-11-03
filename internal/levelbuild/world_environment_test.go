@@ -23,7 +23,7 @@ func TestEnvironmentCapabilityAndPackagedWASM(t *testing.T) {
 	}
 
 	manifest = withoutRuntimeCapabilities(
-		geometrySDK(manifest),
+		currentWorldSDK(manifest),
 		asset.CapabilityWorldEnvironmentV1,
 		asset.CapabilityWorldEnvironmentBackdropV1,
 	)

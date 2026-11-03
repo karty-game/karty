@@ -10,6 +10,9 @@ import (
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty-sdk/format/worldgpuchunk"
+	"github.com/karty-game/karty-sdk/format/worldmaterial"
+	"github.com/karty-game/karty-sdk/format/worldmaterialgpu"
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 )
@@ -22,7 +25,7 @@ func TestMaterialMappingCapabilityGateAndPackagedWASM(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	selected = geometrySDK(selected)
+	selected = currentWorldSDK(selected)
 
 	selected = withoutRuntimeCapabilities(selected, asset.CapabilityWorldMaterialMappingV1)
 
@@ -39,9 +42,19 @@ func TestMaterialMappingCapabilityGateAndPackagedWASM(t *testing.T) {
 		t.Fatalf("mapping-only build: %v", err)
 	}
 
+	wanted := []string{
+		cartridge.FeatureTextureQOIv1,
+		world.FeatureMaterialMapping,
+		world.Feature,
+		worldmaterial.Feature,
+		worldmaterialgpu.Feature,
+		worldgpuchunk.Feature,
+	}
+	slices.Sort(wanted)
+
 	second, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
 	if err != nil || len(second) != 1 || !bytes.Equal(first[0].Bytes, second[0].Bytes) ||
-		!slices.Equal(first[0].Features, []string{cartridge.FeatureTextureQOIv1, world.FeatureMaterialMapping, world.Feature}) {
+		!slices.Equal(first[0].Features, wanted) {
 		t.Fatalf("mapping feature/deterministic packaging changed: %+v %v", first, err)
 	}
 
@@ -56,8 +69,8 @@ func TestMaterialMappingCapabilityGateAndPackagedWASM(t *testing.T) {
 		}
 
 		for _, wall := range sector.Walls {
-			if world.ValidateSurfaceUV(wall.UV) != nil || len(wall.UV.Projections) != 3 {
-				t.Fatal("packaged WASM omitted complete default triplanar wall mapping")
+			if world.ValidateSurfaceUV(wall.UV) != nil || len(wall.UV.Projections) != 1 {
+				t.Fatal("packaged WASM omitted complete prepared affine wall mapping")
 			}
 		}
 	}
@@ -71,7 +84,7 @@ func TestMaterialMappingGateAbsentRemainsLegacy(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	selected = geometrySDK(selected)
+	selected = currentWorldSDK(selected)
 
 	for version := 1; version <= 4; version++ {
 		root := lightingLevelFixture(t, "version: "+strconv.Itoa(version)+"\n"+lightingRoomYAML)

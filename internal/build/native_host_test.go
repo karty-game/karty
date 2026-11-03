@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/karty-game/karty/internal/toolchain"
 )
 
 // These fixtures contain parseable executable headers for each destination.
@@ -79,48 +81,10 @@ func TestNativeHostDestinationFormats(t *testing.T) {
 		}
 
 		for _, destination := range platforms {
-			err := validateNativeHost(path, destination)
+			err := toolchain.ValidateNativeHost(path, destination)
 			if (err == nil) != (source == destination) {
 				t.Fatalf("%s host for %s: %v", source, destination, err)
 			}
-		}
-	}
-}
-
-func TestNativeStageRejectsInvalidHostBeforeChangingDistribution(t *testing.T) {
-	t.Parallel()
-
-	for _, contents := range [][]byte{[]byte("\x00asm\x01\x00\x00\x00"), []byte("not an executable"), {0}, nativeHeader(t, "linux-arm64")} {
-		root := t.TempDir()
-
-		host := filepath.Join(root, "host")
-		if err := os.WriteFile(host, contents, 0o600); err != nil {
-			t.Fatal(err)
-		}
-
-		dist := filepath.Join(root, "dist")
-
-		staged := filepath.Join(dist, "native", "darwin-arm64", "karty-host")
-		if err := os.MkdirAll(filepath.Dir(staged), 0o750); err != nil {
-			t.Fatal(err)
-		}
-
-		if err := os.WriteFile(staged, []byte("previous distribution"), 0o600); err != nil {
-			t.Fatal(err)
-		}
-
-		err := stageTarget(t.Context(), dist, root, "missing-game.kart", nil, host, "native", "", "darwin-arm64", "test", false)
-		if err == nil || !strings.Contains(err.Error(), "native host") {
-			t.Fatalf("invalid host was not rejected before staging: %v", err)
-		}
-
-		if string(contents[:min(4, len(contents))]) == "\x00asm" && !strings.Contains(err.Error(), "WebAssembly") {
-			t.Fatalf("missing actionable WASM diagnostic: %v", err)
-		}
-
-		got, err := os.ReadFile(staged)
-		if err != nil || string(got) != "previous distribution" {
-			t.Fatalf("previous distribution changed: %q, %v", got, err)
 		}
 	}
 }

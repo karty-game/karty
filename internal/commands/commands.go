@@ -8,6 +8,7 @@ import (
 	newcommand "github.com/karty-game/karty/internal/commands/new"
 	"github.com/karty-game/karty/internal/commands/packagecmd"
 	"github.com/karty-game/karty/internal/commands/quality"
+	"github.com/karty-game/karty/internal/commands/reflections"
 	"github.com/karty-game/karty/internal/commands/schema"
 	"github.com/karty-game/karty/internal/commands/screenshot"
 	"github.com/karty-game/karty/internal/commands/serve"
@@ -47,6 +48,7 @@ func renderCommand() *cli.Command {
 		Usage: "bake lighting and take screenshots",
 		Commands: []*cli.Command{
 			bake.Command(),
+			reflections.Command(),
 			screenshot.Command(),
 		},
 	}

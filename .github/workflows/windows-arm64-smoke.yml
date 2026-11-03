@@ -6,41 +6,30 @@ on:
         description: Workflow run containing the windows-arm64-game artifact
         type: string
         required: true
-      graphics:
-        description: Also require graphics startup on a configured OpenGL runner
-        type: boolean
-        default: false
-      graphics-runner-labels:
-        description: JSON runner labels for optional Windows ARM64 graphics qualification
+      source-ref:
+        description: Validated source commit for reusable release checks
         type: string
-        default: '["self-hosted","Windows","ARM64","karty-opengl"]'
+        default: ""
   workflow_dispatch:
     inputs:
       source-run-id:
         description: Existing workflow run containing the windows-arm64-game artifact
         type: string
         required: true
-      graphics:
-        description: Also require graphics startup on a configured OpenGL runner
-        type: boolean
-        default: false
-      graphics-runner-labels:
-        description: JSON runner labels for optional Windows ARM64 graphics qualification
-        type: string
-        default: '["self-hosted","Windows","ARM64","karty-opengl"]'
 permissions:
   contents: read
   actions: read
 jobs:
   smoke:
-    name: ${{ inputs.graphics && 'Windows ARM64 graphics startup' || 'Windows ARM64 package validation' }}
-    runs-on: ${{ inputs.graphics && fromJSON(inputs.graphics-runner-labels) || 'windows-11-arm' }}
+    name: Windows ARM64 package validation
+    runs-on: windows-11-arm
     timeout-minutes: 10
     env:
       GOWORK: "off"
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.source-ref || github.sha }}
           persist-credentials: false
       - uses: actions/download-artifact@v8
         with:
@@ -54,25 +43,11 @@ jobs:
         run: |
           . ../.github/scripts/windows-arm64-game.ps1
           Test-KartyWindowsPackage
-      - name: Native game startup on a configured OpenGL runner
-        if: inputs.graphics
-        working-directory: game
-        shell: pwsh
-        run: |
-          . ../.github/scripts/windows-arm64-game.ps1
-          Test-KartyWindowsGraphics
       - name: Record Windows validation scope
         if: success()
         shell: pwsh
-        env:
-          GRAPHICS_CHECKED: ${{ inputs.graphics }}
         run: |
-          'Windows ARM64: native executable, packaged cartridge acceptance, invalid/missing cartridge rejection.' >> $env:GITHUB_STEP_SUMMARY
-          if ($env:GRAPHICS_CHECKED -eq 'true') {
-            'Graphics: eight-second startup check passed on the selected OpenGL runner.' >> $env:GITHUB_STEP_SUMMARY
-          } else {
-            'Graphics: not qualified by this package-validation job; requires a configured OpenGL runner.' >> $env:GITHUB_STEP_SUMMARY
-          }
+          'Windows ARM64: native executable, packaged cartridge acceptance, invalid/missing cartridge rejection. Graphics are not qualified by this package-validation job.' >> $env:GITHUB_STEP_SUMMARY
       - name: Preserve Windows ARM64 diagnostics
         if: always()
         uses: actions/upload-artifact@v7

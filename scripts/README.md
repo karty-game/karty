@@ -14,28 +14,17 @@ commands in the root `mise.toml`.
 | ----------------------------- | ---------------------------------------------------------------------------------- |
 | `smoke`                       | Build and execute a temporary project with installed public SDK and host artifacts |
 | `check-integration`           | Run the customer integration checks                                                |
-| `check-web-delivery`          | Exercise release updates, background downloads and offline caches in Chromium      |
 | `check-materialize-software`  | Check cold and warm native atlas generation with software graphics                 |
 | `check-video`                 | Exercise packaged media playback in Chromium                                       |
 | `check-local-packages`        | Check linked package edits and portable archive builds                             |
 | `check-package-ui`            | Check shared UI packages in independent Go and TinyGo games                        |
-| `check-tiled-package-web`     | Exercise the Tiled package in an independent browser game                          |
 | `check-tiled-package-archive` | Build a Tiled package consumer from an exported archive                            |
 | `check-controller-starters`   | Compile the 2D, first-person and isometric starters with Go and TinyGo             |
 
-`check-package-controllers.mjs` is called by `check-local-packages.mjs`.
 Sample-specific tasks and prerequisites are documented in the
 [sample READMEs](../samples/README.md). Checks write reports and captures under
 `dist/validation/`. Compilation, WASM execution and browser rendering are
 separate checks; record which ones passed.
-
-`check-web-delivery` generates two synthetic distributions with the production
-web staging code, then runs `check-web-delivery.mjs` against its loopback fixture
-server. Install Playwright and Chromium with `mise run install-browser` first.
-Its report is `dist/validation/web-delivery/results.json`. This check executes
-the real service worker, Fetch and CacheStorage APIs; its small WASM files do not
-establish cartridge execution or graphics. `check-web` covers staged JavaScript
-and Go/TinyGo execution separately.
 
 ## Asset and template generation
 

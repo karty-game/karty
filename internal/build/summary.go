@@ -17,7 +17,6 @@ import (
 // Bytes are on-disk bytes, not decoded memory or compressed download sizes.
 type Summary struct {
 	Project, SDK, Target, Platform, Directory string
-	HostURL                                   string
 	PreviewURL                                string
 	Levels, Chunks, Files                     int
 	Textures, Sounds, Streams                 int
@@ -50,9 +49,6 @@ func summarizeBuild(ctx context.Context, directory, name, version string, levels
 		Project: name, SDK: version, Target: target, Platform: options.Platform,
 		Directory: filepath.Join(directory, output), Levels: len(levels),
 		Textures: len(assets.Textures) + len(assets.Levels), Sounds: len(assets.Sounds), Streams: len(assets.AudioStreams),
-	}
-	if options.cdnHost != nil {
-		report.HostURL = options.cdnHost.URL
 	}
 
 	for _, level := range levels {

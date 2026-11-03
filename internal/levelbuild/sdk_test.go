@@ -2,23 +2,34 @@ package levelbuild
 
 import (
 	"slices"
+	"testing"
 
 	"github.com/karty-game/karty-sdk/format/asset"
-	"github.com/karty-game/karty-sdk/format/worldchunk"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
-// geometrySDK keeps legacy geometry fixtures independent of prepared atlases and chunks.
-// Prepared chunk tests opt in explicitly, even when the current SDK enables them.
-// Complete SDK manifests remain covered by the sample integration builds.
-func geometrySDK(manifest sdk.Manifest) sdk.Manifest {
-	return withoutRuntimeCapabilities(
-		manifest,
-		asset.CapabilityWorldMaterialAtlasV1,
-		asset.CapabilityWorldMaterialAtlasV2,
+// currentWorldSDK keeps the selected GPU2 material/cell contracts. Individual
+// image tests can inspect standalone source textures without enabling 2D atlases.
+func currentWorldSDK(manifest sdk.Manifest) sdk.Manifest {
+	return withoutRuntimeCapabilities(manifest, asset.CapabilityTextureAtlasV1)
+}
+
+func TestCurrentWorldSDKPreservesPreparedGeometry(t *testing.T) {
+	t.Parallel()
+
+	selected := sdk.Manifest{}
+	selected.Assets.Capabilities.Runtime = []asset.Capability{
+		asset.CapabilityWorldGPUChunksV2,
+		asset.CapabilityWorldMaterialGPUV1,
 		asset.CapabilityTextureAtlasV1,
-		asset.Capability(worldchunk.ReadyFeature),
-	)
+	}
+
+	filtered := currentWorldSDK(selected)
+	if !slices.Contains(filtered.Assets.Capabilities.Runtime, asset.CapabilityWorldGPUChunksV2) ||
+		!slices.Contains(filtered.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialGPUV1) ||
+		len(selected.Assets.Capabilities.Runtime) != 3 {
+		t.Fatal("fixture discarded current prepared contracts or changed the SDK")
+	}
 }
 
 func withoutRuntimeCapabilities(manifest sdk.Manifest, excluded ...asset.Capability) sdk.Manifest {

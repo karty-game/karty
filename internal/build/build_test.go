@@ -49,14 +49,14 @@ func TestRunBuildsSelfDescribingClientSummary(t *testing.T) {
 
 	var completed int
 
-	runErr := build.RunWithOptions(context.Background(), directory, build.Options{
+	runErr := build.RunWithOptions(context.Background(), directory, build.WithVerifiedHostFixture(t, build.Options{
 		TinyGo: tinyGo, WasmTools: wasmTools,
 		Progress: func(label string) { activities = append(activities, label) },
 		Summary: func(report build.Summary) {
 			summary = report
 			completed++
 		},
-	})
+	}))
 	if runErr != nil {
 		t.Fatalf("Run() error = %v", runErr)
 	}
@@ -337,32 +337,34 @@ func TestRunStagesWebTarget(t *testing.T) {
 
 	tinyGo, wasmTools := buildTools(t)
 
-	host := filepath.Join(t.TempDir(), "karty-host.wasm")
-	if err := os.WriteFile(host, []byte("host"), 0o600); err != nil {
+	options := build.WithVerifiedHostFixture(t, build.Options{TinyGo: tinyGo, WasmTools: wasmTools, Target: "web"})
+	host := options.Host
+	runtimePath := filepath.Join(host, "wasm_exec.js")
+
+	webRuntime, err := os.ReadFile(runtimePath)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	options := build.Options{TinyGo: tinyGo, WasmTools: wasmTools, Host: host, Target: "web"}
+	if err := os.Remove(runtimePath); err != nil {
+		t.Fatal(err)
+	}
+
 	if err := build.RunWithOptions(
 		context.Background(),
 		directory,
 		options,
 	); err == nil ||
-		!strings.Contains(err.Error(), "matching wasm_exec.js") {
+		!strings.Contains(err.Error(), "wasm_exec.js") {
 		t.Fatalf("missing companion runtime was not rejected: %v", err)
 	}
 
-	webRuntime := []byte("// runtime shipped with this exact host\n")
-	if err := os.WriteFile(filepath.Join(filepath.Dir(host), "wasm_exec.js"), webRuntime, 0o600); err != nil {
+	// #nosec G703 -- runtimePath belongs to the synthetic host fixture beneath t.TempDir.
+	if err := os.WriteFile(runtimePath, webRuntime, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
-	err = build.RunWithOptions(context.Background(), directory, build.Options{
-		TinyGo:    tinyGo,
-		WasmTools: wasmTools,
-		Host:      host,
-		Target:    "web",
-	})
+	err = build.RunWithOptions(context.Background(), directory, options)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -375,7 +377,10 @@ func TestRunStagesWebTarget(t *testing.T) {
 	for _, path := range []string{
 		"dist/web/game.kart",
 		"dist/web/index.html",
-		"dist/web/karty.js",
+		"dist/web/bootstrap.mjs",
+		"dist/web/texture-codec.mjs",
+		"dist/web/texture-worker.mjs",
+		"dist/web/transcoder.wasm",
 	} {
 		if _, statErr := os.Stat(filepath.Join(directory, path)); statErr != nil {
 			t.Errorf("staged %s: %v", path, statErr)
@@ -437,7 +442,7 @@ var retainedTexture = engine.DynamicTexture("sprites.unused")
 
 	tinyGo, wasmTools := buildTools(t)
 
-	options := build.Options{TinyGo: tinyGo, WasmTools: wasmTools}
+	options := build.WithVerifiedHostFixture(t, build.Options{TinyGo: tinyGo, WasmTools: wasmTools})
 	if err := build.RunWithOptions(context.Background(), directory, options); err != nil {
 		t.Fatal(err)
 	}
@@ -485,7 +490,8 @@ func TestRunRetainsExplicitlyKeptTexture(t *testing.T) {
 	}
 
 	tinyGo, wasmTools := buildTools(t)
-	if err := build.RunWithOptions(context.Background(), directory, build.Options{TinyGo: tinyGo, WasmTools: wasmTools}); err != nil {
+	if err := build.RunWithOptions(context.Background(), directory,
+		build.WithVerifiedHostFixture(t, build.Options{TinyGo: tinyGo, WasmTools: wasmTools})); err != nil {
 		t.Fatal(err)
 	}
 

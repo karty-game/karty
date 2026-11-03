@@ -68,7 +68,7 @@ try {
   // Discard the import's restored cache. Ordinary build must restore solely from
   // the copied archive, rather than using the source-linked game's old cache.
   await rm(resolve(game, ".karty"), { recursive: true, force: true });
-  await command(cli, ["build", "--target", "web", "--bundled-runtime", ...(host ? ["--host", host] : [])], game);
+  await command(cli, ["build", "--target", "web", ...(host ? ["--host", host] : [])], game);
   const moduleOutput = await command(go, ["list", "-m", "-json", "github.com/karty-game/tiled"], game);
   const module = JSON.parse(moduleOutput);
   assert.equal(module.Path, "github.com/karty-game/tiled");

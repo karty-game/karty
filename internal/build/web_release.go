@@ -49,7 +49,7 @@ type webReleasePointer struct {
 // stageWebRelease publishes the immutable manifest before its discovery
 // pointer. Existing release manifests and content-addressed assets are retained
 // so deployment tools can keep serving files still used by older sessions.
-func stageWebRelease(ctx context.Context, directory string, host *cdnHost) error {
+func stageWebRelease(ctx context.Context, directory string, startup ...string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func stageWebRelease(ctx context.Context, directory string, host *cdnHost) error
 
 	defer root.Close()
 
-	manifest, err := collectWebRelease(ctx, root, host)
+	manifest, err := collectWebRelease(ctx, root, startup...)
 	if err != nil {
 		return err
 	}
@@ -97,10 +97,14 @@ func stageWebRelease(ctx context.Context, directory string, host *cdnHost) error
 	return replaceWebReleasePointer(ctx, root, append(pointer, '\n'))
 }
 
-func collectWebRelease(ctx context.Context, root *os.Root, host *cdnHost) (webReleaseManifest, error) {
+func collectWebRelease(ctx context.Context, root *os.Root, startup ...string) (webReleaseManifest, error) {
 	manifest := webReleaseManifest{Version: webReleaseVersion}
 
-	for _, name := range []string{"index.html", "karty.js", "wasm_exec.js", "game.kart", "karty-web.js"} {
+	if len(startup) == 0 {
+		startup = []string{"index.html", "game.kart", "karty-web.js"}
+	}
+
+	for _, name := range startup {
 		entry, err := inspectWebReleaseFile(ctx, root, name, "startup")
 		if err != nil {
 			return manifest, err
@@ -109,7 +113,7 @@ func collectWebRelease(ctx context.Context, root *os.Root, host *cdnHost) (webRe
 		manifest.Files = append(manifest.Files, entry)
 	}
 
-	for _, name := range []string{"renderer-debug.js", "karty-web-status.js"} {
+	for _, name := range []string{"karty-web-status.js"} {
 		if _, err := root.Lstat(name); err == nil {
 			entry, err := inspectWebReleaseFile(ctx, root, name, "startup")
 			if err != nil {
@@ -122,30 +126,12 @@ func collectWebRelease(ctx context.Context, root *os.Root, host *cdnHost) (webRe
 		}
 	}
 
-	if host == nil {
-		entry, err := inspectWebReleaseFile(ctx, root, "karty-host.wasm", "startup")
-		if err != nil {
-			return manifest, err
-		}
-
-		manifest.Files = append(manifest.Files, entry)
-	} else {
-		if err := validateCDNURL(host.URL); err != nil {
-			return manifest, err
-		}
-
-		if !validWebReleaseDigest(host.SHA256) {
-			return manifest, fmt.Errorf("shared web host metadata is invalid: %w", os.ErrInvalid)
-		}
-
-		// Signed SDK metadata currently has no decoded size. Zero is allowed
-		// only for this shared host: the worker still enforces the host's
-		// 128 MiB decoded cap and verifies its mandatory digest. CDN builds
-		// need not download and duplicate the host just to measure its size.
-		manifest.Files = append(manifest.Files, webReleaseFile{
-			URL: host.URL, SHA256: host.SHA256, Size: 0, Type: "application/wasm", Role: "startup",
-		})
+	entry, err := inspectWebReleaseFile(ctx, root, "karty-host.wasm", "startup")
+	if err != nil {
+		return manifest, err
 	}
+
+	manifest.Files = append(manifest.Files, entry)
 
 	entries, err := webReleaseContent(root)
 	if err != nil {
@@ -267,7 +253,7 @@ func inspectWebReleaseFile(ctx context.Context, root *os.Root, name, role string
 	switch path.Ext(name) {
 	case ".html":
 		entry.Type = "text/html; charset=utf-8"
-	case ".js":
+	case ".js", ".mjs":
 		entry.Type = "text/javascript; charset=utf-8"
 	case ".wasm", ".kart", ".kld":
 		entry.Type = "application/wasm"

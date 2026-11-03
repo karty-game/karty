@@ -12,8 +12,12 @@ near = 0.05
 far = 120
 ortho_height = 50
 
+[[project.performance.profiles]]
+name = "low"
+floor_reflections = true
+
 [sdk]
-version = "0.0.19"
+version = "0.1.0"
 
 [[assets.sound]]
 name = "reactor-hum"

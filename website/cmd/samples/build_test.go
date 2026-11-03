@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/karty-game/karty/internal/release"
+	"github.com/pelletier/go-toml/v2"
 )
 
 func TestSampleBakeLevelsSelectConfiguredOfflineRecipes(t *testing.T) {
@@ -92,13 +92,13 @@ func TestSampleBuildBakesBeforeWebPackaging(t *testing.T) {
 	for _, scenario := range []struct {
 		name    string
 		levels  []string
+		fixed   []string
 		want    [][]string
 		failure []string
-		cdnURL  string
 	}{
 		{name: "offline", levels: []string{"a", "z"}, want: [][]string{{"render", "bake", "--incremental", "--level", "a"}, {"render", "bake", "--incremental", "--level", "z"}, {"build", "--target", "web"}}},
 		{name: "no bake", want: [][]string{{"build", "--target", "web"}}},
-		{name: "CDN", cdnURL: "../runtime/" + release.SDKVersion() + "/host.wasm", levels: []string{"a"}, want: [][]string{{"render", "bake", "--incremental", "--level", "a"}, {"build", "--target", "web", "--cdn", "../runtime/" + release.SDKVersion() + "/host.wasm"}}},
+		{name: "fixed chunks bake during build", fixed: []string{"ground"}, want: [][]string{{"build", "--target", "web"}}},
 		{name: "failed bake", levels: []string{"broken", "z"}, want: [][]string{{"render", "bake", "--incremental", "--level", "broken"}}, failure: []string{"render", "bake", "--incremental", "--level", "broken"}},
 		{name: "failed build", levels: []string{"a"}, want: [][]string{{"render", "bake", "--incremental", "--level", "a"}, {"build", "--target", "web"}}, failure: []string{"build", "--target", "web"}},
 	} {
@@ -108,6 +108,14 @@ func TestSampleBuildBakesBeforeWebPackaging(t *testing.T) {
 			directory := t.TempDir()
 			for _, name := range scenario.levels {
 				writeFixture(t, filepath.Join(directory, "levels", name, "level.toml"), "[lightmap]\nenabled = true\noffline = true\n")
+			}
+
+			for _, name := range scenario.fixed {
+				writeFixture(
+					t,
+					filepath.Join(directory, "levels", name, "level.toml"),
+					"[lightmap]\nenabled = true\noffline = true\nfixed = true\n[chunks]\nenabled = true\n",
+				)
 			}
 
 			var commands [][]string
@@ -128,7 +136,7 @@ func TestSampleBuildBakesBeforeWebPackaging(t *testing.T) {
 				return nil
 			}
 
-			err := buildSampleWithRunner(directory, "fixture-karty", scenario.cdnURL, run)
+			err := buildSampleWithRunner(directory, "fixture-karty", run)
 			if scenario.failure == nil && err != nil || scenario.failure != nil && !errors.Is(err, failure) {
 				t.Fatalf("build result = %v, expected failure = %v", err, scenario.failure)
 			}
@@ -172,7 +180,7 @@ func TestSampleBuildKeepsRepositoryAndGuestCompilersSeparate(t *testing.T) {
 
 		return nil
 	})
-	if err := buildSampleWithRunner(directory, "fixture-karty", "", run); err != nil {
+	if err := buildSampleWithRunner(directory, "fixture-karty", run); err != nil {
 		t.Fatal(err)
 	}
 
@@ -221,7 +229,8 @@ func TestSampleBakeLevelsMatchCurrentProjects(t *testing.T) {
 	t.Parallel()
 
 	for name, want := range map[string][]string{
-		"hangar":       {"hangar"},
+		"hangar":       nil,
+		"terrain":      nil,
 		"crate-room":   {"room"},
 		"ui-demo":      nil,
 		"media-lab":    nil,
@@ -230,6 +239,31 @@ func TestSampleBakeLevelsMatchCurrentProjects(t *testing.T) {
 		names, err := sampleBakeLevels(filepath.Join("..", "..", "..", "samples", name))
 		if err != nil || !slices.Equal(names, want) {
 			t.Fatalf("%s offline recipes: %v, %v", name, names, err)
+		}
+	}
+}
+
+func TestSampleFixedChunkRecipesMatchCurrentProjects(t *testing.T) {
+	t.Parallel()
+
+	for sample, name := range map[string]string{"hangar": "hangar", "terrain": "ground"} {
+		path := filepath.Join("..", "..", "..", "samples", sample, "levels", name, "level.toml")
+
+		contents, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var config struct {
+			Lightmap struct{ Enabled, Offline, Fixed bool } `toml:"lightmap"`
+			Chunks   struct{ Enabled bool }                 `toml:"chunks"`
+		}
+		if err = toml.Unmarshal(contents, &config); err != nil {
+			t.Fatal(err)
+		}
+
+		if !config.Lightmap.Enabled || !config.Lightmap.Offline || !config.Lightmap.Fixed || !config.Chunks.Enabled {
+			t.Fatalf("%s must bake fixed chunk lighting during build: %+v", sample, config)
 		}
 	}
 }

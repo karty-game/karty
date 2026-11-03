@@ -27,7 +27,7 @@ func TestWorldSkyPackagingCapabilityAndDeterminism(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	manifest = withoutRuntimeCapabilities(geometrySDK(manifest), asset.Capability(worldsky.Feature))
+	manifest = withoutRuntimeCapabilities(currentWorldSDK(manifest), asset.Capability(worldsky.Feature))
 	input := "version: 12\nenvironment: {preset: daylight, sky: {cloud_sparse: cloud.png, horizon: cloud.png, settings: {horizon_haze: 0.4, horizon_uv_scale: 1.5}}}\n" + lightingRoomYAML
 	root := lightingLevelFixture(t, input)
 
@@ -111,7 +111,7 @@ func TestWorldSkySourcesRejectSymlinkEscape(t *testing.T) {
 		root,
 		4,
 		"",
-		geometrySDK(manifest),
+		currentWorldSDK(manifest),
 	); !errors.Is(err, ErrSource) ||
 		artifacts != nil {
 		t.Fatalf("escaping sky source accepted: %v", err)
@@ -128,7 +128,7 @@ func TestWorldSkyAbsentKeepsLegacyLevelAssetFree(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	manifest = withoutRuntimeCapabilities(geometrySDK(manifest), asset.Capability(worldsky.Feature))
+	manifest = withoutRuntimeCapabilities(currentWorldSDK(manifest), asset.Capability(worldsky.Feature))
 
 	artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
 	if err != nil {

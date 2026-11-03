@@ -1033,7 +1033,7 @@ rooms:
   - id: arrival
     floor: { c: 0.00 }
     ceiling: { c: 4.80 }
-    floor_material: floor
+    floor_material: arrival-floor
     ceiling_material: ceiling
     ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
     wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
@@ -1243,10 +1243,11 @@ rooms:
   - id: control
     floor: { c: 1.20 }
     ceiling: { c: 5.80 }
-    floor_material: grate
+    floor_material: floor
+    floor_uv: { mode: planar, anchor: world, scale: { x: 4, y: 4 } }
     ceiling_material: ceiling
-    ceiling_uv: { mode: planar, anchor: world, scale: { x: 3, y: 3 } }
-    wall_uv: { mode: planar, anchor: world, scale: { x: 3, y: 4 } }
+    ceiling_uv: { mode: planar, anchor: world, scale: { x: 6, y: 6 } }
+    wall_uv: { mode: planar, anchor: world, scale: { x: 4, y: 4 } }
     wall_secondary:
       texture: wall-weathering
       strength: 0.50
@@ -1256,7 +1257,7 @@ rooms:
       bottom: { texture: steel, height: 0.48, repeat_width: 2 }
     floor_secondary:
       texture: wall-weathering
-      strength: 0.35
+      strength: 0.20
       uv: { scale: { x: 6, y: 6 } }
     boundary:
       - { id: edge-0, start: { x: -14.00, y: 16.00 }, end: { x: -6.00, y: 16.00 }, material: olive }
@@ -5615,9 +5616,9 @@ solids:
       - { x: 26.2990, y: -1.7500 }
     bottom: { c: 0.000 }
     top: { c: 3.900 }
-    side_material: brick
+    side_material: machine-painted
     top_material: steel
-    bottom_material: brick
+    bottom_material: machine-painted
     collision: true
   - id: loading-cap-0
     footprint:
@@ -5635,9 +5636,9 @@ solids:
       - { x: 26.3856, y: -1.8000 }
     bottom: { c: 3.900 }
     top: { c: 4.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: true
   - id: loading-machine-1
     footprint:
@@ -5655,9 +5656,9 @@ solids:
       - { x: 32.2990, y: -1.7500 }
     bottom: { c: 0.000 }
     top: { c: 3.900 }
-    side_material: brick
+    side_material: machine-painted
     top_material: steel
-    bottom_material: brick
+    bottom_material: machine-painted
     collision: true
   - id: loading-cap-1
     footprint:
@@ -5675,10 +5676,234 @@ solids:
       - { x: 32.3856, y: -1.8000 }
     bottom: { c: 3.900 }
     top: { c: 4.200 }
-    side_material: steel
-    top_material: steel
-    bottom_material: steel
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
     collision: true
+  # BEGIN LOADING MACHINE FITTINGS
+  - id: loading-machine-0-base-collar
+    footprint:
+      [
+        { x: 26.5600, y: -1.0000 },
+        { x: 26.3510, y: -0.2200 },
+        { x: 25.7800, y: 0.3510 },
+        { x: 25.0000, y: 0.5600 },
+        { x: 24.2200, y: 0.3510 },
+        { x: 23.6490, y: -0.2200 },
+        { x: 23.4400, y: -1.0000 },
+        { x: 23.6490, y: -1.7800 },
+        { x: 24.2200, y: -2.3510 },
+        { x: 25.0000, y: -2.5600 },
+        { x: 25.7800, y: -2.3510 },
+        { x: 26.3510, y: -1.7800 },
+      ]
+    bottom: { c: 0.4 }
+    top: { c: 0.63 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: loading-machine-0-upper-collar
+    footprint:
+      [
+        { x: 26.5400, y: -1.0000 },
+        { x: 26.3337, y: -0.2300 },
+        { x: 25.7700, y: 0.3337 },
+        { x: 25.0000, y: 0.5400 },
+        { x: 24.2300, y: 0.3337 },
+        { x: 23.6663, y: -0.2300 },
+        { x: 23.4600, y: -1.0000 },
+        { x: 23.6663, y: -1.7700 },
+        { x: 24.2300, y: -2.3337 },
+        { x: 25.0000, y: -2.5400 },
+        { x: 25.7700, y: -2.3337 },
+        { x: 26.3337, y: -1.7700 },
+      ]
+    bottom: { c: 3.52 }
+    top: { c: 3.7 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: loading-machine-0-access-frame
+    footprint:
+      [{ x: 24.4500, y: 0.3400 }, { x: 25.5500, y: 0.3400 }, { x: 25.5500, y: 0.6600 }, { x: 24.4500, y: 0.6600 }]
+    bottom: { c: 1.4 }
+    top: { c: 2.65 }
+    side_material: ribbed
+    top_material: ribbed
+    bottom_material: ribbed
+    collision: false
+  - id: loading-machine-0-access-cover
+    footprint:
+      [{ x: 24.5300, y: 0.6300 }, { x: 25.4700, y: 0.6300 }, { x: 25.4700, y: 0.7000 }, { x: 24.5300, y: 0.7000 }]
+    bottom: { c: 1.48 }
+    top: { c: 2.57 }
+    side_material: machine-painted
+    top_material: machine-painted
+    bottom_material: machine-painted
+    collision: false
+  - id: loading-machine-0-access-handle
+    footprint:
+      [{ x: 25.2900, y: 0.6800 }, { x: 25.3700, y: 0.6800 }, { x: 25.3700, y: 0.7900 }, { x: 25.2900, y: 0.7900 }]
+    bottom: { c: 1.81 }
+    top: { c: 2.23 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: loading-machine-0-inlet
+    footprint:
+      [
+        { x: 26.2000, y: -1.0000 },
+        { x: 26.1786, y: -0.9200 },
+        { x: 26.1200, y: -0.8614 },
+        { x: 26.0400, y: -0.8400 },
+        { x: 25.9600, y: -0.8614 },
+        { x: 25.9014, y: -0.9200 },
+        { x: 25.8800, y: -1.0000 },
+        { x: 25.9014, y: -1.0800 },
+        { x: 25.9600, y: -1.1386 },
+        { x: 26.0400, y: -1.1600 },
+        { x: 26.1200, y: -1.1386 },
+        { x: 26.1786, y: -1.0800 },
+      ]
+    bottom: { c: 4.14 }
+    top: { c: 4.76 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: loading-machine-0-service-duct
+    footprint:
+      [{ x: 25.9000, y: -4.9400 }, { x: 26.1800, y: -4.9400 }, { x: 26.1800, y: -0.8600 }, { x: 25.9000, y: -0.8600 }]
+    bottom: { c: 4.6 }
+    top: { c: 4.8 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: loading-machine-0-wall-connection
+    footprint:
+      [{ x: 25.8000, y: -5.0000 }, { x: 26.2800, y: -5.0000 }, { x: 26.2800, y: -4.8800 }, { x: 25.8000, y: -4.8800 }]
+    bottom: { c: 4.42 }
+    top: { c: 4.97 }
+    side_material: ribbed
+    top_material: ribbed
+    bottom_material: ribbed
+    collision: false
+  - id: loading-machine-1-base-collar
+    footprint:
+      [
+        { x: 32.5600, y: -1.0000 },
+        { x: 32.3510, y: -0.2200 },
+        { x: 31.7800, y: 0.3510 },
+        { x: 31.0000, y: 0.5600 },
+        { x: 30.2200, y: 0.3510 },
+        { x: 29.6490, y: -0.2200 },
+        { x: 29.4400, y: -1.0000 },
+        { x: 29.6490, y: -1.7800 },
+        { x: 30.2200, y: -2.3510 },
+        { x: 31.0000, y: -2.5600 },
+        { x: 31.7800, y: -2.3510 },
+        { x: 32.3510, y: -1.7800 },
+      ]
+    bottom: { c: 0.4 }
+    top: { c: 0.63 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: loading-machine-1-upper-collar
+    footprint:
+      [
+        { x: 32.5400, y: -1.0000 },
+        { x: 32.3337, y: -0.2300 },
+        { x: 31.7700, y: 0.3337 },
+        { x: 31.0000, y: 0.5400 },
+        { x: 30.2300, y: 0.3337 },
+        { x: 29.6663, y: -0.2300 },
+        { x: 29.4600, y: -1.0000 },
+        { x: 29.6663, y: -1.7700 },
+        { x: 30.2300, y: -2.3337 },
+        { x: 31.0000, y: -2.5400 },
+        { x: 31.7700, y: -2.3337 },
+        { x: 32.3337, y: -1.7700 },
+      ]
+    bottom: { c: 3.52 }
+    top: { c: 3.7 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: loading-machine-1-access-frame
+    footprint:
+      [{ x: 30.4500, y: 0.3400 }, { x: 31.5500, y: 0.3400 }, { x: 31.5500, y: 0.6600 }, { x: 30.4500, y: 0.6600 }]
+    bottom: { c: 1.4 }
+    top: { c: 2.65 }
+    side_material: ribbed
+    top_material: ribbed
+    bottom_material: ribbed
+    collision: false
+  - id: loading-machine-1-access-cover
+    footprint:
+      [{ x: 30.5300, y: 0.6300 }, { x: 31.4700, y: 0.6300 }, { x: 31.4700, y: 0.7000 }, { x: 30.5300, y: 0.7000 }]
+    bottom: { c: 1.48 }
+    top: { c: 2.57 }
+    side_material: machine-painted
+    top_material: machine-painted
+    bottom_material: machine-painted
+    collision: false
+  - id: loading-machine-1-access-handle
+    footprint:
+      [{ x: 31.2900, y: 0.6800 }, { x: 31.3700, y: 0.6800 }, { x: 31.3700, y: 0.7900 }, { x: 31.2900, y: 0.7900 }]
+    bottom: { c: 1.81 }
+    top: { c: 2.23 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: loading-machine-1-inlet
+    footprint:
+      [
+        { x: 32.2000, y: -1.0000 },
+        { x: 32.1786, y: -0.9200 },
+        { x: 32.1200, y: -0.8614 },
+        { x: 32.0400, y: -0.8400 },
+        { x: 31.9600, y: -0.8614 },
+        { x: 31.9014, y: -0.9200 },
+        { x: 31.8800, y: -1.0000 },
+        { x: 31.9014, y: -1.0800 },
+        { x: 31.9600, y: -1.1386 },
+        { x: 32.0400, y: -1.1600 },
+        { x: 32.1200, y: -1.1386 },
+        { x: 32.1786, y: -1.0800 },
+      ]
+    bottom: { c: 4.14 }
+    top: { c: 4.76 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: loading-machine-1-service-duct
+    footprint:
+      [{ x: 31.9000, y: -4.9400 }, { x: 32.1800, y: -4.9400 }, { x: 32.1800, y: -0.8600 }, { x: 31.9000, y: -0.8600 }]
+    bottom: { c: 4.6 }
+    top: { c: 4.8 }
+    side_material: hero-steel
+    top_material: hero-steel
+    bottom_material: hero-steel
+    collision: false
+  - id: loading-machine-1-wall-connection
+    footprint:
+      [{ x: 31.8000, y: -5.0000 }, { x: 32.2800, y: -5.0000 }, { x: 32.2800, y: -4.8800 }, { x: 31.8000, y: -4.8800 }]
+    bottom: { c: 4.42 }
+    top: { c: 4.97 }
+    side_material: ribbed
+    top_material: ribbed
+    bottom_material: ribbed
+    collision: false
+  # END LOADING MACHINE FITTINGS
   - id: loading-girder-0
     footprint: [{ x: 20.000, y: 0.000 }, { x: 35.000, y: 0.000 }, { x: 35.000, y: 0.400 }, { x: 20.000, y: 0.400 }]
     bottom: { c: 5.200 }
@@ -5729,6 +5954,7 @@ solids:
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
+    top_uv: { mode: planar, anchor: world, scale: { x: 7, y: 7 } }
     bottom_material: acid-boundary
     collision: false
   - id: acid-south-east
@@ -5737,6 +5963,7 @@ solids:
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
+    top_uv: { mode: planar, anchor: world, scale: { x: 7, y: 7 } }
     bottom_material: acid-boundary
     collision: false
   - id: acid-west-0-entry
@@ -5745,6 +5972,7 @@ solids:
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
+    top_uv: { mode: planar, anchor: world, scale: { x: 7, y: 7 } }
     bottom_material: acid-boundary
     collision: false
   - id: acid-west-0-bend
@@ -5753,6 +5981,7 @@ solids:
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
+    top_uv: { mode: planar, anchor: world, scale: { x: 7, y: 7 } }
     bottom_material: acid-boundary
     collision: false
   - id: acid-west-1
@@ -5761,6 +5990,7 @@ solids:
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
+    top_uv: { mode: planar, anchor: world, scale: { x: 7, y: 7 } }
     bottom_material: acid-boundary
     collision: false
   - id: acid-east-entry
@@ -5769,6 +5999,7 @@ solids:
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
+    top_uv: { mode: planar, anchor: world, scale: { x: 7, y: 7 } }
     bottom_material: acid-boundary
     collision: false
   - id: acid-east-0
@@ -5777,6 +6008,7 @@ solids:
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
+    top_uv: { mode: planar, anchor: world, scale: { x: 7, y: 7 } }
     bottom_material: acid-boundary
     collision: false
   - id: acid-east-1
@@ -5785,6 +6017,7 @@ solids:
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
+    top_uv: { mode: planar, anchor: world, scale: { x: 7, y: 7 } }
     bottom_material: acid-boundary
     collision: false
   - id: acid-east-2
@@ -5793,6 +6026,7 @@ solids:
     top: { c: -1.10 }
     side_material: acid-boundary
     top_material: toxic
+    top_uv: { mode: planar, anchor: world, scale: { x: 7, y: 7 } }
     bottom_material: acid-boundary
     collision: false
   # A shared recessed case surrounds each rotating sprite with rigid 3D geometry.
@@ -8057,6 +8291,52 @@ instances:
   - { id: loading-vent, prefab: ventilation-case, transform: { translation: { x: 29.0, y: 9.55, z: 3.6 } } }
   - { id: reactor-pumps, prefab: pump-bank, transform: { translation: { x: 0.55, y: 18.25 } } }
 contents:
+  # Residue follows fixed equipment; the renderer retains actual contact shadows.
+  - id: barrel-floor-soot
+    kind: actor
+    position: { x: 14.8, y: -1.55, z: 0.206 }
+    actor:
+      pitch_degrees: 90
+      sprite:
+        {
+          texture: barrel-floor-soot,
+          facing: fixed,
+          alpha: blend,
+          width: 1.18,
+          height: 1.18,
+          origin_x: 0.5,
+          origin_y: 0.5,
+        }
+  - id: loading-machine-base-grime-0
+    kind: actor
+    position: { x: 25, y: -1, z: 0.406 }
+    actor:
+      pitch_degrees: 90
+      sprite:
+        {
+          texture: machine-base-grime,
+          facing: fixed,
+          alpha: blend,
+          width: 3.62,
+          height: 3.62,
+          origin_x: 0.5,
+          origin_y: 0.5,
+        }
+  - id: loading-machine-base-grime-1
+    kind: actor
+    position: { x: 31, y: -1, z: 0.406 }
+    actor:
+      pitch_degrees: 90
+      sprite:
+        {
+          texture: machine-base-grime,
+          facing: fixed,
+          alpha: blend,
+          width: 3.62,
+          height: 3.62,
+          origin_x: 0.5,
+          origin_y: 0.5,
+        }
   - id: arrival-sign
     kind: actor
     position: { x: 2.200, y: 9.940, z: 2.500 }
@@ -8237,6 +8517,25 @@ lighting:
   ambient: { x: 0.035, y: 0.040, z: 0.037 }
   # Steady wayfinding lamps bake offline; emission-linked effects remain live.
   lights:
+    # Small panel lights keep directions readable without the player's torch.
+    - {
+        id: arrival-sign-light,
+        position: { x: 2.2, y: 9.10, z: 2.55 },
+        color: { x: 0.42, y: 0.40, z: 0.32 },
+        radius: 2.1,
+      }
+    - {
+        id: reactor-sign-light,
+        position: { x: 4, y: 29.10, z: 2.75 },
+        color: { x: 0.36, y: 0.39, z: 0.40 },
+        radius: 2.1,
+      }
+    - {
+        id: exit-sign-light,
+        position: { x: 33.75, y: 45.10, z: 2.75 },
+        color: { x: 0.37, y: 0.43, z: 0.38 },
+        radius: 2.4,
+      }
     - {
         id: barrel-fire-light,
         position: { x: 14.8, y: -1.55, z: 1.35 },

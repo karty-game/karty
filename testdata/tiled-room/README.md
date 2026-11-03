@@ -12,7 +12,6 @@ From the CLI repository root, using published SDK 0.0.19 selected by this fixtur
 ```sh
 mise run author-tiled-room
 mise run build-tiled-room-web
-mise run check-tiled-package-web
 ```
 
 SDK 0.0.19 requires Go 1.27.3 for the game compiler. Set `KARTY_GO` to that
@@ -37,7 +36,6 @@ the same published archive and builds it there.
 ```sh
 mise run check-tiled-package-archive
 # Use webDirectory from dist/validation/tiled-package/archive/report.json:
-mise run check-tiled-package-web -- --directory /tmp/your-fixture/game/dist/web --label archive
 ```
 
 The archive task checks the imported checksum and Go module resolution inside

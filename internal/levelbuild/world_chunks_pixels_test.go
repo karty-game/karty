@@ -10,8 +10,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"slices"
-	"strings"
 	"testing"
 	"time"
 
@@ -112,7 +110,7 @@ func bakeIncrementalChunks(t *testing.T, document world.Document, materials []wo
 
 	result := make([][]level.SourceEntry, len(layouts))
 	for index, layout := range layouts {
-		entries, _, err := bakeWorldChunkLightmap(t.Context(), document, layout, materials, options, cache)
+		entries, err := bakeWorldChunkLightmap(t.Context(), document, layout, materials, options, cache)
 		if err != nil {
 			t.Fatalf("bake chunk %d: %v", index, err)
 		}
@@ -310,14 +308,14 @@ func TestChunkPixelCacheCanceledHitDoesNotPublish(t *testing.T) {
 	options := worldlightmapbake.Options{Samples: 1, Workers: 1, Denoise: "off", MaxRayDistance: 4}
 
 	layout := incrementalChunkLayouts(t, document)[0]
-	if _, _, err := bakeWorldChunkLightmap(t.Context(), document, layout, materials, options, cache); err != nil {
+	if _, err := bakeWorldChunkLightmap(t.Context(), document, layout, materials, options, cache); err != nil {
 		t.Fatal(err)
 	}
 
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
-	if _, _, err := bakeWorldChunkLightmap(ctx, document, layout, materials, options, cache); err == nil {
+	if _, err := bakeWorldChunkLightmap(ctx, document, layout, materials, options, cache); err == nil {
 		t.Fatal("canceled cached bake returned artifact")
 	}
 }
@@ -332,7 +330,7 @@ func TestChunkPixelCacheIncompleteCorruptAndEscapedEntries(t *testing.T) {
 			options := worldlightmapbake.Options{Samples: 1, Workers: 1, Seed: 1, Denoise: "off", MaxRayDistance: 4}
 			layout := incrementalChunkLayouts(t, document)[0]
 
-			original, _, err := bakeWorldChunkLightmap(t.Context(), document, layout, materials, options, cache)
+			original, err := bakeWorldChunkLightmap(t.Context(), document, layout, materials, options, cache)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -353,7 +351,7 @@ func TestChunkPixelCacheIncompleteCorruptAndEscapedEntries(t *testing.T) {
 
 			cache.hits, cache.misses = 0, 0
 
-			repaired, _, err := bakeWorldChunkLightmap(t.Context(), document, layout, materials, options, cache)
+			repaired, err := bakeWorldChunkLightmap(t.Context(), document, layout, materials, options, cache)
 			if err != nil || cache.hits != 0 || cache.misses != 1 {
 				t.Fatalf("incomplete/corrupt cache did not cold bake: %d/%d, %v", cache.hits, cache.misses, err)
 			}
@@ -388,85 +386,6 @@ func TestChunkPixelCacheRejectsDirectorySymlink(t *testing.T) {
 
 	if _, err := prepareChunkPixelCache(cache.root, filepath.Join(cache.root, "levels", "test")); err == nil {
 		t.Fatal("escaped pixel cache directory accepted")
-	}
-}
-
-func TestBoundedBakeAutomaticAndImportedDistanceExpectations(t *testing.T) {
-	t.Parallel()
-	root := lightingLevelFixture(t, "version: 4\n"+lightingRoomYAML+directLightmapYAML)
-	enableFixtureLightmap(t, root, automaticBakeSettings+"lights = ['red','blue']\nbake_max_ray_distance = 4\n")
-
-	reports, err := BakeAll(t.Context(), root, BakeOptions{Workers: 1}, nil)
-	if err != nil || len(reports) != 1 {
-		t.Fatalf("bounded standalone bake: %v", err)
-	}
-
-	encoded, err := os.ReadFile(reports[0].Manifest)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	header, err := worldlightmap.DecodePrebakeManifest(encoded)
-	if err != nil || header.MaxRayDistance != 4 || header.Producer != worldlightmap.BoundedOfflinePrebakeProducer {
-		t.Fatalf("bounded manifest did not bind distance/producer: %+v, %v", header, err)
-	}
-
-	selected := directLightmapSDK(t)
-	build := func(want bool) {
-		t.Helper()
-
-		artifacts, err := BuildAllWithAssets(t.Context(), root, 4, "", selected)
-		if err != nil || len(artifacts) != 1 || slices.Contains(artifacts[0].Features, worldlightmap.PrebakeFeature) != want {
-			t.Fatalf("bounded artifact availability want=%v: %v", want, err)
-		}
-	}
-	build(true)
-
-	definitionPath := filepath.Join(root, "levels", "lighting", "level.toml")
-
-	definition, err := os.ReadFile(definitionPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	writePrebakeFixture(
-		t,
-		definitionPath,
-		[]byte(strings.Replace(string(definition), "bake_max_ray_distance = 4", "bake_max_ray_distance = 5", 1)),
-	)
-	build(false)
-	writePrebakeFixture(t, definitionPath, []byte(strings.Replace(string(definition), "bake_max_ray_distance = 4\n", "", 1)))
-	build(false)
-	writePrebakeFixture(t, definitionPath, definition)
-	build(true)
-
-	directory := filepath.Dir(definitionPath)
-	writePrebakeFixture(t, filepath.Join(directory, "import.bin"), encoded)
-
-	pixels, err := os.ReadFile(reports[0].Image)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	writePrebakeFixture(t, filepath.Join(directory, "import.qoi"), pixels)
-
-	imported := strings.Replace(string(definition), "offline = true", "prebake = 'import.bin'\nprebake_image = 'import.qoi'", 1)
-	writePrebakeFixture(t, definitionPath, []byte(imported))
-	build(true)
-	writePrebakeFixture(t, definitionPath, []byte(strings.Replace(imported, "bake_max_ray_distance = 4", "bake_max_ray_distance = 5", 1)))
-
-	if _, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); err == nil {
-		t.Fatal("explicit import accepted distance mismatching level settings")
-	}
-}
-
-func TestLegacyDirectImportRejectsBoundedDistanceExpectation(t *testing.T) {
-	t.Parallel()
-	root, selected := prebakeLevelFixture(t)
-	addPrebakeControls(t, root, "prebake = 'prebake.bin'\nprebake_image = 'prebake.qoi'\nbake_max_ray_distance = 4\n")
-
-	if _, err := BuildAllWithAssets(t.Context(), root, 4, "", selected); err == nil {
-		t.Fatal("unbounded direct import accepted bounded level expectation")
 	}
 }
 

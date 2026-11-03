@@ -7,6 +7,9 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,17 +25,50 @@ import (
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/karty-game/karty/internal/testpackages"
+	"github.com/pelletier/go-toml/v2"
 )
 
-func currentSamples() []string {
-	return []string{"ui-demo", "media-lab", "hangar", "terrain", "crate-room", "vigil", "effect-lab", "particle-lab"}
+func currentSamples(t *testing.T) []string {
+	t.Helper()
+
+	manifests, err := filepath.Glob(filepath.Join("..", "..", "samples", "*", "karty.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(manifests) == 0 {
+		t.Fatal("no sample projects discovered")
+	}
+
+	names := make([]string, 0, len(manifests))
+	for _, manifest := range manifests {
+		names = append(names, filepath.Base(filepath.Dir(manifest)))
+	}
+
+	return names
+}
+
+// These clients need generated resource data beyond the small CPU fixture.
+// Their complete cartridges are compiled by check-api-samples. Keep an explicit
+// decision for every sample so adding one cannot silently omit source coverage.
+func sampleClientCoverage(name string) (supported bool, reason string) {
+	switch name {
+	case "ui-demo", "media-lab", "hangar", "terrain", "crate-room", "vigil", "effect-lab", "particle-lab":
+		return true, ""
+	case "last-train":
+		return false, "requires compiled conversation resource bindings; run check-api-samples"
+	case "willowbrook":
+		return false, "requires Tiled resource bindings and topdown adapter; run check-api-samples"
+	default:
+		return false, ""
+	}
 }
 
 // Read source and metadata only; never build a sample's assets or run its baker.
 func TestSampleUISources(t *testing.T) {
 	t.Parallel()
 
-	for _, name := range currentSamples() {
+	for _, name := range currentSamples(t) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -74,10 +110,71 @@ func checkSampleUISources(t *testing.T, name string) {
 			t.Fatal(err)
 		}
 
-		if _, err := uicompiler.Compile(source, data); err != nil {
+		if _, err := uicompiler.CompileWithTheme(source, data, sampleLevelTheme(t, filepath.Dir(source))); err != nil {
 			t.Fatal(err)
 		}
 	}
+}
+
+// Match level compilation's image identities without baking or encoding assets.
+func sampleLevelTheme(t *testing.T, directory string) uicompiler.Theme {
+	t.Helper()
+
+	var manifest struct {
+		Theme struct {
+			Source string `toml:"source"`
+		} `toml:"theme"`
+		Textures []struct{ Name, Source string } `toml:"textures"`
+	}
+
+	data, err := os.ReadFile(filepath.Join(directory, "level.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := toml.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+
+	if manifest.Theme.Source == "" {
+		return uicompiler.DefaultTheme()
+	}
+
+	data, err = uicompiler.ReadSource(directory, manifest.Theme.Source)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	theme, err := uicompiler.ParseTheme(manifest.Theme.Source, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ids := map[string]uint32{}
+	dimensions := map[string][2]int{}
+
+	for i, texture := range manifest.Textures {
+		ids[texture.Name] = uint32(i + 1)
+
+		data, err := os.ReadFile(filepath.Join(directory, texture.Source))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		config, _, err := image.DecodeConfig(bytes.NewReader(data))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		dimensions[texture.Name] = [2]int{config.Width, config.Height}
+	}
+
+	theme, err = theme.ResolveLevelImages(ids, dimensions)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return theme
 }
 
 // Type-check actual clients against their pinned SDK and exercise the UI
@@ -85,9 +182,18 @@ func checkSampleUISources(t *testing.T, name string) {
 func TestSampleClients(t *testing.T) {
 	t.Parallel()
 
-	for _, name := range currentSamples() {
+	for _, name := range currentSamples(t) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			supported, reason := sampleClientCoverage(name)
+			if !supported {
+				if reason == "" {
+					t.Fatal("sample has no client coverage decision: add a CPU fixture or document its resource build requirement")
+				}
+
+				t.Skip(reason)
+			}
 
 			version := release.SDKVersion()
 
@@ -403,7 +509,50 @@ func sampleUISources(t *testing.T, name string) (string, project.Config, []uicom
 		t.Fatal(err)
 	}
 
-	views, err := project.CompileUI(directory, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source)
+	uiDirectory := directory
+	// Package layouts are compiler inputs too. Resolve their released fixtures in
+	// a temporary project, without populating the authored sample's .karty tree.
+	sources, _, err := localpackages.LoadSources(t.Context(), directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	set := &localpackages.Set{Items: map[string]*localpackages.Resolved{}}
+	t.Cleanup(set.Close)
+
+	for name := range sources {
+		packageSource, err := testpackages.Source(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		root, err := os.OpenRoot(packageSource)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		definition, err := localpackages.ReadManifest(t.Context(), root)
+		if err != nil {
+			root.Close()
+			t.Fatal(err)
+		}
+
+		set.Items[name] = &localpackages.Resolved{Manifest: definition, Root: root, Directory: packageSource}
+	}
+
+	if len(set.Items) > 0 {
+		uiDirectory = t.TempDir()
+		if err := os.CopyFS(filepath.Join(uiDirectory, "ui"), os.DirFS(filepath.Join(directory, "ui"))); err != nil {
+			t.Fatal(err)
+		}
+
+		config.Assets, err = localpackages.ResolveUI(t.Context(), uiDirectory, config.Assets, set)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	views, err := project.CompileUI(uiDirectory, config.Assets.UI, config.Assets.Layouts, config.Assets.Theme.Source)
 	if err != nil {
 		t.Fatal(err)
 	}

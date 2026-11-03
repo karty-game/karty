@@ -10,6 +10,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/level"
 	"github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty-sdk/format/worldgpuchunk"
 	"github.com/karty-game/karty-sdk/format/worldlightmap"
 )
 
@@ -26,6 +27,7 @@ type lightmapBuildSettings struct {
 	Prebake            *string                      `toml:"prebake"`
 	PrebakeImage       *string                      `toml:"prebake_image"`
 	Offline            bool                         `toml:"offline"`
+	Fixed              bool                         `toml:"fixed"`
 	BakeSamples        *int                         `toml:"bake_samples"`
 	BakeBounces        *int                         `toml:"bake_bounces"`
 	BakeDenoise        *string                      `toml:"bake_denoise"`
@@ -106,6 +108,10 @@ func (s lightmapBuildSettings) maxRayDistance() float64 {
 }
 
 func (s lightmapBuildSettings) validatePrebake() error {
+	if err := s.validateFixedPrebake(); err != nil {
+		return err
+	}
+
 	if err := s.validateEnvironmentPrebake(); err != nil {
 		return err
 	}
@@ -160,7 +166,7 @@ func (s lightmapBuildSettings) validateEnvironmentPrebake() error {
 
 func validateLightmapSettings(definition manifest, assets *assetBuild) error {
 	settings := definition.Lightmap
-	if settings != nil && settings.Environment != nil {
+	if settings != nil && (settings.Environment != nil || settings.Fixed) {
 		if err := settings.validatePrebake(); err != nil {
 			return err
 		}
@@ -168,6 +174,16 @@ func validateLightmapSettings(definition manifest, assets *assetBuild) error {
 
 	if settings == nil || !settings.Enabled {
 		return nil
+	}
+
+	if settings.Fixed && (definition.Chunks == nil || !definition.Chunks.Enabled || !worldGPUChunksEnabled(assets) ||
+		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.Capability(worldlightmap.FixedFeature))) {
+		return fmt.Errorf(
+			"fixed lighting requires chunks and SDK advertising %s and %s: %w",
+			worldlightmap.FixedFeature,
+			worldgpuchunk.Feature,
+			ErrManifest,
+		)
 	}
 
 	if definition.World.Source == "" || assets == nil ||
@@ -184,7 +200,7 @@ func validateLightmapSettings(definition manifest, assets *assetBuild) error {
 		)
 	}
 
-	if settings.Environment == nil && (settings.Prebake != nil || settings.Offline) &&
+	if !settings.Fixed && settings.Environment == nil && (settings.Prebake != nil || settings.Offline) &&
 		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldLightmapsPrebakedV1) {
 		return fmt.Errorf("prebake requires SDK advertising %s: %w", worldlightmap.PrebakeFeature, ErrManifest)
 	}
@@ -311,10 +327,24 @@ func readWorldPrebake(directory, manifestPath, imagePath string, layout worldlig
 		if err := validateOfflineReflectance(directory, definition, *document, layout, pair.Manifest); err != nil {
 			return nil, fmt.Errorf("offline prebake reflectance: %w", err)
 		}
+	} else if err := validateVegetationPrebakeProvenance(directory, definition); err != nil {
+		return nil, err
 	}
 
 	return []level.SourceEntry{
 		{Name: worldlightmap.PrebakeEntryName, Kind: level.EntryData, Data: encoded},
 		{Name: worldlightmap.PrebakeImageEntryName, Kind: level.EntryData, Data: image},
 	}, nil
+}
+
+func (s lightmapBuildSettings) validateFixedPrebake() error {
+	if s.Fixed && (!s.Enabled || !s.Offline || s.Environment != nil || s.Light != nil || s.Lights != nil ||
+		s.Prebake != nil || s.PrebakeImage != nil || s.BakeMaxRayDistance != nil) {
+		return fmt.Errorf(
+			"fixed lighting requires enabled offline lightmaps without legacy light selections, variants, imports or ray-distance settings: %w",
+			ErrManifest,
+		)
+	}
+
+	return nil
 }

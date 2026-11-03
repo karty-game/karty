@@ -21,8 +21,7 @@ go.work.sum
 # Local investigations and review notes. Public documentation lives in website/.
 /docs/
 /spike/
-/spikes/*
-!/spikes/go.mod
+/spikes/
 /concept-art/
 /website/validation/
 /scripts/stdlib-spike.sh

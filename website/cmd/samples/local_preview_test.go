@@ -2,13 +2,101 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"fmt"
 	"html"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/karty-game/karty/internal/toolchain"
+	"github.com/pelletier/go-toml/v2"
 )
+
+func TestLocalDocsIncludeCompleteWebGPUBundle(t *testing.T) {
+	t.Parallel()
+
+	for _, missing := range []string{
+		"", "client.mjs", "texture-worker.mjs", "licenses/Basis-LICENSE.txt", "licenses/Karty-RUNTIME_LICENSE.md", "karty-web.js",
+	} {
+		t.Run("missing="+missing, func(t *testing.T) {
+			t.Parallel()
+			root := localPreviewProject(t, false)
+			web := filepath.Join(root, "samples", "crate-room", "dist", "web")
+			files := writeWebGPUPreviewBundle(t, web)
+
+			if missing != "" {
+				if err := os.Remove(filepath.Join(web, filepath.FromSlash(missing))); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			err := previewSamples(root)
+			if missing != "" {
+				if err == nil {
+					t.Fatal("incomplete bundle accepted")
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			site := filepath.Join(root, "dist", "samples-site")
+			if err := validateSamples(os.DirFS(site)); err != nil {
+				t.Fatal(err)
+			}
+
+			for _, name := range files {
+				if err := requireFile(filepath.Join(site, "crate-room", filepath.FromSlash(name))); err != nil {
+					t.Fatal(err)
+				}
+			}
+		})
+	}
+}
+
+func writeWebGPUPreviewBundle(t *testing.T, web string) []string {
+	t.Helper()
+
+	bundle := toolchain.HostBundle{
+		Schema: 1, Renderer: "webgpu", Target: "web",
+		Entrypoint: "karty-host.wasm", Files: map[string]toolchain.HostBundleFile{},
+	}
+
+	files := append(toolchain.WebGPUHostFiles(), toolchain.WebGPUTextureCodecFiles()...)
+	files = append(files, toolchain.WebGPUTextureCodecLicenses()...)
+	files = append(files, "licenses/Karty-RUNTIME_LICENSE.md")
+
+	for _, name := range files {
+		contents := "bundle " + name
+		if name == "karty-host.wasm" || name == "runtime.bin" {
+			contents = "\x00asm\x01\x00\x00\x00"
+		}
+
+		writeFixture(t, filepath.Join(web, filepath.FromSlash(name)), contents)
+		bundle.Files[name] = toolchain.HostBundleFile{
+			Size: int64(len(contents)), SHA256: fmt.Sprintf("%x", sha256.Sum256([]byte(contents))),
+		}
+	}
+
+	data, err := toml.Marshal(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	writeFixture(t, filepath.Join(web, toolchain.HostBundleName), string(data))
+
+	for _, name := range []string{"index.html", "game.kart", "karty-web.js", "karty-web-status.js", "karty-latest.json"} {
+		writeFixture(t, filepath.Join(web, name), "built "+name)
+	}
+
+	return files
+}
 
 func localPreviewProject(t *testing.T, built bool) string {
 	t.Helper()
@@ -21,9 +109,9 @@ func localPreviewProject(t *testing.T, built bool) string {
 		"title = 'Physics lab: crate room'\ndescription = 'Shoot and push crates.'\nalt = 'Crates and ramps.'\n")
 
 	if built {
-		for _, name := range []string{"index.html", "game.kart", "karty.js", "karty-host.wasm", "wasm_exec.js", "content/room.kld"} {
-			writeFixture(t, filepath.Join(project, "dist", "web", filepath.FromSlash(name)), "built "+name)
-		}
+		web := filepath.Join(project, "dist", "web")
+		writeWebGPUPreviewBundle(t, web)
+		writeFixture(t, filepath.Join(web, "content", "room.kld"), "built content/room.kld")
 	}
 
 	return root
@@ -53,9 +141,11 @@ func TestLocalDocsIncludePhysicsScreenshotAndCompletePlayableSnapshot(t *testing
 		}
 	}
 
-	for _, name := range []string{"index.html", "game.kart", "karty.js", "karty-host.wasm", "wasm_exec.js", "content/room.kld"} {
+	for _, name := range []string{"index.html", "game.kart", "karty-web.js", "karty-host.wasm", "wasm_exec.js", "content/room.kld"} {
 		actual, err := os.ReadFile(filepath.Join(site, "crate-room", filepath.FromSlash(name)))
-		if err != nil || string(actual) != "built "+name {
+
+		expected, readErr := os.ReadFile(filepath.Join(root, "samples", "crate-room", "dist", "web", filepath.FromSlash(name)))
+		if err != nil || readErr != nil || !bytes.Equal(actual, expected) {
 			t.Fatalf("incomplete local snapshot %s: %q, %v", name, actual, err)
 		}
 	}

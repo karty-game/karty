@@ -27,9 +27,6 @@ func setup(props TrainStageProps) {}
 </script>
 <style>
 .phone-stage
-  position: absolute
-  left: 0
-  top: 0
   width: 0
   height: 0
   padding: 0

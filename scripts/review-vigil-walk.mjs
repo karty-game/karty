@@ -1,4 +1,4 @@
-// Standalone moving art review. Gameplay qualification remains check-vigil-web.
+// Standalone moving art review of the authored character frames.
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 

@@ -5616,7 +5616,7 @@ fluids:
       linear_drag: 2.5
       angular_drag: 2
       foam_width: 1
-      foam_strength: 1
+      foam_strength: 0.72
       foam_color:
         x: 0.96
         y: 0.99

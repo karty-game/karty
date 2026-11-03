@@ -1,8 +1,6 @@
 package toolchain
 
 import (
-	"archive/zip"
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -24,6 +22,7 @@ type MaterialTool string
 
 const (
 	MaterialToolMaterialize MaterialTool = "materialize-cli" // AiGameKit Materialize Rust CLI.
+	MaterialToolKTX         MaterialTool = "ktx"             // Khronos KTX command line encoder.
 )
 
 // MaterialToolArtifact describes a publisher-supplied, checksum-pinned archive.
@@ -32,7 +31,7 @@ const (
 type MaterialToolArtifact struct {
 	URL        string
 	SHA256     string
-	Format     string // "zip"; never inferred from the URL.
+	Format     string // Explicit zip, tar.bz2, pkg or nsis; never inferred from the URL.
 	Executable string
 }
 
@@ -233,8 +232,15 @@ func stageMaterialInstall(ctx context.Context, staging string, contents []byte, 
 		return err
 	}
 
-	if err := extractMaterialArchive(ctx, payload, contents); err != nil {
-		return err
+	var extractErr error
+	if artifact.Format == "zip" {
+		extractErr = extractMaterialArchive(ctx, payload, contents)
+	} else {
+		extractErr = extractKTXArchive(ctx, payload, contents, artifact)
+	}
+
+	if extractErr != nil {
+		return extractErr
 	}
 
 	executable := filepath.Join(payload, filepath.FromSlash(artifact.Executable))
@@ -275,7 +281,7 @@ func publishMaterialInstall(ctx context.Context, staging, installDir string, war
 }
 
 func materialArtifact(spec MaterialToolSpec, platform string) (MaterialToolArtifact, error) {
-	if spec.Tool != MaterialToolMaterialize {
+	if spec.Tool != MaterialToolMaterialize && spec.Tool != MaterialToolKTX {
 		return MaterialToolArtifact{}, fmt.Errorf("unsupported material tool %q: %w", spec.Tool, os.ErrInvalid)
 	}
 
@@ -299,12 +305,33 @@ func materialArtifact(spec MaterialToolSpec, platform string) (MaterialToolArtif
 
 	if !found || err != nil || artifactURL.Scheme != "https" || artifactURL.Host == "" ||
 		artifactURL.User != nil || artifactURL.Fragment != "" ||
-		!materialHex(artifact.SHA256, 64) || artifact.Format != "zip" ||
+		!materialHex(artifact.SHA256, 64) || !validMaterialArchiveFormat(spec.Tool, platform, artifact.Format) ||
 		!materialMemberPath(artifact.Executable) || path.Base(artifact.Executable) != name {
 		return MaterialToolArtifact{}, fmt.Errorf("incomplete or invalid material artifact for %s: %w", platform, os.ErrInvalid)
 	}
 
 	return artifact, nil
+}
+
+func validMaterialArchiveFormat(tool MaterialTool, platform, format string) bool {
+	if tool == MaterialToolMaterialize {
+		return format == "zip"
+	}
+
+	if tool != MaterialToolKTX {
+		return false
+	}
+
+	switch platform {
+	case "linux-amd64", "linux-arm64":
+		return format == "tar.bz2"
+	case "darwin-arm64":
+		return format == "pkg"
+	case "windows-amd64":
+		return format == "nsis"
+	default:
+		return false
+	}
 }
 
 func materialHex(value string, length int) bool {
@@ -358,125 +385,6 @@ func materialDirectory(name string) error {
 	}
 
 	return nil
-}
-
-func extractMaterialArchive(ctx context.Context, destination string, contents []byte) error {
-	writer := &materialArchiveWriter{
-		destination: destination,
-		seen:        make(map[string]bool),
-	}
-
-	return extractMaterialZip(ctx, contents, writer)
-}
-
-// materialArchiveWriter tracks bounds and member uniqueness across the full archive.
-type materialArchiveWriter struct {
-	destination string
-	seen        map[string]bool
-	total       int64
-	entries     int
-}
-
-func (writer *materialArchiveWriter) write(ctx context.Context, name string, directory bool, size int64, source io.Reader) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
-	writer.entries++
-
-	if directory {
-		name = strings.TrimSuffix(name, "/")
-	}
-
-	if writer.entries > materialEntryLimit || !materialMemberPath(name) || writer.seen[name] ||
-		size < 0 || size > materialExpandedLimit-writer.total {
-		return fmt.Errorf("invalid or oversized material archive member %q: %w", name, os.ErrInvalid)
-	}
-
-	writer.seen[name] = true
-	writer.total += size
-
-	target := filepath.Join(writer.destination, filepath.FromSlash(name))
-	if directory {
-		return os.MkdirAll(target, 0o750)
-	}
-
-	if err := os.MkdirAll(filepath.Dir(target), 0o750); err != nil {
-		return err
-	}
-
-	file, err := os.OpenFile(target, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
-	if err != nil {
-		return err
-	}
-
-	_, copyErr := contextio.CopyN(ctx, file, source, size)
-	closeErr := file.Close()
-
-	if copyErr != nil {
-		return copyErr
-	}
-
-	return closeErr
-}
-
-func extractMaterialZip(ctx context.Context, contents []byte, writer *materialArchiveWriter) error {
-	reader, err := zip.NewReader(bytes.NewReader(contents), int64(len(contents)))
-	if err != nil {
-		return err
-	}
-
-	if len(reader.File) > materialEntryLimit {
-		return fmt.Errorf("too many material archive members: %w", os.ErrInvalid)
-	}
-
-	for _, entry := range reader.File {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-
-		if err := extractMaterialZipEntry(ctx, entry, writer); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func extractMaterialZipEntry(ctx context.Context, entry *zip.File, writer *materialArchiveWriter) error {
-	if (!entry.Mode().IsRegular() && !entry.Mode().IsDir()) || entry.UncompressedSize64 > materialExpandedLimit {
-		return fmt.Errorf("non-regular or oversized material ZIP member: %w", os.ErrInvalid)
-	}
-
-	input, err := entry.Open()
-	if err != nil {
-		return err
-	}
-
-	writeErr := writer.write(ctx, entry.Name, entry.Mode().IsDir(), int64(entry.UncompressedSize64), input)
-	// Read through EOF to enforce ZIP CRC and declared size.
-	if writeErr == nil {
-		var extra [1]byte
-
-		readCount, eofErr := contextio.Reader(ctx, input).Read(extra[:])
-		if canceled := ctx.Err(); canceled != nil {
-			_ = input.Close()
-
-			return canceled
-		}
-
-		if readCount != 0 || eofErr != io.EOF {
-			writeErr = fmt.Errorf("invalid material ZIP contents: %w", os.ErrInvalid)
-		}
-	}
-
-	closeErr := input.Close()
-
-	if writeErr != nil {
-		return writeErr
-	}
-
-	return closeErr
 }
 
 func compareMaterialInstall(ctx context.Context, expected, actual string) error {

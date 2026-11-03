@@ -2,16 +2,12 @@ package toolchain
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/karty-game/karty/internal/contextio"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -19,254 +15,14 @@ const errHostMetadata staticError = "host artifact metadata is incomplete"
 const errHostChecksum staticError = "host artifact checksum mismatch"
 const errHostNotFile staticError = "managed Karty host is not a regular file"
 
-// Host locates a cached host. EnsureHost verifies its SDK-pinned checksum.
-func Host(version, target string) (string, error) {
-	cacheDir, err := kartyHome("")
-	if err != nil {
-		return "", err
-	}
-
-	platform, err := hostPlatform(target)
-	if err != nil {
-		return "", err
-	}
-
-	name := "karty-host"
-
-	switch target {
-	case "web":
-		platform = "web"
-		name = "karty-host.wasm"
-	case "web-runtime":
-		platform = "web-runtime"
-		name = "wasm_exec.js"
-	}
-
-	path := filepath.Join(cacheDir, "hosts", version, platform, name)
-	if target == "web" || target == "web-runtime" {
-		info, statErr := os.Stat(path)
-		if statErr != nil {
-			return "", statErr
-		}
-
-		if !info.Mode().IsRegular() {
-			return "", errHostNotFile
-		}
-
-		return path, nil
-	}
-
-	return executable("managed Karty host", path)
-}
-
-// InstallHost downloads, verifies, and atomically installs a raw host artifact.
-func InstallHost(ctx context.Context, version, target string, artifact sdk.ToolArtifact) (string, error) {
-	if err := ctx.Err(); err != nil {
-		return "", err
-	}
-
-	cacheDir, err := kartyHome("")
-	if err != nil {
-		return "", err
-	}
-
-	return installHost(ctx, cacheDir, version, target, artifact)
-}
-
-func installHost(ctx context.Context, cacheDir, version, target string, artifact sdk.ToolArtifact) (string, error) {
-	if err := ctx.Err(); err != nil {
-		return "", err
-	}
-
-	if version == "" || artifact.URL == "" || artifact.SHA256 == "" {
-		return "", errHostMetadata
-	}
-
-	platform, err := hostPlatform(target)
-	if err != nil {
-		return "", err
-	}
-
-	name := "karty-host"
-	mode := os.FileMode(0o700)
-
-	switch target {
-	case "web":
-		platform = "web"
-		name = "karty-host.wasm"
-		mode = 0o600
-	case "web-runtime":
-		platform = "web-runtime"
-		name = "wasm_exec.js"
-		mode = 0o600
-	}
-
-	installDir := filepath.Join(cacheDir, "hosts", version, platform)
-
-	path := filepath.Join(installDir, name)
-	if err := verifyCachedHost(ctx, path, artifact.SHA256); err == nil {
-		return installedHost(path, target)
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return "", err
-	}
-
-	if err := os.MkdirAll(filepath.Dir(installDir), 0o750); err != nil {
-		return "", fmt.Errorf("create host cache directory: %w", err)
-	}
-
-	contents, err := downloadHost(ctx, artifact)
-	if err != nil {
-		return "", err
-	}
-
-	staging, err := os.MkdirTemp(filepath.Dir(installDir), ".host-")
-	if err != nil {
-		return "", fmt.Errorf("create host staging directory: %w", err)
-	}
-	defer os.RemoveAll(staging)
-
-	if err := contextio.WriteFile(ctx, filepath.Join(staging, name), contents, mode); err != nil {
-		return "", fmt.Errorf("stage host: %w", err)
-	}
-
-	if err := ctx.Err(); err != nil {
-		return "", err
-	}
-
-	if err := os.Rename(staging, installDir); err != nil {
-		return "", fmt.Errorf("install host: %w", err)
-	}
-
-	return installedHost(path, target)
-}
-
-func installedHost(path, target string) (string, error) {
-	if target == "web" || target == "web-runtime" {
-		return path, nil
-	}
-
-	return executable("managed Karty host", path)
-}
-
-func verifyCachedHost(ctx context.Context, path, checksum string) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return fmt.Errorf("open cached Karty host: %w", err)
-	}
-	defer file.Close()
-
-	info, err := file.Stat()
-	if err != nil {
-		return fmt.Errorf("inspect cached Karty host: %w", err)
-	}
-
-	if !info.Mode().IsRegular() {
-		return errHostNotFile
-	}
-
-	digest := sha256.New()
-	if _, err := contextio.Copy(ctx, digest, file); err != nil {
-		return fmt.Errorf("hash cached Karty host: %w", err)
-	}
-
-	if hex.EncodeToString(digest.Sum(nil)) != checksum {
-		return fmt.Errorf(
-			"cached Karty host %q differs from the SDK checksum; remove %q and rebuild: %w",
-			path, filepath.Dir(path), errHostChecksum,
-		)
-	}
-
-	return nil
-}
-
-func downloadHost(ctx context.Context, artifact sdk.ToolArtifact) ([]byte, error) {
-	response, err := downloadURL(ctx, artifact.URL)
-	if err != nil {
-		return nil, fmt.Errorf("download Karty host: %w", err)
-	}
-	defer response.Close()
-
-	contents, err := contextio.ReadAll(ctx, response)
-	if err != nil {
-		return nil, fmt.Errorf("read Karty host: %w", err)
-	}
-
-	digest, hashErr := contextio.Sum256(ctx, contents)
-	if hashErr != nil {
-		return nil, hashErr
-	}
-
-	if hex.EncodeToString(digest[:]) != artifact.SHA256 {
-		return nil, fmt.Errorf("karty host checksum = %x, want %s: %w", digest, artifact.SHA256, errHostChecksum)
-	}
-
-	return contents, nil
-}
-
-// EnsureHost installs the host selected by the project SDK when that SDK
-// publishes a checksum-pinned release artifact.
+// EnsureHost resolves only the current complete, verified WebGPU bundle.
 func EnsureHost(ctx context.Context, manifest sdk.Manifest, target string) (string, error) {
-	if err := ctx.Err(); err != nil {
-		return "", err
-	}
-
-	manifest, err := manifestWithPublishedHost(ctx, manifest, target)
+	bundle, err := EnsureManagedHostBundle(ctx, manifest, target)
 	if err != nil {
 		return "", err
 	}
 
-	if target == "web" {
-		if manifest.Artifacts.Host.Web.URL == "" {
-			return "", errHostMetadata
-		}
-
-		return InstallHost(ctx, manifest.Host.Version, target, manifest.Artifacts.Host.Web)
-	}
-
-	if target == "web-runtime" {
-		return InstallHost(ctx, manifest.Host.Version, target, manifest.Artifacts.Host.WebRuntime)
-	}
-
-	platform, err := hostPlatform(target)
-	if err != nil {
-		return "", err
-	}
-
-	artifact, found := manifest.Artifacts.Host.Native[platform]
-	if !found {
-		return "", errHostMetadata
-	}
-
-	return InstallHost(ctx, manifest.Host.Version, target, artifact)
-}
-
-func manifestWithPublishedHost(ctx context.Context, manifest sdk.Manifest, target string) (sdk.Manifest, error) {
-	hasHost := manifest.Artifacts.Host.Web.URL != ""
-	if target == "web-runtime" {
-		hasHost = manifest.Artifacts.Host.WebRuntime.URL != ""
-	} else if target != "web" {
-		platform, err := hostPlatform(target)
-		if err != nil {
-			return sdk.Manifest{}, err
-		}
-
-		_, hasHost = manifest.Artifacts.Host.Native[platform]
-	}
-
-	if hasHost {
-		return manifest, nil
-	}
-
-	published, err := sdk.ResolvePublished(ctx, manifest.Version)
-	if err != nil {
-		return sdk.Manifest{}, fmt.Errorf("resolve published SDK %s host: %w", manifest.Version, err)
-	}
-
-	if published.Host.Version != manifest.Host.Version {
-		return sdk.Manifest{}, errHostMetadata
-	}
-
-	return published, nil
+	return filepath.Join(bundle.Directory, bundle.Entrypoint), nil
 }
 
 // NativePlatform validates a game distribution target independently of installed tools.
@@ -297,7 +53,7 @@ func NativeHostName(platform string) string {
 }
 
 func hostPlatform(target string) (string, error) {
-	if target == "web" || target == "web-runtime" {
+	if target == "web" {
 		return target, nil
 	}
 

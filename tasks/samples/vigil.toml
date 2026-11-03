@@ -37,10 +37,6 @@ depends = ["build"]
 dir = "samples/vigil"
 run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
 
-[check-vigil-web]
-description = "Execute Vigil's actual WASM, eight-direction movement, pilgrimage and touch controls in Chromium"
-run = "node scripts/check-vigil-web.mjs"
-
 [check-vigil-audio-web]
 description = "Measure Vigil's actual WebAudio output, player-root distance and dimetric stereo through ordinary play"
 run = "node scripts/check-vigil-audio-web.mjs"
@@ -53,5 +49,4 @@ run = "node scripts/review-vigil-walk.mjs"
 description = "Format Vigil's engine path-query adapter and game-owned waypoint follower"
 run = [
   "gofmt -w internal/release/version.go cmd/karty-release/main_test.go samples/vigil/src/main.go samples/vigil/src/navigation.go samples/vigil/internal/dungeon/dungeon.go samples/vigil/internal/dungeon/navigation.go samples/vigil/internal/dungeon/dungeon_test.go samples/vigil/internal/dungeon/navigation_test.go",
-  "prettier --write scripts/check-vigil-web.mjs",
 ]

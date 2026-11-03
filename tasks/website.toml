@@ -51,6 +51,10 @@ depends = ["build"]
 # Last Train selects the official C# Yarn compiler; resolve its exact SDK before baking.
 run = "mise exec dotnet@9.0.203 -- go run ./website/cmd/samples build"
 
+[compact-samples]
+description = "Stage existing sample builds with one verified runtime and enforce the total website budget"
+run = "go run ./website/cmd/samples compact"
+
 [assemble-samples]
 description = "Assemble validated static sample previews for Pages CI"
 run = 'go run ./website/cmd/samples assemble "$SAMPLE_STATE" "$SAMPLE_SOURCE" "$DESTINATION" "$REMOVE_PREVIEW" "$OPEN_PRS"'

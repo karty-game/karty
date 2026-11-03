@@ -12,8 +12,9 @@ import (
 	"github.com/karty-game/karty-sdk/format/level"
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldchunk"
-	"github.com/karty-game/karty-sdk/format/worldlightmap"
+	"github.com/karty-game/karty-sdk/format/worldgpuchunk"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
+	"github.com/karty-game/karty-sdk/format/worldmaterialgpu"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/sdk"
 )
@@ -82,12 +83,17 @@ func TestBuiltKLDResourcesUseTypedBinaryContracts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	catalogBytes, _, found := envelope.Read(worldchunk.CatalogEntryName, 0, level.MaxEntrySize)
-	if !found {
-		t.Fatal("missing chunk catalog")
+	catalogBytes := binaryEntry(t, envelope, worldgpuchunk.CatalogEntry, "KGC2")
+
+	catalog, err := worldgpuchunk.DecodeCatalog(catalogBytes)
+	if err != nil || len(catalog.Cells) == 0 {
+		t.Fatal("invalid current cell catalog", err)
 	}
 
-	if _, err := worldchunk.DecodeCatalog(catalogBytes, &document); err != nil {
+	descriptorBytes := binaryEntry(t, envelope, worldmaterialgpu.DescriptorEntry, "KMG1")
+
+	descriptor, err := worldmaterialgpu.DecodeDescriptor(descriptorBytes)
+	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -97,33 +103,19 @@ func TestBuiltKLDResourcesUseTypedBinaryContracts(t *testing.T) {
 			t.Fatal("child metadata bypassed binary codec")
 		}
 
-		layoutBytes := binaryEntry(t, child, worldlightmap.EntryName, "KLM1")
+		payloadBytes := binaryEntry(t, child, worldgpuchunk.PayloadEntry, "KGP2")
 
-		layout, err := worldlightmap.Decode(layoutBytes, &document)
+		payload, err := worldgpuchunk.DecodePayload(payloadBytes)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		manifest := binaryEntry(t, child, worldlightmap.PrebakeEntryName, "KPB1")
-
-		image, _, found := child.Read(worldlightmap.PrebakeImageEntryName, 0, level.MaxEntrySize)
-		if !found {
-			t.Fatal("missing completed image")
-		}
-
-		if _, err := worldlightmap.DecodePrebake(manifest, image, layout, &document); err != nil {
-			t.Fatal(err)
-		}
-
-		mesh, _, found := child.Read(worldchunk.MeshEntryName, 0, level.MaxEntrySize)
-		if !found {
-			t.Fatal("missing prebuilt mesh")
-		}
-
-		if _, err := worldchunk.DecodeMesh(mesh, &document); err != nil {
+		if err = worldgpuchunk.ValidatePayload(payload, descriptor.MaterialIDs, len(document.Sectors), 0); err != nil {
 			t.Fatal(err)
 		}
 	}
+
+	validateGPUProducerCells(t, artifacts[0], catalog, false)
 }
 func binaryEntry(tb testing.TB, envelope level.Envelope, name, magic string) []byte {
 	tb.Helper()

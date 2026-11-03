@@ -12,6 +12,8 @@ func prepareLevelWorld(ctx context.Context, directory string, definition manifes
 		return definition, err
 	}
 
+	definition = vegetationBuildProfile(definition, assets)
+
 	if assets == nil || !assets.screenshot {
 		return definition, nil
 	}

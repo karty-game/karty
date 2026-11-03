@@ -87,7 +87,7 @@ func TestGalleryExplainsEachPublishedSample(t *testing.T) {
 			`src="` + name + `/preview.jpg"`, `href="` + name + `/"`,
 			`https://github.com/karty-game/karty/tree/main/samples/` + name,
 		} {
-			if strings.Contains(page, want) == cards[index].Preview.Hidden {
+			if strings.Contains(html.UnescapeString(page), want) == cards[index].Preview.Hidden {
 				t.Fatalf("%s gallery visibility differs for %q", name, want)
 			}
 		}

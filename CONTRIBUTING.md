@@ -38,9 +38,13 @@ go work edit -replace=github.com/karty-game/karty-sdk=../karty-sdk
 Use `GOWORK=off` to check the public dependencies pinned in `go.mod`.
 Root tasks enable `GOEXPERIMENT=simd`; use `mise exec -- go ...` for ad hoc Go
 commands. Tests prepare the SDK selected by `internal/release`; an uncached
-published bundle needs a download. This checkout selects published SDK 0.0.19.
-Release checks use its signed bundle and matching public hosts. `KARTY_HOME`
+published bundle needs a download. This checkout selects the published SDK 0.1.0.
+Tests and sample builds install its signed public bundle and matching host bundles;
+no private engine checkout or local candidate archive is required. `KARTY_HOME`
 selects the SDK/toolchain cache root.
+SDK 0.1.0 is a breaking WebGPU cartridge release: rebuild existing cartridges
+and level resources against its matching SDK and host. Earlier cartridges do
+not run on the new host; new cartridges do not run on earlier hosts.
 
 Package consumer tests use the public release URLs and SHA-256 pins committed in
 `internal/testpackages/pins.toml`. `mise run prepare-test-packages` restores and
@@ -58,11 +62,6 @@ mise; `go run ./cmd/karty-test-sdk --go-path` prepares and prints the selected
 SDK's compiler path. An explicit `KARTY_GO` is still checked exactly and is never
 silently replaced. Normal CLI commands continue to require a user-installed
 compiler as described in the toolchain documentation.
-
-For WebGL captures, open the `karty dev` URL with `?spector=1`. This loads
-Spector.js from its pinned CDN before the host creates its graphics context
-and displays capture controls when the game canvas is ready. Omit the query
-parameter for timing measurements without capture instrumentation.
 
 For build, browser, or development-flow changes, run the relevant integration
 tasks listed by `mise tasks`. Common tasks stay in `mise.toml`; integration,
@@ -114,7 +113,7 @@ local investigations and are ignored. Keep public documentation in
 `website/content/`. Builds and tests must not depend on ignored files; promote
 required fixtures into `testdata/`. Leave local `.codex/` and `.agents/` alone.
 
-Keep `tmp/go.mod`, `dist/go.mod` and `spikes/go.mod` when clearing scratch files
+Keep `tmp/go.mod` and `dist/go.mod` when clearing scratch files
 or build output.
 These module boundaries keep temporary Go sources out of root commands such as
 `go mod tidy` and `go test ./...`; Git ignore rules do not affect Go package discovery.
@@ -148,9 +147,8 @@ After maintainer approval, pushing that tag starts [Release CLI](.github/workflo
 The workflow validates Linux amd64/arm64, Windows process cleanup and a packaged
 Windows ARM64 game before GoReleaser publishes the CLI archives and checksums.
 The Windows ARM64 gate verifies the native executable, accepts the packaged
-cartridge and rejects invalid or missing cartridges. Graphics startup is an
-optional eight-second check on a configured OpenGL runner; the default hosted
-runner does not qualify graphics support or performance.
+cartridge and rejects invalid or missing cartridges. This gate checks cartridge
+admission; hardware WebGPU rendering requires separate device review.
 
 Before retrying a release, run **Windows ARM64 packaged game smoke** manually
 against an existing `windows-arm64-game` artifact. Select the branch containing

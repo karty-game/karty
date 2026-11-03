@@ -28,30 +28,17 @@ func writeSummary(output io.Writer, report buildservice.Summary) error {
 	fmt.Fprintf(&text, "  Output: %s, %d files, %s\n", filepath.ToSlash(report.Directory), report.Files, ui.Size(report.Bytes))
 	fmt.Fprintf(&text, "  Game cartridge: %s\n", ui.Size(report.CartridgeBytes))
 
-	if report.HostURL != "" {
-		fmt.Fprintf(&text, "  Remote host: %s, verified against SDK %s\n", report.HostURL, report.SDK)
-	}
-
 	switch report.Target {
 	case "web":
 		switch {
 		case report.PreviewURL != "":
 			fmt.Fprintf(&text, "\nPreview: %s (reloads after a successful build)\n", report.PreviewURL)
-		case strings.HasPrefix(report.HostURL, "../"):
-			fmt.Fprintf(
-				&text,
-				"\nNext: karty serve %s\n",
-				commandPath(filepath.ToSlash(filepath.Dir(report.Directory)), runtime.GOOS == "windows"),
-			)
-			fmt.Fprintln(&text, "Open http://127.0.0.1:8080/web/. Place the relative runtime mirror alongside the game directory.")
+
 		default:
 			fmt.Fprintln(&text, "\nNext: karty serve")
 			fmt.Fprintln(&text, "Open http://127.0.0.1:8080/. Upload the entire output directory to a static web host to share it.")
 		}
 
-		if report.HostURL != "" {
-			fmt.Fprintln(&text, "Keep the remote host URL reachable. Serve a relative mirror alongside the game.")
-		}
 	case "native":
 		writeNativeNext(&text, report)
 	default:

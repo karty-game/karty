@@ -42,7 +42,7 @@ func Command() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "compiler", Value: "go", Usage: "development cartridge compiler: go or tinygo"},
 			&cli.StringFlag{Name: "target", Value: "web", Usage: "development target"},
-			&cli.StringFlag{Name: "host", Usage: "path to a pre-built host artifact"},
+			&cli.StringFlag{Name: "host", Usage: "path to a pre-built host artifact or verified host bundle"},
 			&cli.StringFlag{Name: "go", Usage: "path to a Go executable"},
 			&cli.StringFlag{Name: "tinygo", Usage: "path to a TinyGo executable"},
 			&cli.StringFlag{Name: "wasm-tools", Usage: "path to a wasm-tools executable"},
@@ -59,7 +59,7 @@ type configuration struct {
 }
 
 func run(ctx context.Context, command *cli.Command) error {
-	config, err := configure(command)
+	config, err := configure(ctx, command)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func run(ctx context.Context, command *cli.Command) error {
 	return serveDevelopment(ctx, command, config)
 }
 
-func configure(command *cli.Command) (configuration, error) {
+func configure(ctx context.Context, command *cli.Command) (configuration, error) {
 	if command.String("target") != "web" {
 		return configuration{}, errUnsupportedTarget
 	}
@@ -82,7 +82,7 @@ func configure(command *cli.Command) (configuration, error) {
 		return configuration{}, errInvalidPort
 	}
 
-	host, err := devHost(command.String("host"))
+	host, err := devHost(ctx, command.String("host"))
 	if err != nil {
 		return configuration{}, err
 	}
@@ -191,12 +191,12 @@ func printAddress(command *cli.Command, address string) {
 
 func developmentOptions(host, compiler, goPath, tinygo, wasmTools string) buildservice.Options {
 	return buildservice.Options{Target: "web", Compiler: compiler, Go: goPath, TinyGo: tinygo, WasmTools: wasmTools,
-		Host: host, Development: true, DevelopmentBakes: true, BundledRuntime: true}
+		Host: host, Development: true, DevelopmentBakes: true}
 }
 
 // Managed hosts stay SDK-pinned; local overrides are validated before listening.
-func devHost(override string) (string, error) {
-	host, err := findHost(override)
+func devHost(ctx context.Context, override string) (string, error) {
+	host, err := findHost(ctx, override)
 	if errors.Is(err, errHostNotFound) {
 		return "", nil
 	}
@@ -204,18 +204,18 @@ func devHost(override string) (string, error) {
 	return host, err
 }
 
-func findHost(explicit string) (string, error) {
+func findHost(ctx context.Context, explicit string) (string, error) {
 	if explicit != "" {
-		return existingHost(explicit)
+		return existingHost(ctx, explicit)
 	}
 
 	if environment := os.Getenv("KARTY_HOST_WEB"); environment != "" {
-		return existingHost(environment)
+		return existingHost(ctx, environment)
 	}
 
 	if executable, err := os.Executable(); err == nil {
 		candidate := filepath.Join(filepath.Dir(executable), "..", "..", "host", "web", "karty-host.wasm")
-		if path, pathErr := existingHost(candidate); pathErr == nil {
+		if path, pathErr := existingHost(ctx, candidate); pathErr == nil {
 			return path, nil
 		}
 	}
@@ -224,7 +224,7 @@ func findHost(explicit string) (string, error) {
 	if err == nil {
 		for current := directory; current != filepath.Dir(current); current = filepath.Dir(current) {
 			candidate := filepath.Join(current, "dist", "host", "web", "karty-host.wasm")
-			if path, pathErr := existingHost(candidate); pathErr == nil {
+			if path, pathErr := existingHost(ctx, candidate); pathErr == nil {
 				return path, nil
 			}
 		}
@@ -233,7 +233,7 @@ func findHost(explicit string) (string, error) {
 	return "", errHostNotFound
 }
 
-func existingHost(path string) (string, error) {
+func existingHost(ctx context.Context, path string) (string, error) {
 	absolute, err := filepath.Abs(filepath.Clean(path))
 	if err != nil {
 		return "", err
@@ -243,6 +243,12 @@ func existingHost(path string) (string, error) {
 	info, err := os.Stat(absolute)
 	if err != nil {
 		return "", err
+	}
+
+	if bundle, err := buildservice.ValidateLocalHost(ctx, absolute, "web", ""); err != nil {
+		return "", err
+	} else if bundle {
+		return absolute, nil
 	}
 
 	if !info.Mode().IsRegular() {

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/charmbracelet/log"
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty-sdk/format/level"
@@ -41,19 +42,23 @@ var (
 )
 
 type manifest struct {
+	// Build-owned policy; never serialized into authored level configuration.
+	omitVegetation bool
+
 	Level struct {
 		Name     string `toml:"name"`
 		Kind     string `toml:"kind"`
 		Metadata string `toml:"metadata"`
 	} `toml:"level"`
-	Data     []dataEntry            `toml:"data"`
-	World    worldSettings          `toml:"world"`
-	Terrain  *terrainBuildSettings  `toml:"terrain"`
-	Lightmap *lightmapBuildSettings `toml:"lightmap"`
-	Chunks   *chunkBuildSettings    `toml:"chunks"`
-	Textures []textureEntry         `toml:"textures"`
-	UI       []dataEntry            `toml:"ui"`
-	Theme    dataEntry              `toml:"theme"`
+	Data       []dataEntry            `toml:"data"`
+	World      worldSettings          `toml:"world"`
+	Terrain    *terrainBuildSettings  `toml:"terrain"`
+	Lightmap   *lightmapBuildSettings `toml:"lightmap"`
+	Chunks     *chunkBuildSettings    `toml:"chunks"`
+	Textures   []textureEntry         `toml:"textures"`
+	Characters []characterEntry       `toml:"characters"`
+	UI         []dataEntry            `toml:"ui"`
+	Theme      dataEntry              `toml:"theme"`
 }
 
 type dataEntry struct {
@@ -115,21 +120,16 @@ type Artifact struct {
 	Chunks []ChunkArtifact
 }
 
-// ChunkArtifact is a content-addressed passive child cartridge. Its identity
-// and exact byte length are bound by the parent level's chunk catalog.
-type ChunkArtifact struct {
-	ID              int
-	Bytes           []byte
-	ContentSHA256   string
-	EnvelopeVersion uint16
-}
-
 type assetBuild struct {
-	packages    *packages.Set
-	projectRoot string
-	manifest    sdk.Manifest
-	screenshot  bool
-	development bool
+	packages          *packages.Set
+	projectRoot       string
+	manifest          sdk.Manifest
+	reflectionCapture bool
+	screenshot        bool
+	development       bool
+	ssbump            *worldSSBumpBuild
+	chartSourceIDs    []uint32
+	chartGrid         int
 	// Tests may supply fixture atlas bytes; public builds always use the managed
 	// Go asset processor, including the shared dev/cache path.
 	materials func(context.Context, string, sdk.Manifest, sdkworld.Document, map[uint32][]byte, ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error)
@@ -240,7 +240,39 @@ func buildAll(
 	return artifacts, nil
 }
 
-func build(
+func build(ctx context.Context, directory string, uiSchema uint32, inheritedTheme uicompiler.Theme, assets *assetBuild) (Artifact, error) {
+	if assets == nil {
+		return buildLevel(ctx, directory, uiSchema, inheritedTheme, assets)
+	}
+
+	owned := *assets
+
+	grid := max(2, assets.chartGrid)
+	for range 3 {
+		owned.chartGrid = grid
+
+		result, err := buildLevel(ctx, directory, uiSchema, inheritedTheme, &owned)
+		if err == nil || !errors.Is(err, level.ErrEnvelopeSize) || len(owned.chartSourceIDs) == 0 || owned.chartGrid >= 8 {
+			return result, err
+		}
+
+		grid = owned.chartGrid * webGPUChartGridMultiplier
+		log.Info(
+			"WebGPU complete level budget retry",
+			"level",
+			filepath.Base(directory),
+			"next_chart_pixels",
+			256/grid-2*webGPUChartGutter,
+			"reason",
+			err,
+		)
+	}
+
+	return Artifact{}, level.ErrEnvelopeSize
+}
+
+//nolint:gocognit // Optional level resources are validated before publishing one complete encoded module.
+func buildLevel(
 	ctx context.Context,
 	directory string,
 	uiSchema uint32,
@@ -265,7 +297,7 @@ func build(
 		defer set.Close()
 	}
 
-	definition, err = resolveLevelPackages(ctx, directory, definition, set)
+	definition, err = resolveBuildPackages(ctx, directory, definition, set)
 	if err != nil {
 		return Artifact{}, err
 	}
@@ -295,7 +327,10 @@ func build(
 		return Artifact{}, err
 	}
 
-	var chunks []ChunkArtifact
+	var (
+		chunks         []ChunkArtifact
+		chartSourceIDs []uint32
+	)
 
 	if definition.World.Source != "" {
 		atlas, materialErr := compileWorldAssets(ctx, directory, definition, textureMetadata, textures, data, metadata, assets)
@@ -309,11 +344,21 @@ func build(
 		features = append(features, atlas.features...)
 		chunks = atlas.chunks
 
+		chartSourceIDs = atlas.chartSourceIDs
+		if assets != nil {
+			assets.chartGrid, assets.chartSourceIDs = atlas.chartGrid, atlas.chartSourceIDs
+		}
+
 		slices.Sort(features)
 		features = slices.Compact(features)
 	}
 
 	data = append(data, textures...)
+
+	data, features, err = appendCharacters(ctx, directory, definition, data, features)
+	if err != nil {
+		return Artifact{}, err
+	}
 
 	theme, err := resolveTheme(directory, definition.Theme.Source, uiSchema, inheritedTheme, textureMetadata)
 	if err != nil {
@@ -360,12 +405,24 @@ func build(
 		features,
 		metadata,
 		assets,
+		chartSourceIDs,
 	)
 	if err != nil {
 		return Artifact{}, err
 	}
 
+	if assets != nil {
+		if _, err := completeWebGPUEnvelopeSize(metadata, data); err != nil {
+			return Artifact{}, fmt.Errorf("level %q WebGPU package preflight: %w", definition.Level.Name, err)
+		}
+	}
+
 	module, err := encodeLevelModule(definition.Level.Name, metadata, data)
+	if err != nil {
+		return Artifact{}, err
+	}
+
+	module, features, err = appendSavedReflections(ctx, module, features, directory, assets, chunks)
 	if err != nil {
 		return Artifact{}, err
 	}
@@ -636,8 +693,13 @@ func loadData(directory string, entries []dataEntry) ([]level.SourceEntry, error
 			return nil, fmt.Errorf("data %q is owned by world terrain compilation: %w", entry.Name, ErrSource)
 		}
 
-		if entry.Name == worldmaterial.LayoutEntry || entry.Name == worldmaterial.AlbedoEntry || entry.Name == worldmaterial.DataEntry ||
-			entry.Name == worldmaterial.MipTailEntry || entry.Name == worldmaterial.ReflectanceEntry || entry.Name == worldmaterial.ReflectanceMipTailEntry {
+		if ownedSSBumpEntry(entry.Name) || ownedMaterialGPUEntry(entry.Name) ||
+			entry.Name == worldmaterial.LayoutEntry ||
+			entry.Name == worldmaterial.AlbedoEntry ||
+			entry.Name == worldmaterial.DataEntry ||
+			entry.Name == worldmaterial.MipTailEntry ||
+			entry.Name == worldmaterial.ReflectanceEntry ||
+			entry.Name == worldmaterial.ReflectanceMipTailEntry {
 			return nil, fmt.Errorf("data %q is owned by the world material processor: %w", entry.Name, ErrSource)
 		}
 

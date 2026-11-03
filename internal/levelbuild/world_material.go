@@ -12,20 +12,11 @@ import (
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldchunk"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
+	"github.com/karty-game/karty-sdk/format/worldterrain"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	worldgeometry "github.com/karty-game/karty/internal/worldbuild/geometry"
 	worldsource "github.com/karty-game/karty/internal/worldbuild/source"
 )
-
-type worldMaterialBuild struct {
-	data     []level.SourceEntry
-	metadata []byte
-	textures []assetpipeline.Texture
-	features []string
-	chunks   []ChunkArtifact
-	sources  []level.SourceEntry
-	ready    *worldchunk.ReadyOptions
-}
 
 func compileMaterialWorld(
 	directory string,
@@ -119,6 +110,12 @@ func classifyCompiledFrames(document *world.Document, textures []metadataTexture
 
 func compileWorldAssets(ctx context.Context, directory string, definition manifest, textureMetadata []metadataTexture,
 	textures, data []level.SourceEntry, metadata []byte, assets *assetBuild) (worldMaterialBuild, error) {
+	if !worldGPUChunksEnabled(assets) {
+		return worldMaterialBuild{}, fmt.Errorf("3D worlds require the current SDK's prepared GPU2 profile: %w", ErrManifest)
+	}
+
+	definition = vegetationBuildProfile(definition, assets)
+
 	if err := validateMaterializeSettings(definition, assets); err != nil {
 		return worldMaterialBuild{}, err
 	}
@@ -130,6 +127,30 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 	compiled, encoded, err := compileMaterialWorld(directory, definition, textureMetadata, textures)
 	if err != nil {
 		return worldMaterialBuild{}, err
+	}
+
+	strengths, err := resolveMaterialStrengths(definition.Textures, textureMetadata, compiled)
+	if err != nil {
+		return worldMaterialBuild{}, err
+	}
+
+	materialize, err := resolveMaterializeSettings(definition.Textures, textureMetadata, compiled)
+	if err != nil {
+		return worldMaterialBuild{}, err
+	}
+
+	if assets != nil {
+		prepareWebGPUSingleLayer(&compiled)
+
+		assets, textures, metadata, err = prepareWebGPUCharts(ctx, assets, &compiled, textures, metadata, strengths, materialize)
+		if err != nil {
+			return worldMaterialBuild{}, fmt.Errorf("level %q WebGPU material charts: %w", definition.Level.Name, err)
+		}
+
+		encoded, err = world.Encode(compiled)
+		if err != nil {
+			return worldMaterialBuild{}, err
+		}
 	}
 
 	if compiled.MaterialLayers != nil && (assets == nil ||
@@ -160,37 +181,7 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 
 	data = append(data, outdoorEntries...)
 
-	animations, err := worldAnimationFeatures(assets, compiled)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
-	environment, err := worldEnvironmentFeatures(assets, compiled)
-	if err != nil {
-		return worldMaterialBuild{}, fmt.Errorf("level %q environment: %w", definition.Level.Name, err)
-	}
-
-	lighting, err := worldLightingFeatures(assets, compiled)
-	if err != nil {
-		return worldMaterialBuild{}, fmt.Errorf("level %q world lighting: %w", definition.Level.Name, err)
-	}
-
-	mapping, err := worldMappingFeatures(assets, compiled)
-	if err != nil {
-		return worldMaterialBuild{}, fmt.Errorf("level %q material mapping: %w", definition.Level.Name, err)
-	}
-
-	solids, err := worldSolidsFeatures(assets, compiled)
-	if err != nil {
-		return worldMaterialBuild{}, fmt.Errorf("level %q static solids: %w", definition.Level.Name, err)
-	}
-
-	strengths, err := resolveMaterialStrengths(definition.Textures, textureMetadata, compiled)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
-	materialize, err := resolveMaterializeSettings(definition.Textures, textureMetadata, compiled)
+	features, err := compiledWorldFeatures(assets, compiled, definition.Level.Name)
 	if err != nil {
 		return worldMaterialBuild{}, err
 	}
@@ -203,7 +194,7 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 	}
 
 	var lightmaps []string
-	if definition.Chunks == nil || !definition.Chunks.Enabled {
+	if (definition.Chunks == nil || !definition.Chunks.Enabled) && needsWholeWorldLightingInput(definition, assets) {
 		data, metadata, lightmaps, err = buildWorldLightmaps(
 			projectDirectory,
 			directory,
@@ -230,28 +221,17 @@ func compileWorldAssets(ctx context.Context, directory string, definition manife
 	atlas.features = append(atlas.features, particleFeatures...)
 	atlas.features = append(atlas.features, vegetationFeatures...)
 	atlas.features = append(atlas.features, outdoorFeatures...)
-	atlas.features = append(atlas.features, animations...)
-	atlas.features = append(atlas.features, environment...)
-	atlas.features = append(atlas.features, lighting...)
-	atlas.features = append(atlas.features, mapping...)
-	atlas.features = append(atlas.features, solids...)
+	atlas.features = append(atlas.features, features...)
 	atlas.features = append(atlas.features, lightmaps...)
 	atlas.features = append(atlas.features, world.Feature)
 
 	atlas.sources = textures
-
-	if definition.Chunks != nil && definition.Chunks.Enabled {
-		atlas, err = prepareAndFinishWorldChunks(ctx, directory, definition, compiled, atlas, assets)
-		if err != nil {
-			return worldMaterialBuild{}, fmt.Errorf("level %q chunks: %w", definition.Level.Name, err)
-		}
+	if assets != nil {
+		atlas.chartSourceIDs = assets.chartSourceIDs
+		atlas.chartGrid = assets.chartGrid
 	}
 
-	if err := validateWorldRuntimeLights(&compiled, atlas); err != nil {
-		return worldMaterialBuild{}, fmt.Errorf("level %q world lighting: %w", definition.Level.Name, err)
-	}
-
-	return atlas, nil
+	return finishCompiledWorld(ctx, directory, definition, compiled, atlas, assets)
 }
 
 func buildWorldMaterials(
@@ -264,7 +244,7 @@ func buildWorldMaterials(
 	options ...map[uint32]assetpipeline.MaterializeOptions,
 ) (worldMaterialBuild, error) {
 	result := worldMaterialBuild{data: data, metadata: metadata}
-	if supportsReadyChunks(assets) {
+	if worldGPUChunksEnabled(assets) {
 		result.ready = &worldchunk.ReadyOptions{CleanupStatic: true}
 	}
 
@@ -302,7 +282,10 @@ func buildWorldMaterials(
 	}
 
 	if len(pair.Reflectance) != 0 &&
-		!slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialReflectanceV1) {
+		!slices.Contains(
+			assets.manifest.Assets.Capabilities.Runtime,
+			asset.CapabilityWorldMaterialReflectanceV1,
+		) && !worldMaterialGPUEnabled(assets) {
 		return worldMaterialBuild{}, fmt.Errorf("reflectance requires %s: %w", worldmaterial.FeatureReflectance, ErrManifest)
 	}
 
@@ -336,6 +319,12 @@ func buildWorldMaterials(
 
 	if len(pair.Reflectance) != 0 {
 		result.features = append(result.features, worldmaterial.FeatureReflectance)
+	}
+
+	if worldMaterialGPUEnabled(assets) {
+		if err := appendWorldMaterialGPU(ctx, assets, document, pair, &result); err != nil {
+			return worldMaterialBuild{}, err
+		}
 	}
 
 	return result, nil
@@ -463,4 +452,31 @@ func packageWorldMaterials(data []level.SourceEntry, metadata []byte,
 	}
 
 	return data, metadata, nil
+}
+
+func prepareFixedChunkResources(result worldMaterialBuild, definition manifest) (worldMaterialBuild, error) {
+	if definition.Lightmap != nil && definition.Lightmap.Fixed && result.ready != nil {
+		// Fixed chunks also provide streamed collision. Visual occlusion cleanup
+		// must not remove collision surfaces behind noncolliding render geometry.
+		ready := *result.ready
+		ready.CleanupStatic = false
+		result.ready = &ready
+	}
+
+	if definition.Lightmap != nil && definition.Lightmap.Fixed && definition.Terrain != nil {
+		for _, entry := range result.data {
+			if entry.Name == worldterrain.EntryName {
+				terrain, decodeErr := worldterrain.Decode(entry.Data)
+				if decodeErr != nil {
+					return worldMaterialBuild{}, decodeErr
+				}
+
+				result.terrain = &terrain
+			}
+		}
+
+		result.data = slices.DeleteFunc(result.data, func(entry level.SourceEntry) bool { return entry.Name == worldterrain.EntryName })
+	}
+
+	return result, nil
 }

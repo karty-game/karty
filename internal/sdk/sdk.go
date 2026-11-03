@@ -28,7 +28,9 @@ type Manifest struct {
 		Version string `toml:"version"`
 	} `toml:"api"`
 	Host struct {
-		Version string `toml:"version"`
+		Version  string `toml:"version"`
+		Format   string `toml:"format,omitempty"`
+		Renderer string `toml:"renderer,omitempty"`
 	} `toml:"host"`
 	Docs struct {
 		Version string `toml:"version"`
@@ -47,6 +49,8 @@ type Manifest struct {
 		Go                  string `toml:"go"`
 		Materialize         string `toml:"materialize"`
 		MaterializeRevision string `toml:"materialize-revision"`
+		KTX                 string `toml:"ktx,omitempty"`
+		KTXRevision         string `toml:"ktx-revision,omitempty"`
 		TinyGo              string `toml:"tinygo"`
 		WasmTools           string `toml:"wasm-tools"`
 	} `toml:"tools"`
@@ -54,14 +58,16 @@ type Manifest struct {
 		// Air preserves historical signed SDK metadata; it is never installed or required.
 		Air         map[string]ToolArtifact         `toml:"air,omitempty"`
 		Materialize map[string]MaterialToolArtifact `toml:"materialize"`
+		KTX         map[string]MaterialToolArtifact `toml:"ktx,omitempty"`
 		TinyGo      map[string]ToolArtifact         `toml:"tinygo"`
 		WasmTools   map[string]ToolArtifact         `toml:"wasm-tools"`
 		Host        struct {
-			Native       map[string]ToolArtifact `toml:"native"`
-			Web          ToolArtifact            `toml:"web"`
-			WebRuntime   ToolArtifact            `toml:"web-runtime"`
-			WebOptimized ToolArtifact            `toml:"web-optimized"`
-			WebBrotli    ToolArtifact            `toml:"web-brotli"`
+			Native       map[string]ToolArtifact       `toml:"native"`
+			Bundles      map[string]HostBundleArtifact `toml:"bundles,omitempty"`
+			Web          ToolArtifact                  `toml:"web"`
+			WebRuntime   ToolArtifact                  `toml:"web-runtime"`
+			WebOptimized ToolArtifact                  `toml:"web-optimized"`
+			WebBrotli    ToolArtifact                  `toml:"web-brotli"`
 		} `toml:"host"`
 	} `toml:"artifacts"`
 }
@@ -106,6 +112,15 @@ type ToolArtifact struct {
 }
 
 func validateManifest(version string, manifest Manifest) error {
+	if err := validateHostDelivery(
+		manifest.Host.Format,
+		manifest.Host.Renderer,
+		manifest.Artifacts.Host.Bundles,
+		hasRawHostArtifacts(manifest),
+	); err != nil {
+		return err
+	}
+
 	if err := validateVersion(version); err != nil {
 		return err
 	}
@@ -124,6 +139,10 @@ func validateManifest(version string, manifest Manifest) error {
 
 	if err := ValidateMaterialize(manifest); err != nil {
 		return fmt.Errorf("SDK %s Materialize: %w", version, err)
+	}
+
+	if err := ValidateKTX(manifest); err != nil {
+		return fmt.Errorf("SDK %s KTX: %w", version, err)
 	}
 
 	if slices.Contains(manifest.Assets.Capabilities.Runtime, assetcontract.CapabilityWorldMaterialAtlasV1) &&

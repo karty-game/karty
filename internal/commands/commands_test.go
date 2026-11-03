@@ -68,7 +68,7 @@ func TestCommandGroupHelp(t *testing.T) {
 		path []string
 		want []string
 	}{
-		{[]string{"render"}, []string{"bake", "screenshot"}},
+		{[]string{"render"}, []string{"bake", "reflections", "screenshot"}},
 		{[]string{"sdk"}, []string{"current", "install", "toolchain"}},
 		{[]string{"sdk", "toolchain"}, []string{"install"}},
 		{[]string{"render", "bake"}, []string{"--samples", "--incremental"}},

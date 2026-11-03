@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"path/filepath"
 
 	"github.com/karty-game/karty/internal/brand"
+	"github.com/karty-game/karty/internal/toolchain"
 	"github.com/karty-game/karty/website"
 )
 
@@ -42,7 +44,7 @@ func previewLocalSample(project, output *os.Root, name string, card sampleCard) 
 		}
 		defer source.Close()
 
-		if err = validateLocalSampleWeb(source.FS(), name); err != nil {
+		if err = validateLocalSampleWeb(source, name); err != nil {
 			return err
 		}
 
@@ -90,7 +92,8 @@ func previewLocalSample(project, output *os.Root, name string, card sampleCard) 
 	return nil
 }
 
-func validateLocalSampleWeb(source fs.FS, name string) error {
+func validateLocalSampleWeb(root *os.Root, name string) error {
+	source := root.FS()
 	count, total := 0, int64(0)
 
 	if err := fs.WalkDir(source, ".", func(path string, entry fs.DirEntry, walkErr error) error {
@@ -119,7 +122,21 @@ func validateLocalSampleWeb(source fs.FS, name string) error {
 		return err
 	}
 
-	for _, name := range []string{"index.html", "game.kart", "karty.js", "karty-host.wasm", "wasm_exec.js"} {
+	if _, err := toolchain.ReadHostBundle(context.Background(), root.Name(), "web", ""); err != nil {
+		return err
+	}
+
+	files := []string{
+		"index.html",
+		"game.kart",
+		"karty-host.wasm",
+		"wasm_exec.js",
+		"karty-web.js",
+		"karty-web-status.js",
+		"karty-latest.json",
+	}
+
+	for _, name := range files {
 		if err := requireSampleFile(source, name); err != nil {
 			return err
 		}

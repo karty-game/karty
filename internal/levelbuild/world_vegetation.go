@@ -24,7 +24,7 @@ func compileWorldVegetation(
 		return nil, nil, err
 	}
 
-	if expanded.Vegetation == nil {
+	if expanded.Vegetation == nil || definition.omitVegetation || assets != nil {
 		return nil, nil, nil
 	}
 

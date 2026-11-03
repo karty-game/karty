@@ -216,6 +216,13 @@ func guidePages() ([]guidePage, error) {
 		)
 	}
 
+	capture, err := softwareCapturePage()
+	if err != nil {
+		return nil, err
+	}
+
+	pages = append(pages, capture)
+
 	complete, err := readMarkdown()
 	if err != nil {
 		return nil, err

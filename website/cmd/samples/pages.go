@@ -74,6 +74,9 @@ func validateSiteDirectories(source fs.FS) error {
 		}
 
 		switch entry.Name() {
+		case "assets":
+			// Shared documentation assets are already confined and bounded by
+			// the complete site walk above; they are not playable samples.
 		case "runtime":
 			err = validateRuntime(source)
 		case "technical":

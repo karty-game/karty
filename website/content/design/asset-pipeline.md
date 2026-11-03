@@ -39,6 +39,37 @@ bindings and packaged presentation data.
 Each asset follows the processing it needs. An interface image, a world material
 and a music track do not all use the same recipe.
 
+## Characters keep their source GLBs
+
+A world level can declare a skinned character model and a shared
+animation bank in `level.toml`:
+
+```toml
+[[characters]]
+id = "guard"
+model = "@fps-lowpoly-character/models/guard.glb"
+animations = "@fps-lowpoly-character/animations/shared.glb"
+```
+
+Package references use the packages already declared in `karty.toml`. Local
+paths are relative to the level directory. Model IDs are the names game code
+uses to select a model; clip names come from the animation GLB. Several models
+can share the same animation source without duplicating the bank in the level.
+
+The CLI decodes embedded Meshopt data, binds animation tracks by node name,
+removes unreferenced joints, and combines opaque albedo materials into a padded
+QOI atlas. It applies texture transforms, wrapping and linear base colour
+factors during the build. The host receives the bounded `world/characters@1`
+resource; it does not decode GLB or Meshopt while loading a game.
+
+The current importer accepts one skinned triangle mesh per GLB, four influences
+per vertex, at most 64 referenced joints and STEP or LINEAR animation. Images
+must be embedded PNG, JPEG or WebP. Morph targets, matrix nodes, external files,
+transparent or extended materials and cubic interpolation produce build errors.
+Export transforms as TRS and bake unsupported material effects into the albedo
+before importing. The packaged atlas is limited to 2048 by 2048 pixels, and a
+level can declare at most eight models.
+
 ## Materialize turns colour into surface detail
 
 A colour image tells the renderer what a wall looks like, but it does not

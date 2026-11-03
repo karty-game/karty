@@ -1,8 +1,6 @@
 package dev
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -10,14 +8,13 @@ func TestManagedDevelopmentKeepsSDKHostAndOwnsBaking(t *testing.T) {
 	t.Chdir(t.TempDir())
 	t.Setenv("KARTY_HOST_WEB", "")
 
-	host, err := devHost("")
+	host, err := devHost(t.Context(), "")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	options := developmentOptions(host, "go", "", "", "")
-	if options.Host != "" || options.Target != "web" || options.Compiler != "go" || !options.Development || !options.DevelopmentBakes ||
-		!options.BundledRuntime {
+	if options.Host != "" || options.Target != "web" || options.Compiler != "go" || !options.Development || !options.DevelopmentBakes {
 		t.Fatalf("unexpected development options: %+v", options)
 	}
 }
@@ -25,12 +22,9 @@ func TestManagedDevelopmentKeepsSDKHostAndOwnsBaking(t *testing.T) {
 func TestDevelopmentPreservesToolAndHostOverrides(t *testing.T) {
 	t.Parallel()
 
-	path := filepath.Join(t.TempDir(), "local host.wasm")
-	if err := os.WriteFile(path, []byte("wasm"), 0600); err != nil {
-		t.Fatal(err)
-	}
+	path := developmentBundleFixture(t)
 
-	host, err := devHost(path)
+	host, err := devHost(t.Context(), path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +35,7 @@ func TestDevelopmentPreservesToolAndHostOverrides(t *testing.T) {
 		t.Fatalf("lost overrides: %+v", options)
 	}
 
-	if _, err := devHost(path + ".missing"); err == nil {
+	if _, err := devHost(t.Context(), path+".missing"); err == nil {
 		t.Fatal("missing explicit host accepted")
 	}
 }

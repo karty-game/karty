@@ -3,7 +3,6 @@ package levelbuild_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"image"
 	"image/color"
@@ -16,68 +15,42 @@ import (
 	"testing"
 
 	sdkqoi "github.com/karty-game/karty-sdk/codec/qoi"
-	"github.com/karty-game/karty-sdk/format/asset"
-	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty-sdk/format/level"
 	sdkworld "github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty-sdk/format/worldgpuchunk"
+	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/levelbuild"
-	"github.com/karty-game/karty/internal/release"
-	"github.com/karty-game/karty/internal/sdk"
+	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/testfixture"
+	worldgeometry "github.com/karty-game/karty/internal/worldbuild/geometry"
+	worldsource "github.com/karty-game/karty/internal/worldbuild/source"
+	"github.com/pelletier/go-toml/v2"
 )
 
-func TestRomanCourtFixtureProcessedTextures(t *testing.T) {
+func TestRomanCourtOfflineTexturesPreservePatterns(t *testing.T) {
 	t.Parallel()
-
-	selected, err := sdk.Resolve(release.SDKVersion())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	selected = geometrySDK(selected)
 	root := testfixture.RomanCourtGeometry(t, filepath.Join("..", "..", "testdata", "roman-court"))
-	first, err := levelbuild.BuildAllWithAssets(context.Background(), root, 4, "", selected)
-	if err != nil {
-		t.Fatal(err)
-	}
-	second, err := levelbuild.BuildAllWithAssets(context.Background(), root, 4, "", selected)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(first) != 1 || len(second) != 1 || !bytes.Equal(first[0].Bytes, second[0].Bytes) ||
-		!slices.Contains(first[0].Features, cartridge.FeatureTextureQOIv1) || !slices.Contains(first[0].Features, sdkworld.Feature) {
-		t.Fatal("processed sample must retain world/QOI features and deterministic packaging")
-	}
-	envelope, err := level.Decode(unwrapLevelModule(t, first[0].Bytes))
-	if err != nil {
-		t.Fatal(err)
-	}
-	materials := make(map[string]bool)
-	for _, materialID := range []uint32{1, 4, 8} { // ceiling, floor, wall: same IDs as the original PNG fixture.
-		encoded, _, found := envelope.Read(level.TextureEntryName(materialID), 0, level.MaxEntrySize)
-		if !found || materials[string(encoded)] {
-			t.Fatalf("processed material %d missing or duplicated", materialID)
+	first := processRomanCourtTextures(t, root)
+	second := processRomanCourtTextures(t, root)
+	materials := map[string]bool{}
+	for _, materialID := range []uint32{1, 4, 8} {
+		encoded := processedWorldTexture(t, root, first, materialID)
+		if materials[string(encoded)] {
+			t.Fatal("distinct authored materials collapsed", materialID)
 		}
 		materials[string(encoded)] = true
 		metadata, texture, err := sdkqoi.Decode(encoded)
 		if err != nil || metadata.Width == 0 || metadata.Height == 0 {
-			t.Fatalf("processed material %d QOI metadata=%+v: %v", materialID, metadata, err)
+			t.Fatal("invalid processed texture", materialID, err)
 		}
-		pixels := texture.Pix
-		colors := make(map[[3]byte]bool)
-		for offset := 0; offset < len(pixels); offset += 4 {
-			if pixels[offset+3] != 255 {
-				t.Fatalf("processed material %d is not opaque", materialID)
-			}
-			colors[[3]byte{pixels[offset], pixels[offset+1], pixels[offset+2]}] = true
-		}
-		if len(colors) < 3 {
-			t.Fatalf("processed material %d lost its authored pattern", materialID)
-		}
+		checkOpaquePattern(t, materialID, texture)
 	}
-	for _, texture := range second[0].Textures {
-		if !texture.CacheHit || texture.Encoding != "qoi" {
-			t.Fatalf("second processed build did not reuse QOI cache: %+v", texture)
+	if len(first) != len(second) {
+		t.Fatal("texture reports changed")
+	}
+	for index, report := range second {
+		if !report.CacheHit || report.Encoding != "qoi" || report.OutputSHA256 != first[index].OutputSHA256 {
+			t.Fatal("unchanged current offline texture did not reuse cache", report)
 		}
 	}
 }
@@ -92,7 +65,9 @@ func TestBuildAllCompilesWorldYAMLIntoCanonicalLevelEntry(t *testing.T) {
 	}
 
 	var texture bytes.Buffer
-	if err := png.Encode(&texture, image.NewNRGBA(image.Rect(0, 0, 1, 1))); err != nil {
+	opaque := image.NewNRGBA(image.Rect(0, 0, 1, 1))
+	opaque.SetNRGBA(0, 0, color.NRGBA{R: 120, G: 100, B: 80, A: 255})
+	if err := png.Encode(&texture, opaque); err != nil {
 		t.Fatal(err)
 	}
 
@@ -149,15 +124,15 @@ rooms:
 		t.Fatal(err)
 	}
 
-	first, err := levelbuild.BuildAllWithAssets(t.Context(), root, 2, "", textureSDK(asset.ProcessorQOIv1))
+	first, err := levelbuild.BuildAllWithAssets(t.Context(), root, 2, "", worldFixtureSDK(t))
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := levelbuild.BuildAllWithAssets(t.Context(), root, 2, "", textureSDK(asset.ProcessorQOIv1))
+	second, err := levelbuild.BuildAllWithAssets(t.Context(), root, 2, "", worldFixtureSDK(t))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(first) != 1 || !slices.Equal(first[0].Features, []string{cartridge.FeatureTextureQOIv1, sdkworld.Feature}) ||
+	if len(first) != 1 || !slices.Contains(first[0].Features, worldgpuchunk.Feature) ||
 		first[0].ContentSHA256 != second[0].ContentSHA256 {
 		t.Fatalf("world artifacts = %+v", first)
 	}
@@ -179,57 +154,30 @@ rooms:
 	}
 }
 
-func TestRomanCourtFixtureLevelCompiles(t *testing.T) {
+func TestRomanCourtSourceGeometryPreservesTopologyAndMaterials(t *testing.T) {
 	t.Parallel()
-
 	root := testfixture.RomanCourtGeometry(t, filepath.Join("..", "..", "testdata", "roman-court"))
-	selected, err := sdk.Resolve(release.SDKVersion())
+	document := compileRomanCourtGeometry(t, root)
+	repeated := compileRomanCourtGeometry(t, root)
+	first, err := sdkworld.Encode(document)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	selected = geometrySDK(selected)
-	first, err := levelbuild.BuildAllWithAssets(t.Context(), root, 4, "", selected)
-	if err != nil {
-		t.Fatal(err)
+	second, err := sdkworld.Encode(repeated)
+	if err != nil || !bytes.Equal(first, second) {
+		t.Fatal("current source geometry is nondeterministic", err)
 	}
-	second, err := levelbuild.BuildAllWithAssets(t.Context(), root, 4, "", selected)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(first) != 1 || first[0].Name != "levels.camera-showcase" ||
-		!slices.Equal(first[0].Features, []string{
-			cartridge.FeatureTextureQOIv1, sdkworld.FeatureMaterialMapping, sdkworld.Feature, sdkworld.FeatureStaticSolids,
-		}) ||
-		first[0].ContentSHA256 != second[0].ContentSHA256 {
-		t.Fatalf("sample artifacts = %+v", first)
-	}
-
-	envelope, err := level.Decode(unwrapLevelModule(t, first[0].Bytes))
-	if err != nil {
-		t.Fatal(err)
-	}
-	encoded, _, found := envelope.Read(sdkworld.EntryName, 0, sdkworld.MaxEncodedSize)
-	if !found {
-		t.Fatal("sample compiled world entry is missing")
-	}
-	document, err := sdkworld.Decode(encoded)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Column detail now belongs to independent solids; the actual migrated fixture
-	// has a pinned room/portal graph, independent of shaft facet counts.
 	if document.Version != sdkworld.Version || document.Lighting != nil || len(document.Sectors) != 24 || len(document.Contents) != 22 {
-		t.Fatalf("sample world v%d = %d sectors, %d contents", document.Version, len(document.Sectors), len(document.Contents))
+		t.Fatalf("source geometry v%d: %d sectors, %d contents", document.Version, len(document.Sectors), len(document.Contents))
 	}
-
-	checkRomanCourtMaterials(t, document, envelope)
+	textures := processRomanCourtTextures(t, root)
+	checkRomanCourtMaterials(t, document, root, textures)
 	checkRomanCourtPortals(t, document)
 	checkRomanCourtBasin(t, document)
 	checkRomanCourtActors(t, document)
 }
 
-func checkRomanCourtMaterials(t *testing.T, document sdkworld.Document, envelope level.Envelope) {
+func checkRomanCourtMaterials(t *testing.T, document sdkworld.Document, root string, textures []assetpipeline.Texture) {
 	t.Helper()
 
 	// Material IDs follow the level's sorted texture names: ceiling, character,
@@ -252,8 +200,8 @@ func checkRomanCourtMaterials(t *testing.T, document sdkworld.Document, envelope
 	}
 	materialBytes := make(map[string]bool)
 	for _, materialID := range []uint32{1, 4, 8, 9, 10, 11, 12, 13, 14, 15} {
-		encoded, _, found := envelope.Read(level.TextureEntryName(materialID), 0, level.MaxEntrySize)
-		if !found || materialBytes[string(encoded)] {
+		encoded := processedWorldTexture(t, root, textures, materialID)
+		if materialBytes[string(encoded)] {
 			t.Fatalf("material texture %d is missing or duplicates another surface", materialID)
 		}
 		materialBytes[string(encoded)] = true
@@ -286,14 +234,18 @@ func checkOpaquePattern(t *testing.T, materialID uint32, texture image.Image) {
 	}
 }
 
+//nolint:gocognit // Keep the complete partition, ownership and regular-shaft proof together.
 func checkRomanCourtColumns(t *testing.T, document sdkworld.Document) {
 	t.Helper()
 	if document.StaticSolids == nil || document.StaticSolids.Version != 1 || len(document.StaticSolids.Items) != 355 {
 		t.Fatal("court lacks eight independent solid shafts")
 	}
 	bays := map[string]bool{}
-	portals := 0
+	portals, courtSectors, courtPortals := 0, 0, 0
 	for _, sector := range document.Sectors {
+		if sector.Instance == "roman-court" {
+			courtSectors++
+		}
 		if sector.Instance == "roman-court" && strings.HasPrefix(sector.SourceRoom, "bay-") {
 			bays[sector.SourceRoom] = true
 		}
@@ -303,10 +255,13 @@ func checkRomanCourtColumns(t *testing.T, document sdkworld.Document) {
 			}
 			if wall.Portal >= 0 {
 				portals++
+				if sector.Instance == "roman-court" {
+					courtPortals++
+				}
 			}
 		}
 	}
-	if len(bays) != 16 || portals != 66 {
+	if len(bays) != 16 || portals != 66 || courtSectors != 16 || courtPortals != 49 {
 		t.Fatalf("court partition changed: bays=%d directed portals=%d", len(bays), portals)
 	}
 	centers := []sdkworld.Vec2{
@@ -496,4 +451,79 @@ func checkRomanCourtBasin(t *testing.T, document sdkworld.Document) {
 			t.Fatalf("basin top at (%g,4.1) = %g, want %g", sample.x, height, sample.height)
 		}
 	}
+}
+
+// Material source pixels are an offline compiler input. Current GPU roots carry
+// KMG/KTX2 resources; checking the actual cached QOI producer output preserves
+// the authored pattern regression without publishing obsolete CPU texture data.
+func processedWorldTexture(t *testing.T, root string, textures []assetpipeline.Texture, id uint32) []byte {
+	t.Helper()
+	if id == 0 || int(id) > len(textures) {
+		t.Fatal("missing texture report", id, len(textures))
+	}
+	report := textures[id-1]
+	encoded, err := os.ReadFile(filepath.Join(root, ".karty", "cache", "assets", "v3", report.CacheKey, "payload"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return encoded
+}
+
+func romanCourtSource(t *testing.T, root string) (string, []project.Texture) {
+	t.Helper()
+	encoded, err := os.ReadFile(filepath.Join(root, "levels", "showcase", "level.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var definition struct {
+		World    struct{ Source string }
+		Textures []project.Texture
+	}
+	if err := toml.Unmarshal(encoded, &definition); err != nil {
+		t.Fatal(err)
+	}
+	slices.SortFunc(definition.Textures, func(a, b project.Texture) int { return strings.Compare(a.Name, b.Name) })
+
+	return definition.World.Source, definition.Textures
+}
+func compileRomanCourtGeometry(t *testing.T, root string) sdkworld.Document {
+	t.Helper()
+	source, textures := romanCourtSource(t, root)
+	materials := map[string]uint32{}
+	for index, texture := range textures {
+		// #nosec G115 -- This maintained fixture has fifteen declared materials.
+		materials[texture.Name] = uint32(index + 1)
+	}
+	expanded, err := worldsource.Load(filepath.Join(root, "levels", "showcase"), source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, err := worldgeometry.Compile(expanded, materials)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return document
+}
+func processRomanCourtTextures(t *testing.T, root string) []assetpipeline.Texture {
+	t.Helper()
+	_, declarations := romanCourtSource(t, root)
+	selected := worldFixtureSDK(t)
+	textures := make([]assetpipeline.Texture, 0, len(declarations))
+	for _, declaration := range declarations {
+		declaration.Source = filepath.Join("levels", "showcase", declaration.Source)
+		report, err := assetpipeline.ProcessTexture(
+			t.Context(),
+			root,
+			selected.Assets.TextureProfiles[project.DefaultTextureProfile],
+			declaration,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		textures = append(textures, report)
+	}
+
+	return textures
 }

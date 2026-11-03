@@ -44,6 +44,7 @@ type GeneratedNotice struct {
 
 // Texture describes a validated texture and its deterministic output identity.
 type Texture struct {
+	Streamed              bool               `toml:"streamed,omitempty"`
 	Kind                  string             `toml:"kind,omitempty"`
 	Name                  string             `toml:"name"`
 	Profile               string             `toml:"profile"`
@@ -117,33 +118,34 @@ type LevelTexture struct {
 
 // Summary records encoded and estimated decoded texture costs separately.
 type Summary struct {
-	TextureCount               int   `toml:"textureCount"`
-	DeclaredTextureCount       int   `toml:"declaredTextureCount"`
-	UsedTextureCount           int   `toml:"usedTextureCount"`
-	KeptTextureCount           int   `toml:"keptTextureCount"`
-	StrippedTextureCount       int   `toml:"strippedTextureCount"`
-	SourceBytes                int64 `toml:"sourceBytes"`
-	OutputBytes                int64 `toml:"outputBytes"`
-	StrippedSourceBytes        int64 `toml:"strippedSourceBytes"`
-	EstimatedDecodedBytes      int64 `toml:"estimatedDecodedBytes"`
-	SoundCount                 int   `toml:"soundCount"`
-	SoundSourceBytes           int64 `toml:"soundSourceBytes"`
-	SoundOutputBytes           int64 `toml:"soundOutputBytes"`
-	AudioStreamCount           int   `toml:"audioStreamCount"`
-	AudioStreamSourceBytes     int64 `toml:"audioStreamSourceBytes"`
-	AudioStreamOutputBytes     int64 `toml:"audioStreamOutputBytes"`
-	EstimatedDecodedSoundBytes int64 `toml:"estimatedDecodedSoundBytes"`
-	LevelTextureCount          int   `toml:"levelTextureCount"`
-	LevelSourceBytes           int64 `toml:"levelSourceBytes"`
-	LevelOutputBytes           int64 `toml:"levelOutputBytes"`
-	EstimatedDecodedLevelBytes int64 `toml:"estimatedDecodedLevelBytes"`
-	AssetSourceBytes           int64 `toml:"assetSourceBytes"`
-	AssetOutputBytes           int64 `toml:"assetOutputBytes"`
-	DeclaredFontCount          int   `toml:"declaredFontCount"`
-	UsedFontCount              int   `toml:"usedFontCount"`
-	StrippedFontCount          int   `toml:"strippedFontCount"`
-	FontSourceBytes            int64 `toml:"fontSourceBytes"`
-	StrippedFontBytes          int64 `toml:"strippedFontBytes"`
+	TextureCount                int   `toml:"textureCount"`
+	DeclaredTextureCount        int   `toml:"declaredTextureCount"`
+	UsedTextureCount            int   `toml:"usedTextureCount"`
+	KeptTextureCount            int   `toml:"keptTextureCount"`
+	StrippedTextureCount        int   `toml:"strippedTextureCount"`
+	SourceBytes                 int64 `toml:"sourceBytes"`
+	OutputBytes                 int64 `toml:"outputBytes"`
+	StrippedSourceBytes         int64 `toml:"strippedSourceBytes"`
+	EstimatedDecodedBytes       int64 `toml:"estimatedDecodedBytes"`
+	SoundCount                  int   `toml:"soundCount"`
+	SoundSourceBytes            int64 `toml:"soundSourceBytes"`
+	SoundOutputBytes            int64 `toml:"soundOutputBytes"`
+	AudioStreamCount            int   `toml:"audioStreamCount"`
+	AudioStreamSourceBytes      int64 `toml:"audioStreamSourceBytes"`
+	AudioStreamOutputBytes      int64 `toml:"audioStreamOutputBytes"`
+	EstimatedDecodedSoundBytes  int64 `toml:"estimatedDecodedSoundBytes"`
+	LevelTextureCount           int   `toml:"levelTextureCount"`
+	LevelSourceBytes            int64 `toml:"levelSourceBytes"`
+	LevelOutputBytes            int64 `toml:"levelOutputBytes"`
+	EstimatedDecodedLevelBytes  int64 `toml:"estimatedDecodedLevelBytes"`
+	EstimatedStreamedLevelBytes int64 `toml:"estimatedStreamedLevelBytes,omitempty"`
+	AssetSourceBytes            int64 `toml:"assetSourceBytes"`
+	AssetOutputBytes            int64 `toml:"assetOutputBytes"`
+	DeclaredFontCount           int   `toml:"declaredFontCount"`
+	UsedFontCount               int   `toml:"usedFontCount"`
+	StrippedFontCount           int   `toml:"strippedFontCount"`
+	FontSourceBytes             int64 `toml:"fontSourceBytes"`
+	StrippedFontBytes           int64 `toml:"strippedFontBytes"`
 }
 
 // Usage explains why each declared texture was retained or stripped.

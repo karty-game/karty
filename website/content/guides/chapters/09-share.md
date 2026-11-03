@@ -29,6 +29,27 @@ Open `http://127.0.0.1:8080/` and test the built game. Upload the whole
 `dist/web/` directory to a static host, including `content/` when present.
 Use HTTP hosting; opening `index.html` directly is not the preview workflow.
 
+For a slow or failed browser startup, add `?diagnostics=1` to the game URL
+(or `&diagnostics=1` when it already has a query). After loading, inspect the
+report in the browser's developer console:
+
+```js
+const startup = kartyStartupDiagnostics();
+console.table(startup.stages);
+console.table(startup.events);
+console.log(startup.firstFailure, startup.terminal);
+```
+
+Stage times use milliseconds: `count`, `totalMS`, and `maximumMS` aggregate
+repeated host stages, including shader preparation. Heartbeat `gapMS` records
+how long the main thread went between startup timer callbacks; it can help
+identify stalls, but does not measure device frame rate. The heartbeat stops
+when the game first presents or startup fails. The report keeps at most 64
+stage names, 128 recent events and eight terminal events. It preserves the
+first failure when the runtime subsequently exits. Reports stay in memory in
+that page; Karty does not upload them. Omit the query parameter to leave the
+diagnostic stage observer and heartbeat disabled.
+
 ### Build and run a native game
 
 Build for your current machine, then launch it on Linux or macOS:

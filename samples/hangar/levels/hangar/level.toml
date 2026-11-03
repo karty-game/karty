@@ -1,4 +1,5 @@
 # Hangar materials and baked lighting.
+# Paint, masonry and wood are nonmetallic; arrival flooring has a faint metallic sheen.
 [level]
 name = "levels.hangar"
 kind = "world"
@@ -14,7 +15,8 @@ source = "olive.png"
 profile = "environment"
 
 [textures.materialize]
-preset = "metal"
+preset = "default"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 0.80
@@ -28,7 +30,8 @@ source = "ribbed-quiet.png"
 profile = "environment"
 
 [textures.materialize]
-preset = "metal"
+preset = "default"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 0.55
@@ -38,18 +41,18 @@ rim = 0.1
 
 [[textures]]
 name = "reactor-ribbed"
-source = "ribbed.png"
+source = "reactor-body.png"
 profile = "environment"
 
 [textures.materialize]
-preset = "metal"
+preset = "default"
 metallic_scale = 0
 
 [textures.material_strengths]
-normal = 0.80
-height = 0.10
-ao = 0.80
-rim = 0.1
+normal = 0.38
+height = 0.025
+ao = 0.40
+rim = 0.0
 
 [[textures]]
 name = "barrel-painted"
@@ -57,7 +60,7 @@ source = "ribbed-quiet.png"
 profile = "environment"
 
 [textures.materialize]
-preset = "metal"
+preset = "default"
 metallic_scale = 0
 
 [textures.material_strengths]
@@ -84,6 +87,33 @@ height = 0.01
 ao = 0.25
 rim = 0.0
 
+# Matte enamel separates loading machinery from the surrounding masonry.
+[[textures]]
+name = "machine-painted"
+source = "machine-painted.png"
+profile = "environment"
+
+[textures.materialize]
+preset = "default"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.18
+height = 0.01
+ao = 0.25
+rim = 0.0
+
+# Localized residue sprites retain the floor's underlying detail.
+[[textures]]
+name = "barrel-floor-soot"
+source = "barrel-floor-soot.png"
+profile = "sprite"
+
+[[textures]]
+name = "machine-base-grime"
+source = "machine-base-grime.png"
+profile = "sprite"
+
 [[textures]]
 name = "brick"
 source = "brick.png"
@@ -91,6 +121,7 @@ profile = "environment"
 
 [textures.materialize]
 preset = "brick"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 0.80
@@ -104,8 +135,25 @@ source = "floor-quiet.png"
 profile = "environment"
 
 [textures.materialize]
-# Metal panels retain their direct-light highlights; planar reflections apply to liquid.
-preset = "metal"
+# Worn floor coating stays rough; exposed steel uses its own material.
+preset = "floor"
+metallic_scale = 0
+
+[textures.material_strengths]
+normal = 0.35
+height = 0.03
+ao = 0.45
+rim = 0.1
+
+[[textures]]
+name = "arrival-floor"
+source = "floor-quiet.png"
+profile = "environment"
+
+[textures.materialize]
+# Keep the rough floor preset; only a trace of metallic response catches the lights.
+preset = "floor"
+metallic_scale = 0.03
 
 [textures.material_strengths]
 normal = 0.35
@@ -133,7 +181,8 @@ source = "ceiling-quiet.png"
 profile = "environment"
 
 [textures.materialize]
-preset = "metal"
+preset = "default"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 0.25
@@ -148,6 +197,7 @@ profile = "environment"
 
 [textures.materialize]
 preset = "concrete"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 0.80
@@ -161,7 +211,8 @@ source = "hazard.png"
 profile = "environment"
 
 [textures.materialize]
-preset = "metal"
+preset = "default"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 0.80
@@ -189,7 +240,8 @@ source = "crate.png"
 profile = "environment"
 
 [textures.materialize]
-preset = "metal"
+preset = "wood"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 0.80
@@ -204,6 +256,7 @@ profile = "environment"
 
 [textures.materialize]
 preset = "stone"
+metallic_scale = 0
 
 [textures.material_strengths]
 normal = 0.80
@@ -213,17 +266,18 @@ rim = 0.1
 
 [[textures]]
 name = "toxic"
-source = "toxic.png"
+source = "toxic-flow.png"
 profile = "environment"
 
 [textures.materialize]
 preset = "water"
+metallic_scale = 0
 
 [textures.material_strengths]
-normal = 0.80
-height = 0.10
-ao = 0.80
-rim = 0.1
+normal = 0.35
+height = 0.0
+ao = 0.0
+rim = 0.0
 
 [textures.emission]
 intensity = 0.8
@@ -380,18 +434,123 @@ lights = ["barrel-fire-light"]
 depth = 0.28
 period_seconds = 0.85
 
+[chunks]
+enabled = true
+# Room groups below define matching render and physical loading areas.
+
+[chunks.gpu]
+# Grid coordinates bound chunks; room groups determine indoor loading boundaries.
+cell_size = 8
+# Keep each loading area whole, including its stairs, recesses and access rooms.
+room_groups = [
+  [
+    "arrival",
+    "threshold",
+    "inspection-alcove",
+  ],
+  [
+    "reactor",
+    "east-link",
+    "return-gallery",
+  ],
+  [
+    "service",
+  ],
+  [
+    "loading",
+  ],
+  [
+    "control",
+    "step-0",
+    "step-1",
+    "step-2",
+    "step-3",
+    "step-4",
+    "step-5",
+  ],
+  [
+    "window-bay",
+    "bay-access",
+    "maintenance-niche",
+    "window-0",
+    "window-1",
+    "window-2",
+  ],
+  [
+    "trench-south",
+    "zig-entry",
+    "trench-entry-east",
+    "trench-egress",
+    "trench-stair-0",
+    "trench-stair-1",
+    "trench-stair-2",
+    "trench-stair-3",
+    "trench-stair-4",
+    "trench-stair-5",
+    "west-trench-stair-0",
+    "west-trench-stair-1",
+    "west-trench-stair-2",
+    "west-trench-stair-3",
+    "west-trench-stair-4",
+    "west-trench-stair-5",
+    "zig-walk-0",
+    "zig-walk-1",
+    "zig-walk-2",
+    "zig-west-0",
+    "zig-west-1",
+    "zig-west-2",
+    "zig-east-0",
+    "zig-east-1",
+    "zig-east-2",
+  ],
+  [
+    "extraction",
+    "extraction-link",
+    "egress-return",
+  ],
+  [
+    "acid-control",
+    "acid-control-window-0",
+    "acid-control-window-1",
+    "acid-control-west-access",
+    "acid-control-east-access",
+    "acid-control-west-lift",
+    "acid-control-east-step-0",
+    "acid-control-east-step-1",
+    "acid-control-east-step-2",
+    "acid-control-east-step-3",
+    "acid-control-east-step-4",
+    "acid-control-east-step-5",
+    "acid-control-east-step-6",
+    "acid-control-east-step-7",
+    "acid-control-east-step-8",
+    "acid-control-east-step-9",
+    "acid-control-east-step-10",
+    "acid-control-east-step-11",
+    "acid-control-east-step-12",
+    "acid-control-east-step-13",
+    "acid-control-east-step-14",
+    "acid-control-east-step-15",
+  ],
+]
+# Shared rest vertices keep displaced liquid boundaries joined.
+liquid_edge_step = 0.5
+
 [lightmap]
 enabled = true
-density = 4
+fixed = true
+# Eight texels per metre retain fixture and contact detail within chunk pages.
+density = 8
+# Large rooms need a 1024px maximum; smaller groups use smaller packed pages.
 page_size = 1024
 padding = 4
 max_pages = 1
 max_texels = 1048576
 shadow_size = 256
 offline = true
-bake_samples = 32
+bake_samples = 64
 bake_bounces = 3
-bake_denoise = "medium"
+bake_denoise = "low"
 
 # BEGIN PARTICLE LAB EFFECTS: textures
 

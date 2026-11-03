@@ -1,21 +1,16 @@
 package levelbuild
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"image"
-	_ "image/jpeg"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/log"
 	worldlightmapbake "github.com/karty-game/karty-sdk/bake/worldlightmap"
 	"github.com/karty-game/karty-sdk/codec/qoi"
-	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/level"
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldlightmap"
@@ -115,50 +110,6 @@ func BakeAll(ctx context.Context, projectDirectory string, options BakeOptions, 
 	return reports, nil
 }
 
-func loadBakeMaterials(directory string, definition manifest) ([]metadataTexture, []worldlightmapbake.Material, error) {
-	entries := slices.Clone(definition.Textures)
-	slices.SortFunc(entries, func(a, b textureEntry) int { return strings.Compare(a.Name, b.Name) })
-	metadata := make([]metadataTexture, 0, len(entries))
-	materials := make([]worldlightmapbake.Material, 0, len(entries))
-	decodedBytes := int64(0)
-
-	for index, entry := range entries {
-		if entry.Name == "" || index > 0 && entry.Name == entries[index-1].Name {
-			return nil, nil, ErrSource
-		}
-
-		contents, err := readConfinedFile(directory, entry.Source, asset.MaxSourceAssetBytes)
-		if err != nil {
-			return nil, nil, fmt.Errorf("material %q: %w", entry.Name, err)
-		}
-
-		config, _, err := image.DecodeConfig(bytes.NewReader(contents))
-		if err != nil || config.Width < 1 || config.Height < 1 ||
-			int64(config.Width)*int64(config.Height) > asset.MaxDecodedTextureBytes/bakeTextureChannels {
-			return nil, nil, fmt.Errorf("material %q dimensions: %w", entry.Name, ErrSource)
-		}
-
-		decodedBytes += int64(config.Width) * int64(config.Height) * bakeTextureChannels
-		if decodedBytes > asset.MaxDecodedTextures {
-			return nil, nil, fmt.Errorf("bake source texture budget: %w", ErrSource)
-		}
-
-		pixels, _, err := image.Decode(bytes.NewReader(contents))
-		if err != nil {
-			return nil, nil, fmt.Errorf("material %q: %w", entry.Name, err)
-		}
-
-		id := uint32(index + 1)
-		metadata = append(
-			metadata,
-			metadataTexture{ID: id, Name: entry.Name, Width: config.Width, Height: config.Height, Coverage: bandCoverage(pixels)},
-		)
-		materials = append(materials, worldlightmapbake.Material{ID: id, Albedo: pixels})
-	}
-
-	return metadata, materials, nil
-}
-
 func bakeLevel(ctx context.Context, projectDirectory, directory string, definition manifest, options BakeOptions) (BakeReport, error) {
 	started := time.Now()
 
@@ -239,6 +190,11 @@ func bakeLevel(ctx context.Context, projectDirectory, directory string, definiti
 	log.Info("Baking directional lightmap", "level_name", definition.Level.Name, "samples", samples, "bounces", bounces, "denoise", denoise)
 	bakeOptions := worldlightmapbake.Options{Samples: samples, Bounces: bounces, Workers: options.Workers, Seed: 1, Denoise: denoise,
 		MaxRayDistance: definition.Lightmap.maxRayDistance()}
+
+	bakeOptions.Vegetation, err = prepareAuthoredVegetationBake(directory, definition, &document, metadata, materials)
+	if err != nil {
+		return BakeReport{}, err
+	}
 
 	result, err := worldlightmapbake.Bake(ctx, document, layout, materials, bakeOptions)
 	if err != nil {
@@ -365,10 +321,12 @@ func prepareBakeDirectory(projectDirectory, directory string) (string, error) {
 	current := root
 	for name := range strings.SplitSeq(relative, string(filepath.Separator)) {
 		current = filepath.Join(current, name)
+		// #nosec G703 -- automaticBakePath limits this to fixed cache components and one direct level name; each parent rejects symlinks below.
 		if err := os.Mkdir(current, 0o755); err != nil && !os.IsExist(err) {
 			return "", err
 		}
 
+		// #nosec G703 -- Lstat validates the same confined component without following its symlink.
 		info, err := os.Lstat(current)
 		if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
 			return "", fmt.Errorf("bake cache must be a confined directory: %w", ErrSource)
@@ -479,27 +437,6 @@ func readAutomaticPrebake(
 		{Name: worldlightmap.PrebakeEntryName, Kind: level.EntryData, Data: encoded},
 		{Name: worldlightmap.PrebakeImageEntryName, Kind: level.EntryData, Data: image},
 	}
-}
-
-func validateOfflineReflectance(directory string, definition manifest, document world.Document,
-	layout worldlightmap.Layout, prebake worldlightmap.PrebakeManifest) error {
-	_, materials, err := loadBakeMaterials(directory, definition)
-	if err != nil {
-		return err
-	}
-
-	actual, err := worldlightmapbake.ReflectanceDigestForLayout(document, layout, materials, worldlightmapbake.Options{
-		Samples: prebake.Samples, Bounces: prebake.Bounces, Seed: prebake.Seed, MaxRayDistance: prebake.MaxRayDistance,
-	})
-	if err != nil {
-		return err
-	}
-
-	if actual != prebake.ReflectanceSHA256 {
-		return fmt.Errorf("original albedo or surface inputs changed: %w", worldlightmap.ErrLayout)
-	}
-
-	return nil
 }
 
 func selectBakeLevel(directoryName string, definition manifest, selector string) (bool, error) {

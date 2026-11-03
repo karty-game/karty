@@ -17,7 +17,7 @@ import (
 // Atlas interiors already contain the world material pixels. Keep standalone
 // entries only when they are not atlas materials or have another runtime use.
 // Run after UI compilation and chunk generation, which still need the sources.
-func omitAtlasSourceTextures(entries []level.SourceEntry) ([]level.SourceEntry, error) {
+func omitAtlasSourceTextures(entries []level.SourceEntry, chartSources ...[]uint32) ([]level.SourceEntry, error) {
 	var layoutBytes, worldBytes []byte
 
 	for _, entry := range entries {
@@ -44,6 +44,13 @@ func omitAtlasSourceTextures(entries []level.SourceEntry) ([]level.SourceEntry, 
 	}
 
 	omit := make(map[uint32]bool, len(layout.Materials))
+
+	for _, ids := range chartSources {
+		for _, id := range ids {
+			omit[id] = true
+		}
+	}
+
 	for _, material := range layout.Materials {
 		omit[material.MaterialID] = true
 	}

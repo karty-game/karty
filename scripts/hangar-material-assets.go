@@ -19,7 +19,7 @@ import (
 func main() {
 	check := flag.Bool("check", false, "verify generated surfaces without writing")
 	flag.Parse()
-	for _, name := range []string{"floor", "ceiling", "grate", "ribbed", "hero-steel", "strip-light", "strip-light-broken"} {
+	for _, name := range []string{"floor", "ceiling", "grate", "ribbed", "reactor-body", "machine-painted", "hero-steel", "strip-light", "strip-light-broken"} {
 		if err := generate(name, *check); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -65,6 +65,20 @@ func generate(name string, check bool) error {
 				} else if x%16 < 5 {
 					r, g, b = 74, 83, 84
 				}
+			case "reactor-body":
+				// Continuous vertical ribs. Structural collars belong to the mesh,
+				// not to horizontal stripes repeated at every texture boundary.
+				r, g, b = 58, 73, 74
+				if x%32 < 3 {
+					r, g, b = 87, 98, 96
+				} else if x%32 < 9 {
+					r, g, b = 43, 55, 56
+				}
+			case "machine-painted":
+				// Matte olive enamel in the existing wall/cargo palette. Broad
+				// casing panels stay quiet; access covers and bands are geometry.
+				r, g, b = 87, 97, 83
+				grain = grain / 2
 			case "hero-steel":
 				// Bare brushed trim: quieter and lighter than ribbed painted panels.
 				r, g, b = 141, 153, 157
@@ -89,7 +103,7 @@ func generate(name string, check bool) error {
 		return err
 	}
 	filename := name + "-quiet.png"
-	if name == "hero-steel" || strings.HasPrefix(name, "strip-light") {
+	if name == "hero-steel" || name == "reactor-body" || name == "machine-painted" || strings.HasPrefix(name, "strip-light") {
 		filename = name + ".png"
 	}
 	path := filepath.Join("samples/hangar/levels/hangar", filename)

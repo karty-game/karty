@@ -89,7 +89,7 @@ func sampleNames(root string) ([]string, error) {
 	return names, nil
 }
 
-func buildSamples(root string, cdn bool) error {
+func buildSamples(root string) error {
 	root, err := filepath.Abs(root)
 	if err != nil {
 		return err
@@ -115,19 +115,11 @@ func buildSamples(root string, cdn bool) error {
 	}
 
 	cli := filepath.Join(root, "dist", "karty")
-	if err = buildPublishedSamples(root, site, cli, names, cdn); err != nil {
+	if err = buildPublishedSamples(root, site, cli, names); err != nil {
 		return err
 	}
 
-	if err = generator.Generate(filepath.Join(site, "guide")); err != nil {
-		return err
-	}
-
-	if err = generator.GenerateDesign(filepath.Join(site, "design")); err != nil {
-		return err
-	}
-
-	if err = generator.GenerateTechnical(filepath.Join(site, "technical")); err != nil {
+	if err = generator.GenerateSiteDocs(site); err != nil {
 		return err
 	}
 
@@ -138,7 +130,7 @@ func buildSamples(root string, cdn bool) error {
 	return validateSamples(os.DirFS(site))
 }
 
-func buildPublishedSamples(root, site, cli string, names []string, cdn bool) error {
+func buildPublishedSamples(root, site, cli string, names []string) error {
 	compilers := map[string]string{}
 	versions := map[string]string{}
 
@@ -177,28 +169,21 @@ func buildPublishedSamples(root, site, cli string, names []string, cdn bool) err
 		return err
 	}
 
-	hostURLs := map[string]string{}
-
 	for _, name := range names {
 		sample := filepath.Join(root, "samples", name)
 		version := versions[name]
 		fmt.Fprintf(os.Stdout, "Building sample %s (SDK %s)\n", name, version)
 
-		if cdn && hostURLs[version] == "" {
-			url, err := mirrorSampleHost(site, version)
-			if err != nil {
-				return err
-			}
-
-			hostURLs[version] = url
-		}
-
-		if err := buildSample(sample, cli, hostURLs[version], compilers[version]); err != nil {
+		if err := buildSample(sample, cli, compilers[version]); err != nil {
 			return fmt.Errorf("sample %s (SDK %s): %w", name, version, err)
 		}
 
 		target := filepath.Join(site, name)
-		if err := os.CopyFS(target, os.DirFS(filepath.Join(sample, "dist", "web"))); err != nil {
+		if err := copyCompleteSampleWeb(filepath.Join(sample, "dist", "web"), target, name); err != nil {
+			return err
+		}
+
+		if err := shareSampleRuntime(site, name, version); err != nil {
 			return err
 		}
 
@@ -216,8 +201,8 @@ func buildPublishedSamples(root, site, cli string, names []string, cdn bool) err
 
 // buildSample refreshes missing/stale offline lighting before packaging it. The
 // project's public SDK is installed by buildSamples before invoking either CLI command.
-func buildSample(directory, cli, cdnURL, goPath string) error {
-	return buildSampleWithRunner(directory, cli, cdnURL, sampleRunner(cli, goPath, runCLIEnvironment))
+func buildSample(directory, cli, goPath string) error {
+	return buildSampleWithRunner(directory, cli, sampleRunner(cli, goPath, runCLIEnvironment))
 }
 
 func sampleRunner(cli, goPath string, run func(string, []string, string, ...string) error) func(string, string, ...string) error {
@@ -231,7 +216,7 @@ func sampleRunner(cli, goPath string, run func(string, []string, string, ...stri
 	}
 }
 
-func buildSampleWithRunner(directory, cli, cdnURL string, run func(string, string, ...string) error) error {
+func buildSampleWithRunner(directory, cli string, run func(string, string, ...string) error) error {
 	// Source masks are shared; regenerate each level's confined copies when
 	// packaging a fresh checkout instead of committing those duplicate files.
 	if name := filepath.Base(directory); name == "particle-lab" || name == "hangar" {
@@ -257,12 +242,7 @@ func buildSampleWithRunner(directory, cli, cdnURL string, run func(string, strin
 		}
 	}
 
-	args := []string{"build", "--target", "web"}
-	if cdnURL != "" {
-		args = append(args, "--cdn", cdnURL)
-	}
-
-	return run(directory, cli, args...)
+	return run(directory, cli, "build", "--target", "web")
 }
 
 func sampleBakeLevels(directory string) ([]string, error) {

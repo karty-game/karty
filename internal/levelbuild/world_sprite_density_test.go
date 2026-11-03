@@ -14,7 +14,9 @@ import (
 
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty-sdk/format/worldmaterial"
 	uicompiler "github.com/karty-game/karty-ui/compiler"
+	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
 	"github.com/pelletier/go-toml/v2"
@@ -44,7 +46,7 @@ source = "world.yaml"
 max_sprite_texels_per_unit = 64
 [[textures]]
 name = "surface"
-source = "texture.png"
+source = "surface.png"
 [[textures]]
 name = "decal"
 source = "texture.png"
@@ -57,7 +59,26 @@ source = "texture.png"
       sprite: {texture: decal, facing: fixed, alpha: blend, width: 0.85, height: 1.2, origin_x: 0.5, origin_y: 0.5}
 `)
 
-	for name, contents := range map[string][]byte{"level.toml": manifestBytes, "world.yaml": worldBytes, "texture.png": source.Bytes()} {
+	// The actor keeps its authored transparent border. Static materials are
+	// separately opaque under the current GPU profile.
+	surface := image.NewNRGBA(input.Bounds())
+	for row := range input.Bounds().Dy() {
+		for column := range input.Bounds().Dx() {
+			pixel := input.NRGBAAt(column, row)
+			if pixel.A == 0 {
+				pixel = color.NRGBA{R: 40, G: 30, B: 20, A: 255}
+			}
+
+			surface.SetNRGBA(column, row, pixel)
+		}
+	}
+
+	var surfaceBytes bytes.Buffer
+	if err := png.Encode(&surfaceBytes, surface); err != nil {
+		t.Fatal(err)
+	}
+
+	for name, contents := range map[string][]byte{"level.toml": manifestBytes, "world.yaml": worldBytes, "texture.png": source.Bytes(), "surface.png": surfaceBytes.Bytes()} {
 		if err := os.WriteFile(filepath.Join(root, name), contents, 0600); err != nil {
 			t.Fatal(err)
 		}
@@ -75,7 +96,15 @@ func TestSpriteDensityBuildResizesWithoutChangingArtwork(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assets := &assetBuild{projectRoot: root, manifest: geometrySDK(selected)}
+	// Material generation is independently covered; this regression exercises
+	// authored sprite pixels/density and genuine current GPU-cell packaging.
+	assets := &assetBuild{
+		projectRoot: root,
+		manifest:    currentWorldSDK(selected),
+		materials: func(_ context.Context, _ string, _ sdk.Manifest, document world.Document, _ map[uint32][]byte, _ ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error) {
+			return fixtureWorldMaterialPair(t, assetpipeline.WorldMaterialIDs(document)), assetpipeline.Artifact{}, nil
+		},
+	}
 
 	var previous []byte
 

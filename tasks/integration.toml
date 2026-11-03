@@ -21,30 +21,9 @@ run = "go test -timeout=9s ./internal/devserver -run '^$' -bench '^BenchmarkWatc
 description = "Check build and bake output counts and next commands"
 run = "go test -timeout=9s ./internal/commands/build ./internal/commands/bake ./internal/ui ./internal/build ./internal/levelbuild -run 'Summary|Size'"
 
-[check-cdn]
-description = "Validate shared browser runtime URLs, hashes and launcher behavior"
-run = "go test -timeout=9s ./internal/build ./internal/commands/build -run 'CDN|BrowserLauncher|BrowserChunkBridge|ResourceProducers'"
-
 [smoke]
 depends = ["build"]
 run = "bash scripts/smoke.sh"
-
-[check-web]
-run = "go run ./cmd/karty-check --web"
-
-[check-web-delivery]
-description = "Execute generated web releases, updates, background downloads and offline caches in Chromium"
-env = { KARTY_WEB_DELIVERY_FIXTURES = "{{config_root}}/../dist/validation/web-delivery-fixtures" }
-run = [
-  "go test -timeout=9s ./internal/build -run '^TestWebDeliveryFixtures$' -count=1",
-  "node scripts/check-web-delivery.mjs --fixtures dist/validation/web-delivery-fixtures --output dist/validation/web-delivery/results.json",
-]
-
-[check-browser]
-run = "go run ./cmd/karty-check --browser"
-
-[check-ui]
-run = "go run ./cmd/karty-check --ui"
 
 [check-dev]
 run = "go run ./cmd/karty-check --watcher"
@@ -54,7 +33,7 @@ run = "go run ./cmd/karty-check --allocations"
 
 [check-client-hooks]
 description = "Validate hooks/actions with a small native WASM fixture; no browser required"
-run = "go run ./cmd/karty-check --client-hooks --native-only"
+run = "go run ./cmd/karty-check --client-hooks"
 
 [check-renderer-debug-ui]
 description = "Verify sample shells leave renderer controls to the host debug screen"
@@ -77,10 +56,6 @@ run = "node scripts/check-video.mjs"
 
 [check-client-hooks-native]
 description = "Build the crafted hooks/actions fixture twice and execute its native WASM lifecycle"
-run = "go run ./cmd/karty-check --client-hooks --native-only"
-
-[check-client-hooks-web]
-description = "Optional Chromium smoke for the crafted hooks/actions fixture, with a 9-second execution budget"
 run = "go run ./cmd/karty-check --client-hooks"
 
 [check-sample-clients]

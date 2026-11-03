@@ -21,7 +21,7 @@ func BuildNamedWithAssets(
 	themeSource string,
 	selected sdk.Manifest,
 ) (Artifact, error) {
-	return buildNamed(ctx, root, name, uiSchema, themeSource, selected, false)
+	return buildNamed(ctx, root, name, uiSchema, themeSource, selected, false, false)
 }
 
 // BuildNamedForScreenshot reuses a valid bake or creates a four-sample,
@@ -33,7 +33,7 @@ func BuildNamedForScreenshot(
 	themeSource string,
 	selected sdk.Manifest,
 ) (Artifact, error) {
-	return buildNamed(ctx, root, name, uiSchema, themeSource, selected, true)
+	return buildNamed(ctx, root, name, uiSchema, themeSource, selected, true, false)
 }
 
 func buildNamed(
@@ -43,6 +43,7 @@ func buildNamed(
 	themeSource string,
 	selected sdk.Manifest,
 	screenshot bool,
+	reflections bool,
 ) (Artifact, error) {
 	entries, err := os.ReadDir(filepath.Join(root, "levels"))
 	if err != nil {
@@ -105,5 +106,22 @@ func buildNamed(
 		}
 	}
 
-	return build(ctx, directory, uiSchema, theme, &assetBuild{projectRoot: root, manifest: selected, screenshot: screenshot})
+	return build(
+		ctx,
+		directory,
+		uiSchema,
+		theme,
+		&assetBuild{projectRoot: root, manifest: selected, screenshot: screenshot, reflectionCapture: reflections},
+	)
+}
+
+// BuildNamedForReflections packages the exact fixed static inputs without importing an older capture.
+func BuildNamedForReflections(
+	ctx context.Context,
+	root, name string,
+	uiSchema uint32,
+	theme string,
+	selected sdk.Manifest,
+) (Artifact, error) {
+	return buildNamed(ctx, root, name, uiSchema, theme, selected, false, true)
 }

@@ -17,7 +17,6 @@ for (const name of ["dialogue", "savegame"]) {
 }
 const target = process.argv[2] || "web";
 const args = ["build", "--target", target];
-if (target === "web" && process.env.KARTY_HOST_WEB) args.push("--bundled-runtime");
 const host = target === "web" ? process.env.KARTY_HOST_WEB : process.env.KARTY_HOST_NATIVE;
 if (host) args.push("--host", host);
 if (process.env.KARTY_LAST_TRAIN_COMPILER) args.push("--compiler", process.env.KARTY_LAST_TRAIN_COMPILER);

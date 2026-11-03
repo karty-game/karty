@@ -33,7 +33,7 @@ func TestStaticSolidsCapabilityPackagingAndWASM(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	selected = geometrySDK(selected)
+	selected = currentWorldSDK(selected)
 
 	selected = withoutRuntimeCapabilities(selected, asset.CapabilityWorldStaticSolidsV1)
 

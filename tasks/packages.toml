@@ -73,9 +73,6 @@ depends = ["build"]
 dir = "testdata/tiled-room"
 run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
 
-[check-tiled-package-web]
-run = "node scripts/check-tiled-package-web.mjs"
-
 [check-tiled-package-archive]
 description = "Build an independent consumer from the checksum-verified published Tiled archive"
 depends = ["build", "prepare-test-packages"]

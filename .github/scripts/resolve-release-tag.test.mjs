@@ -82,3 +82,13 @@ test("invalid tag inputs cannot select branches or inject output fields", (t) =>
     assert.match(result.stderr, /Release tag must be/);
   }
 });
+
+test("reusable Windows package validation uses the resolved release commit", () => {
+  const workflow = readFileSync(new URL("../workflows/release.yml", import.meta.url), "utf8");
+  const windows = workflow.split("  validate-windows-arm64:\n")[1].split("  release:\n")[0];
+  assert.match(windows, /needs: \[prepare, validate\]/);
+  assert.match(windows, /source-ref: \$\{\{ needs\.prepare\.outputs\.commit \}\}/);
+  const reusable = readFileSync(new URL("../workflows/windows-arm64-smoke.yml", import.meta.url), "utf8");
+  assert.match(reusable, /source-ref:\n\s+description: Validated source commit/);
+  assert.match(reusable, /ref: \$\{\{ inputs\.source-ref \|\| github\.sha \}\}/);
+});

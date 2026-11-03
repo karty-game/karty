@@ -3,6 +3,7 @@ package build
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 )
@@ -34,5 +35,14 @@ func TestWebDeliveryRejectsSymlinkOutputs(t *testing.T) {
 				t.Fatalf("symlink target modified: %q, %v", contents, err)
 			}
 		})
+	}
+}
+
+func TestCurrentWebWorkerManifestAdmission(t *testing.T) {
+	t.Parallel()
+
+	command := exec.CommandContext(t.Context(), "node", "testdata/web-manifest.test.mjs")
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("current worker manifest admission: %v\n%s", err, output)
 	}
 }

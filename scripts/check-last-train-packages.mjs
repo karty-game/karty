@@ -65,7 +65,7 @@ assert.deepEqual([...consumerManifest.matchAll(/^\[packages\.([^\]]+)\]/gm)].map
 assert.ok(!(await readFile(resolve(game, "go.mod"), "utf8")).includes("github.com/karty-game/yarn"));
 report.unifiedDialogueExports = unifiedFiles;
 for (const compiler of ["go", "tinygo"]) {
-  const args = ["build", "--target", "web", "--compiler", compiler, "--bundled-runtime"];
+  const args = ["build", "--target", "web", "--compiler", compiler];
   if (process.env.KARTY_HOST_WEB) args.push("--host", process.env.KARTY_HOST_WEB);
   await cli(args, game);
   const distribution = resolve(game, "dist/web");

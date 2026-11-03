@@ -55,7 +55,7 @@ jobs:
           destination=main
           if [ -n "$PR_NUMBER" ]; then destination="pr/$PR_NUMBER"; fi
           export KARTY_SITE_URL="${base%/}/$destination/"
-          mise run build-samples -- --cdn
+          mise run build-samples
       - name: Save sample lightmap bakes
         if: ${{ !cancelled() && steps.bake-cache.outputs.cache-primary-key != '' && steps.bake-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6

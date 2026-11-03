@@ -14,6 +14,7 @@ import (
 
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/level"
+	"github.com/karty-game/karty-sdk/format/worldgpuchunk"
 	"github.com/karty-game/karty-sdk/format/worldvegetation"
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
@@ -25,7 +26,7 @@ const levelVegetationYAML = `vegetation:
     - {name: grass, texture: wall, width: {min: 0.2, max: 0.4}, height: {min: 0.2, max: 0.5}, wind_amplitude: 0.08, wind_frequency: 0.7, draw_distance: 32}
 `
 
-func TestVegetationCapabilityAndPackagedWASM(t *testing.T) {
+func TestCurrentGPUProfileOmitsProceduralVegetationShapes(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
@@ -44,12 +45,12 @@ func TestVegetationCapabilityAndPackagedWASM(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			testVegetationPackagedWASM(t, test.source, test.version, test.geometry, test.feature)
+			testOmittedVegetationWASM(t, test.source, test.version, test.geometry, test.feature)
 		})
 	}
 }
 
-func testVegetationPackagedWASM(t *testing.T, sourceVersion, version uint16, geometry uint8, feature string) {
+func testOmittedVegetationWASM(t *testing.T, sourceVersion, version uint16, geometry uint8, feature string) {
 	t.Helper()
 
 	manifest, err := sdk.Resolve(release.SDKVersion())
@@ -57,7 +58,7 @@ func testVegetationPackagedWASM(t *testing.T, sourceVersion, version uint16, geo
 		t.Fatal(err)
 	}
 
-	manifest = withoutRuntimeCapabilities(geometrySDK(manifest), asset.Capability(feature))
+	manifest = withoutRuntimeCapabilities(currentWorldSDK(manifest), asset.Capability(feature))
 	rooms := strings.Replace(
 		lightingRoomYAML,
 		"    ceiling:",
@@ -85,12 +86,6 @@ func testVegetationPackagedWASM(t *testing.T, sourceVersion, version uint16, geo
 
 	root := lightingLevelFixture(t, fmt.Sprintf("version: %d\n", sourceVersion)+rooms+presets)
 
-	if artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {
-		t.Fatalf("SDK gate lost: %v", err)
-	}
-
-	manifest.Assets.Capabilities.Runtime = append(manifest.Assets.Capabilities.Runtime, asset.Capability(feature))
-
 	first, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest)
 	if err != nil {
 		t.Fatal(err)
@@ -101,8 +96,9 @@ func testVegetationPackagedWASM(t *testing.T, sourceVersion, version uint16, geo
 		t.Fatal(err)
 	}
 
-	if len(first) != 1 || !bytes.Equal(first[0].Bytes, second[0].Bytes) || !slices.Contains(first[0].Features, feature) {
-		t.Fatal("particle staging is not deterministic or loses feature")
+	if len(first) != 1 || !bytes.Equal(first[0].Bytes, second[0].Bytes) || slices.Contains(first[0].Features, feature) ||
+		!slices.Contains(first[0].Features, worldgpuchunk.Feature) {
+		t.Fatal("current vegetation omission is not deterministic or lost GPU cells")
 	}
 
 	node, err := exec.LookPath("node")
@@ -128,25 +124,21 @@ func testVegetationPackagedWASM(t *testing.T, sourceVersion, version uint16, geo
 		t.Fatal(err)
 	}
 
-	data, _, found := envelope.Read(worldvegetation.EntryName, 0, worldvegetation.MaxEncodedSize)
-
-	if !found {
-		t.Fatal("particle entry absent in executed WASM")
+	if _, _, found := envelope.Read(worldvegetation.EntryName, 0, worldvegetation.MaxEncodedSize); found {
+		t.Fatal("unsupported vegetation published in current GPU module")
 	}
 
-	particles, err := worldvegetation.Decode(data)
-	if err != nil {
-		t.Fatal(err)
+	data, _, found := envelope.Read(worldgpuchunk.CatalogEntry, 0, level.MaxEntrySize)
+
+	catalog, err := worldgpuchunk.DecodeCatalog(data)
+	if !found || err != nil || len(catalog.Cells) == 0 {
+		t.Fatal("executed WASM lost current geometry catalog", err)
 	}
 
-	normalTexture := uint32(0)
-	if version >= worldvegetation.NormalVersion {
-		normalTexture = particles.Presets[0].Texture
-	}
-
-	if particles.Layers[0].Seed != 42 || particles.Presets[0].WindAmplitude != .08 ||
-		particles.Version != version || particles.Presets[0].Geometry != geometry || particles.Presets[0].NormalTexture != normalTexture {
-		t.Fatalf("particle payload changed: %+v", particles)
+	source, err := os.ReadFile(filepath.Join(root, "levels", "lighting", "world.yaml"))
+	if err != nil || !strings.Contains(string(source), "density: 4, seed: 42") ||
+		!strings.Contains(string(source), "wind_amplitude: 0.08") {
+		t.Fatal("omission altered authored vegetation", err)
 	}
 }
 

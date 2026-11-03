@@ -21,10 +21,6 @@ run = "go run scripts/crate-room-sounds.go"
 description = "Verify deterministic crate room sound assets"
 run = "go run scripts/crate-room-sounds.go --check"
 
-[check-crate-room-effects]
-description = "Check real WASM blast particles, crate impact limits and stereo WebAudio"
-run = "node scripts/check-crate-room-effects.mjs"
-
 [generate-crate-room-wood]
 description = "Generate original seamless oak planks, knots and frame grain"
 run = "go run scripts/crate-room-wood.go"

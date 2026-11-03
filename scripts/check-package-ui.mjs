@@ -166,7 +166,7 @@ for (const game of cases) {
   await rm(resolve(game.directory, ".karty"), { recursive: true });
   await cli(["package", "restore"], game.directory);
   for (const compiler of ["go", "tinygo"]) {
-    await cli(["build", "--target", "web", "--compiler", compiler, "--bundled-runtime"], game.directory);
+    await cli(["build", "--target", "web", "--compiler", compiler], game.directory);
     const cartridge = await readFile(resolve(game.directory, "dist/web/game.kart"));
     const stagedHostSHA256 = digest(await readFile(resolve(game.directory, "dist/web/karty-host.wasm")));
     if (hostSHA256) assert.equal(stagedHostSHA256, hostSHA256);

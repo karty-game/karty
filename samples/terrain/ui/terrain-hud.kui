@@ -2,7 +2,7 @@
   <panel class="screen" modal="false">
     <panel class="heading">
       <label class="status">{ props.Status() }</label>
-      <label class="help">Coastal vegetation · WASD / mouse · Shift run · V views (11) · R reset · Touch: left move / right look</label>
+      <label class="help">WASD / mouse · Shift run · V viewpoints · R reset · Touch: left move / right look</label>
     </panel>
   </panel>
 </template>
@@ -25,9 +25,10 @@ func setup(props TerrainHUDProps) {}
   top: 18
   left: 22
   right: 22
-  padding: 0
-  gap: 10
-  background: #00000000
+  max-width: 740
+  padding: 12
+  gap: 6
+  background: #071b28b8
 .status
   width: 100%
   font-family: body
@@ -36,12 +37,12 @@ func setup(props TerrainHUDProps) {}
 .help
   width: 100%
   font-family: body
-  font-size: 14
-  color: #ffffffff
+  font-size: 12
+  color: #d6e6eaff
 @media (max-width: 600)
   .heading
     top: 16
     left: 16
     right: 16
-    gap: 8
+    gap: 6
 </style>

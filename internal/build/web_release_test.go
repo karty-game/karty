@@ -21,18 +21,17 @@ func TestWebReleaseDeterministicAndComplete(t *testing.T) {
 	content := webReleaseTestContent(t, root, ".kld", []byte("level"))
 	audio := webReleaseTestContent(t, root, ".kaud", []byte("audio"))
 	video := webReleaseTestContent(t, root, ".kvid", []byte("video"))
-	webReleaseTestWrite(t, root, "renderer-debug.js", []byte("debug"))
 	webReleaseTestWrite(t, root, "karty-web-status.js", []byte("status"))
 	webReleaseTestWrite(t, root, "karty-sw.js", []byte("independent worker lifecycle"))
 	webReleaseTestWrite(t, root, "not-a-game-asset.txt", []byte("ignore unrelated output"))
 
-	if err := stageWebRelease(t.Context(), root, nil); err != nil {
+	if err := stageWebRelease(t.Context(), root); err != nil {
 		t.Fatal(err)
 	}
 
 	first, manifest, raw := readWebReleaseTest(t, root)
 
-	if first.Version != 1 || manifest.Version != 1 || len(manifest.Files) != 11 {
+	if first.Version != 1 || manifest.Version != 1 || len(manifest.Files) != 8 {
 		t.Fatalf("incomplete release: %+v, %+v", first, manifest)
 	}
 
@@ -70,7 +69,7 @@ func TestWebReleaseDeterministicAndComplete(t *testing.T) {
 		t.Fatalf("unowned file in release: %v", urls)
 	}
 
-	if err := stageWebRelease(t.Context(), root, nil); err != nil {
+	if err := stageWebRelease(t.Context(), root); err != nil {
 		t.Fatal(err)
 	}
 
@@ -82,7 +81,7 @@ func TestWebReleaseDeterministicAndComplete(t *testing.T) {
 
 	webReleaseTestWrite(t, root, "game.kart", []byte("updated cartridge"))
 
-	if err := stageWebRelease(t.Context(), root, nil); err != nil {
+	if err := stageWebRelease(t.Context(), root); err != nil {
 		t.Fatal(err)
 	}
 
@@ -100,42 +99,6 @@ func TestWebReleaseDeterministicAndComplete(t *testing.T) {
 	entries, err := os.ReadDir(filepath.Join(root, "karty-releases"))
 	if err != nil || len(entries) != 2 {
 		t.Fatalf("release staging copied files instead of manifests: %v, %v", entries, err)
-	}
-}
-
-func TestWebReleaseSharedHostDoesNotCopyOrDownload(t *testing.T) {
-	t.Parallel()
-
-	root := webReleaseTestFiles(t)
-
-	if err := os.Remove(filepath.Join(root, "karty-host.wasm")); err != nil {
-		t.Fatal(err)
-	}
-
-	host := &cdnHost{URL: "../runtime/host.wasm", SHA256: strings.Repeat("a", 64)}
-
-	if err := stageWebRelease(t.Context(), root, host); err != nil {
-		t.Fatal(err)
-	}
-
-	_, manifest, _ := readWebReleaseTest(t, root)
-
-	if manifest.Files[0].URL != host.URL || manifest.Files[0].SHA256 != host.SHA256 || manifest.Files[0].Size != 0 {
-		t.Fatalf("shared host metadata = %+v", manifest.Files[0])
-	}
-
-	if _, err := os.Stat(filepath.Join(root, "karty-host.wasm")); !os.IsNotExist(err) {
-		t.Fatalf("shared host was copied: %v", err)
-	}
-
-	for _, invalid := range []*cdnHost{
-		{URL: "../../outside.wasm", SHA256: host.SHA256},
-		{URL: "https://example.com/host.wasm", SHA256: "invalid"},
-		{URL: "game.kart", SHA256: host.SHA256},
-	} {
-		if err := stageWebRelease(t.Context(), root, invalid); err == nil {
-			t.Fatalf("invalid shared host accepted: %+v", invalid)
-		}
 	}
 }
 
@@ -213,7 +176,7 @@ func TestWebReleaseRejectsUnsafeOrUnboundedFiles(t *testing.T) {
 			root := webReleaseTestFiles(t)
 			example.change(t, root)
 
-			if err := stageWebRelease(t.Context(), root, nil); err == nil {
+			if err := stageWebRelease(t.Context(), root); err == nil {
 				t.Fatal("unsafe release accepted")
 			}
 		})
@@ -225,7 +188,7 @@ func TestWebReleasePreservesPointerOnCancellationOrConflict(t *testing.T) {
 
 	root := webReleaseTestFiles(t)
 
-	if err := stageWebRelease(t.Context(), root, nil); err != nil {
+	if err := stageWebRelease(t.Context(), root); err != nil {
 		t.Fatal(err)
 	}
 
@@ -233,13 +196,13 @@ func TestWebReleasePreservesPointerOnCancellationOrConflict(t *testing.T) {
 	canceled, cancel := context.WithCancel(t.Context())
 	cancel()
 
-	if err := stageWebRelease(canceled, root, nil); !errors.Is(err, context.Canceled) {
+	if err := stageWebRelease(canceled, root); !errors.Is(err, context.Canceled) {
 		t.Fatalf("canceled build = %v", err)
 	}
 
 	webReleaseTestWrite(t, root, pointer.Manifest, []byte("immutable conflict"))
 
-	if err := stageWebRelease(t.Context(), root, nil); err == nil {
+	if err := stageWebRelease(t.Context(), root); err == nil {
 		t.Fatal("immutable manifest conflict overwritten")
 	}
 
@@ -260,14 +223,13 @@ func webReleaseTestFiles(t *testing.T) string {
 
 	root := t.TempDir()
 
-	for _, name := range []string{"index.html", "karty.js", "wasm_exec.js", "game.kart", "karty-web.js", "karty-host.wasm"} {
+	for _, name := range []string{"index.html", "game.kart", "karty-web.js", "karty-host.wasm"} {
 		webReleaseTestWrite(t, root, name, []byte(name))
 	}
 
 	return root
 }
 
-//nolint:gosec // Fixture writers use explicit caller-owned temporary output paths.
 func webReleaseTestWrite(t *testing.T, root, name string, contents []byte) {
 	t.Helper()
 

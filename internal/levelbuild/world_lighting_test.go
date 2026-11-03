@@ -20,7 +20,9 @@ import (
 	"github.com/karty-game/karty-sdk/format/cartridge"
 	"github.com/karty-game/karty-sdk/format/level"
 	"github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty-sdk/format/worldgpuchunk"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
+	"github.com/karty-game/karty-sdk/format/worldmaterialgpu"
 	"github.com/karty-game/karty-sdk/format/worldsource"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/release"
@@ -48,7 +50,7 @@ func TestWorldLightingCapabilityGateAndPackagedWASM(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	manifest = geometrySDK(manifest)
+	manifest = currentWorldSDK(manifest)
 
 	manifest = withoutRuntimeCapabilities(manifest, asset.CapabilityWorldLightingV1)
 
@@ -71,8 +73,18 @@ func TestWorldLightingCapabilityGateAndPackagedWASM(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	wanted := []string{
+		cartridge.FeatureTextureQOIv1,
+		world.FeatureLighting,
+		world.Feature,
+		worldmaterial.Feature,
+		worldmaterialgpu.Feature,
+		worldgpuchunk.Feature,
+	}
+	slices.Sort(wanted)
+
 	if len(first) != 1 || len(second) != 1 || !bytes.Equal(first[0].Bytes, second[0].Bytes) ||
-		!slices.Equal(first[0].Features, []string{cartridge.FeatureTextureQOIv1, world.FeatureLighting, world.Feature}) {
+		!slices.Equal(first[0].Features, wanted) {
 		t.Fatalf("lighting features or deterministic packaging lost: %+v", first)
 	}
 
@@ -101,7 +113,7 @@ func TestWorldLightingEmptyAndRejectedBatches(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	manifest = geometrySDK(manifest)
+	manifest = currentWorldSDK(manifest)
 
 	for name, test := range map[string]struct {
 		lighting string
@@ -146,7 +158,7 @@ func TestWorldLightingAndMaterialAtlasPackageTogether(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	manifest = geometrySDK(manifest)
+	manifest = currentWorldSDK(manifest)
 
 	manifest.Assets.Capabilities.Runtime = append(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1)
 	root := lightingLevelFixture(t, "version: 4\n"+lightingRoomYAML+levelLightingYAML(2))
@@ -191,7 +203,7 @@ func TestAbsentLightingPackagingAcrossSourceVersions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	manifest = geometrySDK(manifest)
+	manifest = currentWorldSDK(manifest)
 
 	manifest = withoutRuntimeCapabilities(manifest, asset.CapabilityWorldLightingV1)
 

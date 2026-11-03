@@ -17,11 +17,12 @@ import (
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/level"
 	"github.com/karty-game/karty-sdk/format/world"
+	"github.com/karty-game/karty-sdk/format/worldgpuchunk"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
+	"github.com/karty-game/karty-sdk/format/worldmaterialgpu"
 	"github.com/karty-game/karty/internal/assetpipeline"
 	"github.com/karty-game/karty/internal/release"
 	"github.com/karty-game/karty/internal/sdk"
-	"github.com/karty-game/karty/internal/testfixture"
 )
 
 // Synthetic maps here are fixtures only. Production has no replacement for a
@@ -169,101 +170,82 @@ func TestAuthoredDataCannotClaimGeneratedWorldMaterials(t *testing.T) {
 
 func TestWorldMaterialSolidsBuildAndCapabilityGate(t *testing.T) {
 	t.Parallel()
+	root := lightingLevelFixture(t, "version: 6\n"+lightingRoomYAML+levelSolidYAML)
 
-	root := testfixture.RomanCourtGeometry(t, filepath.Join("..", "..", "testdata", "roman-court"))
-
-	manifest, err := sdk.Resolve(release.SDKVersion())
+	selected, err := sdk.Resolve(release.SDKVersion())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	manifest = geometrySDK(manifest)
-
-	manifest = withoutRuntimeCapabilities(manifest, asset.CapabilityWorldMaterialMappingV1, asset.CapabilityWorldStaticSolidsV1)
-
+	selected = withoutRuntimeCapabilities(
+		currentWorldSDK(selected),
+		asset.CapabilityWorldMaterialMappingV1,
+		asset.CapabilityWorldStaticSolidsV1,
+	)
 	calls := 0
 
 	var generated worldmaterial.Pair
 
-	process := func(_ context.Context, _ string, _ sdk.Manifest, document world.Document, textures map[uint32][]byte, _ ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error) {
-		calls++
+	assets := &assetBuild{
+		projectRoot: root,
+		manifest:    selected,
+		materials: func(_ context.Context, _ string, _ sdk.Manifest, document world.Document, _ map[uint32][]byte, _ ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error) {
+			calls++
+			generated = fixtureWorldMaterialPair(t, assetpipeline.WorldMaterialIDs(document))
 
-		for _, id := range assetpipeline.WorldMaterialIDs(document) {
-			if id != 0 {
-				if _, err := qoi.Inspect(textures[id]); err != nil {
-					return worldmaterial.Pair{}, assetpipeline.Artifact{}, err
-				}
-			}
-		}
-
-		generated = fixtureWorldMaterialPair(t, assetpipeline.WorldMaterialIDs(document))
-
-		return generated, assetpipeline.Artifact{CacheKey: "fixture", CacheHit: true}, nil
+			return generated, assetpipeline.Artifact{CacheKey: "fixture", CacheHit: true}, nil
+		},
 	}
-	assets := &assetBuild{projectRoot: root, manifest: manifest, materials: process}
-
-	rejected, err := buildAll(context.Background(), root, 4, "", assets)
-	if !errors.Is(err, ErrManifest) || len(rejected) != 0 || calls != 0 {
-		t.Fatalf("SDK without geometry capabilities accepted sample: %v", err)
+	if rejected, err := buildAll(t.Context(), root, 4, "", assets); !errors.Is(err, ErrManifest) || len(rejected) != 0 {
+		t.Fatal("missing geometry capability published resources", err)
 	}
 
-	assets.manifest.Assets.Capabilities.Runtime = append(assets.manifest.Assets.Capabilities.Runtime,
-		asset.CapabilityWorldMaterialMappingV1, asset.CapabilityWorldStaticSolidsV1)
-	// The same level remains buildable without atlas generation when the
-	// SDK supports its mapping/solids capabilities.
-	legacy, err := buildAll(context.Background(), root, 4, "", assets)
-	if err != nil || len(legacy) != 1 || calls != 0 || slices.Contains(legacy[0].Features, worldmaterial.Feature) {
-		t.Fatalf("geometry-only build: %v", err)
-	}
+	assets.manifest.Assets.Capabilities.Runtime = append(
+		assets.manifest.Assets.Capabilities.Runtime,
+		asset.CapabilityWorldMaterialMappingV1,
+		asset.CapabilityWorldStaticSolidsV1,
+	)
+	calls = 0
 
-	assets.manifest.Assets.Capabilities.Runtime = append(assets.manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialAtlasV1)
-
-	candidate, err := buildAll(context.Background(), root, 4, "", assets)
+	candidate, err := buildAll(t.Context(), root, 4, "", assets)
 	if err != nil || len(candidate) != 1 || calls != 1 {
-		t.Fatalf("atlas build: calls=%d err=%v", calls, err)
+		t.Fatal("current prepared material build", calls, err)
 	}
 
-	if !slices.Contains(candidate[0].Features, worldmaterial.Feature) || !slices.Contains(candidate[0].Features, world.Feature) {
-		t.Fatalf("missing required features: %v", candidate[0].Features)
+	if !slices.Contains(candidate[0].Features, worldgpuchunk.Feature) || !slices.Contains(candidate[0].Features, worldmaterialgpu.Feature) {
+		t.Fatal("missing prepared material/cell contracts")
 	}
 
-	envelope, err := level.DecodePassiveModule(candidate[0].Bytes)
-	if err != nil {
-		t.Fatal(err)
+	document := executePackagedLightingWorld(t, candidate[0].Bytes)
+	if document.StaticSolids == nil || len(document.StaticSolids.Items) != 1 || !document.StaticSolids.Items[0].Collision {
+		t.Fatal("solid geometry lost")
 	}
 
-	standaloneCount := 0
-
-	for _, entry := range envelope.Entries {
-		if entry.Kind == level.EntryTexture {
-			standaloneCount++
-		}
-	}
-
-	if len(candidate[0].Textures) != standaloneCount+2 {
-		t.Fatal("generated pair missing from asset report/budget")
-	}
+	reports := 0
 
 	for _, texture := range candidate[0].Textures {
-		if texture.Kind != "world-material" {
-			continue
-		}
+		if texture.Kind == "world-material" {
+			reports++
 
-		if texture.SourceBytes != 0 ||
-			texture.EstimatedDecodedBytes != int64(generated.Layout.Width)*int64(generated.Layout.Height)*4 || !texture.CacheHit {
-			t.Fatalf("atlas report: %+v", texture)
+			if texture.SourceBytes != 0 || texture.EstimatedDecodedBytes <= 0 {
+				t.Fatal("invalid prepared material report")
+			}
 		}
+	}
+
+	if reports != 3 {
+		t.Fatal("prepared material array report count", reports)
 	}
 
 	checkWorldMaterialModule(t, candidate[0].Bytes, generated)
 
 	sentinel := os.ErrPermission
+
 	assets.materials = func(context.Context, string, sdk.Manifest, world.Document, map[uint32][]byte, ...map[uint32]assetpipeline.MaterializeOptions) (worldmaterial.Pair, assetpipeline.Artifact, error) {
 		return worldmaterial.Pair{}, assetpipeline.Artifact{}, sentinel
 	}
-
-	if _, err := buildAll(context.Background(), root, 4, "", assets); !errors.Is(err, sentinel) {
-		t.Fatalf("build did not fail closed: %v", err)
+	if _, err = buildAll(t.Context(), root, 4, "", assets); !errors.Is(err, sentinel) {
+		t.Fatal("source preparation did not fail closed", err)
 	}
 }
 
@@ -308,21 +290,28 @@ process.stdout.write(Buffer.from(e.memory.buffer, e.karty_level_data_pointer(), 
 		t.Fatalf("packaged layout: %v", err)
 	}
 
-	images := []struct {
-		name string
-		data []byte
-	}{{worldmaterial.AlbedoEntry, generated.Albedo}, {worldmaterial.DataEntry, generated.Data}}
-	if len(generated.MipTail) != 0 {
-		images = append(images, struct {
-			name string
-			data []byte
-		}{worldmaterial.MipTailEntry, generated.MipTail})
+	descriptorBytes, _, found := envelope.Read(worldmaterialgpu.DescriptorEntry, 0, level.MaxEntrySize)
+	if !found {
+		t.Fatal("missing prepared material descriptor")
 	}
 
-	for _, test := range images {
-		data, _, found := envelope.Read(test.name, 0, level.MaxEntrySize)
-		if !found || !bytes.Equal(data, test.data) {
-			t.Fatalf("packaged pair: %s", test.name)
+	descriptor, err := worldmaterialgpu.DecodeDescriptor(descriptorBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pair := worldmaterialgpu.Pair{Descriptor: descriptor}
+	pair.Albedo, _, _ = envelope.Read(worldmaterialgpu.AlbedoEntry, 0, level.MaxEntrySize)
+	pair.SSBump, _, _ = envelope.Read(worldmaterialgpu.SSBumpEntry, 0, level.MaxEntrySize)
+
+	pair.Detail, _, _ = envelope.Read(worldmaterialgpu.DetailEntry, 0, level.MaxEntrySize)
+	if err = pair.Validate(layout); err != nil {
+		t.Fatal("prepared material arrays lost layout binding", err)
+	}
+
+	for _, name := range []string{worldmaterial.AlbedoEntry, worldmaterial.DataEntry, worldmaterial.MipTailEntry} {
+		if _, _, found = envelope.Read(name, 0, level.MaxEntrySize); found {
+			t.Fatal("root retained retired raw material payload", name)
 		}
 	}
 }

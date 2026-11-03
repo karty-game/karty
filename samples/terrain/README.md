@@ -28,3 +28,23 @@ cd samples/terrain
 ```
 
 Explore [the game](src/main.go), [explorer](src/explorer.go) and [landscape](levels/ground/world.yaml).
+
+## Fixed lighting candidate
+
+This sample targets SDK **0.0.21** and enables `fixed = true` in its chunked
+offline lightmap recipe. SDK 0.0.21 is currently a local release candidate;
+install its checksummed bundle before building. Use a matching candidate host
+with `karty build --host /path/to/host/webgpu --target web`.
+
+Sun, sky and static surfaces share one fixed bake. Geometry, terrain lighting
+and vegetation probes stream in bounded chunks. Connected sectors share a page;
+the chunk recipe bounds its mesh and cropped terrain data at 8 MiB and its
+encoded child module at 16 MiB.
+Terrain retains per-vertex directional lighting. The bake uses 64 transport
+samples and two diffuse bounces to improve shaded recesses. Static solid
+lightmaps use a coarse density of 0.125 texels per metre so the distant ocean
+fits one page. This also affects the bunker; small surfaces still receive at
+least two texels per axis.
+
+`karty build` produces the required chunk bakes. Rebake after changing the
+authored geometry, materials or static lighting.

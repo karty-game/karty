@@ -24,6 +24,11 @@ type viewRequest struct {
 	output string
 }
 
+type stagedCapture struct {
+	temporary string
+	request   viewRequest
+}
+
 type authoredView struct {
 	Position []float64 `toml:"position"`
 	Yaw      *float64  `toml:"yaw"`
@@ -202,7 +207,20 @@ func resolveViews(views []authoredView, defaults camera, level string) ([]viewRe
 }
 
 func captureBatch(ctx context.Context, host, level string, features []string, requests []viewRequest, diagnostics io.Writer) error {
+	return captureBatchWithOptions(ctx, host, level, features, requests, diagnostics, CaptureOptions{})
+}
+
+func captureBatchWithOptions(
+	ctx context.Context,
+	host, level string,
+	features []string,
+	requests []viewRequest,
+	diagnostics io.Writer,
+	options CaptureOptions,
+) error {
 	views := make([]nativeView, 0, len(requests))
+	outputs := make([]stagedCapture, 0, len(requests))
+
 	defer func() {
 		for _, view := range views {
 			_ = os.Remove(view.Output)
@@ -224,6 +242,8 @@ func captureBatch(ctx context.Context, host, level string, features []string, re
 			Yaw: request.pose.yaw, Pitch: request.pose.pitch, FOV: request.pose.fov, Near: request.pose.near, Far: request.pose.far,
 			Width: request.pose.width, Height: request.pose.height,
 		}})
+		outputs = append(outputs, stagedCapture{temporary: file.Name(), request: request})
+
 		if err := file.Close(); err != nil {
 			return err
 		}
@@ -248,8 +268,9 @@ func captureBatch(ctx context.Context, host, level string, features []string, re
 		return closeErr
 	}
 
-	command := exec.CommandContext(ctx, host, "--screenshot-protocol", "2", "--screenshot-level", level,
+	arguments := append(options.Arguments(), "--screenshot-protocol", "2", "--screenshot-level", level,
 		"--screenshot-features", strings.Join(features, ","), "--screenshot-batch", file.Name())
+	command := exec.CommandContext(ctx, host, arguments...)
 
 	command.Stdout, command.Stderr = diagnostics, diagnostics
 	if err := command.Run(); err != nil {
@@ -260,14 +281,14 @@ func captureBatch(ctx context.Context, host, level string, features []string, re
 		return fmt.Errorf("native screenshot batch failed; use a host supporting screenshot-v2 TOML batches: %w", err)
 	}
 
-	for index, view := range views {
-		if err := validatePNG(view.Output, requests[index].pose); err != nil {
+	for index, output := range outputs {
+		if err := validatePNG(output.temporary, output.request.pose); err != nil {
 			return fmt.Errorf("view %d: %w", index+1, err)
 		}
 	}
 
-	for index, view := range views {
-		if err := os.Rename(view.Output, requests[index].output); err != nil {
+	for _, output := range outputs {
+		if err := os.Rename(output.temporary, output.request.output); err != nil {
 			return err
 		}
 	}

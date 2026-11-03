@@ -53,7 +53,8 @@ func TestProductionBuildRejectsDecoderBeforeCompilationOrArtifactReplacement(t *
 		t.Fatal(err)
 	}
 
-	err = build.RunWithOptions(t.Context(), directory, build.Options{TinyGo: compiler, WasmTools: wasmTools})
+	err = build.RunWithOptions(t.Context(), directory,
+		build.WithVerifiedHostFixture(t, build.Options{TinyGo: compiler, WasmTools: wasmTools}))
 	if err == nil || !strings.Contains(err.Error(), "encoding/json") || strings.Contains(err.Error(), "unexpected compilation") {
 		t.Fatalf("production policy was not applied before compilation: %v", err)
 	}

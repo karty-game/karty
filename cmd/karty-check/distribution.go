@@ -12,7 +12,6 @@ import (
 
 var (
 	errNativeHostMissing = errors.New("KARTY_HOST_NATIVE must name the native host artifact")
-	errWebHostMissing    = errors.New("KARTY_HOST_WEB must name the browser host artifact")
 	errHostCheckMissing  = errors.New("KARTY_HOST_CHECK must name the karty-host-check executable")
 	errBuildChanged      = errors.New("repeated build produced different distribution bytes")
 )

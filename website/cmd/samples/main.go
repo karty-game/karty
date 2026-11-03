@@ -15,12 +15,20 @@ func main() {
 }
 
 func run(args []string) error {
+	if len(args) == 1 && args[0] == "compact" {
+		return compactSamples(".", "")
+	}
+
+	if len(args) == 3 && args[0] == "compact" && args[1] == "--notices" {
+		return compactSamples(".", args[2])
+	}
+
 	if len(args) == 1 && args[0] == "preview" {
 		return previewSamples(".")
 	}
 
-	if len(args) == 1 && args[0] == "build" || len(args) == 2 && args[0] == "build" && args[1] == "--cdn" {
-		return buildSamples(".", len(args) == 2)
+	if len(args) == 1 && args[0] == "build" {
+		return buildSamples(".")
 	}
 
 	if len(args) == 6 && args[0] == "assemble" {
@@ -37,7 +45,7 @@ func run(args []string) error {
 	}
 
 	return fmt.Errorf(
-		"usage: karty-samples preview | build [--cdn] | assemble STATE SOURCE DESTINATION REMOVE OPEN_PRS_JSON: %w",
+		"usage: karty-samples compact [--notices DIRECTORY] | preview | build | assemble STATE SOURCE DESTINATION REMOVE OPEN_PRS_JSON: %w",
 		os.ErrInvalid,
 	)
 }

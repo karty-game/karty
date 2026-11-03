@@ -2,6 +2,7 @@ package levelbuild
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
@@ -99,7 +100,7 @@ func TestScreenshotQuickBakeRepairAndReuse(t *testing.T) {
 	}
 	// The screenshot-only override never enables offline lighting in normal builds.
 	artifact, err := BuildNamedWithAssets(t.Context(), root, "lighting", 4, "", selected)
-	if err != nil || slices.Contains(artifact.Features, worldlightmap.PrebakeFeature) {
-		t.Fatal("screenshot settings leaked into normal builds", err)
+	if !errors.Is(err, ErrManifest) || len(artifact.Bytes) != 0 {
+		t.Fatal("normal build accepted screenshot-only offline settings", err)
 	}
 }

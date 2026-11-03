@@ -43,7 +43,7 @@ func TestParticleCapabilityAndPackagedWASM(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	manifest = withoutRuntimeCapabilities(geometrySDK(manifest), asset.CapabilityWorldParticlesV1)
+	manifest = withoutRuntimeCapabilities(currentWorldSDK(manifest), asset.CapabilityWorldParticlesV1)
 	root := lightingLevelFixture(t, "version: 10\n"+lightingRoomYAML+levelParticleYAML)
 
 	if artifacts, err := BuildAllWithAssets(context.Background(), root, 4, "", manifest); !errors.Is(err, ErrManifest) || artifacts != nil {

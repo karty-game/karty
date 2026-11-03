@@ -1,16 +1,9 @@
 package levelbuild
 
 import (
-	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"slices"
-	"strings"
 
-	worldlightmapbake "github.com/karty-game/karty-sdk/bake/worldlightmap"
-	"github.com/karty-game/karty-sdk/codec/qoi"
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/level"
 	"github.com/karty-game/karty-sdk/format/world"
@@ -19,12 +12,14 @@ import (
 )
 
 type chunkBuildSettings struct {
-	Enabled           bool                `toml:"enabled"`
-	MaxMeshBytes      *uint64             `toml:"max_mesh_bytes"`
-	MaxLightmapTexels *int                `toml:"max_lightmap_texels"`
-	MaxEncodedBytes   *uint64             `toml:"max_encoded_bytes"`
-	MaxSectors        *int                `toml:"max_sectors"`
-	Areas             []chunkAreaSettings `toml:"areas"`
+	Enabled           bool                  `toml:"enabled"`
+	MaxMeshBytes      *uint64               `toml:"max_mesh_bytes"`
+	MaxLightmapTexels *int                  `toml:"max_lightmap_texels"`
+	MaxEncodedBytes   *uint64               `toml:"max_encoded_bytes"`
+	MaxSpan           *float64              `toml:"max_span"`
+	MaxSectors        *int                  `toml:"max_sectors"`
+	Spatial           *spatialChunkSettings `toml:"spatial"`
+	GPU               *gpuChunkSettings     `toml:"gpu"`
 }
 
 const (
@@ -38,6 +33,11 @@ func chunkOptions(definition manifest) (worldchunk.Options, error) {
 	settings := definition.Chunks
 	if settings == nil || !settings.Enabled {
 		return worldchunk.Options{}, ErrManifest
+	}
+
+	maximumSpan, err := chunkSpanLimit(settings)
+	if err != nil {
+		return worldchunk.Options{}, err
 	}
 
 	var lightmap worldlightmap.Options
@@ -68,6 +68,8 @@ func chunkOptions(definition manifest) (worldchunk.Options, error) {
 	}
 
 	options := worldchunk.Options{
+		EnclosureAware:  true,
+		MaxSpan:         maximumSpan,
 		MaxMeshBytes:    defaultChunkMeshBytes,
 		MaxEncodedBytes: defaultChunkEncodedBytes,
 		MaxSectors:      defaultChunkSectors,
@@ -76,7 +78,12 @@ func chunkOptions(definition manifest) (worldchunk.Options, error) {
 	}
 
 	if settings.MaxMeshBytes != nil {
-		if *settings.MaxMeshBytes == 0 || *settings.MaxMeshBytes > level.MaxEntrySize {
+		maximum := uint64(level.MaxEntrySize)
+		if settings.Spatial != nil {
+			maximum = maxSpatialGeometryBytes
+		}
+
+		if *settings.MaxMeshBytes == 0 || *settings.MaxMeshBytes > maximum {
 			return worldchunk.Options{}, fmt.Errorf("max_mesh_bytes: %w", ErrManifest)
 		}
 
@@ -97,6 +104,14 @@ func chunkOptions(definition manifest) (worldchunk.Options, error) {
 		}
 
 		options.MaxSectors = *settings.MaxSectors
+	}
+
+	if err := validateSpatialChunkSettings(settings.Spatial, lightmap.TexelsPerUnit); err != nil {
+		return worldchunk.Options{}, err
+	}
+
+	if settings.Spatial != nil && (noLightmap || definition.Lightmap == nil || !definition.Lightmap.Fixed) {
+		return worldchunk.Options{}, fmt.Errorf("spatial chunks require fixed offline lighting: %w", ErrManifest)
 	}
 
 	return options, nil
@@ -124,438 +139,4 @@ func validateChunkSettings(definition manifest, assets *assetBuild) error {
 	return nil
 }
 
-func buildWorldChunks(ctx context.Context, directory string, definition manifest, document world.Document,
-	result worldMaterialBuild, cache *chunkPixelCache) (worldMaterialBuild, error) {
-	// Keep the shared root intact if complete module sizes require a smaller
-	// partition after baking. Planner estimates cannot predict QOI byte lengths.
-	shared := result
-
-	options, err := chunkOptions(definition)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
-	options.SectorGroups, err = resolveChunkAreas(definition.Chunks.Areas, &document)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
-	if definition.Lightmap != nil && definition.Lightmap.Environment != nil {
-		options.CompactLightmaps = true
-		options.Lightmap.CapsWithinSourceRoom = true
-		options.Lightmap.CompactPacking = true
-
-		options.SolidOwners, err = worldchunk.BalancedSolidOwners(document, options.Lightmap)
-		if err != nil {
-			return worldMaterialBuild{}, err
-		}
-	}
-
-	planOptions := options
-	if result.ready != nil {
-		// The intermediate semantic encoding is not shipped. Partition against
-		// the completed ready-only module below, retaining semantic format bounds.
-		planOptions.MaxEncodedBytes = worldchunk.MaxEncodedBytes
-	}
-
-	plan, err := worldchunk.Plan(document, planOptions)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
-	result, err = prepareWorldChunkStreams(result, plan.Chunks, &document)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
-	encodedProxy, err := encodeWorldChunkShadow(document)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
-	var materials []worldlightmapbake.Material
-	if !options.NoLightmap {
-		_, materials, err = loadBakeMaterials(directory, definition)
-		if err != nil {
-			return worldMaterialBuild{}, err
-		}
-	}
-
-	digest, err := worldchunk.GeometryDigest(&document)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
-	catalog := worldchunk.Catalog{Schema: worldchunk.Schema, GeometrySHA256: digest,
-		SectorChunks: plan.SectorChunks, Candidates: plan.Candidates}
-
-	bakeOptions := chunkBakeOptions(definition.Lightmap)
-	baked := make(map[string]bool)
-
-	cache, releaseBaker := prepareChunkBaker(cache, document, materials, !options.NoLightmap)
-	defer releaseBaker()
-
-	for _, chunk := range plan.Chunks {
-		if err := ctx.Err(); err != nil {
-			return worldMaterialBuild{}, err
-		}
-
-		var (
-			artifact   ChunkArtifact
-			descriptor worldchunk.Chunk
-			variants   []ChunkArtifact
-		)
-		if definition.Lightmap != nil && definition.Lightmap.Environment != nil {
-			artifact, descriptor, variants, err = encodeEnvironmentWorldChunk(ctx, document, definition.Level.Name, chunk,
-				materials, bakeOptions, *definition.Lightmap.Environment, cache, result.ready)
-		} else {
-			artifact, descriptor, err = encodeWorldChunk(
-				ctx,
-				document,
-				definition.Level.Name,
-				chunk,
-				materials,
-				bakeOptions,
-				options.NoLightmap,
-				cache,
-				result.ready,
-			)
-		}
-
-		retry, buildErr := chunkArtifactLimit(descriptor, chunk, options, result.ready != nil, err)
-		if retry {
-			definition = repartitionChunkSettings(definition, len(chunk.Sectors)-1)
-
-			return buildWorldChunks(ctx, directory, definition, document, shared, cache)
-		}
-
-		if buildErr != nil {
-			return worldMaterialBuild{}, buildErr
-		}
-
-		result.chunks = append(result.chunks, artifact)
-		result.chunks = append(result.chunks, variants...)
-
-		catalog.Chunks = append(catalog.Chunks, descriptor)
-		appendChunkBakedLights(baked, descriptor, chunk)
-	}
-
-	appendCatalogBakedLights(&catalog, &document, baked)
-
-	encodedCatalog, err := worldchunk.EncodeCatalog(catalog, &document)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
-	entries := []level.SourceEntry{{Name: worldchunk.CatalogEntryName, Kind: level.EntryData, Data: encodedCatalog}}
-	if encodedProxy != nil {
-		entries = append(entries, level.SourceEntry{Name: worldchunk.ShadowEntryName, Kind: level.EntryData, Data: encodedProxy})
-	}
-
-	return applyWorldChunks(result, entries, result.chunks, definition)
-}
-
 // Fresh builds and validated caches use the same root ownership and metadata path.
-func applyWorldChunks(
-	result worldMaterialBuild,
-	entries []level.SourceEntry,
-	chunks []ChunkArtifact,
-	definition manifest,
-) (worldMaterialBuild, error) {
-	for _, entry := range result.data {
-		if strings.HasPrefix(entry.Name, "@world/chunks/") || strings.HasPrefix(entry.Name, "@world/lightmaps/") {
-			return worldMaterialBuild{}, ErrSource
-		}
-	}
-
-	identity, err := level.DecodeMetadata(result.metadata)
-	if err != nil {
-		return worldMaterialBuild{}, ErrManifest
-	}
-
-	if _, declared := identity[worldlightmap.MetadataKey]; declared {
-		return worldMaterialBuild{}, fmt.Errorf("chunk roots cannot declare a whole-world lightmap: %w", ErrManifest)
-	}
-
-	if _, declared := identity[worldlightmap.PrebakeMetadataKey]; declared {
-		return worldMaterialBuild{}, fmt.Errorf("chunk roots cannot declare a whole-world prebake: %w", ErrManifest)
-	}
-
-	identity[worldchunk.MetadataKey] = level.StringValue(worldchunk.Schema)
-	if result.ready != nil {
-		identity[worldchunk.ReadyMetadataKey] = level.StringValue(worldchunk.ReadySchema)
-	}
-
-	result.metadata, err = level.EncodeMetadata(identity)
-	if err != nil {
-		return worldMaterialBuild{}, err
-	}
-
-	result.data = append(result.data, entries...)
-	result.chunks = chunks
-
-	result.features = append(result.features, worldchunk.Feature)
-	if result.ready != nil {
-		result.features = append(result.features, worldchunk.ReadyFeature)
-	}
-
-	if definition.Lightmap != nil && definition.Lightmap.Enabled {
-		result.features = append(result.features, worldlightmap.Feature)
-		if definition.Lightmap.Environment != nil {
-			result.features = append(result.features, worldlightmap.EnvironmentVariantsFeature)
-		} else {
-			result.features = append(result.features, worldlightmap.PrebakeFeature)
-		}
-	}
-
-	return result, nil
-}
-
-func encodeWorldChunkShadow(document world.Document) ([]byte, error) {
-	proxy, err := worldchunk.CompileShadowProxy(document)
-	if errors.Is(err, worldchunk.ErrShadowBudget) {
-		// Complete render chunks retain their larger independent geometry bound.
-		// A host must reject shadow commands when this optional asset is absent.
-		return nil, nil
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return worldchunk.EncodeShadowProxy(proxy, &document)
-}
-
-func chunkBakeOptions(settings *lightmapBuildSettings) worldlightmapbake.Options {
-	options := worldlightmapbake.Options{Samples: defaultChunkBakeSamples, Bounces: 1, Seed: 1, Denoise: "medium"}
-
-	if settings != nil {
-		if settings.BakeSamples != nil {
-			options.Samples = *settings.BakeSamples
-		}
-
-		if settings.BakeBounces != nil {
-			options.Bounces = *settings.BakeBounces
-		}
-
-		options.Denoise = settings.denoise()
-		options.MaxRayDistance = settings.maxRayDistance()
-	}
-
-	return options
-}
-
-func encodeWorldChunk(
-	ctx context.Context, document world.Document, name string, chunk worldchunk.PlannedChunk,
-	materials []worldlightmapbake.Material, options worldlightmapbake.Options, noLightmap bool,
-	cache *chunkPixelCache,
-	ready ...*worldchunk.ReadyOptions,
-) (ChunkArtifact, worldchunk.Chunk, error) {
-	mesh, err := worldchunk.EncodeMesh(chunk.Mesh, &document)
-	if err != nil {
-		return ChunkArtifact{}, worldchunk.Chunk{}, err
-	}
-
-	identity := level.Metadata{
-		worldchunk.ChunkMetadataKey: level.StringValue(worldchunk.Schema),
-		"chunkID":                   level.UintValue(uint64(chunk.ID)),
-		"geometrySha256":            level.StringValue(chunk.Mesh.GeometrySHA256),
-	}
-	entries := []level.SourceEntry{{Name: worldchunk.MeshEntryName, Kind: level.EntryData, Data: mesh}}
-
-	var layout *worldlightmap.Layout
-	if !noLightmap {
-		layout = &chunk.Layout
-	}
-
-	entries, meshBytes, err := appendWorldChunkStreams(entries, identity, &chunk.Mesh, mesh, &document, layout, ready...)
-	if err != nil {
-		return ChunkArtifact{}, worldchunk.Chunk{}, err
-	}
-
-	var lightmapBytes uint64
-
-	if !noLightmap {
-		lightmaps, decodedBytes, err := bakeWorldChunkLightmap(ctx, document, chunk.Layout, materials, options, cache)
-		if err != nil {
-			return ChunkArtifact{}, worldchunk.Chunk{}, fmt.Errorf("chunk %d bake: %w", chunk.ID, err)
-		}
-
-		lightmapBytes = decodedBytes
-		identity[worldlightmap.MetadataKey] = level.StringValue(worldlightmap.Schema)
-		identity[worldlightmap.PrebakeMetadataKey] = level.StringValue(worldlightmap.PrebakeSchema)
-
-		entries = append(entries, lightmaps...)
-	}
-
-	metadata, err := level.EncodeMetadata(identity)
-	if err != nil {
-		return ChunkArtifact{}, worldchunk.Chunk{}, err
-	}
-
-	module, err := encodeLevelModule(name, metadata, entries)
-	if err != nil {
-		return ChunkArtifact{}, worldchunk.Chunk{}, err
-	}
-
-	digest := sha256.Sum256(module)
-	contentDigest := hex.EncodeToString(digest[:])
-	artifact := ChunkArtifact{ID: chunk.ID, Bytes: module, ContentSHA256: contentDigest, EnvelopeVersion: level.EnvelopeVersion}
-	descriptor := worldchunk.Chunk{ID: chunk.ID, Sectors: chunk.Sectors, Solids: chunk.Solids, ContentSHA256: contentDigest,
-		Size: uint64(len(module)), MeshBytes: meshBytes, LightmapBytes: lightmapBytes, Bounds: chunk.Bounds}
-
-	return artifact, descriptor, nil
-}
-
-func bakeWorldChunkLightmap(
-	ctx context.Context, document world.Document, layout worldlightmap.Layout,
-	materials []worldlightmapbake.Material, options worldlightmapbake.Options,
-	cache *chunkPixelCache,
-) ([]level.SourceEntry, uint64, error) {
-	encodedLayout, err := worldlightmap.Encode(layout, &document)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	producer, err := worldlightmap.OfflineProducer(options.Denoise, options.MaxRayDistance)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	rgbmRange, err := worldlightmap.OfflineRGBMRangeBounded(layout, &document, options.Bounces, options.MaxRayDistance)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	var (
-		key         string
-		image       []byte
-		reflectance string
-		hit         bool
-	)
-
-	if cache.enabled() {
-		key, err = worldlightmapbake.BakeInputDigest(document, layout, materials, options)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		image, hit = cache.read(key, producer, rgbmRange)
-		if hit {
-			// Dimension checks follow complete QOI validation, before trusting a
-			// cache hit. Wrong-size but valid pixels must trigger a cold bake.
-			metadata, _ := qoi.Inspect(image)
-			hit = len(layout.Pages) == 1 && int(metadata.Width) == 3*layout.Pages[0].Width &&
-				int(metadata.Height) == layout.Pages[0].Height
-		}
-	}
-
-	image, reflectance, rgbmRange, err = resolveChunkLightmapPixels(ctx, document, layout, materials, options, cache, hit, image, rgbmRange)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	pair, err := worldlightmap.NewOfflinePrebake(layout, &document, image, worldlightmap.OfflineBakeInputs{
-		ReflectanceSHA256: reflectance, Samples: options.Samples, Bounces: options.Bounces,
-		Seed: options.Seed, RGBMRange: rgbmRange, Denoise: options.Denoise, MaxRayDistance: options.MaxRayDistance,
-	})
-	if err != nil {
-		return nil, 0, err
-	}
-
-	if err := ctx.Err(); err != nil {
-		return nil, 0, err
-	}
-
-	if !hit {
-		if err := cache.write(key, producer, rgbmRange, image); err != nil {
-			return nil, 0, fmt.Errorf("write chunk pixel cache: %w", err)
-		}
-	}
-
-	prebake, err := worldlightmap.EncodePrebake(pair, layout, &document)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	decodedBytes := uint64(pair.Manifest.Width) * uint64(pair.Manifest.Height) * bakeTextureChannels
-	entries := []level.SourceEntry{
-		{Name: worldlightmap.EntryName, Kind: level.EntryData, Data: encodedLayout},
-		{Name: worldlightmap.PrebakeEntryName, Kind: level.EntryData, Data: prebake},
-		{Name: worldlightmap.PrebakeImageEntryName, Kind: level.EntryData, Data: image},
-	}
-
-	return entries, decodedBytes, nil
-}
-
-func appendCatalogBakedLights(catalog *worldchunk.Catalog, document *world.Document, baked map[string]bool) {
-	if document.Lighting != nil {
-		for index, light := range document.Lighting.Lights {
-			if baked[light.ID] {
-				catalog.BakedLights = append(catalog.BakedLights, index)
-			}
-		}
-	}
-}
-
-func resolveChunkLightmapPixels(
-	ctx context.Context,
-	document world.Document,
-	layout worldlightmap.Layout,
-	materials []worldlightmapbake.Material,
-	options worldlightmapbake.Options,
-	cache *chunkPixelCache,
-	hit bool,
-	image []byte,
-	rgbmRange float64,
-) ([]byte, string, float64, error) {
-	var (
-		reflectance string
-		err         error
-	)
-	if hit {
-		reflectance, err = worldlightmapbake.ReflectanceDigestForLayout(document, layout, materials, options)
-		if err != nil {
-			return nil, "", 0, err
-		}
-
-		cache.hits++
-
-		return image, reflectance, rgbmRange, nil
-	}
-
-	var (
-		baked   worldlightmapbake.Result
-		bakeErr error
-	)
-	if cache != nil && cache.baker != nil {
-		baked, bakeErr = cache.baker.Bake(ctx, layout, options)
-	} else {
-		baked, bakeErr = worldlightmapbake.Bake(ctx, document, layout, materials, options)
-	}
-
-	if bakeErr != nil {
-		return nil, "", 0, bakeErr
-	}
-
-	image, _, err = qoi.Encode(baked.Image, qoi.Options{Channels: qoi.ChannelsRGBA, Colorspace: qoi.ColorspaceLinear})
-	if err != nil {
-		return nil, "", 0, err
-	}
-
-	reflectance, rgbmRange = baked.ReflectanceSHA256, baked.RGBMRange
-
-	if cache != nil {
-		cache.misses++
-	}
-
-	return image, reflectance, rgbmRange, nil
-}
-
-func appendChunkBakedLights(baked map[string]bool, descriptor worldchunk.Chunk, chunk worldchunk.PlannedChunk) {
-	if descriptor.LightmapBytes != 0 && chunk.Layout.RuntimeBake != nil {
-		for _, id := range chunk.Layout.RuntimeBake.LightIDs {
-			baked[id] = true
-		}
-	}
-}

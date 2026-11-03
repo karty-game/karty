@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,21 +57,32 @@ func GenerateTechnical(output string) error {
 }
 
 func generateFiles(output string, files []generatedFile) error {
+	return generateFilesWithAssets(output, files, true)
+}
+
+func generateFilesWithAssets(output string, files []generatedFile, includeAssets bool) error {
 	root, err := openOutput(output)
 	if err != nil {
 		return err
 	}
 	defer root.Close()
 
-	assetRoot, err := childOutput(root, "assets")
-	if err != nil {
-		return err
-	}
-	defer assetRoot.Close()
+	var (
+		assetRoot *os.Root
+		assets    []fs.DirEntry
+	)
 
-	assets, err := website.Files.ReadDir("assets")
-	if err != nil {
-		return err
+	if includeAssets {
+		assetRoot, err = childOutput(root, "assets")
+		if err != nil {
+			return err
+		}
+		defer assetRoot.Close()
+
+		assets, err = website.Files.ReadDir("assets")
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, asset := range assets {

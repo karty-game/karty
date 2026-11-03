@@ -47,12 +47,7 @@ func ResolvePublished(ctx context.Context, version string) (Manifest, error) {
 		return Manifest{}, err
 	}
 
-	key, err := publishedVerifier()
-	if err != nil {
-		return Manifest{}, err
-	}
-
-	return parsePublishedManifest(version, manifest, signature, key)
+	return VerifyPublishedManifest(version, manifest, signature)
 }
 
 func downloadPublishedSDK(ctx context.Context, url string) ([]byte, error) {

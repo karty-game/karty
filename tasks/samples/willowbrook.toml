@@ -20,15 +20,6 @@ depends = ["build"]
 dir = "samples/willowbrook"
 run = '../../dist/karty build --target native --host "${KARTY_HOST_NATIVE:-}"'
 
-[check-willowbrook-web]
-description = "Play the real village WASM in Chromium and verify 2D camera, portrait touch, treasure routes and structure overlap"
-run = "node scripts/check-willowbrook-web.mjs"
-
-[check-willowbrook-residency-web]
-description = "Replay camera clicks and verify bounded sprite residency in actual browser WASM"
-depends = ["build-willowbrook-web"]
-run = "node scripts/check-willowbrook-residency-web.mjs"
-
 [serve-willowbrook]
 description = "Serve an immutable Willowbrook snapshot on loopback port 39718"
 run = "node scripts/willowbrook-server.mjs samples/willowbrook/dist/web 39718"

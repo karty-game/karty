@@ -19,7 +19,6 @@ var webServiceWorkerTemplate string
 //go:embed templates/web-status.js.tmpl
 var webStatusTemplate string
 
-//nolint:gosec // Only fixed CLI-owned script basenames are joined beneath the caller's staging directory.
 func stageWebDelivery(ctx context.Context, directory string) (string, string, error) {
 	for _, file := range []struct{ name, contents string }{
 		{"karty-web.js", webBootstrapTemplate},

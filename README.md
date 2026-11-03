@@ -11,11 +11,16 @@ Build retro-inspired 2D and 3D games with Karty.
 > [!WARNING]
 > Karty is under active development. APIs, project formats and features may change.
 
+[SDK 0.1.0](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.1.0)
+introduces a breaking WebGPU cartridge format.
+Rebuild existing cartridges and levels with SDK 0.1.0 and use its matching host.
+Older cartridges cannot run on the new host; new cartridges cannot run on older
+hosts. CLI versions are independent of SDK versions.
+
 ## Features
 
 - 🐹 **Your game, written in Go.** Build game logic with Go’s simplicity, speed and
-  type safety, powered by [Ebitengine](https://ebitengine.org/) and
-  [EbitenUI](https://github.com/ebitenui/ebitenui).
+  type safety, running on Karty’s WebGPU host for browsers and desktop.
 - 👾 **Retro looks. Modern workflow.** Create 2D and 3D games inspired by the ’90s
   and early 2000s, with tools built for today’s development workflow.
 - ✨ **Give your game a signature look.** Shape the mood with built-in

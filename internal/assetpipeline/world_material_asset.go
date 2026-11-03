@@ -19,6 +19,7 @@ import (
 	"github.com/karty-game/karty-sdk/format/asset"
 	"github.com/karty-game/karty-sdk/format/world"
 	"github.com/karty-game/karty-sdk/format/worldmaterial"
+	"github.com/karty-game/karty-sdk/format/worldmaterialgpu"
 	"github.com/karty-game/karty/internal/sdk"
 )
 
@@ -99,7 +100,8 @@ func materializeArguments(inputPath, directory string, values ...MaterializeOpti
 
 // This capability is a generation policy: older SDKs retain their three-map recipe.
 func materialReflectanceEnabled(manifest sdk.Manifest) bool {
-	return slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialReflectanceV1)
+	return slices.Contains(manifest.Assets.Capabilities.Runtime, asset.CapabilityWorldMaterialReflectanceV1) ||
+		slices.Contains(manifest.Assets.Capabilities.Runtime, worldmaterialgpu.Feature)
 }
 
 func materializeManifestArguments(manifest sdk.Manifest, inputPath, directory string, options MaterializeOptions) []string {

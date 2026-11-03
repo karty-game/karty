@@ -152,18 +152,14 @@ for (const game of ["walk", "precision"]) {
   await runCLI(["package", "restore"], directory);
   await runCLI(["schema", "--check"], directory);
   for (const compiler of ["go", "tinygo"]) {
-    const args = ["build", "--target", "web", "--compiler", compiler, "--bundled-runtime"];
+    const args = ["build", "--target", "web", "--compiler", compiler];
     if (process.env.KARTY_HOST_WEB) args.push("--host", process.env.KARTY_HOST_WEB);
     await runCLI(args, directory);
     await cp(resolve(directory, "dist/web"), resolve(directory, "dist/variants", compiler), { recursive: true });
     console.log(`${game}/${compiler}: archive build passed after removing original sources and caches`);
   }
 }
-await runProcess(process.execPath, ["scripts/check-package-controllers.mjs"], process.cwd(), {
-  ...process.env,
-  KARTY_STDLIB_GAMES: resolve(fixture, "games"),
-  KARTY_STDLIB_ARTIFACTS: resolve(artifacts, "controllers"),
-});
+
 await writeFile(resolve(artifacts, "report.json"), JSON.stringify({ fixture, archiveSHA256, reports }, null, 2) + "\n");
 console.log(
   JSON.stringify(

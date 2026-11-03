@@ -39,7 +39,7 @@ func validateTerrainSettings(definition manifest, assets *assetBuild) error {
 		return fmt.Errorf("terrain requires a world, source and SDK advertising %s: %w", worldterrain.Feature, ErrManifest)
 	}
 
-	if definition.Chunks != nil && definition.Chunks.Enabled {
+	if definition.Chunks != nil && definition.Chunks.Enabled && (definition.Lightmap == nil || !definition.Lightmap.Fixed) {
 		return fmt.Errorf("terrain cannot be combined with sector chunk streaming in this version: %w", ErrManifest)
 	}
 

@@ -193,7 +193,7 @@ func readSnapshotFile(ctx context.Context, root *os.Root, path string, remaining
 }
 
 func (snapshot *Snapshot) identify(ctx context.Context, revision uint64) error {
-	for _, name := range []string{"index.html", "karty.js", "wasm_exec.js", "game.kart"} {
+	for _, name := range snapshot.requiredRuntimeFiles() {
 		if len(snapshot.files[name]) == 0 {
 			return fmt.Errorf("missing %s: %w", name, ErrSnapshot)
 		}
@@ -206,6 +206,10 @@ func (snapshot *Snapshot) identify(ctx context.Context, revision uint64) error {
 
 	manifest, err := cartridge.DecodeManifest(manifestBytes)
 	if err != nil {
+		return err
+	}
+
+	if err := snapshot.validatePreparedMaterialRuntime(manifest.Features); err != nil {
 		return err
 	}
 
@@ -285,28 +289,12 @@ func (snapshot *Snapshot) runtimeIdentity(ctx context.Context, manifest cartridg
 		return "", err
 	}
 
-	clientHash, err := digestContext(ctx, snapshot.files["game.kart"])
-	if err != nil {
-		return "", err
-	}
-
-	launcherHash, err := digestContext(ctx, snapshot.files["karty.js"])
-	if err != nil {
-		return "", err
-	}
-
-	launcher, err := normalizeShellHash(ctx, snapshot.files["karty.js"], "game.kart", clientHash)
-	if err != nil {
-		return "", err
-	}
-
-	index, err := normalizeShellHash(ctx, snapshot.files["index.html"], "karty.js", launcherHash)
+	files, err := snapshot.runtimeShellFiles(ctx, wasm)
 	if err != nil {
 		return "", err
 	}
 	// All non-level bytes participate, including host/glue/media/debug scripts.
 	// Content-addressed KLDs carry both parent levels and subordinate chunks.
-	files := map[string][]byte{"game.kart": wasm, "karty.js": launcher, "index.html": index}
 	for name, data := range snapshot.files {
 		// Delivery manifests bind the whole build, including changed levels.
 		// Development bypasses the worker and retains level-only hot updates.

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	buildservice "github.com/karty-game/karty/internal/build"
 	"github.com/karty-game/karty/internal/levelbuild"
 	"github.com/karty-game/karty/internal/project"
 	"github.com/karty-game/karty/internal/sdk"
@@ -45,7 +46,8 @@ func Command() *cli.Command {
 			&cli.IntFlag{Name: "height", Usage: "PNG height, at most 720 (default: project resolution)"},
 			&cli.StringFlag{Name: "output", Aliases: []string{"o"}, Usage: "PNG path (default: dist/screenshots/<level>-<timestamp>.png)"},
 			&cli.StringFlag{Name: "batch", Usage: "TOML camera views; capture all in one native session"},
-			&cli.StringFlag{Name: "host", Usage: "local native karty-host executable (or KARTY_HOST_NATIVE)"},
+			&cli.StringFlag{Name: "host", Usage: "verified native host bundle or declared entrypoint (or KARTY_HOST_NATIVE)"},
+			BackendFlag(),
 			&cli.DurationFlag{Name: "timeout", Value: time.Minute, Usage: "maximum native capture duration"},
 		}, Action: run,
 	}
@@ -85,6 +87,16 @@ func run(ctx context.Context, command *cli.Command) error {
 		return err
 	}
 
+	webgpu, err := buildservice.ValidateLocalHost(ctx, host, "native", "")
+	if err != nil {
+		return err
+	}
+
+	options, err := CaptureBackend(command.String("backend"), webgpu)
+	if err != nil {
+		return err
+	}
+
 	version := manifest.Compatibility.UISchema
 
 	fmt.Fprintln(command.Root().ErrWriter, "Building level", command.Args().First())
@@ -100,12 +112,8 @@ func run(ctx context.Context, command *cli.Command) error {
 	}
 	defer os.RemoveAll(cache)
 
-	levelPath, err := filepath.Abs(filepath.Join(cache, artifact.ContentSHA256+".kld"))
+	levelPath, err := StageCaptureInputs(cache, artifact)
 	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(levelPath, artifact.Bytes, 0600); err != nil {
 		return err
 	}
 
@@ -113,9 +121,18 @@ func run(ctx context.Context, command *cli.Command) error {
 	defer cancel()
 
 	if command.String("batch") == "" {
-		err = capture(captureCtx, host, levelPath, requests[0].output, artifact.Features, requests[0].pose, command.Root().ErrWriter)
+		err = captureWithOptions(
+			captureCtx,
+			host,
+			levelPath,
+			requests[0].output,
+			artifact.Features,
+			requests[0].pose,
+			command.Root().ErrWriter,
+			options,
+		)
 	} else {
-		err = captureBatch(captureCtx, host, levelPath, artifact.Features, requests, command.Root().ErrWriter)
+		err = captureBatchWithOptions(captureCtx, host, levelPath, artifact.Features, requests, command.Root().ErrWriter, options)
 	}
 
 	if err != nil {
@@ -204,13 +221,31 @@ func nativeHost(ctx context.Context, override string, manifest sdk.Manifest) (st
 	}
 
 	if override != "" {
-		return filepath.Abs(override)
+		absolute, err := filepath.Abs(override)
+		if err != nil {
+			return "", err
+		}
+
+		resolved, _, err := buildservice.ResolveLocalHostBundle(ctx, absolute, "native", "")
+
+		return resolved, err
 	}
 
 	return toolchain.EnsureHost(ctx, manifest, "native")
 }
 
 func capture(ctx context.Context, host, levelPath, output string, features []string, pose camera, diagnostics io.Writer) error {
+	return captureWithOptions(ctx, host, levelPath, output, features, pose, diagnostics, CaptureOptions{})
+}
+
+func captureWithOptions(
+	ctx context.Context,
+	host, levelPath, output string,
+	features []string,
+	pose camera,
+	diagnostics io.Writer,
+	options CaptureOptions,
+) error {
 	if err := os.MkdirAll(filepath.Dir(output), 0750); err != nil {
 		return err
 	}
@@ -228,6 +263,7 @@ func capture(ctx context.Context, host, levelPath, output string, features []str
 	}
 	// An empty staging file cannot be mistaken for an older successful image.
 	arguments := make([]string, 0, 28)
+	arguments = append(arguments, options.Arguments()...)
 
 	arguments = append(arguments,
 		"--screenshot-protocol",

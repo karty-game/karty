@@ -52,7 +52,7 @@ func validateWorldRuntimeLights(document *world.Document, result worldMaterialBu
 func collectBakedLightIDs(document *world.Document, result worldMaterialBuild) (map[string]bool, error) {
 	baked := make(map[string]bool)
 
-	if !slices.Contains(result.features, worldlightmap.PrebakeFeature) {
+	if !slices.Contains(result.features, worldlightmap.PrebakeFeature) && !slices.Contains(result.features, worldlightmap.FixedFeature) {
 		return baked, nil
 	}
 

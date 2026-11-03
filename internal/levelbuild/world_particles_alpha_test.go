@@ -33,7 +33,7 @@ func testParticlesRequireExactSDKCapability(t *testing.T, blend string) {
 		t.Fatal(err)
 	}
 
-	selected = withoutRuntimeCapabilities(geometrySDK(selected), asset.CapabilityWorldParticlesV1, asset.CapabilityWorldParticlesV2)
+	selected = withoutRuntimeCapabilities(currentWorldSDK(selected), asset.CapabilityWorldParticlesV1, asset.CapabilityWorldParticlesV2)
 	input := "version: 11\n" + lightingRoomYAML + strings.Replace(
 		strings.Replace(levelParticleYAML, "  version: 1", "  version: 2", 1),
 		"blend: additive",

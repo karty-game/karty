@@ -76,7 +76,7 @@ button
   min-height: 44
   font-family: body
   font-size: theme.typography.label
-  text-align: start
+  text-align: left
   color: theme.colors.text
   color-disabled: theme.colors.text-disabled
   background: theme.colors.surface

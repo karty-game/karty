@@ -21,7 +21,7 @@ func TestNamedWorldBuildSkipsUnrelatedAssets(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	selected = geometrySDK(selected)
+	selected = currentWorldSDK(selected)
 
 	root := t.TempDir()
 
@@ -41,7 +41,12 @@ func TestNamedWorldBuildSkipsUnrelatedAssets(t *testing.T) {
 	}
 
 	pixels := image.NewRGBA(image.Rect(0, 0, 2, 2))
-	pixels.SetRGBA(0, 0, color.RGBA{R: 120, G: 100, B: 80, A: 255})
+
+	for y := range 2 {
+		for x := range 2 {
+			pixels.SetRGBA(x, y, color.RGBA{R: 120, G: 100, B: 80, A: 255})
+		}
+	}
 
 	if err := png.Encode(file, pixels); err != nil {
 		t.Fatal(err)

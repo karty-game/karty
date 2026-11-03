@@ -69,31 +69,6 @@ func TestSummaryReturnsOutputError(t *testing.T) {
 	}
 }
 
-func TestCDNSummaryReportsRemoteDependencyAndRelativePreviewRoot(t *testing.T) {
-	t.Parallel()
-
-	var output bytes.Buffer
-
-	report := buildservice.Summary{
-		Project:   "starter",
-		SDK:       release.SDKVersion(),
-		Target:    "web",
-		Directory: "dist/web",
-		HostURL:   "../runtime/" + release.SDKVersion() + "/release.wasm",
-		Files:     4,
-		Bytes:     2048,
-	}
-	if err := writeSummary(&output, report); err != nil {
-		t.Fatal(err)
-	}
-
-	for _, expected := range []string{"4 files, 2.0 KiB", "Remote host: ../runtime/" + release.SDKVersion() + "/release.wasm", "verified against SDK " + release.SDKVersion(), "Next: karty serve 'dist'", "http://127.0.0.1:8080/web/", "mirror alongside the game"} {
-		if !strings.Contains(output.String(), expected) {
-			t.Errorf("CDN summary missing %q:\n%s", expected, &output)
-		}
-	}
-}
-
 type failedSummaryWriter struct{}
 
 func TestDevSummaryUsesTheActivePreviewURL(t *testing.T) {

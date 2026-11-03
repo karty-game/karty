@@ -17,7 +17,12 @@ builds:
       - { goos: windows, goarch: arm64 }
 archives:
   - ids: [karty]
-    files: [README.md, LICENSE.md]
+    files:
+      - README.md
+      - LICENSE.md
+      - src: internal/characterimport/meshopt/LICENSE.md
+        dst: licenses/meshoptimizer
+        strip_parent: true
     format_overrides:
       - { goos: windows, formats: [zip] }
 checksum:
