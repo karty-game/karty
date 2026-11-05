@@ -17,7 +17,7 @@ name = "low"
 floor_reflections = true
 
 [sdk]
-version = "0.1.0"
+version = "0.1.1"
 
 [[assets.sound]]
 name = "reactor-hum"

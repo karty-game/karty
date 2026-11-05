@@ -11,11 +11,11 @@ Build retro-inspired 2D and 3D games with Karty.
 > [!WARNING]
 > Karty is under active development. APIs, project formats and features may change.
 
-[SDK 0.1.0](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.1.0)
-introduces a breaking WebGPU cartridge format.
-Rebuild existing cartridges and levels with SDK 0.1.0 and use its matching host.
-Older cartridges cannot run on the new host; new cartridges cannot run on older
-hosts. CLI versions are independent of SDK versions.
+SDK 0.1.0 introduced a breaking WebGPU cartridge format. The current
+[SDK 0.1.1](https://github.com/karty-game/karty-sdk/releases/tag/sdk-v0.1.1)
+selects its matching host. Rebuild existing cartridges and levels with SDK
+0.1.1; older cartridges cannot run on the new host, and new cartridges cannot
+run on older hosts. CLI versions are independent of SDK versions.
 
 ## Features
 

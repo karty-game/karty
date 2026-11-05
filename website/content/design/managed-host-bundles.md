@@ -1,15 +1,15 @@
 # Managed host bundles
 
-SDK 0.1.0 explicitly selects complete WebGPU host delivery with
+SDK 0.1.1 explicitly selects complete WebGPU host delivery with
 `host.format = "host-bundle@1"` and `host.renderer = "webgpu"`. The signed SDK
 manifest pins ZIP archives for web and supported native platforms. SDK metadata without that declaration is unsupported by the current CLI.
 The CLI's current SDK selection advances only after the corresponding signed
 release is available; local candidate validation does not publish a release.
 
-SDK 0.1.0 is a breaking WebGPU cartridge release. Rebuild cartridges and their
-level resources with SDK 0.1.0 and use the matching 0.1.0 host. Older cartridges
-are incompatible with the new host, and new cartridges do not run on older
-hosts. Changing a version label cannot migrate the compiled resource formats.
+SDK 0.1.0 introduced the breaking WebGPU cartridge format. Rebuild cartridges
+and their level resources with the current SDK 0.1.1 and use its matching host.
+Older cartridges are incompatible with the new host, and new cartridges do not
+run on older hosts. Changing a version label cannot migrate compiled resources.
 
 The CLI verifies the archive SHA-256, then the bounded `host-bundle.toml` file
 inventory, renderer, target and native executable architecture. Managed archives

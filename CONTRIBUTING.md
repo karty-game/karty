@@ -40,13 +40,15 @@ Root tasks enable `GOEXPERIMENT=simd`; use `mise exec -- go ...` for ad hoc Go
 commands. Tests prepare the SDK selected by `internal/release` and its managed CPU KTX
 encoder before package timers start; uncached signed artifacts need a download.
 Default packaging tests use deterministic material inputs. Native Materialize
-generation stays in its dedicated integration check. This checkout selects the published SDK 0.1.0.
-Tests and sample builds install its signed public bundle and matching host bundles;
-no private engine checkout or local candidate archive is required. `KARTY_HOME`
-selects the SDK/toolchain cache root.
-SDK 0.1.0 is a breaking WebGPU cartridge release: rebuild existing cartridges
-and level resources against its matching SDK and host. Earlier cartridges do
-not run on the new host; new cartridges do not run on earlier hosts.
+generation stays in its dedicated integration check. This checkout selects SDK
+0.1.1. Tests and sample builds install its signed public bundle and matching
+host bundles; no private engine checkout or local candidate archive is required
+after the release is published. `KARTY_HOME` selects the SDK/toolchain cache
+root.
+SDK 0.1.0 introduced the breaking WebGPU cartridge format. Rebuild existing
+cartridges and level resources with the current SDK 0.1.1 and its matching host.
+Earlier cartridges do not run on the new host; new cartridges do not run on
+earlier hosts.
 
 Package consumer tests use the public release URLs and SHA-256 pins committed in
 `internal/testpackages/pins.toml`. `mise run prepare-test-packages` restores and
