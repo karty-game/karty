@@ -7,17 +7,16 @@ Standalone game builds retain their complete `host-bundle@1` distributions.
 
 ## Build contract
 
-The website builder verifies every complete source bundle, including both
-byte-identical `karty-host.wasm` and `runtime.bin` files, before staging shared
+The website builder verifies every complete source bundle, including
+`karty-host.wasm`, before staging shared
 files. It copies unchanged runtime modules, Go glue, texture codec, WebAssembly
 and required licenses to `runtime/SDK/INVENTORY_SHA256/`.
 
 The separate `karty.hosted-runtime@1` representation contains a bounded,
 checksum-named `hosted-runtime.json` inventory. Its `bundleSha256` records the
 verified source descriptor. Its `files` table preserves each selected file's
-size and SHA-256. The hosted representation omits only `runtime.bin`, the
-optional byte-identical network fallback alias. `karty-host.wasm` remains the
-primary runtime URL. No source bundle or immutable SDK release is modified.
+size and SHA-256. Legacy source bundles may include a verified `runtime.bin` alias, which is
+omitted from hosted output. The current loader requests `karty-host.wasm`. No source bundle or immutable SDK release is modified.
 
 Publication rejects incomplete inventories, changed file bytes, unexpected
 files, links, invalid paths and multiple different runtimes for one SDK version.

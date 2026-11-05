@@ -31,7 +31,7 @@ func main() {
 	prepareImages()
 	for i, b := range dungeon.Obstacles {
 		id := fmt.Sprintf("obstacle-%02d", i)
-		sprite(id+"-contact", "shadow", b.X+b.W/2, b.Y+b.D/2, .023, b.W+.75, b.D+.75, "fixed", "blend")
+		sprite(id+"-contact", "shadow", b.X+b.W/2, b.Y+b.D/2, .023, b.W+.35, b.D+.35, "fixed", "blend")
 		contact := contents[len(contents)-1]["actor"].(record)
 		contact["pitch_degrees"] = 90
 		contact["sprite"].(record)["origin_y"] = .5
@@ -465,7 +465,7 @@ func prepareImages() {
 		for x := range 96 {
 			r := math.Hypot((float64(x)-48)/45, (float64(y)-48)/45)
 			if r < 1 {
-				shadow.SetNRGBA(x, y, color.NRGBA{4, 5, 8, uint8(110 * (1 - r) * (1 - r))})
+				shadow.SetNRGBA(x, y, color.NRGBA{4, 5, 8, uint8(75 * (1 - r) * (1 - r))})
 			}
 		}
 	}

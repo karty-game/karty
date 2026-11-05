@@ -180,25 +180,25 @@ func materialTexture(name string) record {
 	if name == "wax" {
 		return result
 	}
-	recipe := record{"preset": "stone", "normal_strength": .8, "height_contrast": .5, "metallic_scale": 0.0}
-	strengths := record{"normal": .8, "height": .5, "ao": .9, "rim": .15}
+	recipe := record{"preset": "stone", "normal_strength": 1.0, "height_contrast": .8, "metallic_scale": 0.0}
+	strengths := record{"normal": .42, "height": .12, "ao": .4, "rim": .05}
 	switch name {
 	case "floor":
 		// The original 1774x887 study is retained in art. Its packaged albedo
 		// otherwise consumes 3.3 MiB even though world material tiles are 256px.
 		// Bound that duplicate texture while preserving aspect and material art.
 		result["transform"] = record{"max_width": 1024, "max_height": 512}
-		recipe = record{"preset": "marble", "normal_strength": 2.8, "height_contrast": 2.2, "metallic_scale": 0.0, "ao_depth_scale": 2.5}
-		strengths = record{"normal": 1.0, "height": .85, "ao": 1.0, "rim": .2}
+		recipe = record{"preset": "marble", "normal_strength": 1.1, "height_contrast": 1.0, "metallic_scale": 0.0, "ao_depth_scale": 1.25}
+		strengths = record{"normal": .5, "height": .1, "ao": .4, "rim": .06}
 	case "gold":
 		recipe = record{"preset": "metal", "normal_strength": .4, "height_contrast": .3, "metallic_scale": 1.0}
 		strengths = record{"normal": .4, "height": .1, "ao": .8, "rim": .2}
 	case "wood":
 		recipe = record{"preset": "wood", "metallic_scale": 0.0}
-		strengths = record{"normal": .55, "height": .2, "ao": .9, "rim": .1}
+		strengths = record{"normal": .35, "height": .08, "ao": .45, "rim": .05}
 	case "runner":
 		recipe = record{"preset": "fabric", "metallic_scale": 0.0}
-		strengths = record{"normal": .45, "height": .25, "ao": 1.0, "rim": 0.0}
+		strengths = record{"normal": .3, "height": .08, "ao": .4, "rim": 0.0}
 	}
 	result["materialize"], result["material_strengths"] = recipe, strengths
 	return result

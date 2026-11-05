@@ -84,7 +84,7 @@ NovelFrame.frame
   left: 0
   top: 0
   right: 0
-  bottom: 260
+  bottom: 0
   background: #00000000
 .scene-advance:hover
   background: #00000000
@@ -182,8 +182,6 @@ button:hover
   font-size: 17
   color: #c1c9cfff
 @media (max-width: 600)
-  .scene-advance
-    bottom: 340
   .title
     font-size: 27
   .location

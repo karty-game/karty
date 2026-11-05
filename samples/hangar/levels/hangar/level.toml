@@ -4,6 +4,9 @@
 name = "levels.hangar"
 kind = "world"
 
+[reflections]
+required = true
+
 [world]
 source = "world.yaml"
 # Use the standard sprite density cap, retaining more fan and decal detail.

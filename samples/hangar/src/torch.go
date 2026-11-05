@@ -103,9 +103,7 @@ func (tour *hangarTour) clearLights() {
 }
 
 func (tour *hangarTour) createTorch(host *engine.Game, level engine.LevelHandle, view viewpoint) {
-	// A short, soft navigation beam leaves the fire's warmth and reactor's cool
-	// bands visible. This unshadowed light must not overwhelm baked contact cues.
-	tour.torch = host.NewSpotLight(level, engine.NewVec3(view.x, view.y, view.z), engine.NewVec3(.9, .86, .76), 10, .16, .48)
+	tour.torch = host.NewSpotLight(level, engine.NewVec3(view.x, view.y, view.z), engine.NewVec3(3, 2.7, 2.16), 18, .25, .50)
 	// Camera-local axes are right, forward and up: hold the torch low on the right.
 	tour.torch.AttachTo(tour.camera.Ref(), engine.NewVec3(.35, .20, -.30))
 	tour.torch.SetEnabled(tour.torchEnabled)

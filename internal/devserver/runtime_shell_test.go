@@ -21,7 +21,7 @@ func TestWebGPUSnapshotUsesModulesAndPreservesLevelOnlyIdentity(t *testing.T) {
 		for name, data := range map[string]string{
 			"index.html":    "<html><head></head><body><canvas id=world></canvas><script type=module src=bootstrap.mjs></script></body></html>",
 			"bootstrap.mjs": "import './runtime.mjs';", "runtime.mjs": "export const runtime=1;",
-			"client.mjs": "export const client=1;", "runtime.bin": "host",
+			"client.mjs": "export const client=1;",
 		} {
 			if err := os.WriteFile(filepath.Join(directory, name), []byte(data), 0o600); err != nil {
 				t.Fatal(err)

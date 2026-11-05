@@ -74,7 +74,7 @@ func writeWebGPUPreviewBundle(t *testing.T, web string) []string {
 
 	for _, name := range files {
 		contents := "bundle " + name
-		if name == "karty-host.wasm" || name == "runtime.bin" {
+		if name == "karty-host.wasm" {
 			contents = "\x00asm\x01\x00\x00\x00"
 		}
 

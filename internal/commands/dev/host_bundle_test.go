@@ -49,7 +49,7 @@ func developmentBundleFixture(t *testing.T) string {
 
 	for _, name := range append(append(toolchain.WebGPUHostFiles(), toolchain.WebGPUTextureCodecFiles()...), toolchain.WebGPUTextureCodecLicenses()...) {
 		data := []byte("fixture")
-		if name == "karty-host.wasm" || name == "runtime.bin" {
+		if name == "karty-host.wasm" {
 			data = []byte("\x00asm\x01\x00\x00\x00")
 		}
 

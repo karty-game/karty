@@ -29,6 +29,13 @@ function fixture(mode = "success", prefetchFails = false) {
       hidden: ["error-detail", "retry", "fullscreen"].includes(id),
       attributes: {},
       handlers: new Map(),
+      width: 1280,
+      height: 720,
+      style: {
+        setProperty(name, value) {
+          this[name] = value;
+        },
+      },
       setAttribute(name, value) {
         this.attributes[name] = value;
       },
@@ -37,6 +44,7 @@ function fixture(mode = "success", prefetchFails = false) {
       },
       focus() {
         focused++;
+        document.activeElement = this;
       },
     });
   }
@@ -180,6 +188,7 @@ for (const cached of [false, true]) {
   assert.equal(run.nodes.get("fullscreen").hidden, false);
   assert.equal(run.document.title, "A test game");
   assert.equal(run.focused(), 1);
+  assert.equal(run.nodes.get("world").style["--karty-aspect"], String(1280 / 720));
   assert.equal(run.prefetches(), 1);
   assert.equal(
     run.document.documentElement.dataset.kartyState,
@@ -191,12 +200,20 @@ for (const cached of [false, true]) {
   await settle();
   assert.equal(run.prefetches(), 1, "duplicate lifecycle signals cannot restart downloads or move focus");
   assert.equal(run.focused(), 1);
+  run.nodes.get("fullscreen").focus();
   await run.nodes.get("fullscreen").handlers.get("click")();
+  assert.equal(run.document.activeElement, run.nodes.get("world"), "fullscreen returns movement focus");
   run.event("fullscreenchange");
   assert.equal(run.nodes.get("fullscreen").attributes["aria-label"], "Exit fullscreen");
   await run.nodes.get("fullscreen").handlers.get("click")();
   run.event("fullscreenchange");
   assert.equal(run.nodes.get("fullscreen").attributes["aria-label"], "Fullscreen");
+  const field = {};
+  run.document.activeElement = run.nodes.get("fullscreen");
+  const pending = run.nodes.get("fullscreen").handlers.get("click")();
+  run.document.activeElement = field;
+  await pending;
+  assert.equal(run.document.activeElement, field, "fullscreen completion preserves newly focused controls");
 }
 
 {
@@ -208,6 +225,12 @@ for (const cached of [false, true]) {
   run.event("karty-host-error", { message: "Device lost" });
   assert.equal(run.nodes.get("loading").hidden, false);
   assert.equal(run.nodes.get("error-detail").textContent, "Device lost");
+}
+{
+  const run = fixture();
+  run.document.activeElement = {};
+  run.nodes.get("world").handlers.get("pointerdown")();
+  assert.equal(run.document.activeElement, run.nodes.get("world"), "canvas pointer input reclaims movement focus");
 }
 {
   const run = fixture();

@@ -64,6 +64,8 @@ func (build *gpuWorldBuild) encodeCell(
 		return ChunkArtifact{}, worldgpuchunk.Cell{}, assetpipeline.Texture{}, err
 	}
 
+	lighting = compactGPUCellLighting(lighting)
+
 	rnm, cached, err := assetpipeline.EncodeCellRNM(
 		ctx,
 		build.assets.projectRoot,

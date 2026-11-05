@@ -31,6 +31,9 @@ jobs:
           - particle-lab
     env:
       GOWORK: "off"
+      GOEXPERIMENT: simd
+      # Hosted CI generates assets explicitly on Mesa; device visual review uses hardware.
+      KARTY_SAMPLE_REFLECTION_BACKEND: software
       GOCACHE: ${{ github.workspace }}/tmp/ci/go-build
       GOMODCACHE: ${{ github.workspace }}/tmp/ci/go-mod
       KARTY_HOME: ${{ github.workspace }}/tmp/ci/karty
@@ -61,7 +64,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sample-bakes-v1-${{ matrix.sample }}-
       - name: Install headless software graphics dependencies
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri libvulkan1 mesa-vulkan-drivers
       - name: Bake and build sample web preview
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}

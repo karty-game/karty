@@ -104,7 +104,15 @@ func readCompactNotices(directory string) (map[string][]byte, error) {
 }
 
 func copyCompleteSampleWeb(source, destination, name string) error {
-	info, err := os.Lstat(source)
+	parent, err := os.OpenRoot(filepath.Dir(source))
+	if err != nil {
+		return err
+	}
+	defer parent.Close()
+
+	base := filepath.Base(source)
+
+	info, err := parent.Lstat(base)
 	if err != nil {
 		return err
 	}
@@ -113,7 +121,7 @@ func copyCompleteSampleWeb(source, destination, name string) error {
 		return fmt.Errorf("sample web source must be a real directory: %w", os.ErrInvalid)
 	}
 
-	root, err := os.OpenRoot(source)
+	root, err := parent.OpenRoot(base)
 	if err != nil {
 		return err
 	}

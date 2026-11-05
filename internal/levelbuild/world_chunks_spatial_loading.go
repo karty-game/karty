@@ -11,6 +11,13 @@ import (
 	"github.com/karty-game/karty-sdk/format/worldlightmap"
 )
 
+// A complete discovery-ordered source set permits GPU cells to combine
+// different intersecting owners. Semantic loading units retain strict selection
+// equality because their selections can intentionally delegate geometry.
+type spatialLoadingMergePolicy struct {
+	sourceBindings []worldlightmap.Binding
+}
+
 func validateSpatialLoadingSettings(settings *spatialChunkSettings) error {
 	if settings.LoadTileSize == 0 {
 		return nil
@@ -30,12 +37,18 @@ func validateSpatialLoadingSettings(settings *spatialChunkSettings) error {
 // remain explicit. Failed capacity trials keep the original accepted units.
 func groupSpatialLoadingUnits(document *world.Document, chunks []worldchunk.PlannedChunk, parents []int,
 	settings *spatialChunkSettings, options worldchunk.Options, ready *worldchunk.ReadyOptions,
+	policies ...spatialLoadingMergePolicy,
 ) ([]worldchunk.PlannedChunk, []int, error) {
 	if settings.LoadTileSize == 0 {
 		return chunks, parents, nil
 	}
 
 	maximum := min(settings.LoadTileSize, options.MaxSpan)
+
+	var policy spatialLoadingMergePolicy
+	if len(policies) > 0 {
+		policy = policies[0]
+	}
 	// Bounded passes combine rows, then columns. Original source order makes
 	// repeated builds canonical; an explicit work cap also bounds sparse inputs.
 	work := 0
@@ -44,7 +57,7 @@ func groupSpatialLoadingUnits(document *world.Document, chunks []worldchunk.Plan
 		for changed := true; changed; {
 			var err error
 
-			chunks, parents, changed, err = mergeSpatialLoadingAxis(document, chunks, parents, axis, maximum, options, ready, &work)
+			chunks, parents, changed, err = mergeSpatialLoadingAxis(document, chunks, parents, axis, maximum, options, ready, &work, policy)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -56,6 +69,7 @@ func groupSpatialLoadingUnits(document *world.Document, chunks []worldchunk.Plan
 
 func mergeSpatialLoadingAxis(document *world.Document, chunks []worldchunk.PlannedChunk, parents []int,
 	axis int, maximum float64, options worldchunk.Options, ready *worldchunk.ReadyOptions, work *int,
+	policy spatialLoadingMergePolicy,
 ) ([]worldchunk.PlannedChunk, []int, bool, error) {
 	changed := false
 
@@ -70,7 +84,7 @@ func mergeSpatialLoadingAxis(document *world.Document, chunks []worldchunk.Plann
 				continue
 			}
 
-			merged, fits, err := trySpatialLoadingMerge(document, chunks[left], chunks[right], axis, maximum, options, ready)
+			merged, fits, err := trySpatialLoadingMerge(document, chunks[left], chunks[right], axis, maximum, options, ready, policy)
 			if err != nil {
 				return nil, nil, false, err
 			}
@@ -93,10 +107,16 @@ func mergeSpatialLoadingAxis(document *world.Document, chunks []worldchunk.Plann
 
 func trySpatialLoadingMerge(document *world.Document, left, right worldchunk.PlannedChunk,
 	axis int, maximum float64, options worldchunk.Options, ready *worldchunk.ReadyOptions,
+	policy spatialLoadingMergePolicy,
 ) (worldchunk.PlannedChunk, bool, error) {
-	selection, bounds, ok := spatialLoadingUnion(left, right, axis, maximum)
+	selection, bounds, ok := spatialLoadingUnion(left, right, axis, maximum, policy)
 	if !ok || len(left.Mesh.Triangles)+len(right.Mesh.Triangles) > worldchunk.MaxTriangles {
 		return worldchunk.PlannedChunk{}, false, nil
+	}
+
+	if len(policy.sourceBindings) > 0 {
+		left.Sectors = spatialLoadingOwnerUnion(left.Sectors, right.Sectors)
+		left.Solids = spatialLoadingOwnerUnion(left.Solids, right.Solids)
 	}
 
 	merged, err := compileSpatialLeaf(document, left, options.Lightmap, selection,
@@ -110,16 +130,25 @@ func trySpatialLoadingMerge(document *world.Document, left, right worldchunk.Pla
 	}
 
 	fits, err := spatialLoadingFits(&merged, document, options, ready)
+	if err != nil {
+		return worldchunk.PlannedChunk{}, false, fmt.Errorf(
+			"spatial merge geometry (%d vertices, %d triangles): %w",
+			len(merged.Mesh.Vertices),
+			len(merged.Mesh.Triangles),
+			err,
+		)
+	}
 
 	return merged, fits, err
 }
 
 func spatialLoadingUnion(a, b worldchunk.PlannedChunk, axis int, maximum float64,
+	policies ...spatialLoadingMergePolicy,
 ) (worldlightmap.SurfaceSelection, [4]float64, bool) {
 	left, right := a.Layout.Selection, b.Layout.Selection
 	if left == nil || right == nil || left.Clip == nil || right.Clip == nil ||
 		a.Layout.TexelsPerUnit != b.Layout.TexelsPerUnit || left.LiquidEdgeStep != right.LiquidEdgeStep ||
-		left.LiquidMaxSubdivisions != right.LiquidMaxSubdivisions || !slices.Equal(left.Bindings, right.Bindings) {
+		left.LiquidMaxSubdivisions != right.LiquidMaxSubdivisions {
 		return worldlightmap.SurfaceSelection{}, [4]float64{}, false
 	}
 
@@ -136,8 +165,14 @@ func spatialLoadingUnion(a, b worldchunk.PlannedChunk, axis int, maximum float64
 		return worldlightmap.SurfaceSelection{}, [4]float64{}, false
 	}
 
+	bindings, ok := spatialLoadingBindings(left.Bindings, right.Bindings, policies)
+	if !ok {
+		return worldlightmap.SurfaceSelection{}, [4]float64{}, false
+	}
+
 	selection := *left
 	selection.Clip = &bounds
+	selection.Bindings = bindings
 
 	selection.LiquidTiles = append(spatialLoadingCells(left), spatialLoadingCells(right)...)
 	if len(selection.LiquidTiles) > worldlightmap.MaxLiquidTiles {
@@ -145,6 +180,43 @@ func spatialLoadingUnion(a, b worldchunk.PlannedChunk, axis int, maximum float64
 	}
 
 	return selection, bounds, true
+}
+
+func spatialLoadingBindings(left, right []worldlightmap.Binding, policies []spatialLoadingMergePolicy) ([]worldlightmap.Binding, bool) {
+	if slices.Equal(left, right) {
+		return left, true
+	}
+
+	if len(policies) == 0 || len(policies[0].sourceBindings) == 0 {
+		return nil, false
+	}
+
+	selected := make(map[worldlightmap.Binding]bool, len(left)+len(right))
+	for _, source := range [][]worldlightmap.Binding{left, right} {
+		for _, binding := range source {
+			binding.Chart = -1
+			selected[binding] = true
+		}
+	}
+
+	var result []worldlightmap.Binding
+
+	for _, binding := range policies[0].sourceBindings {
+		binding.Chart = -1
+		if selected[binding] {
+			result = append(result, binding)
+			delete(selected, binding)
+		}
+	}
+
+	return result, len(selected) == 0
+}
+
+func spatialLoadingOwnerUnion(left, right []int) []int {
+	result := append(slices.Clone(left), right...)
+	slices.Sort(result)
+
+	return slices.Compact(result)
 }
 
 func spatialLoadingCells(selection *worldlightmap.SurfaceSelection) []worldlightmap.LiquidTile {
@@ -158,6 +230,30 @@ func spatialLoadingCells(selection *worldlightmap.SurfaceSelection) []worldlight
 func spatialLoadingFits(chunk *worldchunk.PlannedChunk, document *world.Document,
 	options worldchunk.Options, ready *worldchunk.ReadyOptions,
 ) (bool, error) {
+	// The semantic mesh is an intermediate entry even for GPU-only cells. Its
+	// unchanged entry bound is smaller than the aggregate spatial mesh budget.
+	// Reserve its fixed headers conservatively and count selection/owner bytes
+	// before EncodeMesh, whose wire-size overflow otherwise returns ErrChunk.
+	const (
+		meshHeaderReserve = 4096
+		ownerIndexBytes   = 4
+	)
+
+	encodedBound := worldchunk.DecodedMeshBytes(chunk.Mesh) + meshHeaderReserve +
+		ownerIndexBytes*uint64(len(chunk.Mesh.Sectors)+len(chunk.Mesh.Solids))
+	if chunk.Mesh.Selection != nil {
+		selection, err := worldlightmap.EncodeSurfaceSelection(*chunk.Mesh.Selection)
+		if err != nil {
+			return false, err
+		}
+
+		encodedBound += uint64(len(selection))
+	}
+
+	if encodedBound > worldchunk.MaxEncodedSize {
+		return false, nil
+	}
+
 	descriptor, err := preflightSpatialGeometryDescriptor(chunk, false, document, nil, ready)
 	if errors.Is(err, worldchunk.ErrReadyCapacity) {
 		return false, nil

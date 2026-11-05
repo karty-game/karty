@@ -112,7 +112,15 @@ func mergeGPUCellPlans(
 		chunks[index] = cell.chunk
 	}
 
-	merged, _, err := groupSpatialLoadingUnits(document, chunks, parents, policy.spatial, policy.options, nil)
+	mergePolicy := spatialLoadingMergePolicy{}
+
+	for _, source := range space.surfaces {
+		binding := source.surface.Binding
+		binding.Chart = -1
+		mergePolicy.sourceBindings = append(mergePolicy.sourceBindings, binding)
+	}
+
+	merged, _, err := groupSpatialLoadingUnits(document, chunks, parents, policy.spatial, policy.options, nil, mergePolicy)
 	if err != nil {
 		return nil, err
 	}

@@ -1011,7 +1011,8 @@ animations:
     - {
         name: acid-ripple,
         kind: liquid,
-        amplitude: 0.065,
+        flow: { x: 0.012, y: -0.007 },
+        amplitude: 0.11,
         frequency: 1.2,
         speed: 0.6,
         surface_amplitude: 0.045,

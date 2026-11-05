@@ -31,7 +31,6 @@ func managedBundleFixture(t *testing.T, target string, edit func(*HostBundle, ma
 		}
 
 		files[bundle.Entrypoint] = []byte("\x00asm\x01\x00\x00\x00")
-		files["runtime.bin"] = files[bundle.Entrypoint]
 	} else {
 		bundle.Entrypoint = "karty-host-webgpu"
 

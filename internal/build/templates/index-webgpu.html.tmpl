@@ -16,7 +16,7 @@ Regenerate with: karty build --target web --host /path/to/host-bundle
       :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #10131c; color: #edf1fa; }
       * { box-sizing: border-box; }
       body { margin: 0; height: 100dvh; display: grid; place-items: center; overflow: hidden; overscroll-behavior: none; }
-      #world { display: block; max-width: 100vw; max-height: 100dvh; image-rendering: pixelated; }
+      #world { display: block; width: min(100vw, calc(100dvh * var(--karty-aspect, 1.777777778))); height: auto; max-height: 100dvh; image-rendering: auto; outline: none; }
       body > canvas { touch-action: none; }
       [hidden] { display: none !important; }
       #loading { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); background: radial-gradient(ellipse at top, #25334c, #10131c 70%); }
@@ -104,7 +104,9 @@ Regenerate with: karty build --target web --host /path/to/host-bundle
           element("loading").setAttribute("aria-busy", "false");
           element("loading").hidden = true;
           element("fullscreen").hidden = !document.fullscreenEnabled;
-          element("world").focus();
+          const canvas = element("world");
+          canvas.style.setProperty("--karty-aspect", String(canvas.width / Math.max(1, canvas.height)));
+          canvas.focus({ preventScroll: true });
           // Background cache failures must never interrupt a presented game.
           Promise.resolve().then(() => globalThis.KartyWebRuntime?.startPrefetch?.()).catch(() => {});
         };
@@ -115,12 +117,16 @@ Regenerate with: karty build --target web --host /path/to/host-bundle
         }, 20000);
         globalThis.kartyStartupFailed = fail;
         globalThis.kartyLoading = { stage, ready, fail };
+        element("world").addEventListener("pointerdown", () => element("world").focus({ preventScroll: true }));
         element("retry").onclick = () => location.reload();
         element("fullscreen").addEventListener("click", async () => {
           try {
             if (document.fullscreenElement) await document.exitFullscreen();
             else await document.documentElement.requestFullscreen();
           } catch { /* Fullscreen is optional; in-page play remains available. */ }
+          finally {
+            if (document.activeElement === element("fullscreen")) element("world").focus({ preventScroll: true });
+          }
         });
         document.addEventListener("fullscreenchange", () => {
           const label = document.fullscreenElement ? "Exit fullscreen" : "Fullscreen";

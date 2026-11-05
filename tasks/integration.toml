@@ -39,6 +39,10 @@ run = "go run ./cmd/karty-check --client-hooks"
 description = "Verify sample shells leave renderer controls to the host debug screen"
 run = "node internal/build/testdata/renderer-debug.test.mjs"
 
+[check-webgpu-shell-viewport]
+description = "Verify largest-fit WebGPU canvas scaling and fullscreen keyboard focus in an accelerated browser"
+run = "node internal/build/testdata/webgpu-shell-viewport.test.mjs"
+
 [test-dev-server]
 description = "Verify immutable development builds, source watching and reconnecting browser updates"
 run = ["go test -timeout=9s ./internal/devserver", "node internal/devserver/browser.test.mjs"]

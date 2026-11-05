@@ -70,6 +70,10 @@ func stageBundleDescriptor(ctx context.Context, bundle *hostBundle, directory, p
 	staged.Files = make(map[string]hostBundleFile, len(bundle.Files))
 	maps.Copy(staged.Files, bundle.Files)
 
+	if bundle.Target == "web" {
+		delete(staged.Files, "runtime.bin")
+	}
+
 	if bundle.Target != "web" {
 		staged.Entrypoint = toolchain.NativeHostName(platform)
 		delete(staged.Files, bundle.Entrypoint)
@@ -93,6 +97,10 @@ func stageBundleFiles(ctx context.Context, bundle *hostBundle, directory, platfo
 
 	names := make([]string, 0, len(bundle.Files))
 	for name := range bundle.Files {
+		if bundle.Target == "web" && name == "runtime.bin" {
+			continue
+		}
+
 		names = append(names, name)
 	}
 
@@ -123,6 +131,12 @@ func stageBundleFiles(ctx context.Context, bundle *hostBundle, directory, platfo
 			filepath.Join(directory, filepath.FromSlash(destination)),
 			mode,
 		); err != nil {
+			return err
+		}
+	}
+
+	if bundle.Target == "web" {
+		if err := os.Remove(filepath.Join(directory, "runtime.bin")); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	}
@@ -220,7 +234,7 @@ func stageWebGPUHostShell(ctx context.Context, directory, title string, bundle *
 	startup := []string{"index.html", "game.kart", "karty-web.js"}
 
 	for name := range bundle.Files {
-		if name != bundle.Entrypoint {
+		if name != bundle.Entrypoint && name != "runtime.bin" {
 			startup = append(startup, name)
 		}
 	}

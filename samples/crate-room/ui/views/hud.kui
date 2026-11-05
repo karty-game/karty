@@ -15,7 +15,11 @@
     <panel class="shoot-overlay">
       <panel class="shoot-spacer"/>
       <panel class="shoot-band">
-        <label class="shoot-label">SHOOT</label>
+        <panel class="shoot-frame">
+          <panel class="shoot-button">
+            <label class="shoot-label">SHOOT</label>
+          </panel>
+        </panel>
       </panel>
     </panel>
   </panel>
@@ -92,6 +96,20 @@ button
   align: center
   justify: center
   background: #00000000
+.shoot-frame
+  width: 210
+  height: 75
+  padding: 2
+  align: center
+  justify: center
+  background: #dcb46dff
+.shoot-button
+  width: 100%
+  height: 100%
+  padding: 0
+  align: center
+  justify: center
+  background: #13202bd2
 .shoot-label
   font-size: 22
 @media (max-width: 600)

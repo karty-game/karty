@@ -22,7 +22,7 @@ func TestWebGPUCodecSnapshotRequiresCompleteFamilyAndRestartsOnWorkerChange(t *t
 	for name, data := range map[string]string{
 		"index.html":    "<html><head></head><body><script type=module src=bootstrap.mjs></script></body></html>",
 		"bootstrap.mjs": "import './runtime.mjs';", "runtime.mjs": "export const runtime=1;",
-		"client.mjs": "export const client=1;", "runtime.bin": "host",
+		"client.mjs":        "export const client=1;",
 		"texture-codec.mjs": "codec bridge", "texture-worker.mjs": "worker first", "transcoder.wasm": "codec wasm",
 		"licenses/Basis-LICENSE.txt": "Basis notice fixture", "licenses/Zstd-LICENSE.txt": "Zstd notice fixture",
 	} {
@@ -65,7 +65,7 @@ func TestWebGPUCodecSnapshotRejectsEntireMissingFamilyForPreparedMaterial(t *tes
 
 	for name, data := range map[string]string{
 		"bootstrap.mjs": "import './runtime.mjs';", "runtime.mjs": "export const runtime=1;",
-		"client.mjs": "export const client=1;", "runtime.bin": "host",
+		"client.mjs":        "export const client=1;",
 		"texture-codec.mjs": "codec bridge", "texture-worker.mjs": "worker", "transcoder.wasm": "codec wasm",
 		"licenses/Basis-LICENSE.txt": "Basis notice fixture", "licenses/Zstd-LICENSE.txt": "Zstd notice fixture",
 	} {

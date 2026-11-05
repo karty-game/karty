@@ -86,65 +86,86 @@ func TestSampleNoticesArePreparedOncePerSDKBeforePackaging(t *testing.T) {
 	}
 }
 
+type sampleBuildScenario struct {
+	name        string
+	levels      []string
+	fixed       []string
+	reflections []string
+	want        [][]string
+	failure     []string
+}
+
 func TestSampleBuildBakesBeforeWebPackaging(t *testing.T) {
 	t.Parallel()
 
-	for _, scenario := range []struct {
-		name    string
-		levels  []string
-		fixed   []string
-		want    [][]string
-		failure []string
-	}{
+	for _, scenario := range []sampleBuildScenario{
 		{name: "offline", levels: []string{"a", "z"}, want: [][]string{{"render", "bake", "--incremental", "--level", "a"}, {"render", "bake", "--incremental", "--level", "z"}, {"build", "--target", "web"}}},
 		{name: "no bake", want: [][]string{{"build", "--target", "web"}}},
 		{name: "fixed chunks bake during build", fixed: []string{"ground"}, want: [][]string{{"build", "--target", "web"}}},
+		{name: "required reflection", levels: []string{"room"}, reflections: []string{"room"}, want: [][]string{{"render", "bake", "--incremental", "--level", "room"}, {"render", "reflections", "--backend", "hardware", "room"}, {"build", "--target", "web"}}},
+		{name: "fixed reflection", fixed: []string{"ground"}, reflections: []string{"ground"}, want: [][]string{{"render", "reflections", "--backend", "hardware", "ground"}, {"build", "--target", "web"}}},
+		{name: "failed reflection", reflections: []string{"room"}, want: [][]string{{"render", "reflections", "--backend", "hardware", "room"}}, failure: []string{"render", "reflections", "--backend", "hardware", "room"}},
 		{name: "failed bake", levels: []string{"broken", "z"}, want: [][]string{{"render", "bake", "--incremental", "--level", "broken"}}, failure: []string{"render", "bake", "--incremental", "--level", "broken"}},
 		{name: "failed build", levels: []string{"a"}, want: [][]string{{"render", "bake", "--incremental", "--level", "a"}, {"build", "--target", "web"}}, failure: []string{"build", "--target", "web"}},
 	} {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
-
-			directory := t.TempDir()
-			for _, name := range scenario.levels {
-				writeFixture(t, filepath.Join(directory, "levels", name, "level.toml"), "[lightmap]\nenabled = true\noffline = true\n")
-			}
-
-			for _, name := range scenario.fixed {
-				writeFixture(
-					t,
-					filepath.Join(directory, "levels", name, "level.toml"),
-					"[lightmap]\nenabled = true\noffline = true\nfixed = true\n[chunks]\nenabled = true\n",
-				)
-			}
-
-			var commands [][]string
-
-			failure := os.ErrPermission
-
-			run := func(cwd, executable string, args ...string) error {
-				if cwd != directory || executable != "fixture-karty" {
-					t.Fatalf("command location = %q, %q", cwd, executable)
-				}
-
-				commands = append(commands, slices.Clone(args))
-
-				if slices.Equal(args, scenario.failure) {
-					return failure
-				}
-
-				return nil
-			}
-
-			err := buildSampleWithRunner(directory, "fixture-karty", run)
-			if scenario.failure == nil && err != nil || scenario.failure != nil && !errors.Is(err, failure) {
-				t.Fatalf("build result = %v, expected failure = %v", err, scenario.failure)
-			}
-
-			if !slices.EqualFunc(commands, scenario.want, slices.Equal[[]string]) {
-				t.Fatalf("command order: %q, want %q", commands, scenario.want)
-			}
+			testSampleBuildScenario(t, scenario)
 		})
+	}
+}
+
+func testSampleBuildScenario(t *testing.T, scenario sampleBuildScenario) {
+	t.Helper()
+
+	directory := t.TempDir()
+	for _, name := range scenario.levels {
+		writeFixture(t, filepath.Join(directory, "levels", name, "level.toml"), "[lightmap]\nenabled = true\noffline = true\n")
+	}
+
+	for _, name := range scenario.fixed {
+		writeFixture(
+			t,
+			filepath.Join(directory, "levels", name, "level.toml"),
+			"[lightmap]\nenabled = true\noffline = true\nfixed = true\n[chunks]\nenabled = true\n",
+		)
+	}
+
+	for _, name := range scenario.reflections {
+		filename := filepath.Join(directory, "levels", name, "level.toml")
+
+		contents, err := os.ReadFile(filename)
+		if err != nil && !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+
+		writeFixture(t, filename, string(contents)+"\n[reflections]\nrequired = true\n")
+	}
+
+	var commands [][]string
+
+	failure := os.ErrPermission
+	run := func(cwd, executable string, args ...string) error {
+		if cwd != directory || executable != "fixture-karty" {
+			t.Fatalf("command location = %q, %q", cwd, executable)
+		}
+
+		commands = append(commands, slices.Clone(args))
+
+		if slices.Equal(args, scenario.failure) {
+			return failure
+		}
+
+		return nil
+	}
+
+	err := buildSampleWithRunner(directory, "fixture-karty", run)
+	if scenario.failure == nil && err != nil || scenario.failure != nil && !errors.Is(err, failure) {
+		t.Fatalf("build result = %v, expected failure = %v", err, scenario.failure)
+	}
+
+	if !slices.EqualFunc(commands, scenario.want, slices.Equal[[]string]) {
+		t.Fatalf("command order: %q, want %q", commands, scenario.want)
 	}
 }
 

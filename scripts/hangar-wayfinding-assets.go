@@ -1,6 +1,6 @@
 //go:build ignore
 
-// Author Hangar's quiet acid and bold wayfinding signs without external fonts.
+// Author Hangar's flowing acid and bold wayfinding signs without external fonts.
 // Run from the CLI root: mise exec -- go run scripts/hangar-wayfinding-assets.go
 // Pass -check to verify byte-for-byte reproducibility without writing assets.
 package main
@@ -53,7 +53,8 @@ func main() {
 
 // Periodic low-frequency fields keep the tile edges continuous. The base has
 // no bubble circles: moving particles own those small, transient surface events.
-// Original toxic.png is retained; this recipe deliberately lowers local contrast.
+// Original toxic.png remains the reference for mottled green surface detail.
+// Broader streaks avoid the old painted bubble circles and survive minification.
 func acidFlow() *image.NRGBA {
 	const size = 256
 	out := image.NewNRGBA(image.Rect(0, 0, size, size))
@@ -64,12 +65,14 @@ func acidFlow() *image.NRGBA {
 			a, b := u+0.19*warp, v+0.12*math.Sin(2*math.Pi*u)
 			broad := 0.72*periodicNoise(a, b, 3, 2, 17) + 0.28*periodicNoise(a, b, 5, 4, 43)
 			wisp := periodicNoise(a, b, 7, 11, 127)
+			body := math.Max(0, math.Min(1, 0.5+2.6*(broad-0.5)+0.45*(wisp-0.5)))
+			vein := math.Pow(math.Max(0, 1-6*math.Abs(wisp-0.5)), 3)
 			// Fine detail stays subordinate to the broad liquid variation.
 			grain := float64((uint32(x)*73856093^uint32(y)*19349663)%3) - 1
 			out.SetNRGBA(x, y, color.NRGBA{
-				uint8(math.Round(24 + 40*broad + 8*wisp + grain)),
-				uint8(math.Round(101 + 50*broad + 12*wisp + grain)),
-				uint8(math.Round(7 + 12*broad + 3*wisp)), 255,
+				uint8(math.Round(18 + 62*body + 16*vein + grain)),
+				uint8(math.Round(68 + 103*body + 20*vein + grain)),
+				uint8(math.Round(5 + 20*body + 4*vein)), 255,
 			})
 		}
 	}

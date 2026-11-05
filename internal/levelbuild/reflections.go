@@ -37,8 +37,13 @@ func appendSavedReflections(
 	directory string,
 	assets *assetBuild,
 	chunks []ChunkArtifact,
+	required bool,
 ) ([]byte, []string, error) {
 	if assets == nil || !slices.Contains(features, "world/fixed-lighting@1") {
+		if required {
+			return nil, nil, fmt.Errorf("required reflections need fixed offline lighting: %w", ErrManifest)
+		}
+
 		return module, features, nil
 	}
 
@@ -62,9 +67,30 @@ func appendSavedReflections(
 
 	key := worldreflection.InputDigest(envelope)
 
-	data, valid := readSavedReflectionCapture(assets.projectRoot, filepath.Join(relative, "reflections-"+key+".krc"), envelope, document)
+	data, capture, valid := readSavedReflectionCapture(
+		assets.projectRoot,
+		filepath.Join(relative, "reflections-"+key+".krc"),
+		envelope,
+		document,
+	)
+
 	if !valid {
+		if required {
+			return nil, nil, fmt.Errorf(
+				"required reflection capture is missing, stale or invalid for %s; run karty render reflections %s: %w",
+				directory,
+				filepath.Base(directory),
+				ErrManifest,
+			)
+		}
+
 		return module, features, nil
+	}
+
+	if required {
+		if err := validateRequiredReflectionCoverage(capture, document); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	if !slices.Contains(assets.manifest.Assets.Capabilities.Runtime, asset.Capability(worldreflection.Feature)) {
@@ -82,6 +108,10 @@ func appendSavedReflections(
 		}
 
 		if !present {
+			if required {
+				return nil, nil, fmt.Errorf("required reflection capture has no environments: %w", ErrManifest)
+			}
+
 			return module, features, nil
 		}
 
@@ -144,6 +174,7 @@ func SaveReflectionCapture(root string, artifact Artifact, data []byte) (string,
 	}
 
 	name := "reflections-" + bundle.InputSHA256 + ".krc"
+
 	if err := atomicBakeWrite(directory, name, data); err != nil {
 		return "", err
 	}
@@ -151,18 +182,22 @@ func SaveReflectionCapture(root string, artifact Artifact, data []byte) (string,
 	return filepath.Join(directory, name), nil
 }
 
-func readSavedReflectionCapture(root, path string, envelope level.Envelope, document *world.Document) ([]byte, bool) {
+func readSavedReflectionCapture(
+	root, path string,
+	envelope level.Envelope,
+	document *world.Document,
+) ([]byte, worldreflection.Bundle, bool) {
 	data, err := readConfinedFile(root, path, worldreflection.MaxEncodedSize)
 	if err != nil {
-		return nil, false
+		return nil, worldreflection.Bundle{}, false
 	}
 
 	bundle, err := worldreflection.Decode(data)
 	if err != nil || bundle.ValidateSource(envelope, document) != nil {
-		return nil, false
+		return nil, worldreflection.Bundle{}, false
 	}
 
-	return data, true
+	return data, bundle, true
 }
 
 // Keep offline conversion separate from packaging without changing source bytes.

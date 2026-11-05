@@ -16,7 +16,7 @@ func textureCodecRuntimeFiles() []string {
 func (snapshot *Snapshot) requiredRuntimeFiles() []string {
 	names := []string{"index.html", "wasm_exec.js", "game.kart"}
 	if len(snapshot.files["bootstrap.mjs"]) != 0 {
-		names = append(names, "bootstrap.mjs", "runtime.mjs", "client.mjs", "karty-host.wasm", "runtime.bin")
+		names = append(names, "bootstrap.mjs", "runtime.mjs", "client.mjs", "karty-host.wasm")
 
 		codec := textureCodecRuntimeFiles()
 		for _, name := range codec[:3] {

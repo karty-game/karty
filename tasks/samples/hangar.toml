@@ -70,6 +70,12 @@ depends = [
 dir = "samples/hangar"
 run = '../../dist/karty build --target web --host "${KARTY_HOST_WEB:-}"'
 
+[capture-hangar-reflections]
+description = "Capture the reflection environments required by Hangar packaging"
+depends = ["build"]
+dir = "samples/hangar"
+run = '../../dist/karty render reflections --backend hardware --host "${KARTY_HOST_NATIVE:-}" levels.hangar'
+
 [capture-hangar-particles]
 description = "Capture barrel and acid particle viewpoints in one passive native session"
 depends = ["build"]

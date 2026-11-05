@@ -232,7 +232,7 @@ func (bundle *HostBundle) nativeLibraries() []string {
 }
 
 func WebGPUHostFiles() []string {
-	return []string{"karty-host.wasm", "runtime.bin", "wasm_exec.js", "client.mjs", "runtime.mjs", "bootstrap.mjs"}
+	return []string{"karty-host.wasm", "wasm_exec.js", "client.mjs", "runtime.mjs", "bootstrap.mjs"}
 }
 
 func (bundle *HostBundle) verify(ctx context.Context, root *os.Root) error {
@@ -266,8 +266,8 @@ func (bundle *HostBundle) verify(ctx context.Context, root *os.Root) error {
 		}
 	}
 
-	if bundle.Target == "web" && bundle.Files["runtime.bin"] != bundle.Files["karty-host.wasm"] {
-		return fmt.Errorf("web host aliases must have identical bytes: %w", os.ErrInvalid)
+	if alias, legacy := bundle.Files["runtime.bin"]; bundle.Target == "web" && legacy && alias != bundle.Files["karty-host.wasm"] {
+		return fmt.Errorf("legacy web host alias must have identical bytes: %w", os.ErrInvalid)
 	}
 
 	return nil
@@ -280,7 +280,7 @@ func validBundlePath(name string) bool {
 
 func (bundle *HostBundle) allowedFile(name string) bool {
 	if bundle.Target == "web" {
-		return slices.Contains(WebGPUHostFiles(), name) || slices.Contains(WebGPUTextureCodecFiles(), name) ||
+		return name == "runtime.bin" || slices.Contains(WebGPUHostFiles(), name) || slices.Contains(WebGPUTextureCodecFiles(), name) ||
 			slices.Contains(WebGPUTextureCodecLicenses(), name) || name == "licenses/Karty-RUNTIME_LICENSE.md"
 	}
 

@@ -52,7 +52,7 @@ depends = ["build"]
 run = "mise exec dotnet@9.0.203 -- go run ./website/cmd/samples build"
 
 [build-sample-ci]
-description = "Build one CI sample after baking its offline lightmaps"
+description = "Build one CI sample after baking its offline lightmaps and required reflections"
 depends = ["build"]
 run = 'mise exec dotnet@9.0.203 -- go run ./website/cmd/samples build-one "$SAMPLE_NAME"'
 

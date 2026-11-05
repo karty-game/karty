@@ -323,7 +323,7 @@ func buildPublishedSamples(root, site, cli string, names []string) error {
 	return nil
 }
 
-// buildSample refreshes missing/stale offline lighting before packaging it. The
+// buildSample refreshes offline lighting and required reflections before packaging. The
 // project's public SDK is installed by buildSamples before invoking either CLI command.
 func buildSample(directory, cli, goPath string) error {
 	return buildSampleWithRunner(directory, cli, sampleRunner(cli, goPath, runCLIEnvironment))
@@ -366,13 +366,53 @@ func buildSampleWithRunner(directory, cli string, run func(string, string, ...st
 		}
 	}
 
+	reflections, err := sampleReflectionLevels(directory)
+	if err != nil {
+		return err
+	}
+
+	backend := os.Getenv("KARTY_SAMPLE_REFLECTION_BACKEND")
+	if backend == "" {
+		backend = "hardware"
+	}
+
+	if backend != "hardware" && backend != "software" {
+		return fmt.Errorf("invalid sample reflection backend %q: %w", backend, os.ErrInvalid)
+	}
+
+	for _, name := range reflections {
+		if err = run(directory, cli, "render", "reflections", "--backend", backend, name); err != nil {
+			return err
+		}
+	}
+
 	return run(directory, cli, "build", "--target", "web")
 }
 
-func sampleBakeLevels(directory string) ([]string, error) {
-	levelsDirectory := filepath.Join(directory, "levels")
+type sampleLevelConfig struct {
+	Lightmap    struct{ Enabled, Offline bool } `toml:"lightmap"`
+	Chunks      struct{ Enabled bool }          `toml:"chunks"`
+	Reflections struct{ Required bool }         `toml:"reflections"`
+}
 
-	info, err := os.Lstat(levelsDirectory)
+func sampleBakeLevels(directory string) ([]string, error) {
+	return sampleConfiguredLevels(directory, func(config sampleLevelConfig) bool {
+		return config.Lightmap.Enabled && config.Lightmap.Offline && !config.Chunks.Enabled
+	})
+}
+
+func sampleReflectionLevels(directory string) ([]string, error) {
+	return sampleConfiguredLevels(directory, func(config sampleLevelConfig) bool { return config.Reflections.Required })
+}
+
+func sampleConfiguredLevels(directory string, selected func(sampleLevelConfig) bool) ([]string, error) {
+	project, err := os.OpenRoot(directory)
+	if err != nil {
+		return nil, err
+	}
+	defer project.Close()
+
+	info, err := project.Lstat("levels")
 	if os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -382,10 +422,22 @@ func sampleBakeLevels(directory string) ([]string, error) {
 	}
 
 	if !info.IsDir() {
-		return nil, fmt.Errorf("invalid sample levels directory: %s: %w", levelsDirectory, os.ErrInvalid)
+		return nil, fmt.Errorf("invalid sample levels directory: %s: %w", filepath.Join(directory, "levels"), os.ErrInvalid)
 	}
 
-	entries, err := os.ReadDir(levelsDirectory)
+	levels, err := project.OpenRoot("levels")
+	if err != nil {
+		return nil, err
+	}
+	defer levels.Close()
+
+	levelsDir, err := levels.Open(".")
+	if err != nil {
+		return nil, err
+	}
+	defer levelsDir.Close()
+
+	entries, err := levelsDir.ReadDir(-1)
 	if err != nil {
 		return nil, err
 	}
@@ -397,9 +449,9 @@ func sampleBakeLevels(directory string) ([]string, error) {
 			continue
 		}
 
-		path := filepath.Join(directory, "levels", entry.Name(), "level.toml")
+		path := filepath.Join("levels", entry.Name(), "level.toml")
 
-		info, err := os.Lstat(path)
+		info, err := project.Lstat(path)
 		if os.IsNotExist(err) {
 			continue
 		}
@@ -412,29 +464,34 @@ func sampleBakeLevels(directory string) ([]string, error) {
 			return nil, fmt.Errorf("invalid sample level manifest: %s: %w", path, os.ErrInvalid)
 		}
 
-		contents, err := os.ReadFile(path)
+		contents, err := project.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}
 
-		var config struct {
-			Lightmap struct{ Enabled, Offline bool } `toml:"lightmap"`
-			Chunks   struct{ Enabled bool }          `toml:"chunks"`
-		}
+		var config sampleLevelConfig
 		if err = toml.Unmarshal(contents, &config); err != nil {
 			return nil, fmt.Errorf("parse sample level %s: %w", path, err)
 		}
 
-		if config.Lightmap.Enabled && config.Lightmap.Offline && !config.Chunks.Enabled {
+		if selected(config) {
 			names = append(names, entry.Name())
 		}
 	}
+
+	slices.Sort(names)
 
 	return names, nil
 }
 
 func sampleVersion(directory string) (string, error) {
-	contents, err := os.ReadFile(filepath.Join(directory, "karty.toml"))
+	root, err := os.OpenRoot(directory)
+	if err != nil {
+		return "", err
+	}
+	defer root.Close()
+
+	contents, err := root.ReadFile("karty.toml")
 	if err != nil {
 		return "", err
 	}
@@ -458,6 +515,9 @@ func runCLI(directory, cli string, args ...string) error {
 }
 
 func runCLIEnvironment(directory string, environment []string, cli string, args ...string) error {
+	// cli comes from the repository's dist/karty build output; arguments are
+	// passed directly to that executable without shell interpretation.
+	// #nosec G702 -- the caller supplies the trusted repository-built CLI path.
 	command := exec.CommandContext(context.Background(), cli, args...)
 	command.Dir = directory
 

@@ -63,7 +63,7 @@ func Serve(ctx context.Context, directory, address string) error {
 
 	server := &http.Server{
 		Addr:              address,
-		Handler:           http.FileServer(http.Dir(directory)),
+		Handler:           previewFiles(directory),
 		ReadHeaderTimeout: serverTimeout,
 	}
 

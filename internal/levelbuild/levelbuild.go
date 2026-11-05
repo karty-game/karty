@@ -50,15 +50,16 @@ type manifest struct {
 		Kind     string `toml:"kind"`
 		Metadata string `toml:"metadata"`
 	} `toml:"level"`
-	Data       []dataEntry            `toml:"data"`
-	World      worldSettings          `toml:"world"`
-	Terrain    *terrainBuildSettings  `toml:"terrain"`
-	Lightmap   *lightmapBuildSettings `toml:"lightmap"`
-	Chunks     *chunkBuildSettings    `toml:"chunks"`
-	Textures   []textureEntry         `toml:"textures"`
-	Characters []characterEntry       `toml:"characters"`
-	UI         []dataEntry            `toml:"ui"`
-	Theme      dataEntry              `toml:"theme"`
+	Data        []dataEntry             `toml:"data"`
+	World       worldSettings           `toml:"world"`
+	Terrain     *terrainBuildSettings   `toml:"terrain"`
+	Lightmap    *lightmapBuildSettings  `toml:"lightmap"`
+	Reflections struct{ Required bool } `toml:"reflections"`
+	Chunks      *chunkBuildSettings     `toml:"chunks"`
+	Textures    []textureEntry          `toml:"textures"`
+	Characters  []characterEntry        `toml:"characters"`
+	UI          []dataEntry             `toml:"ui"`
+	Theme       dataEntry               `toml:"theme"`
 }
 
 type dataEntry struct {
@@ -422,7 +423,7 @@ func buildLevel(
 		return Artifact{}, err
 	}
 
-	module, features, err = appendSavedReflections(ctx, module, features, directory, assets, chunks)
+	module, features, err = appendSavedReflections(ctx, module, features, directory, assets, chunks, definition.Reflections.Required)
 	if err != nil {
 		return Artifact{}, err
 	}

@@ -2,9 +2,12 @@ package levelbuild
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	"os"
+	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/karty-game/karty-sdk/codec/qoi"
@@ -34,14 +37,11 @@ func TestGPUReflectionCapturePlaceholderPreservesSourceAndCellIdentity(t *testin
 		t.Fatal("ordinary build published capture-only placeholder")
 	}
 
+	markReflectionCaptureRequired(t, root, assets)
+
 	assets.reflectionCapture = true
-
-	capture, err := buildAll(t.Context(), root, 4, "", assets)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	placeholderRoot := decodePassiveEnvelope(t, capture[0].Bytes)
+	capture := buildReflectionPlaceholder(t, root, assets)
+	placeholderRoot := decodePassiveEnvelope(t, capture.Bytes)
 	data, _, found := placeholderRoot.Read(worldreflection.EntryName, 0, level.MaxEntrySize)
 
 	placeholder, err := worldreflection.DecodePrepared(data)
@@ -53,12 +53,75 @@ func TestGPUReflectionCapturePlaceholderPreservesSourceAndCellIdentity(t *testin
 		t.Fatal("placeholder changed capture source digest")
 	}
 
-	assertReflectionCellsUnchanged(t, normal[0], capture[0])
+	assertReflectionCellsUnchanged(t, normal[0], capture)
 
 	actual := placeholder.Metadata
 	actual.Producer = worldreflection.Producer
 	actual.Probes = slices.Clone(actual.Probes)
 	actual.Sectors = slices.Clone(actual.Sectors)
+	encodedCapture := encodeReflectionFixture(t, &actual)
+
+	capturePath, err := SaveReflectionCapture(root, capture, encodedCapture)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assets.reflectionCapture = false
+	final := buildReflectionArtifact(t, root, assets)
+	assertCapturedReflectionReplacesPlaceholder(t, placeholderRoot, capture, final, placeholder.Texture)
+	assertInvalidRequiredReflectionsRejected(t, root, capture, capturePath, actual, assets)
+}
+
+func markReflectionCaptureRequired(t *testing.T, root string, assets *assetBuild) {
+	t.Helper()
+
+	project, err := os.OpenRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer project.Close()
+
+	manifest, err := project.OpenFile(filepath.Join("levels", "lighting", "level.toml"), os.O_WRONLY|os.O_APPEND, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer manifest.Close()
+
+	if _, err := manifest.WriteString("\n[reflections]\nrequired = true\n"); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := buildAll(
+		t.Context(),
+		root,
+		4,
+		"",
+		assets,
+	); !errors.Is(err, ErrManifest) ||
+		!strings.Contains(err.Error(), "required reflection capture") {
+		t.Fatal("required reflections disappeared from successful build", err)
+	}
+
+	// Capture preparation must create its fixed lighting from a clean checkout,
+	// without depending on an optional CI bake-cache restore.
+	if err := os.RemoveAll(filepath.Join(root, ".karty", "bakes")); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func buildReflectionPlaceholder(t *testing.T, root string, assets *assetBuild) Artifact {
+	t.Helper()
+
+	capture, err := buildAll(t.Context(), root, 4, "", assets)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return capture[0]
+}
+
+func encodeReflectionFixture(t *testing.T, actual *worldreflection.Bundle) []byte {
+	t.Helper()
 
 	pixels := image.NewNRGBA(image.Rect(0, 0, worldreflection.FaceSize*worldreflection.Faces, worldreflection.FaceSize))
 	for offset := 0; offset < len(pixels.Pix); offset += 4 {
@@ -74,27 +137,38 @@ func TestGPUReflectionCapturePlaceholderPreservesSourceAndCellIdentity(t *testin
 		actual.Probes[index].Image = encoded
 	}
 
-	encodedCapture, err := worldreflection.Encode(actual)
+	data, err := worldreflection.Encode(*actual)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := SaveReflectionCapture(root, capture[0], encodedCapture); err != nil {
-		t.Fatal(err)
-	}
+	return data
+}
 
-	assets.reflectionCapture = false
+func buildReflectionArtifact(t *testing.T, root string, assets *assetBuild) Artifact {
+	t.Helper()
 
 	final, err := buildAll(t.Context(), root, 4, "", assets)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	finalRoot := decodePassiveEnvelope(t, final[0].Bytes)
-	data, _, found = finalRoot.Read(worldreflection.EntryName, 0, level.MaxEntrySize)
+	return final[0]
+}
+
+func assertCapturedReflectionReplacesPlaceholder(
+	t *testing.T,
+	placeholderRoot level.Envelope,
+	capture, final Artifact,
+	placeholderTexture []byte,
+) {
+	t.Helper()
+
+	finalRoot := decodePassiveEnvelope(t, final.Bytes)
+	data, _, found := finalRoot.Read(worldreflection.EntryName, 0, level.MaxEntrySize)
 
 	prepared, err := worldreflection.DecodePrepared(data)
-	if !found || err != nil || bytes.Equal(prepared.Texture, placeholder.Texture) {
+	if !found || err != nil || bytes.Equal(prepared.Texture, placeholderTexture) {
 		t.Fatal("ordinary build did not replace placeholder with saved capture", err)
 	}
 
@@ -102,7 +176,65 @@ func TestGPUReflectionCapturePlaceholderPreservesSourceAndCellIdentity(t *testin
 		t.Fatal("captured pixels changed source digest")
 	}
 
-	assertReflectionCellsUnchanged(t, capture[0], final[0])
+	assertReflectionCellsUnchanged(t, capture, final)
+}
+
+func assertInvalidRequiredReflectionsRejected(
+	t *testing.T,
+	root string,
+	capture Artifact,
+	capturePath string,
+	actual worldreflection.Bundle,
+	assets *assetBuild,
+) {
+	t.Helper()
+
+	empty := actual
+	empty.Probes = nil
+
+	empty.Sectors, empty.Solids = slices.Clone(actual.Sectors), slices.Clone(actual.Solids)
+	for index := range empty.Sectors {
+		empty.Sectors[index] = -1
+	}
+
+	for index := range empty.Solids {
+		empty.Solids[index] = -1
+	}
+
+	emptyData, err := worldreflection.Encode(empty)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := SaveReflectionCapture(root, capture, emptyData); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := buildAll(
+		t.Context(),
+		root,
+		4,
+		"",
+		assets,
+	); !errors.Is(err, ErrManifest) ||
+		!strings.Contains(err.Error(), "no environments") {
+		t.Fatal("empty required capture silently omitted", err)
+	}
+
+	if err := os.WriteFile(capturePath, []byte("invalid capture"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := buildAll(
+		t.Context(),
+		root,
+		4,
+		"",
+		assets,
+	); !errors.Is(err, ErrManifest) ||
+		!strings.Contains(err.Error(), "required reflection capture") {
+		t.Fatal("invalid required capture silently omitted", err)
+	}
 
 	actual.Sectors[0] = -1
 
@@ -111,7 +243,7 @@ func TestGPUReflectionCapturePlaceholderPreservesSourceAndCellIdentity(t *testin
 		t.Fatal(err)
 	}
 
-	if _, err := SaveReflectionCapture(root, capture[0], bad); err != nil {
+	if _, err := SaveReflectionCapture(root, capture, bad); err != nil {
 		t.Fatal(err)
 	}
 

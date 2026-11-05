@@ -34,8 +34,7 @@ type hostedRuntimeFile struct {
 	SHA256 string `json:"sha256"`
 }
 
-// Only the site representation omits the byte-identical fallback alias. Source
-// bundles are fully verified before their unchanged files are shared.
+// Source bundles are fully verified before their unchanged files are shared.
 func shareSampleRuntime(site, sample, version string) error {
 	directory := filepath.Join(site, sample)
 
@@ -281,7 +280,7 @@ func verifyHostedRuntimeFile(source fs.FS, name string, entry hostedRuntimeFile)
 }
 
 func hostedRuntimeFiles() []string {
-	names := slices.DeleteFunc(toolchain.WebGPUHostFiles(), func(name string) bool { return name == "runtime.bin" })
+	names := toolchain.WebGPUHostFiles()
 	names = append(names, toolchain.WebGPUTextureCodecFiles()...)
 	names = append(names, "licenses/Karty-RUNTIME_LICENSE.md")
 

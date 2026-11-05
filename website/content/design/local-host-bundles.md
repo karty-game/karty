@@ -30,8 +30,7 @@ sha256 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 ```
 
 Every dependency needs a `files` entry containing its exact size and lowercase
-SHA-256. A web bundle declares `karty-host.wasm`, its byte-identical
-`runtime.bin` alias, `wasm_exec.js`, `client.mjs`, `runtime.mjs`, and
+SHA-256. A web bundle declares `karty-host.wasm`, `wasm_exec.js`, `client.mjs`, `runtime.mjs`, and
 `bootstrap.mjs`, the texture-codec modules and their licenses. The CLI creates the game's HTML shell and keeps the complete
 runtime in its existing offline-release inventory. The engine's bootstrap owns
 guest startup, WebGPU setup, and live update hooks.
@@ -58,3 +57,7 @@ under `content/<sha256>.kld` before invoking the native host.
 
 Capture commands default to `--backend hardware`. Use `--backend software` with
 a validated WebGPU native bundle for [CPU-only capture tooling](../guide/software-capture.html).
+
+Legacy schema-1 input bundles may include the verified byte-identical
+`runtime.bin` alias. New distributions omit it, and the current loader requests
+only `karty-host.wasm`.

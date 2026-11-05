@@ -13,7 +13,7 @@ func (p *pilgrim) createRoot() error {
 	pose.Pitch = math.Pi / 2
 	p.shadow = p.game.NewSprite3D(engine.LevelTexture(p.level, shadowTexture), pose, engine.SpriteRenderer3D{
 		Facing: engine.WorldSpriteFacingFixed, AlphaMode: engine.WorldSpriteAlphaBlend,
-		Size: engine.NewVec2(1.1, 1.1), Anchor: engine.NewVec2(.5, .5),
+		Size: engine.NewVec2(.8, .55), Anchor: engine.NewVec2(.5, .5),
 	})
 	var err error
 	p.watch, err = p.game.WatchPose(p.shadow.Ref(), func(transform engine.Transform3D) {

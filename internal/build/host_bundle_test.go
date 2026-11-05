@@ -17,6 +17,9 @@ import (
 func TestWebGPUHostBundleStagesEngineBootstrapAndOfflineModules(t *testing.T) {
 	t.Parallel()
 	directory, bundle := webCodecBundleFixture(t)
+	// Published schema-1 inputs may retain the old alias; new output omits it.
+	addBundleFixtureFile(t, directory, bundle, "runtime.bin", []byte("\x00asm\x01\x00\x00\x00"))
+	writeHostBundleFixture(t, directory, bundle)
 
 	game := filepath.Join(t.TempDir(), "game.kart")
 	if err := os.WriteFile(game, []byte("\x00asm\x01\x00\x00\x00"), 0o600); err != nil {
@@ -24,12 +27,38 @@ func TestWebGPUHostBundleStagesEngineBootstrapAndOfflineModules(t *testing.T) {
 	}
 
 	distribution := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(distribution, "web"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(distribution, "web", "runtime.bin"), []byte("previous output"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
 	if err := stageRequestedTarget(t.Context(), preparedMaterialSDKFixture(), "A <game>", distribution, t.TempDir(), game, nil,
 		Options{Host: directory, Target: "web"}); err != nil {
 		t.Fatal(err)
 	}
 
 	web := filepath.Join(distribution, "web")
+	assertWebGPUHostShell(t, web, bundle)
+
+	root, err := os.OpenRoot(web)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+
+	manifest := readWebReleaseManifest(t, web)
+	assertWebBundleInManifest(t, manifest, bundle)
+}
+
+func assertWebGPUHostShell(t *testing.T, web string, bundle *hostBundle) {
+	t.Helper()
+
+	if _, err := os.Stat(filepath.Join(web, "runtime.bin")); !os.IsNotExist(err) {
+		t.Fatalf("legacy runtime alias staged: %v", err)
+	}
 
 	contents, err := os.ReadFile(filepath.Join(web, "index.html"))
 	if err != nil {
@@ -46,12 +75,10 @@ func TestWebGPUHostBundleStagesEngineBootstrapAndOfflineModules(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(web, "karty.js")); !os.IsNotExist(err) {
 		t.Fatalf("legacy launcher staged: %v", err)
 	}
+}
 
-	root, err := os.OpenRoot(web)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer root.Close()
+func readWebReleaseManifest(t *testing.T, web string) webReleaseManifest {
+	t.Helper()
 
 	pointerData, err := os.ReadFile(filepath.Join(web, "karty-latest.json"))
 	if err != nil {
@@ -73,7 +100,23 @@ func TestWebGPUHostBundleStagesEngineBootstrapAndOfflineModules(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	return manifest
+}
+
+func assertWebBundleInManifest(t *testing.T, manifest webReleaseManifest, bundle *hostBundle) {
+	t.Helper()
+
 	for name := range bundle.Files {
+		if name == "runtime.bin" {
+			for _, entry := range manifest.Files {
+				if entry.URL == name {
+					t.Fatal("legacy runtime alias retained in release inventory")
+				}
+			}
+
+			continue
+		}
+
 		found := false
 
 		for _, entry := range manifest.Files {
@@ -261,7 +304,7 @@ func webHostBundleFixture(t *testing.T) (string, *hostBundle) {
 
 	for _, name := range webGPUHostFiles() {
 		data := []byte("// " + name)
-		if name == "karty-host.wasm" || name == "runtime.bin" {
+		if name == "karty-host.wasm" {
 			data = []byte("\x00asm\x01\x00\x00\x00")
 		}
 
