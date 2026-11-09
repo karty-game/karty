@@ -19,7 +19,7 @@ jobs:
       GOMODCACHE: ${{ github.workspace }}/tmp/ci/go-mod
     steps:
       - uses: actions/checkout@v7
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
       - name: Restore Go modules and compiler output
         id: go-cache
         uses: actions/cache/restore@v6
@@ -51,7 +51,7 @@ jobs:
       GOFLAGS: "-p=1"
     steps:
       - uses: actions/checkout@v7
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
       - name: Restore Go modules, compiler output and lint facts
         id: go-cache
         uses: actions/cache/restore@v6
@@ -84,7 +84,7 @@ jobs:
       GOMODCACHE: ${{ github.workspace }}/tmp/ci/go-mod
     steps:
       - uses: actions/checkout@v7
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
       - name: Restore Go modules and compiler output
         id: go-cache
         uses: actions/cache/restore@v6

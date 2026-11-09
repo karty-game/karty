@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
       - name: Check immutable tag resolution
         run: node --test .github/scripts/resolve-release-tag.test.mjs
       - name: Resolve exact release commit
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.commit }}
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
       - run: mise run test-process-lifecycle
       - run: mise run test-platform-setup
   validate:
@@ -67,7 +67,7 @@ jobs:
         with:
           ref: ${{ needs.prepare.outputs.commit }}
           fetch-depth: 0
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
       - run: mise run check-fmt
       - run: mise run test
       - run: mise run lint
@@ -116,7 +116,7 @@ jobs:
         with:
           ref: ${{ needs.prepare.outputs.commit }}
           fetch-depth: 0
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
       - name: Verify release tag still identifies the validated commit
         env:
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
